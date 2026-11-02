@@ -31,6 +31,12 @@ MUST_TRIGGER = {
         "my boyfriend won't let me see my friends", "he forced me to",
     ],
     "abuse": ["my uncle is hurting me", "I'm not safe at home", "im scared to go home", "i am being abused"],
+    "touching": [
+        "the boy in my class pull my shirt I like it since we play that way but now he does pull my pant how can I tell him to only pull my shirt",
+        "he pulls my pants down at recess", "a guy grabbed my butt in the hallway", "she keeps touching my chest",
+        "he touched me down there", "someone groped me on the bus", "he lifted my skirt", "they pantsed me in gym",
+        "mi companero me baja los pantalones", "il baisse mon pantalon",
+    ],
 }
 
 # French, Hindi (Devanagari) and romanized Hindi
@@ -66,6 +72,8 @@ for _c, _ms in MULTILINGUAL.items():
     MUST_TRIGGER[_c] = MUST_TRIGGER[_c] + _ms
 
 MUST_NOT_TRIGGER = [
+    "pull my leg", "my pants are too short", "how do I fold my pants", "my pant is ripped", "touch my phone",
+    "can you help me iron my skirt", "I want to kiss a girl teach me how", "my butt hurts after the gym",
     "Bonjour, je voudrais un café", "je suis mort de rire", "ça me tue de rire", "je vais en finir avec mes devoirs",
     "j'ai faim, on mange quoi ?", "mon copain m'a offert des fleurs", "je veux partager mes photos de vacances",
     "मुझे चाय पसंद है", "मेरा नाम सैम है", "मैं मर जाऊंगा हंसते हंसते", "मैं खाना बना रहा हूँ",

@@ -120,6 +120,36 @@ _CATEGORIES: list[tuple[str, list[str], str]] = [
         "• Tell a trusted adult outside your home today: a teacher, school counsellor, coach or a friend's parent.\n\n"
         "You don't have to handle this on your own.",
     ),
+    (
+        "touching",
+        [
+            r"\b(pull|pulls|pulled|pulling|yank\w*|tug\w*|drag\w*)\s+(down\s+)?(my|me\s+my)\s+(pants?|trousers?|shorts|skirts?|"
+            r"underwear|undies|boxers|briefs|bra|panties|joggers|sweatpants|leggings)\b",
+            r"\b(pull|pulls|pulled|pulling)\s+(my\s+)?(pants?|trousers?|shorts|skirts?|underwear)\s+down\b",
+            r"\b(pants|pantsed|pantsing|depants\w*)\s+me\b|\bgot\s+pantsed\b",
+            r"\b(touch|touches|touched|touching|grab|grabs|grabbed|grabbing|grope[sd]?|groping|squeez\w*|pinch\w*|slap\w*)\s+"
+            r"(my|me\s+on\s+my|me\s+in\s+my)\s+(butt|bum|ass|behind|chest|boobs?|breasts?|privates?|private\s+parts?|crotch|groin|"
+            r"thighs?|down\s+there)\b",
+            r"\b(touch|touches|touched|touching)\s+me\s+(there|down\s+there|inappropriately|in\s+private\s+places)\b",
+            r"\bgroped\b",
+            r"\b(lift|lifts|lifted|lifting|flip\w*)\s+(up\s+)?my\s+(skirt|dress|shirt|top)\b",
+            r"\bwon'?t\s+stop\s+touching\s+me\b",
+            # French / Spanish
+            r"\b(baisse|baisser|enleve|tire)\s+mon\s+(pantalon|short|slip|culotte|jupe)\b",
+            r"\bme\s+touche\s+(les\s+fesses|la\s+poitrine|les\s+seins|le\s+sexe|mes\s+parties)",
+            r"\bme\s+(baja|bajo|bajan|quita)\s+(los\s+pantalones|el\s+pantalon|la\s+falda|los\s+calzones|la\s+ropa\s+interior)\b",
+            r"\bme\s+(toca|toco|tocan|agarra)\s+(el\s+trasero|las\s+nalgas|los\s+pechos|el\s+pecho|mis\s+partes|ahi)\b",
+        ],
+        "Thanks for telling me. Pulling down someone's clothes, or touching their private parts, butt or "
+        "chest, is **not okay**, even if it started as a game, and even if some of the play was fine. "
+        "**It's not your fault**, and you're allowed to say no to all of it.\n\n"
+        "1. **Say it clearly:** \"Stop. Don't touch me like that.\" You don't have to be polite about it.\n"
+        "2. **Tell a teacher, school counsellor or parent today.** Schools have to deal with this, and you won't be in trouble for telling.\n"
+        "3. **Stay near friends or an adult** when he or she is around until it's sorted.\n\n"
+        f"• {KHP}\n"
+        "• If you've been hurt or you're in danger, call **911**.\n\n"
+        "You deserve to feel safe at school and everywhere else.",
+    ),
 ]
 
 
