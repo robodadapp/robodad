@@ -283,7 +283,7 @@ mistake, reply in character first, then add one line in ENGLISH starting "Dad ti
 - All of RoboDad's boundaries and the crisis rule still apply, whatever language they write in."""
 
 
-def build_system_prompt(analysis: Analysis, nickname: str = "", practice=None) -> str:
+def build_system_prompt(analysis: Analysis, nickname: str = "", practice=None, extra: str = "") -> str:
     """Persona + what the classic NLP pipeline found (retrieval-augmented grounding)."""
     if practice is not None:
         extra = coach_prompt(practice.scenario) if practice.lang == "math" else practice_prompt(practice.lang, practice.scenario)
@@ -314,6 +314,8 @@ def build_system_prompt(analysis: Analysis, nickname: str = "", practice=None) -
         ]
         for e in analysis.examples:
             lines.append(f'- Teen: "{e["user"]}" → RoboDad: "{e["robodad"]}"')
+    if extra:
+        lines.append(extra)
     return "\n".join(lines)
 
 

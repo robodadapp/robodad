@@ -140,6 +140,13 @@
   --metal:#CDD5DD; --alert:#B3412E; --ok:#2E8B57; --glow:color-mix(in srgb, #C8102E 25%, transparent);
   --display:"Graduate", "Nunito", serif; color-scheme:light;
 }
+:root[data-look="cheat"]{
+  --sky:#0B0B0F; --surface:#17171F; --ink:#FFF6D6; --muted:#C9B98A; --line:#3A3420;
+  --denim:#F5C518; --denim-ink:#1A1400; --mustard:#FF4D6D; --mustard-ink:#1A0008;
+  --metal:#6E6650; --alert:#FF6B6B; --ok:#4ADE80; --jacket:#1F1A0A; --jacket2:#2E2610; --hair:#0B0B0F; --lens:#05050A;
+  --glow:color-mix(in srgb, #F5C518 50%, transparent);
+  --display:"Bungee", "Nunito", sans-serif; color-scheme:dark;
+}
 :root[data-look="eid"]{
   --sky:#0B2A33; --surface:#11404C; --ink:#F4FBF8; --muted:#A8CFC6; --line:#1E5B68;
   --denim:#F2C14E; --denim-ink:#2A1E00; --mustard:#2EC4B6; --mustard-ink:#03201D;
@@ -453,6 +460,9 @@ button,textarea{font:inherit;color:inherit}
 .pv.lab::after{content:"Da"; position:absolute; right:7px; top:5px; font:700 12px/1 "Fredoka", sans-serif; color:#7B3FE4; border:2px solid #7B3FE4; border-radius:5px; padding:3px 4px; background:#fff}
 .pv.library{background:#F4ECDD}
 .pv.library::after{content:""; position:absolute; left:0; right:0; bottom:0; height:16px; background:repeating-linear-gradient(90deg, #8C2F39 0 6px, #2F6E5B 6px 11px, #C99A2E 11px 15px, #4E3B2E 15px 20px, transparent 20px 22px); border-bottom:3px solid #6E5646}
+.pv.cheat{background:radial-gradient(circle at 50% 120%, #3A2E05, #0B0B0F 70%)}
+.pv.cheat::after{content:"1UP"; position:absolute; top:4px; left:6px; font:400 10px "Bungee", sans-serif; color:#F5C518}
+:root[data-look="cheat"] .hello::before{content:"↑ ↑ ↓ ↓"; position:absolute; z-index:-1; top:10px; right:0; font:400 1.4rem "Bungee", sans-serif; color:#F5C518; opacity:.35; transform:rotate(-6deg)}
 .pv.gym{background:repeating-linear-gradient(90deg, rgba(150,100,40,.16) 0 2px, transparent 2px 18px), #F1DDB5}
 .pv.gym::after{content:""; position:absolute; left:0; right:0; top:0; height:7px; background:#C8102E; box-shadow:0 3px 0 #14213D}
 .looks-head{grid-column:1 / -1; margin:6px 0 -2px; font-weight:900; font-size:.9rem; color:var(--muted); letter-spacing:.04em; text-transform:uppercase}
@@ -1491,6 +1501,10 @@ textarea::placeholder{color:var(--muted)}
         <span class="pv gym"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-coach"/></svg></span>
         <strong>Gym Class</strong><small>Coach Dad, whistle ready</small>
       </button>
+      <button class="look" type="button" role="radio" data-look="cheat" aria-checked="false" id="lookCheat" hidden>
+        <span class="pv cheat"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-eighties"/></svg></span>
+        <strong>Cheat Code</strong><small>Secret unlocked. Extra lives!</small>
+      </button>
     </div>
     <div class="avpick">
       <p class="coll-head" style="margin:0!important"><span>Avatar</span><small>Tap RoboDad any time to see a move</small></p>
@@ -1503,6 +1517,8 @@ textarea::placeholder{color:var(--muted)}
         <select id="voiceSel" style="font:inherit; font-weight:700; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:12px; padding:7px 10px; max-width:58%"></select></div>
       <div class="setting"><span>What RoboDad calls you</span>
         <button class="ghost" id="nameBtn" type="button">Set a nickname</button></div>
+      <div class="setting"><span id="codeLabel">Got a secret code?</span>
+        <button class="ghost" id="codeBtn" type="button">Enter code</button></div>
       <div class="setting" id="installRow" hidden><span>Put RoboDad on your home screen</span>
         <button class="ghost" id="install" type="button">Install app</button></div>
       <div class="setting"><span>Everything that's changed</span><a class="ghost" href="/changelog" style="text-decoration:none">What's new</a></div>
@@ -1584,6 +1600,21 @@ textarea::placeholder{color:var(--muted)}
     <h2>RoboDad is for teens 13 and up</h2>
     <p>It isn't available for you yet. Ask a parent, guardian or teacher about apps made for your age.</p>
   </div>
+</div>
+
+<div class="overlay" id="codeDlg" role="dialog" aria-modal="true" aria-labelledby="codeTitle" hidden>
+  <form class="card" id="codeForm">
+    <h2 id="codeTitle">Got a secret code?</h2>
+    <p>Some codes unlock surprises. Codes are checked by RoboDad's server and never saved.</p>
+    <label for="codeInput">Secret code</label>
+    <input id="codeInput" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type it here">
+    <p id="codeMsg" class="notice" role="status" hidden></p>
+    <div class="row">
+      <button class="primary" type="submit" id="codeGo">Unlock</button>
+      <button class="ghost" id="familyOff" type="button" hidden>Turn off family mode</button>
+      <button class="ghost" id="codeCancel" type="button">Close</button>
+    </div>
+  </form>
 </div>
 
 <div class="overlay" id="nameDlg" role="dialog" aria-modal="true" aria-labelledby="nameTitle" hidden>
@@ -1976,7 +2007,8 @@ textarea::placeholder{color:var(--muted)}
     if (canSpeak) stopSpeaking();
     const { bubble, stack } = addRobo();
     let text = "", meta = null, totalMs = null;
-    const payload = { messages: history.map(({role, content}) => ({role, content})), nickname };
+    const payload = { messages: history.map(({role, content}) => ({role, content})), nickname,
+      family: getPref("robodad.family") || "", eggs: getPref("robodad.egg.cheat") ? ["cheat"] : [] };
     const inPractice = practice;
     if (inPractice) payload.practice = { lang: inPractice.lang, scenario: inPractice.scene };
 
@@ -2287,8 +2319,8 @@ const PLAYERS = {
   }
 
   const LOOK_KEY = "robodad.look";
-  const THEME_COLORS = { classic:"#2E5C8A", arcade:"#0D0A26", vhs:"#1C0E22", diner:"#D7263D", y2k:"#1A7FD6", skate:"#1C1C1C", gamer:"#0A0E14", summer:"#E2541F", halloween:"#160D26", bolly:"#C2185B", diwali:"#120B2E", winter:"#0E1F3A", lunar:"#7A0E14", chalk:"#22382E", lab:"#12B5A0", library:"#8C2F39", gym:"#C8102E", eid:"#0B2A33" };
-  const LOOK_STATION = { diner:"jukebox", arcade:"drive", skate:"skate", gamer:"lobby", summer:"block", halloween:"haunt", bolly:"filmi", diwali:"diya", winter:"snow", lunar:"lantern", eid:"crescent", chalk:"study", library:"study" };
+  const THEME_COLORS = { classic:"#2E5C8A", arcade:"#0D0A26", vhs:"#1C0E22", diner:"#D7263D", y2k:"#1A7FD6", skate:"#1C1C1C", gamer:"#0A0E14", summer:"#E2541F", halloween:"#160D26", bolly:"#C2185B", diwali:"#120B2E", winter:"#0E1F3A", lunar:"#7A0E14", chalk:"#22382E", lab:"#12B5A0", library:"#8C2F39", gym:"#C8102E", eid:"#0B2A33", cheat:"#0B0B0F" };
+  const LOOK_STATION = { diner:"jukebox", arcade:"drive", skate:"skate", gamer:"lobby", summer:"block", halloween:"haunt", bolly:"filmi", diwali:"diya", winter:"snow", lunar:"lantern", eid:"crescent", chalk:"study", library:"study", cheat:"drive" };
   const WAKE_COPY = {
     diner: "Firing up the jukebox… RoboDad will be ready in about 30 seconds.",
     y2k: "Dialing up at 56k… RoboDad will be ready in about 30 seconds.",
@@ -2305,6 +2337,7 @@ const PLAYERS = {
     lab: "Warming up the Bunsen burner… RoboDad will be ready in about 30 seconds.",
     library: "Shelving the returns… RoboDad will be ready in about 30 seconds.",
     gym: "Pumping up the dodgeballs… RoboDad will be ready in about 30 seconds.",
+    cheat: "Entering the cheat code… RoboDad will be ready in about 30 seconds.",
     other: "Blowing on the cartridge… RoboDad will be ready in about 30 seconds.",
   };
   const menuDlg = $("menuDlg");
@@ -2633,6 +2666,7 @@ const PLAYERS = {
   $("reveal").addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]")?.dataset.act;
     if (act === "next") showReveal(); else if (act === "share") shareBadge($("reveal").dataset.id);
+    else if (act === "cheat") { applyLook("cheat"); lookStation("cheat"); showReveal(); }
     else if (act === "grandpa") { avPref = "grandpa"; setPref(AV_KEY, avPref); mountAvatar(document.documentElement.dataset.look || "classic"); showReveal(); setTimeout(() => avPlay("kids"), 700); }
   });
   $("reveal").addEventListener("keydown", (e) => { if (e.key === "Escape") { revealQ.length = 0; showReveal(); } });
@@ -3496,6 +3530,53 @@ const PLAYERS = {
   }
   $("jokeMore").addEventListener("click", () => loadDaily(true));
   $("jokeShare").addEventListener("click", () => shareJoke($("dailyJoke").textContent, "Dad joke of the day"));
+
+  // ---------- secret codes (family mode + Easter eggs; checked on the server) ----------
+  const codeDlg = $("codeDlg"), codeInput = $("codeInput"), codeMsg = $("codeMsg");
+  function codeUI(){
+    const fam = !!getPref("robodad.family");
+    $("codeLabel").textContent = fam ? "Family mode is on" : "Got a secret code?";
+    $("familyOff").hidden = !fam;
+    $("lookCheat").hidden = !getPref("robodad.egg.cheat");
+  }
+  function openCode(){ codeInput.value = ""; codeMsg.hidden = true; codeDlg.hidden = false; codeInput.focus(); }
+  function closeCode(){ codeDlg.hidden = true; $("codeBtn").focus(); }
+  function secretReveal(kicker, title, line, svg, act, actLabel){
+    const el = $("reveal"); if (el.hidden) revealReturn = document.activeElement;
+    el.style.setProperty("--rc", "#F5C518"); el.dataset.id = "";
+    el.innerHTML = `<div class="rays"></div><div class="confetti">${confetti(RARITY.legendary)}</div><div class="rv">
+      <p class="kicker">${kicker}</p><div class="big">${svg}</div>
+      <h2 id="revealTitle">${title}</h2><p class="did">${line}</p>
+      <div class="row"><button class="primary" data-act="${act}">${actLabel}</button><button class="ghost" data-act="next">Close</button></div></div>`;
+    el.hidden = false; el.querySelector(`[data-act=${act}]`).focus();
+    try { window.RoboRadio && RoboRadio.chime(); } catch {}
+  }
+  $("codeBtn").addEventListener("click", openCode);
+  $("codeCancel").addEventListener("click", closeCode);
+  $("familyOff").addEventListener("click", () => { setPref("robodad.family", ""); codeUI(); codeMsg.textContent = "Family mode is off on this device."; codeMsg.hidden = false; });
+  codeDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCode(); });
+  $("codeForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = codeInput.value.trim(); if (!code) return;
+    $("codeGo").disabled = true;
+    try {
+      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { codeMsg.textContent = j.error || "Hmm, that didn't work. Try again."; codeMsg.hidden = false; return; }
+      codeDlg.hidden = true;
+      const head = AV ? `<svg viewBox="0 0 64 64" aria-hidden="true">${AV.AVATARS[avKind].svg}</svg>` : "";
+      if (j.kind === "family") {
+        setPref("robodad.family", j.token); codeUI();
+        secretReveal("FAMILY MODE ON", "Hey, it's your dad's RoboDad", "Your dad set this up just for you. Same rules, more inside jokes.", head, "next", "Let's go!");
+      } else if (j.egg === "cheat") {
+        setPref("robodad.egg.cheat", "1"); codeUI();
+        const eighties = AV ? `<svg viewBox="0 0 64 64" aria-hidden="true">${AV.AVATARS.eighties.svg}</svg>` : "";
+        secretReveal("CHEAT CODE ACCEPTED", "Cheat Code Dad", "You found the secret look. Extra lives, extra puns. Don't tell everyone. (Okay, tell everyone.)", eighties, "cheat", "Wear the look");
+      }
+    } catch { codeMsg.textContent = "Couldn't reach RoboDad. Check your connection and try again."; codeMsg.hidden = false; }
+    finally { $("codeGo").disabled = false; }
+  });
+  codeUI();
 
   // ---------- nickname ----------
   const NAME_KEY = "robodad.nickname", AGE_KEY = "robodad.ageCheck";

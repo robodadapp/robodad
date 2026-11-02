@@ -427,7 +427,7 @@
         <path class="hand" d="M53 11 V6.2" stroke="#C8102E" stroke-width="1.6" stroke-linecap="round"/><circle cx="53" cy="11" r="1" fill="${INK}"/></g>`,
     },
   };
-  const LOOK_AVATAR = { classic: "modern", arcade: "eighties", vhs: "nineties", y2k: "y2k", diner: "fifties", skate: "skater", gamer: "gamer", summer: "bucket", halloween: "dracula", bolly: "filmi", diwali: "festive", winter: "cozy", lunar: "lucky", eid: "eiddad", chalk: "professor", lab: "labdad", library: "bookworm", gym: "coach" };
+  const LOOK_AVATAR = { classic: "modern", arcade: "eighties", vhs: "nineties", y2k: "y2k", diner: "fifties", skate: "skater", gamer: "gamer", summer: "bucket", halloween: "dracula", bolly: "filmi", diwali: "festive", winter: "cozy", lunar: "lucky", eid: "eiddad", chalk: "professor", lab: "labdad", library: "bookworm", gym: "coach", cheat: "eighties" };
 
   function installSymbols(sprite){
     for (const [k, a] of Object.entries(AVATARS)) {

@@ -11,6 +11,8 @@ Run locally:  uvicorn app.main:app --reload --port 7860
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -289,6 +291,62 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1, max_length=200)
     nickname: str = Field(default="", max_length=40)
     practice: PracticeSpec | None = None
+    family: str = Field(default="", max_length=64)          # family-mode token from /api/code
+    eggs: list[str] = Field(default_factory=list, max_length=8)
+
+
+class CodeRequest(BaseModel):
+    code: str = Field(min_length=1, max_length=60)
+
+
+# ---------------------------------------------------------------- secret codes
+# Easter-egg codes are stored only as SHA-256 hashes (they're meant to be found
+# and shared, but not read straight out of the source). The family code lives
+# only in the FAMILY_CODE environment variable, never in this repository.
+# Nothing a code unlocks changes RoboDad's safety rules.
+def _norm_code(c: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (c or "").lower())
+
+
+EGG_HASHES = {hashlib.sha256(b"upupdowndown").hexdigest(): "cheat"}
+EGGS = {"cheat"}
+FAMILY_CODE = _norm_code(os.getenv("FAMILY_CODE", ""))
+FAMILY_PROFILE = os.getenv("FAMILY_PROFILE", "").strip()[:3000]
+_code_hits: dict[str, deque] = defaultdict(deque)
+
+FAMILY_BLOCK = (
+    "\n## Family mode\n"
+    "You're chatting with one of the kids of the real dad who built you (a dad in Toronto). Be a little more "
+    "personal and warm, as if you know the family, and say now and then that their dad would be proud of them. "
+    "Use the family details below naturally, at most one per reply, and never invent family facts that aren't "
+    "listed. Every safety rule and boundary above stays exactly the same in family mode."
+)
+CHEAT_BLOCK = (
+    "\n## Cheat Code mode\n"
+    "This user found the secret cheat code. Now and then, sprinkle in 80s arcade and video-game puns (extra "
+    "lives, 1UP, high score, level up). When they ask for a joke, make it an extra-cringe dad pun. Keep advice "
+    "just as helpful and short."
+)
+
+
+def _family_token() -> str:
+    if not FAMILY_CODE:
+        return ""
+    return hmac.new(FAMILY_CODE.encode(), b"robodad-family-v1", hashlib.sha256).hexdigest()[:32]
+
+
+def _is_family(token: str) -> bool:
+    t = _family_token()
+    return bool(t and token) and hmac.compare_digest(t, token)
+
+
+def _prompt_extras(req: "ChatRequest") -> str:
+    parts = []
+    if _is_family(req.family):
+        parts.append(FAMILY_BLOCK + ("\n" + FAMILY_PROFILE if FAMILY_PROFILE else ""))
+    if "cheat" in req.eggs:
+        parts.append(CHEAT_BLOCK)
+    return "\n".join(parts)
 
 
 def _prepare_history(msgs: list[ChatMessage], practice: bool = False) -> list[dict]:
@@ -647,6 +705,28 @@ async def health():
     return {"ok": True}
 
 
+@app.post("/api/code")
+async def secret_code(c: CodeRequest, request: Request):
+    """Check a secret code. Codes are never logged or stored."""
+    now = time.monotonic()
+    _prune(_code_hits, 600, now)
+    q = _code_hits[_client_ip(request)]
+    while q and now - q[0] > 600:
+        q.popleft()
+    if len(q) >= 8:
+        return JSONResponse({"error": "Too many guesses. Take a 10-minute break, then try again."}, status_code=429)
+    q.append(now)
+    code = _norm_code(c.code)
+    if FAMILY_CODE and hmac.compare_digest(code, FAMILY_CODE):
+        log.info("SECRET CODE: family mode unlocked")
+        return {"kind": "family", "token": _family_token()}
+    egg = EGG_HASHES.get(hashlib.sha256(code.encode()).hexdigest())
+    if egg:
+        log.info("SECRET CODE: egg %s unlocked", egg)
+        return {"kind": "egg", "egg": egg}
+    return JSONResponse({"error": "Nope, that's not a code I know. Nice try, though."}, status_code=404)
+
+
 @app.post("/api/chat")
 async def chat(req: ChatRequest, request: Request):
     practice = req.practice if req.practice and (req.practice.lang in PRACTICE_LANGS or req.practice.lang == "math") else None
@@ -690,7 +770,7 @@ async def chat(req: ChatRequest, request: Request):
             _daily["count"] += 1
             sent_any = False
             try:
-                system = build_system_prompt(analysis, nickname, practice)
+                system = build_system_prompt(analysis, nickname, practice, extra=_prompt_extras(req))
                 async for chunk in dad_mode_stream(provider, system, history):
                     if isinstance(chunk, CrisisFlag):
                         # The AI spotted a crisis the keyword rules missed (any language)
