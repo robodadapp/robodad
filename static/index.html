@@ -577,6 +577,8 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 :root[data-look="vhs"] body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:60;
   background:repeating-linear-gradient(180deg, rgba(0,0,0,.14) 0 1px, transparent 1px 3px); mix-blend-mode:multiply}
 .hello p{margin:0; color:var(--muted); max-width:46ch}
+.tcta{display:block; max-width:46ch; padding:10px 14px; border:2px dashed currentColor; border-radius:14px; color:inherit; font-weight:800; font-size:.92rem; line-height:1.35; text-decoration:none; opacity:.9}
+.tcta:hover,.tcta:focus-visible{opacity:1; text-decoration:underline}
 .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
 .chip{
   border:1.5px solid var(--denim); color:var(--denim); background:transparent;
@@ -1237,6 +1239,7 @@ textarea::placeholder{color:var(--muted)}
         <button class="chip lang-chip" type="button" data-open-math="">Maths help, Grades 7–10</button>
         <button class="chip lang-chip" type="button" data-open-study="">Study Hall focus timer</button>
       </div>
+      <a class="tcta" href="/testers">📱 Help RoboDad get on Google Play: know an adult with an Android phone? Ask them to test it for 2 weeks →</a>
       <section class="challenge" aria-label="Daily Dad Challenge">
         <span class="ch-tag">Daily Dad Challenge</span>
         <p class="ch-text"></p>
