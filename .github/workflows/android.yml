@@ -42,7 +42,13 @@ jobs:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
         run: |
           if [ -n "$KS_B64" ]; then
-            printf '%s' "$KS_B64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/upload.keystore"
+            CLEAN=$(printf '%s' "$KS_B64" | tr -d '\r\n\t ')
+            echo "Key text is ${#CLEAN} characters long."
+            if ! printf '%s' "$CLEAN" | grep -qE '^[A-Za-z0-9+/]+=*$'; then
+              echo "::error::ANDROID_KEYSTORE_B64 doesn't look like the copied key (it has characters a copied key never has). Redo the copy step and paste it again."
+              exit 1
+            fi
+            printf '%s' "$CLEAN" | base64 -d > "$RUNNER_TEMP/upload.keystore"
             echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.keystore" >> "$GITHUB_ENV"
             echo "Signing key found."
           else
