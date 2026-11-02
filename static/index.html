@@ -1686,10 +1686,10 @@ textarea::placeholder{color:var(--muted)}
   const VOICE_KEY = "robodad.voice";
   // RoboDad's voices: two Groq voices, each at normal speed or slowed a little (slower = deeper)
   const VOICES = {
-    troy:   { api:"troy",   rate:1,    label:"Troy",   note:"natural" },
-    bruce:  { api:"troy",   rate:0.88, label:"Bruce",  note:"deeper" },
-    peter:  { api:"austin", rate:1,    label:"Peter",  note:"easygoing" },
-    austin: { api:"austin", rate:0.88, label:"Austin", note:"easygoing, deeper" },
+    troy:   { api:"troy",   rate:1,    label:"Joe King",   note:"natural" },
+    bruce:  { api:"troy",   rate:0.88, label:"Ray Dio",  note:"deeper" },
+    peter:  { api:"austin", rate:1,    label:"Al Gorithm",  note:"easygoing" },
+    austin: { api:"austin", rate:0.88, label:"Sir Kit Breaker", note:"easygoing, deeper" },
   };
   let voicePref = VOICES[getPref(VOICE_KEY)] ? getPref(VOICE_KEY) : "troy";
   const curVoice = () => VOICES[voicePref] || VOICES.troy;
