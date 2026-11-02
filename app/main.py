@@ -345,7 +345,7 @@ async def status():
     p = state.get("provider")
     return {
         "mode": "llm" if p else "classic",
-        "model": p.label if p else "TF-IDF + Logistic Regression",
+        "model": "RoboDad" if p else "TF-IDF + Logistic Regression",  # never expose the vendor model
         "intents": len(state["nlp"].intents),
         "examples": len(state["nlp"].rows),
     }
@@ -679,8 +679,6 @@ async def chat(req: ChatRequest, request: Request):
         meta = analysis.to_dict() | {"mode": mode, "nlp_ms": round(nlp_ms, 1)}
         if crisis:
             meta["safety"] = crisis[0]
-        if mode == "llm":
-            meta["model"] = provider.label
         yield _sse("meta", meta)
 
         if mode == "safety":
@@ -717,7 +715,7 @@ async def chat(req: ChatRequest, request: Request):
 
         done = {"total_ms": round((time.perf_counter() - t0) * 1000, 1)}
         if mode == "llm":
-            done["model"] = provider.label  # may differ from meta if the model was switched
+            log.info("REPLY model=%s", provider.label)  # kept in server logs only, never sent to the page
         yield _sse("done", done)
 
     return StreamingResponse(
@@ -788,6 +786,8 @@ async def feedback(fb: FeedbackRequest, request: Request):
     if _rate_limited(_client_ip(request)):
         return JSONResponse({"error": "Too many ratings. Wait a minute, then try again."}, status_code=429)
 
+    p = state.get("provider")
+    fb.model = p.label if (p and fb.mode == "llm") else ""  # recorded server-side; the page never sees it
     row = fb.model_dump()
     log.info("FEEDBACK %s%s intent=%s mode=%s model=%s reply=%r",
              "REPORT " if fb.kind == "report" else "", "up" if fb.rating > 0 else "down",

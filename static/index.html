@@ -1920,7 +1920,7 @@ textarea::placeholder{color:var(--muted)}
     d.className = "why";
     d.innerHTML = `<summary>How RoboDad read this</summary>
       <dl class="grid">
-        <dt>Answered by</dt><dd>${esc(modeLabel(meta.mode))}${meta.model ? `<br><small>${esc(meta.model)}</small>` : ""}</dd>
+        <dt>Answered by</dt><dd>${esc(modeLabel(meta.mode))}</dd>
         <dt>Intent</dt><dd>${esc(intentLabel(meta.intent))} · ${pct(meta.confidence)}% sure<div class="bar"><span style="width:${pct(meta.confidence)}%"></span></div></dd>
         <dt>Mood</dt><dd>${mood} (${(s.compound ?? 0).toFixed(2)})</dd>
         <dt>Entities</dt><dd>${ents}</dd>
@@ -1941,7 +1941,7 @@ textarea::placeholder{color:var(--muted)}
     statusEl.classList.remove("waking");
     statusEl.classList.toggle("classic", s.mode !== "llm");
     statusEl.innerHTML = `<span class="dot"></span>` + (s.mode === "llm"
-      ? `Online · ${esc(s.model)}`
+      ? `Online`
       : `Classic mode · ${s.intents} intents, ${s.examples} examples`);
   }
   async function connect(){
