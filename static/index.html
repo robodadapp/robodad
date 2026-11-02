@@ -1785,7 +1785,7 @@ textarea::placeholder{color:var(--muted)}
   // voice picker in settings
   function fillVoices(){
     const sel = $("voiceSel"); if (!sel) return;
-    sel.innerHTML = Object.entries(VOICES).map(([k, v]) => `<option value="${k}">${v.label}: ${v.note}</option>`).join("");
+    sel.innerHTML = Object.entries(VOICES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join("");
     sel.value = voicePref;
   }
   if ("speechSynthesis" in window) speechSynthesis.addEventListener?.("voiceschanged", fillVoices);
@@ -3289,7 +3289,7 @@ const PLAYERS = {
   }
   function renderVoicePop(){
     $("qVoicePop").innerHTML = `<div class="qrow"><span>Read replies aloud</span><button class="switch" type="button" data-act="read" aria-pressed="${readAloud}"><span class="sr">Read replies aloud</span></button></div>
-      ${Object.entries(VOICES).map(([k, v]) => `<button class="qopt" type="button" data-voice="${k}" aria-checked="${readAloud && voicePref === k}"><span class="dot"></span>${v.label}<small>${v.note}</small></button>`).join("")}`;
+      ${Object.entries(VOICES).map(([k, v]) => `<button class="qopt" type="button" data-voice="${k}" aria-checked="${readAloud && voicePref === k}"><span class="dot"></span>${v.label}</button>`).join("")}`;
   }
   function renderMusicPop(){
     const R = window.RoboRadio; if (!R) return; const on = !!R.playing;
