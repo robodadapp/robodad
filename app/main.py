@@ -336,12 +336,13 @@ def _toronto_today() -> date:
     return datetime.now(ZoneInfo("America/Toronto")).date()
 
 
-async def _clicks_total(kind: str, name: str) -> int | None:
+async def _clicks_total(kind: str, name: str, since: str = "") -> int | None:
     if not (SUPABASE_URL and SUPABASE_KEY):
         return None
     try:
         r = await state["client"].get(
-            f"{SUPABASE_URL}/rest/v1/clicks?select=id&kind=eq.{kind}&name=eq.{name}",
+            f"{SUPABASE_URL}/rest/v1/clicks?select=id&kind=eq.{kind}&name=eq.{name}"
+            + (f"&created_at=gte.{since}" if since else ""),
             headers=_supabase_headers({"Prefer": "count=exact", "Range": "0-0"}),
         )
         total = r.headers.get("content-range", "").split("/")[-1]
@@ -781,9 +782,9 @@ async def secret_code(c: CodeRequest, request: Request):
             return {"kind": "hunt_wait", "opens": when}
         log.info("HUNT: chapter %s opened", chapter)
         out = {"kind": "hunt", "chapter": chapter}
-        if chapter == 6:
+        if chapter == 6 and not _is_family(c.family):   # family previews aren't counted
             await _count("hunt", "solved", request)
-            out["solver"] = await _clicks_total("hunt", "solved")
+            out["solver"] = await _clicks_total("hunt", "solved", ARG_START)
         return out
     return JSONResponse({"error": "Nope, that's not a code I know. Nice try, though."}, status_code=404)
 
