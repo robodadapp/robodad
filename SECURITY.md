@@ -6,7 +6,7 @@ RoboDad is a free chatbot for teens, so we take safety and security seriously.
 
 If you find a security issue (a way to break the site, get around the safety
 rules, or reach data you shouldn't), please **don't post it publicly**.
-Email **robodadapp@gmail.com** with "RoboDad security" in the subject
+Email **dad@robodad.app** with "RoboDad security" in the subject
 and the steps to reproduce it. You'll get a reply within a few days.
 
 Please don't test against the live site in ways that slow it down for others
