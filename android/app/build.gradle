@@ -7,12 +7,12 @@ def hasKey = ksFile && new File(ksFile).exists()
 
 android {
     namespace "app.robodad"
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId "app.robodad"
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode Integer.parseInt(System.getenv("ANDROID_VERSION_CODE") ?: "2")
         versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.1.0"
     }
