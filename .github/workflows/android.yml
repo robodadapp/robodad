@@ -1,0 +1,110 @@
+# Builds the RoboDad Android app (android/) on GitHub's free servers, starts it
+# on a virtual phone to check it opens, and saves the results to the
+# "android-build" branch: robodad.aab (for Play Console), a test APK,
+# a screenshot and the phone's log.
+#
+# The upload to Google Play needs the app signed with RoboDad's upload key.
+# That key is kept in this repository's Actions secrets (Settings > Secrets and
+# variables > Actions) and is never written to the repository:
+#   ANDROID_KEYSTORE_B64       the .keystore file, base64-encoded
+#   ANDROID_KEYSTORE_PASSWORD  its password
+#   ANDROID_KEY_ALIAS          the key alias
+#   ANDROID_KEY_PASSWORD       the key password (often the same as the keystore password)
+# Without them the build still runs, but robodad.aab is unsigned.
+name: Android app
+on:
+  push:
+    branches: [main]
+    paths: ["android/**", ".github/workflows/android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Unpack the upload key (from secrets)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            printf '%s' "$KS_B64" | tr -d '\r\n ' | base64 -d > "$RUNNER_TEMP/upload.keystore"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.keystore" >> "$GITHUB_ENV"
+            echo "Signing key found."
+          else
+            echo "No signing key in secrets: the bundle will be unsigned."
+          fi
+
+      - name: Build
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          export ANDROID_VERSION_CODE=$((ANDROID_VERSION_CODE + 1))
+          echo "versionCode $ANDROID_VERSION_CODE"
+          gradle -p android --no-daemon bundleRelease assembleDebug
+          mkdir -p out
+          cp android/app/build/outputs/bundle/release/app-release.aab out/robodad.aab
+          cp android/app/build/outputs/apk/debug/app-debug.apk out/robodad-test.apk
+          if [ -n "$ANDROID_KEYSTORE_FILE" ]; then
+            jarsigner -verify out/robodad.aab > out/signing.txt 2>&1 || true
+            keytool -printcert -jarfile out/robodad.aab | grep -E "SHA256:|Owner:" >> out/signing.txt || true
+          else
+            echo "unsigned" > out/signing.txt
+          fi
+          echo "$ANDROID_VERSION_CODE" > out/version-code.txt
+          rm -f "$RUNNER_TEMP/upload.keystore"
+
+      - name: Allow the virtual phone to use hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Open the app on a virtual phone
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r out/robodad-test.apk
+            adb logcat -c
+            adb shell am start -n app.robodad/.MainActivity
+            sleep 40
+            adb exec-out screencap -p > out/screen-1.png
+            adb shell input tap 540 1200
+            sleep 5
+            adb exec-out screencap -p > out/screen-2.png
+            adb logcat -d -v brief > out/logcat-full.txt
+            grep -E "chromium|AndroidRuntime|RoboDad|robodad|FATAL" out/logcat-full.txt | tail -400 > out/logcat.txt || true
+            rm out/logcat-full.txt
+            adb shell pidof app.robodad > out/still-running.txt || echo "NOT RUNNING" > out/still-running.txt
+
+      - name: Save the results to the android-build branch
+        if: always()
+        run: |
+          mkdir -p out && cd out
+          echo "Built from ${GITHUB_SHA} on $(date -u)" > README.txt
+          git init -q -b android-build
+          git config user.name "github-actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Android build ${GITHUB_RUN_NUMBER}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" android-build

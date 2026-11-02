@@ -1,0 +1,47 @@
+plugins { id "com.android.application" }
+
+// The release is signed only when the four ANDROID_* secrets are present
+// (GitHub Actions passes them in). Without them the build is unsigned.
+def ksFile = System.getenv("ANDROID_KEYSTORE_FILE")
+def hasKey = ksFile && new File(ksFile).exists()
+
+android {
+    namespace "app.robodad"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "app.robodad"
+        minSdk 24
+        targetSdk 35
+        versionCode Integer.parseInt(System.getenv("ANDROID_VERSION_CODE") ?: "2")
+        versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.1.0"
+    }
+
+    signingConfigs {
+        if (hasKey) {
+            upload {
+                storeFile file(ksFile)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (hasKey) signingConfig signingConfigs.upload
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core:1.13.1"
+    implementation "androidx.webkit:webkit:1.12.1"
+}
