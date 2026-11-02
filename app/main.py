@@ -297,6 +297,7 @@ class ChatRequest(BaseModel):
 
 class CodeRequest(BaseModel):
     code: str = Field(min_length=1, max_length=60)
+    family: str = Field(default="", max_length=64)          # lets the family preview the hunt early
 
 
 # ---------------------------------------------------------------- secret codes
@@ -310,6 +311,43 @@ def _norm_code(c: str) -> str:
 
 EGG_HASHES = {hashlib.sha256(b"upupdowndown").hexdigest(): "cheat"}
 EGGS = {"cheat"}
+
+# The Lost Cartridge (an in-app puzzle hunt). Each answer opens the next chapter;
+# chapter 6 is the finale. Chapters open every 3 days from ARG_START (YYYY-MM-DD,
+# Toronto time). Answers are kept here only as hashes.
+HUNT_HASHES = {hashlib.sha256(w.encode()).hexdigest(): n for w, n in (
+    ("pressstart", 1), ("joypad", 2), ("attic", 3), ("badge", 4), ("392", 5), ("39200", 5), ("dadquest", 6))}
+ARG_START = os.getenv("ARG_START", "").strip()
+
+
+def _hunt_opens(chapter: int):
+    """The date a chapter opens, or None if the hunt has no start date yet."""
+    from datetime import timedelta
+    try:
+        start = date.fromisoformat(ARG_START)
+    except ValueError:
+        return None
+    return start + timedelta(days=3 * (min(chapter, 5) - 1))
+
+
+def _toronto_today() -> date:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo("America/Toronto")).date()
+
+
+async def _clicks_total(kind: str, name: str) -> int | None:
+    if not (SUPABASE_URL and SUPABASE_KEY):
+        return None
+    try:
+        r = await state["client"].get(
+            f"{SUPABASE_URL}/rest/v1/clicks?select=id&kind=eq.{kind}&name=eq.{name}",
+            headers=_supabase_headers({"Prefer": "count=exact", "Range": "0-0"}),
+        )
+        total = r.headers.get("content-range", "").split("/")[-1]
+        return int(total) if total.isdigit() else None
+    except httpx.HTTPError:
+        return None
 FAMILY_CODE = _norm_code(os.getenv("FAMILY_CODE", ""))
 FAMILY_PROFILE = os.getenv("FAMILY_PROFILE", "").strip()[:3000]
 _code_hits: dict[str, deque] = defaultdict(deque)
@@ -407,6 +445,16 @@ async def status():
         "intents": len(state["nlp"].intents),
         "examples": len(state["nlp"].rows),
     }
+
+
+@app.get("/quest")
+async def quest_page():
+    return FileResponse(os.path.join(STATIC_DIR, "quest.html"), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/attic")
+async def attic_page():
+    return FileResponse(os.path.join(STATIC_DIR, "attic.html"), headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/testers")
@@ -713,17 +761,30 @@ async def secret_code(c: CodeRequest, request: Request):
     q = _code_hits[_client_ip(request)]
     while q and now - q[0] > 600:
         q.popleft()
-    if len(q) >= 8:
+    if len(q) >= 20:
         return JSONResponse({"error": "Too many guesses. Take a 10-minute break, then try again."}, status_code=429)
     q.append(now)
     code = _norm_code(c.code)
     if FAMILY_CODE and hmac.compare_digest(code, FAMILY_CODE):
         log.info("SECRET CODE: family mode unlocked")
         return {"kind": "family", "token": _family_token()}
-    egg = EGG_HASHES.get(hashlib.sha256(code.encode()).hexdigest())
+    digest = hashlib.sha256(code.encode()).hexdigest()
+    egg = EGG_HASHES.get(digest)
     if egg:
         log.info("SECRET CODE: egg %s unlocked", egg)
         return {"kind": "egg", "egg": egg}
+    chapter = HUNT_HASHES.get(digest)
+    if chapter:
+        opens = _hunt_opens(chapter)
+        if not _is_family(c.family) and (opens is None or _toronto_today() < opens):
+            when = opens.strftime("%A, %B %-d") if opens else None
+            return {"kind": "hunt_wait", "opens": when}
+        log.info("HUNT: chapter %s opened", chapter)
+        out = {"kind": "hunt", "chapter": chapter}
+        if chapter == 6:
+            await _count("hunt", "solved", request)
+            out["solver"] = await _clicks_total("hunt", "solved")
+        return out
     return JSONResponse({"error": "Nope, that's not a code I know. Nice try, though."}, status_code=404)
 
 

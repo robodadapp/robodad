@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dad's Attic · RoboDad</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2B1D16">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+:root{--wood:#2B1D16; --beam:#3E2A1E; --box:#A0743F; --box2:#8C6334; --ink:#F8EBD8; --muted:#C9AE8E; --gold:#F5C518}
+*{box-sizing:border-box}
+body{margin:0; min-height:100vh; color:var(--ink); font:16px/1.5 "Nunito", ui-rounded, system-ui, sans-serif;
+  background:radial-gradient(ellipse at 30% 10%, rgba(255,200,120,.16), transparent 55%), repeating-linear-gradient(90deg, var(--beam) 0 14px, var(--wood) 14px 120px)}
+main{max-width:760px; margin:0 auto; padding:24px 16px 64px; display:flex; flex-direction:column; gap:16px}
+a{color:var(--gold); font-weight:800}
+h1{margin:0; font-size:clamp(1.8rem, 6vw, 2.4rem); line-height:1.1}
+.lede{margin:0; color:var(--muted)}
+.dust{position:fixed; inset:0; pointer-events:none; background-image:radial-gradient(rgba(255,240,210,.35) 1px, transparent 1.5px); background-size:46px 46px; animation:drift 30s linear infinite; opacity:.5}
+@keyframes drift{to{background-position:46px 200px}}
+@media (prefers-reduced-motion:reduce){ .dust{animation:none} }
+.boxes{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:14px}
+.box{position:relative; min-height:130px; border:none; border-radius:10px; cursor:pointer; color:#2A1B14; font:inherit; font-weight:900; text-align:center; padding:14px;
+  background:linear-gradient(var(--box), var(--box2)); box-shadow:inset 0 6px 0 rgba(255,255,255,.18), 0 8px 0 rgba(0,0,0,.35)}
+.box::before{content:""; position:absolute; left:50%; top:0; bottom:0; width:16px; transform:translateX(-50%); background:rgba(0,0,0,.12)}
+.box span{position:relative; display:inline-block; background:#F8EBD8; padding:4px 10px; border-radius:6px; transform:rotate(-2deg)}
+.box[aria-expanded="true"]{background:linear-gradient(#5A4128, #46321F)}
+.box[aria-expanded="true"] span{opacity:.75}
+.found{background:#FFFBF2; color:#2A1B14; border-radius:14px; padding:16px 18px; box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.found h2{margin:0 0 6px; font-size:1.15rem}
+.stub{width:100%; border-collapse:collapse; font-family:ui-monospace, "Courier New", monospace; background:#F6EBC8; border:2px dashed #B9A26A}
+.stub td{padding:6px 10px; border-bottom:1px dotted #B9A26A} .stub td:last-child{text-align:right} .stub tr.g td{font-weight:900}
+.note{font-style:italic}
+.locked{background:rgba(0,0,0,.45); border-radius:14px; padding:18px}
+</style>
+</head>
+<body>
+<div class="dust" aria-hidden="true"></div>
+<main>
+  <a href="/">← Back down to RoboDad</a>
+  <div id="locked" class="locked" hidden>
+    <h1>The attic door is stuck.</h1>
+    <p class="lede">Nothing to see up here yet. Maybe RoboDad will remember something soon.</p>
+  </div>
+  <div id="attic" hidden>
+    <h1>Dad's Attic</h1>
+    <p class="lede">Dusty boxes everywhere. RoboDad's handwriting is on the labels. One of these has the next piece of the password.</p>
+    <div class="boxes" id="boxes">
+      <button class="box" type="button" aria-expanded="false" data-say="An old tie with tiny cassettes on it. Very fashionable. In 1987."><span>Ties (good ones)</span></button>
+      <button class="box" type="button" aria-expanded="false" data-say="A mug that says &ldquo;World's Okayest Dad&rdquo;. Accurate."><span>Kitchen stuff</span></button>
+      <button class="box" type="button" aria-expanded="false" data-stub="1"><span>Important papers</span></button>
+      <button class="box" type="button" aria-expanded="false" data-say="A mixtape labelled &ldquo;Songs to fix the car to&rdquo;. The car was not fixed."><span>Music</span></button>
+      <button class="box" type="button" aria-expanded="false" data-say="Christmas lights. All tangled. Every year, somehow."><span>Holiday</span></button>
+      <button class="box" type="button" aria-expanded="false" data-say="Spare keys. Labelled &ldquo;spare keys&rdquo;. For what? Nobody knows."><span>Misc. (do not open)</span></button>
+    </div>
+    <p id="said" class="note" role="status" aria-live="polite"></p>
+    <section class="found" id="stub" hidden>
+      <h2>RoboDad's first pay stub</h2>
+      <p class="note">Taped to it, in Dad's handwriting: &ldquo;The password is my take-home pay. Never forget your first paycheque!&rdquo;</p>
+      <table class="stub" aria-label="Pay stub">
+        <tr class="g"><td>Gross pay</td><td>$480.00</td></tr>
+        <tr><td>Income tax</td><td>&minus;$62.00</td></tr>
+        <tr><td>CPP (Canada Pension Plan)</td><td>&minus;$21.50</td></tr>
+        <tr><td>EI (Employment Insurance)</td><td>&minus;$4.50</td></tr>
+        <tr class="g"><td>Take-home pay</td><td>$ ???</td></tr>
+      </table>
+      <p>Worked it out? Type the take-home pay into RoboDad's <strong>secret code box</strong> (☰ menu &rarr; Got a secret code?), just like before.</p>
+      <p><a href="/">Back to RoboDad &rarr;</a></p>
+    </section>
+  </div>
+</main>
+<script src="/static/attic.js?v=1"></script>
+</body>
+</html>
