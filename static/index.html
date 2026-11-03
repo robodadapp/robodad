@@ -2855,7 +2855,7 @@ const PLAYERS = {
   const MALE_LANG = {
     hi: [/hi-in-x-hi[de]/i, /Madhur/i, /Hemant/i, /Aarav/i, /Kunal/i],
     fr: [/fr-ca-x-ca[bd]/i, /fr-fr-x-fr[bd]/i, /Antoine/i, /Jean\b/i, /Thierry/i, /Henri/i, /R[ée]my/i, /\bPaul\b/i, /\bClaude\b/i, /Thomas/i, /Nicolas/i],
-    es: [/es-us-x-esd/i, /es-es-x-ee[df]/i, /es-mx-x-/i, /Jorge/i, /Ra[uú]l/i, /[AÁ]lvaro/i, /Pablo/i, /\bJuan\b/i, /Diego/i, /Gerardo/i],
+    es: [/es-us-x-esd/i, /es-es-x-ee[df]/i, /Jorge/i, /Ra[uú]l/i, /[AÁ]lvaro/i, /Pablo/i, /\bJuan\b/i, /Diego/i, /Gerardo/i],
   };
   function pickLangVoice(lang){
     const code = L[lang].voice.toLowerCase(), base = code.slice(0, 2);
@@ -2865,10 +2865,18 @@ const PLAYERS = {
     for (const re of [...(MALE_LANG[base] || []), /\bmale\b/i]) { const v = near.find(x => re.test(x.name) && notF(x)); if (v) return { v, male:true }; }
     return { v: near[0] || null, male:false };
   }
+  function isEnglishReply(text, lang){
+    if (lang === "hi") return !/[\u0900-\u097F]/.test(text);              // no Devanagari at all
+    if (/\([^)]*\)/.test(text)) return false;                          // French/Spanish lines come with an (English) translation
+    const en = (text.match(/\b(the|you|your|is|are|and|it|its|that|this|what|can|my|to|of|with|for|I|am|in|be|have|just|here|if|I'm|you're|don't)\b/gi) || []).length;
+    const words = (text.match(/[A-Za-zÀ-ÿ']+/g) || []).length;
+    return en >= 3 && en / Math.max(words, 1) > 0.15;
+  }
   function speakLang(text, lang){
     if (!("speechSynthesis" in window)) { toast("This browser can't read aloud. Try Chrome."); return; }
-    // a Hindi-practice reply with no Hindi in it (he answered in English) gets Dad's English voice
-    if (lang === "hi" && !/[\u0900-\u097F]/.test(text)) return speak(text);
+    // a practice reply with none of the language in it (he answered in English, e.g. a question
+    // about the app) gets Dad's English voice, not an English reply in a French or Hindi accent
+    if (isEnglishReply(text, lang)) return speak(text);
     stopSpeaking();
     const code = L[lang].voice, { v, male } = pickLangVoice(lang), any = speechSynthesis.getVoices().length;
     if (any && !v && !toldNoVoice[lang]) {
