@@ -1767,6 +1767,7 @@ textarea::placeholder{color:var(--muted)}
   document.addEventListener("pointerdown", unlockVoice, { capture:true });
   document.addEventListener("keydown", unlockVoice, { capture:true });
   let speakId = 0;
+  let lastVoice = "";                          // told to the AI, so it never guesses what it sounds like
   const unduck = () => { $("voiceBtn")?.classList.remove("speaking"); window.RoboRadio && RoboRadio.duck(false); };
   function stopSpeaking(){
     speakId++;
@@ -1792,6 +1793,7 @@ textarea::placeholder{color:var(--muted)}
     if (!("speechSynthesis" in window) || id !== speakId) return unduck();
     const u = new SpeechSynthesisUtterance(text);
     const v = pickVoice(); if (v) u.voice = v;
+    lastVoice = `the phone's own voice (${v ? v.name : "default"})`;
     u.rate = 0.96; u.pitch = curVoice().rate < 1 ? 0.85 : 1;   // phone voices sound odd pushed too low
     u.onend = unduck; u.onerror = unduck;
     speechSynthesis.speak(u);
@@ -1816,6 +1818,7 @@ textarea::placeholder{color:var(--muted)}
     let blobs;
     try { blobs = await Promise.all(parts.map(fetchClip)); }      // fetch every piece first, so it plays without gaps
     catch { if (id === speakId) { voiceResting(); speakDevice(said, id); } return; }
+    lastVoice = `RoboDad's own male dad voice (${voiceLabel()})`;
     for (let i = 0; i < blobs.length; i++) {
       if (id !== speakId) return;
       const url = URL.createObjectURL(blobs[i]);
@@ -2059,7 +2062,8 @@ textarea::placeholder{color:var(--muted)}
     const { bubble, stack } = addRobo();
     let text = "", meta = null, totalMs = null;
     const payload = { messages: history.map(({role, content}) => ({role, content})), nickname,
-      family: getPref("robodad.family") || "", eggs: getPref("robodad.egg.cheat") ? ["cheat"] : [] };
+      family: getPref("robodad.family") || "", eggs: getPref("robodad.egg.cheat") ? ["cheat"] : [],
+      voice: lastVoice.slice(0, 80) };
     const inPractice = practice;
     if (inPractice) payload.practice = { lang: inPractice.lang, scenario: inPractice.scene };
 
@@ -2845,18 +2849,36 @@ const PLAYERS = {
     revealQ.push(...fresh); if ($("reveal").hidden) showReveal();
   }
   // listening uses the device's own voices for French and Hindi
+  // RoboDad is a dad, so male voices come first (names differ by phone and browser;
+  // Android's Google voices are codes like hi-in-x-hid-local)
   const toldNoVoice = {};
+  const MALE_LANG = {
+    hi: [/hi-in-x-hi[de]/i, /Madhur/i, /Hemant/i, /Aarav/i, /Kunal/i],
+    fr: [/fr-ca-x-ca[bd]/i, /fr-fr-x-fr[bd]/i, /Antoine/i, /Jean\b/i, /Thierry/i, /Henri/i, /R[ée]my/i, /\bPaul\b/i, /\bClaude\b/i, /Thomas/i, /Nicolas/i],
+    es: [/es-us-x-esd/i, /es-es-x-ee[df]/i, /es-mx-x-/i, /Jorge/i, /Ra[uú]l/i, /[AÁ]lvaro/i, /Pablo/i, /\bJuan\b/i, /Diego/i, /Gerardo/i],
+  };
+  function pickLangVoice(lang){
+    const code = L[lang].voice.toLowerCase(), base = code.slice(0, 2);
+    const vs = speechSynthesis.getVoices().filter(x => (x.lang || "").toLowerCase().replace("_", "-").startsWith(base));
+    const near = [...vs.filter(x => x.lang.toLowerCase().replace("_", "-") === code), ...vs];   // this accent first
+    const notF = (x) => !/female|femme|mujer/i.test(x.name);
+    for (const re of [...(MALE_LANG[base] || []), /\bmale\b/i]) { const v = near.find(x => re.test(x.name) && notF(x)); if (v) return { v, male:true }; }
+    return { v: near[0] || null, male:false };
+  }
   function speakLang(text, lang){
     if (!("speechSynthesis" in window)) { toast("This browser can't read aloud. Try Chrome."); return; }
+    // a Hindi-practice reply with no Hindi in it (he answered in English) gets Dad's English voice
+    if (lang === "hi" && !/[\u0900-\u097F]/.test(text)) return speak(text);
     stopSpeaking();
-    const code = L[lang].voice, base = code.slice(0, 2), vs = speechSynthesis.getVoices();
-    const v = vs.find(x => (x.lang || "").replace("_", "-") === code) || vs.find(x => (x.lang || "").toLowerCase().startsWith(base));
-    if (vs.length && !v && !toldNoVoice[lang]) {
+    const code = L[lang].voice, { v, male } = pickLangVoice(lang), any = speechSynthesis.getVoices().length;
+    if (any && !v && !toldNoVoice[lang]) {
       toldNoVoice[lang] = true;
       toast(`No ${L[lang].name} voice on this device yet. You can add one in your phone's text-to-speech settings.`);
     }
     const u = new SpeechSynthesisUtterance(text);
     u.lang = v?.lang || code; if (v) u.voice = v; u.rate = 0.85;
+    if (!male) u.pitch = 0.8;                  // no male voice on this phone: at least make it deeper
+    lastVoice = `the phone's own ${L[lang].name} voice (${v ? v.name : "default"}${male ? "" : ", may sound female"})`;
     speechSynthesis.speak(u);
   }
   // read only the French or Hindi bits of a role-play reply, not the English in brackets or Dad's tips

@@ -293,6 +293,7 @@ class ChatRequest(BaseModel):
     practice: PracticeSpec | None = None
     family: str = Field(default="", max_length=64)          # family-mode token from /api/code
     eggs: list[str] = Field(default_factory=list, max_length=8)
+    voice: str = Field(default="", max_length=80)            # the voice that read the last reply aloud
 
 
 class CodeRequest(BaseModel):
@@ -377,6 +378,15 @@ def _family_token() -> str:
 def _is_family(token: str) -> bool:
     t = _family_token()
     return bool(t and token) and hmac.compare_digest(t, token)
+
+
+def _voice_note(req: "ChatRequest") -> str:
+    """Tell the AI which voice actually read its last reply, so it never has to guess."""
+    v = re.sub(r"[^\w\s().:#\-]", "", req.voice or "").strip()[:80]
+    if not v:
+        return ""
+    return ("\n\nThe voice that read your last reply aloud on this device: " + v +
+            ". Use this only if they ask about your voice.")
 
 
 def _prompt_extras(req: "ChatRequest") -> str:
@@ -832,7 +842,7 @@ async def chat(req: ChatRequest, request: Request):
             _daily["count"] += 1
             sent_any = False
             try:
-                system = build_system_prompt(analysis, nickname, practice, extra=_prompt_extras(req))
+                system = build_system_prompt(analysis, nickname, practice, extra=_prompt_extras(req)) + _voice_note(req)
                 async for chunk in dad_mode_stream(provider, system, history):
                     if isinstance(chunk, CrisisFlag):
                         # The AI spotted a crisis the keyword rules missed (any language)
