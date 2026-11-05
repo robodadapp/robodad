@@ -112,6 +112,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="RoboDad", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# Compress pages and scripts (the main page drops from ~340 KB to ~90 KB on the wire).
+# Starlette leaves text/event-stream alone, so chat replies still stream token by token.
+from fastapi.middleware.gzip import GZipMiddleware  # noqa: E402
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
 
 # ---------------------------------------------------------------- security headers
 MAX_BODY_BYTES = 64 * 1024  # a chat request is a few KB; anything bigger is junk

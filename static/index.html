@@ -634,7 +634,7 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 .ticker::-webkit-scrollbar{display:none}
 .ticker[hidden]{display:none}
 .ticker-track{display:flex; gap:8px; width:max-content; padding:2px 24px}
-.ticker .chip{white-space:nowrap; flex:none; background:var(--surface)}
+.ticker .chip{white-space:nowrap; flex:none; background:var(--surface); color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
 .ticker .chip:hover{background:var(--denim)}
 .chip{
   border:1.5px solid var(--denim); color:var(--denim); background:transparent;
@@ -678,6 +678,13 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 .rate button:disabled{cursor:default}
 .rate button:disabled:not([aria-pressed="true"]){opacity:.35}
 .thanks{font-weight:700}
+.acts{display:flex; align-items:center; gap:2px 6px; flex-wrap:wrap}
+.more-btn{border:0; background:transparent; cursor:pointer; padding:3px 6px; border-radius:8px; color:var(--muted); line-height:1}
+.more-btn svg{width:18px; height:18px; display:block; fill:currentColor}
+.more-btn:hover, .more-btn[aria-expanded="true"]{background:var(--surface); color:var(--ink)}
+.more-panel{flex-basis:100%; display:flex; flex-direction:column; align-items:flex-start; gap:6px; padding:8px 10px; border-radius:12px; background:var(--surface); border:1px dashed var(--line)}
+.more-panel[hidden]{display:none}
+.more-panel details.why .grid{background:var(--sky)}
 .rate.joke{gap:6px}
 .rate.joke button{border:1px solid var(--line); border-radius:999px; padding:4px 11px; font-weight:800; font-size:.85rem}
 .rate.joke button[aria-pressed="true"]{background:var(--denim); border-color:var(--denim); color:var(--denim-ink)}
@@ -1159,8 +1166,16 @@ textarea::placeholder{color:var(--muted)}
 .herowrap .bub .vnote svg{width:12px; height:12px}
 .bub.thought[aria-pressed="true"] .fnote{display:grid; place-items:center; width:15px; height:15px; border-radius:50%; background:var(--denim); color:var(--denim-ink); font-size:.62rem; font-weight:900; line-height:1; box-shadow:0 0 0 1.5px var(--surface); animation:none}
 @keyframes notefloat{0%{opacity:0; transform:translate(0,4px)} 25%{opacity:1} 100%{opacity:0; transform:translate(5px,-10px) rotate(15deg)}}
-.challenge{align-self:stretch; display:flex; flex-direction:column; gap:6px; background:var(--surface); border:2px dashed var(--mustard); border-radius:18px; padding:12px 14px; max-width:520px}
-.ch-tag{font-size:.72rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--denim)}
+.challenge{align-self:stretch; display:flex; flex-direction:column; gap:8px; background:var(--surface); border:2px dashed var(--mustard); border-radius:18px; padding:10px 14px; max-width:520px}
+.ch-head{all:unset; box-sizing:border-box; cursor:pointer; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:4px 10px; width:100%}
+.ch-head:focus-visible{outline:3px solid var(--denim); outline-offset:4px; border-radius:8px}
+.challenge .ch-text{grid-column:1 / -1; grid-row:2}
+.ch-chev{grid-column:3; grid-row:1; font-weight:900; font-size:1.2rem; line-height:1; color:var(--muted); transition:rotate .2s}
+.challenge:not(.folded) .ch-chev{rotate:90deg}
+.challenge.folded .ch-text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.95rem}
+.challenge.folded .ch-row{display:none}
+.tcta-mini{font-size:.85rem; font-weight:800; color:var(--muted); text-decoration:underline; text-underline-offset:3px}
+.ch-tag{font-size:.72rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
 .ch-text{margin:0!important; font-weight:800; color:var(--ink)!important; font-size:1.02rem; line-height:1.35}
 .ch-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
 .ch-row .primary{padding:7px 16px; font-size:.9rem}
@@ -1319,12 +1334,11 @@ textarea::placeholder{color:var(--muted)}
       </div>
       <h2 id="helloTitle">Hey. What's on your mind?</h2>
       <p>Real advice for real life: school stress, money, cooking, friends, first jobs, or a dad joke you'll pretend not to like.</p>
-      <a class="tcta" href="/testers">📱 Help RoboDad get on Google Play: know an adult with an Android phone? Ask them to test it for 2 weeks →</a>
-      <section class="challenge" aria-label="Daily Dad Challenge">
-        <span class="ch-tag">Daily Dad Challenge</span>
-        <p class="ch-text"></p>
+      <section class="challenge folded" aria-label="Daily Dad Challenge">
+        <button class="ch-head" type="button" aria-expanded="false"><span class="ch-tag">Daily Dad Challenge</span><span class="ch-text"></span><span class="ch-chev" aria-hidden="true">›</span></button>
         <div class="ch-row"><button class="primary ch-done" type="button">Done it!</button><small class="ch-count"></small></div>
       </section>
+      <a class="tcta-mini" href="/testers">📱 Know an adult with an Android phone? Help RoboDad test →</a>
       <div class="diner-art" aria-hidden="true"><svg viewBox="0 0 330 80" role="presentation">
   <!-- tail-finned cruiser -->
   <g transform="translate(0,6)">
@@ -1993,6 +2007,10 @@ textarea::placeholder{color:var(--muted)}
     if (!meta) return;
     const tools = document.createElement("div");
     tools.className = "tools";
+    // one tidy row under each reply: rate · read aloud · ⋯ (report and "how RoboDad read this" live behind ⋯)
+    const acts = document.createElement("div"); acts.className = "acts";
+    const more = document.createElement("div"); more.className = "more-panel"; more.hidden = true;
+    tools.appendChild(acts);
 
     if (meta.mode !== "safety") {
       const rate = document.createElement("span");
@@ -2044,8 +2062,10 @@ textarea::placeholder{color:var(--muted)}
         const sj = document.createElement("button");
         sj.type = "button"; sj.className = "report-btn share-joke"; sj.textContent = "Share joke";
         sj.addEventListener("click", () => shareJoke(item.content));
-        tools.append(rate, thanks, sj, rep, box);
-      } else tools.append(rate, thanks, rep, box);
+        acts.append(rate, thanks, sj);
+      } else acts.append(rate, thanks);
+      more.appendChild(rep);
+      tools.append(box, more);
       renderExtras(tools, item);
     }
 
@@ -2054,7 +2074,7 @@ textarea::placeholder{color:var(--muted)}
       sp.type = "button"; sp.className = "speak-one"; sp.title = "Read this reply aloud";
       sp.innerHTML = `<svg aria-hidden="true"><use href="#i-speaker"/></svg><span class="sr">Read this reply aloud</span>`;
       sp.addEventListener("click", () => item.lang && item.meta?.mode !== "safety" ? speakLang(practiceSpoken(item.content), item.lang) : speak(item.content));
-      tools.appendChild(sp);
+      rateSlot(acts).after(sp);
     }
 
     const s = meta.sentiment || {};
@@ -2072,10 +2092,21 @@ textarea::placeholder{color:var(--muted)}
         ${ex ? `<dt>Similar examples</dt><dd><ul class="ex">${ex}</ul></dd>` : ""}
         <dt>Timing</dt><dd>NLP ${meta.nlp_ms} ms${item.totalMs ? ` · full reply ${(item.totalMs/1000).toFixed(2)} s` : ""}</dd>
       </dl>`;
-    tools.appendChild(d);
+    acts.after(more);   // open right under the reply, above any bonus card
+    more.appendChild(d);
+    const mb = document.createElement("button");
+    mb.type = "button"; mb.className = "more-btn"; mb.title = "More: report, how RoboDad read this"; mb.setAttribute("aria-expanded", "false");
+    mb.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="1.8"/><circle cx="10" cy="10" r="1.8"/><circle cx="16" cy="10" r="1.8"/></svg><span class="sr">More</span>`;
+    mb.addEventListener("click", () => { more.hidden = !more.hidden; mb.setAttribute("aria-expanded", String(!more.hidden)); });
+    acts.appendChild(mb);
     stack.appendChild(tools);
   }
 
+  function rateSlot(acts){
+    const r = acts.querySelector(".rate");
+    if (r) return r;
+    const pin = document.createElement("span"); acts.prepend(pin); return { after: (el) => pin.replaceWith(el) };
+  }
   function addNotice(stack, text){
     const p = document.createElement("p");
     p.className = "notice"; p.textContent = text; stack.appendChild(p);
@@ -3537,6 +3568,9 @@ const PLAYERS = {
       c.querySelector(".ch-count").textContent = n ? `${n} done so far. No streaks, no pressure.` : "Honour system. A new one every day.";
     });
   }
+  document.querySelectorAll(".ch-head").forEach(h => h.addEventListener("click", () => {
+    const c = h.closest(".challenge"); const open = c.classList.toggle("folded") === false; h.setAttribute("aria-expanded", String(open));
+  }));
   document.querySelectorAll(".ch-done").forEach(b => b.addEventListener("click", () => {
     if (chDone.includes(todayKey())) return;
     const before = isEarned(BADGES.challenge);
