@@ -14,11 +14,27 @@ pinned: false
 
 (Free hosting: the first visit after a quiet spell can take up to a minute to wake up. The old robodad.onrender.com address forwards to robodad.app.)
 
-RoboDad started as my CONL725 coursework chatbot: TF-IDF + Logistic Regression
-intent classification, VADER sentiment, regex NER and canned responses in a
-terminal. This version turns it into a web app for **teenagers (13+)** that
-talks like a real LLM while keeping that NLP pipeline in charge of grounding
-and safety.
+## Why RoboDad exists
+
+I lost my dad before I became a teenager, and life was never the same again.
+
+The years that followed were full of questions, the kind a kid would normally
+take to his dad. I figured most of them out eventually, on my own and often the
+hard way. But the answers always came later. When I needed them most, there was
+no one to ask.
+
+RoboDad is the dad I wish I could have asked. He's patient, a bit corny, and
+always there for **teenagers (13+)** who need a straight answer, some
+encouragement, or just someone to think out loud with. He doesn't replace a
+parent or a trusted adult, and when something serious comes up, he points you
+to real people and real help.
+
+## How it works
+
+RoboDad began as a terminal chatbot: TF-IDF + Logistic Regression intent
+classification, VADER sentiment, regex NER and canned responses. This version
+turns it into a web app that talks like a real LLM while keeping that NLP
+pipeline in charge of grounding and safety.
 
 ## What changed
 
