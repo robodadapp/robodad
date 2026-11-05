@@ -197,7 +197,7 @@
   var isBirthday = today - first < BIRTHDAY_DAYS;
   if (isBirthday) bday.hidden = false;
   function openNote() { note.classList.add('open'); confetti(); setTimeout(function () { document.getElementById('noteClose').focus(); }, 50); }
-  function closeNote() { note.classList.remove('open'); store('rdtv.noteSeen', '1'); bday.focus(); }
+  function closeNote() { note.classList.remove('open'); store('rdtv.armed', ''); bday.focus(); }
   bday.addEventListener('click', openNote);
   document.getElementById('noteClose').addEventListener('click', closeNote);
 
@@ -268,8 +268,20 @@
   render();
   document.getElementById('chat').focus();
 
-  // First switch-on during the birthday fortnight: open Dad's note with confetti.
-  if (isBirthday && !store('rdtv.noteSeen')) setTimeout(openNote, 900);
+  // The surprise: once Dad arms it (one adb command after setup), the note and confetti
+  // play the next time the TV is switched on, then the birthday card stays for two weeks.
+  window.tvArm = function () {
+    store('rdtv.armed', '1');
+    first = today; store('rdtv.first', String(first));
+    isBirthday = true; bday.hidden = false;
+    closeIfOpen(); store('rdtv.armed', '1');
+    toast('Surprise armed 🎁 Switch the TV off. It plays next time it turns on.');
+  };
+  window.tvWake = function () {
+    tick(); render();
+    if (store('rdtv.armed') === '1') setTimeout(openNote, 1500);
+  };
+  if (store('rdtv.armed') === '1') setTimeout(openNote, 1500);
 
   // ---- confetti ----
   function confetti() {

@@ -10,9 +10,12 @@ adb logcat -c
 adb shell am start -n app.robodad.tv/.HomeActivity
 sleep 15
 adb exec-out screencap -p > $O/screen-1-home.png
+adb shell input keyevent KEYCODE_DPAD_RIGHT
 adb shell input keyevent KEYCODE_DPAD_CENTER
 sleep 3
-adb exec-out screencap -p > $O/screen-2-note-closed.png
+adb exec-out screencap -p > $O/screen-2-note-opened-by-ok.png
+adb shell input keyevent KEYCODE_DPAD_CENTER
+sleep 2
 adb shell input keyevent KEYCODE_DPAD_DOWN
 sleep 2
 adb exec-out screencap -p > $O/screen-3-watch-row.png
@@ -43,6 +46,16 @@ adb shell input keyevent KEYCODE_BACK
 adb shell input keyevent KEYCODE_BACK
 sleep 3
 adb exec-out screencap -p > $O/screen-8-back-home.png
+
+# Arm the surprise, switch the TV off, switch it on: the note should pop up by itself.
+adb shell am start -n app.robodad.tv/.HomeActivity --ez armSurprise true
+sleep 2
+adb exec-out screencap -p > $O/screen-9-armed.png
+adb shell input keyevent KEYCODE_SLEEP
+sleep 5
+adb shell input keyevent KEYCODE_WAKEUP
+sleep 6
+adb exec-out screencap -p > $O/screen-10-surprise-on-wake.png
 
 # Undo, as you would on the real TV.
 [ -n "$STOCK" ] && adb shell pm enable "$STOCK" >> $O/home-after.txt 2>&1

@@ -3,6 +3,9 @@ package app.robodad.tv;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -54,6 +57,14 @@ public class HomeActivity extends Activity {
     private WebViewAssetLoader assets;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Map<String, String> artCache = new HashMap<>();
+    private boolean pageReady = false;
+    private boolean armPending = false;
+
+    // The TV waking from standby (power button): the moment the birthday surprise plays.
+    private final BroadcastReceiver wake = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent i) { js("window.tvWake && window.tvWake()"); }
+    };
 
     @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
     @Override
@@ -84,6 +95,12 @@ public class HomeActivity extends Activity {
             }
 
             @Override
+            public void onPageFinished(WebView view, String url) {
+                pageReady = true;
+                if (armPending) { armPending = false; js("window.tvArm && window.tvArm()"); }
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
                 // The home page never navigates anywhere else.
                 return !req.getUrl().toString().startsWith("https://appassets.androidplatform.net/");
@@ -91,6 +108,15 @@ public class HomeActivity extends Activity {
         });
         web.loadUrl(HOME_URL);
         web.requestFocus();
+        registerReceiver(wake, new IntentFilter(Intent.ACTION_SCREEN_ON));
+        checkArm(getIntent());
+    }
+
+    /** adb shell am start -n app.robodad.tv/.HomeActivity --ez armSurprise true */
+    private void checkArm(Intent i) {
+        if (i == null || !i.getBooleanExtra("armSurprise", false)) return;
+        i.removeExtra("armSurprise");
+        if (pageReady) js("window.tvArm && window.tvArm()"); else armPending = true;
     }
 
     @Override
@@ -102,6 +128,7 @@ public class HomeActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (intent != null && intent.getBooleanExtra("armSurprise", false)) { checkArm(intent); return; }
         // Home button pressed while already home: jump back to the top row.
         js("window.tvHome && window.tvHome()");
     }
@@ -124,6 +151,7 @@ public class HomeActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        try { unregisterReceiver(wake); } catch (Exception ignored) { }
         web.destroy();
         super.onDestroy();
     }
