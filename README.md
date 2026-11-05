@@ -38,7 +38,7 @@ pipeline in charge of grounding and safety.
 
 ## What changed
 
-| | CONL725 version | Web version |
+| | Original version | Web version |
 |---|---|---|
 | Interface | Terminal `input()` loop | Web chat page, works on phone and desktop |
 | Replies | Random pick from the intent's canned list | Streamed, word-by-word replies from an LLM (Claude, Groq or any OpenAI-compatible model) |
@@ -54,7 +54,7 @@ pipeline in charge of grounding and safety.
 | Avatars | One robot dad | Eight decade avatars that follow the look (or pick one in the menu): Modern Dad (polo), Arcade Dad (80s), Video Store Dad (90s), Trucker Hat Dad (2000s), Skater Dad (late '90s), Bucket Hat Dad (early 2000s), Gamer Dad (mid-2000s) and Diner Dad (50s). Each has three idle moves (collar pop, shades shine, comb; wave, wink, coffee; head-bob, shades drop, 1UP; cap flip, pager buzz, wink; cap tip, earbud bop, peace sign; beanie pull, ollie, fist bump; "GG!", button-mash, victory fist; hat tip, "#1 DAD", cool nod), played every 5 minutes or when tapped. Drawn in `static/avatars.js` |
 | Little touches | None | RoboDad nods when you send a message or earn a plate; new belt plates get a gold shine; a gold ring around his avatar counts down the focus timer (green on breaks) |
 | Quick controls | None | A **speech bubble** (voice) and a **thought bubble** (music) beside the header avatar. One tap toggles; a caption shows the current voice or station with a **Change** button that opens the list. The thought bubble shows the look's animated player while music plays; the speech bubble bounces while RoboDad reads aloud and shows a word during some idle moves |
-| Changelog | None | A "What's new" page at `/changelog` (linked in Settings and under the chat) listing every release from the CONL725 version to now |
+| Changelog | None | A "What's new" page at `/changelog` (linked in Settings and under the chat) listing every release from the original version to now |
 | Play Store testers | None | **Help test RoboDad** page at `/testers` with a QR code (`static/testers-qr.png`): adults sign up with their Android Gmail, a live "x of 12" meter counts sign-ups, and emails are stored in a private Supabase `testers` table (duplicates ignored, spam honeypot) |
 | Audience | Kids, terminal only | Teens 13+: teen persona, teen topics (first jobs, life after high school, healthy relationships, peer pressure, budgeting, driving), neutral birth-year age check, optional nickname, privacy page |
 | Memory | None, every message stands alone | Remembers the last 16 messages of the conversation |
@@ -103,14 +103,14 @@ with snacks and breakfast merged into food, and lightbulbs into home basics:
 
 | Set-up | Accuracy | Confident† | Right when confident |
 |---|---|---|---|
-| 1. Original CONL725 model | 51.0% | 11.7% | 88.9% |
+| 1. Original model | 51.0% | 11.7% | 88.9% |
 | 4. Production model | **65.8%** | 75.1% | 75.7% |
 
 †Above the 0.40 fallback threshold. Majority-class baseline: 7.9%.
 Every new teen topic is recognised with 0.81–0.90 confidence on unseen test
 phrases ("how do i ask my crush out", "my friends keep pushing me to vape").
 
-### CONL725 data only (32 intents)
+### Original data only (32 intents)
 
 These are the results before the teen topics were added, tested only on the
 original 981 RoboDad examples with 5-fold cross-validation
@@ -118,7 +118,7 @@ original 981 RoboDad examples with 5-fold cross-validation
 
 | Set-up | Accuracy | Confident* | Right when confident |
 |---|---|---|---|
-| 1. Original CONL725 model (stop words removed, word 1–2-grams) | 57.8% | 29.3% | 79.1% |
+| 1. Original model (stop words removed, word 1–2-grams) | 57.8% | 29.3% | 79.1% |
 | 2. Keep stop words, less regularisation (C=10) | 60.9% | 87.8% | 66.1% |
 | 3. Add character 2–5-grams (handles typos and slang) | 63.6% | 92.7% | 67.2% |
 | 4. #3 + 480 extra training examples | **68.7%** | 95.8% | 70.2% |
@@ -137,7 +137,7 @@ and any that exactly match an original example (67 of 480) are dropped first.
 
 Messages from the original testing transcript:
 
-| Message | CONL725 model | Now |
+| Message | Original model | Now |
 |---|---|---|
 | "help me cook pasta" | fallback (0.16) | cooking (0.89) |
 | "yo" | fallback (0.07) | greeting (0.88) |
@@ -150,7 +150,7 @@ writes the replies and the classifier grounds them.
 ```
 app/
   main.py      web server: chat streaming, rate limits, fallbacks
-  nlp.py       the CONL725 pipeline: classifier, retrieval, sentiment, NER
+  nlp.py       the original NLP pipeline: classifier, retrieval, sentiment, NER
   llm.py       RoboDad persona prompt + Claude / Groq / OpenAI-compatible streaming
   safety.py    crisis detection (English, French, Hindi): situation-specific help messages
 static/
