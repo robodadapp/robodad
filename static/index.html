@@ -585,7 +585,7 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 @keyframes propin{from{opacity:0; scale:.7}}
 ::view-transition-old(root), ::view-transition-new(root){animation-duration:.25s}
 @media (max-width:420px){ .shuffle-spot{width:116px; height:116px} .spinner, :root[data-look="diwali"] .hello::before{width:116px; height:116px}
-  .herowrap .bubcap{white-space:normal; max-width:calc(100vw - 160px)} }
+  .herowrap .bubcap{width:max-content; max-width:calc(100vw - 150px); white-space:normal; line-height:1.3} }
 @media (prefers-reduced-motion:reduce){ .hello.prop-go *, .hello.prop-go::before, .hello.prop-go::after, .hello.prop-in *, .hello.prop-in::before, .hello.prop-in::after{animation:none!important}
   .shuffle-hint, .shuffle-spot.idle::after{animation:none} ::view-transition-old(root), ::view-transition-new(root){animation-duration:.15s} }
 .hello h2{margin:0; font-family:var(--display); font-size:clamp(2rem, 6vw, 2.9rem); line-height:1.05; font-weight:900; letter-spacing:-.02em; max-width:14ch}
@@ -3584,7 +3584,7 @@ const PLAYERS = {
     if (R) { radioPrefs.st = pickNew(Object.keys(R.stations), radioPrefs.st); saveRadio(); R.play(radioPrefs.st); radioUI(); tune = R.stations[radioPrefs.st]; }
     const tile = menuDlg.querySelector(`.look[data-look="${look}"] strong`);
     const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : look;
-    showCap("", "✨ " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
+    hideCap(); toast("✨ " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
   }
   const SHUF_KEY = "robodad.shuffled";
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
