@@ -1871,8 +1871,26 @@ textarea::placeholder{color:var(--muted)}
     u.onend = unduck; u.onerror = unduck;
     speechSynthesis.speak(u);
   }
-  const fetchClip = (text) => fetch("/api/tts", { method:"POST", headers:{ "content-type":"application/json" },
-    body: JSON.stringify({ text, voice: curVoice().api }) }).then(r => { if (!r.ok) throw new Error("tts"); return r.blob(); });
+  const fetchClip = (text, lang) => fetch("/api/tts", { method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify(lang ? { text, lang } : { text, voice: curVoice().api }) }).then(r => { if (!r.ok) throw new Error("tts"); return r.blob(); });
+  // play fetched clips one after another; resolves "done", "stopped" or "failed" (failed = nothing played)
+  async function playClips(blobs, id, rate){
+    for (let i = 0; i < blobs.length; i++) {
+      if (id !== speakId) return "stopped";
+      const url = URL.createObjectURL(blobs[i]);
+      const ok = await new Promise((res) => {
+        player.onended = () => res(true); player.onerror = () => res(false);
+        player.src = url;
+        player.preservesPitch = player.mozPreservesPitch = player.webkitPreservesPitch = rate === 1;
+        player.defaultPlaybackRate = rate; player.playbackRate = rate;
+        const pr = player.play(); pr && pr.catch(() => res(false));
+      });
+      URL.revokeObjectURL(url);
+      if (id !== speakId) return "stopped";
+      if (!ok) return i === 0 ? "failed" : "done";
+    }
+    return "done";
+  }
   // When RoboDad's online voice is unavailable (its free daily allowance runs out),
   // a whole reply is read by the phone's voice instead: never half and half.
   let onlineDownUntil = 0, toldVoiceRest = false;
@@ -1892,22 +1910,9 @@ textarea::placeholder{color:var(--muted)}
     try { blobs = await Promise.all(parts.map(fetchClip)); }      // fetch every piece first, so it plays without gaps
     catch { if (id === speakId) { voiceResting(); speakDevice(said, id); } return; }
     lastVoice = `RoboDad's own male dad voice (${voiceLabel()})`;
-    for (let i = 0; i < blobs.length; i++) {
-      if (id !== speakId) return;
-      const url = URL.createObjectURL(blobs[i]);
-      const ok = await new Promise((res) => {
-        player.onended = () => res(true); player.onerror = () => res(false);
-        player.src = url;
-        const rate = curVoice().rate;           // slowing the clip lowers the pitch too
-        player.preservesPitch = player.mozPreservesPitch = player.webkitPreservesPitch = false;
-        player.defaultPlaybackRate = rate; player.playbackRate = rate;
-        const pr = player.play(); pr && pr.catch(() => res(false));
-      });
-      URL.revokeObjectURL(url);
-      if (id !== speakId) return;
-      if (!ok) { if (i === 0) speakDevice(said, id); else unduck(); return; }
-    }
-    unduck();
+    const how = await playClips(blobs, id, curVoice().rate);   // slowing the clip lowers the pitch too
+    if (how === "failed") return speakDevice(said, id);
+    if (how === "done") unduck();
   }
   // voice picker in settings
   function fillVoices(){
@@ -2938,7 +2943,6 @@ const PLAYERS = {
     if ($("reveal").hidden) revealReturn = document.activeElement;
     revealQ.push(...fresh); if ($("reveal").hidden) showReveal();
   }
-  // listening uses the device's own voices for French and Hindi
   // RoboDad is a dad, so male voices come first (names differ by phone and browser;
   // Android's Google voices are codes like hi-in-x-hid-local)
   const toldNoVoice = {};
@@ -2962,12 +2966,32 @@ const PLAYERS = {
     const words = (text.match(/[A-Za-zÀ-ÿ']+/g) || []).length;
     return en >= 3 && en / Math.max(words, 1) > 0.15;
   }
-  function speakLang(text, lang){
-    if (!("speechSynthesis" in window)) { toast("This browser can't read aloud. Try Chrome."); return; }
+  // French, Spanish and Hindi are read in RoboDad's own online male voice for that language,
+  // the same on every phone. The phone's voice is only the backup.
+  const langDownUntil = {};
+  async function speakLang(text, lang){
     // a practice reply with none of the language in it (he answered in English, e.g. a question
     // about the app) gets Dad's English voice, not an English reply in a French or Hindi accent
     if (isEnglishReply(text, lang)) return speak(text);
-    stopSpeaking();
+    stopSpeaking(); const id = speakId;
+    const said = text.replace(/\s+/g, " ").trim(); if (!said) return;
+    if (player && !(Date.now() < (langDownUntil[lang] || 0))) {
+      if (window.RoboRadio) RoboRadio.duck(true);
+      let blobs = null;
+      try { blobs = await Promise.all(chunks(said).map(t => fetchClip(t, lang))); }
+      catch { langDownUntil[lang] = Date.now() + 15 * 60 * 1000; }
+      if (id !== speakId) return;
+      if (blobs) {
+        lastVoice = `RoboDad's own male ${L[lang].name} voice`;
+        const how = await playClips(blobs, id, 1);
+        if (how !== "failed") { if (how === "done") unduck(); return; }
+      }
+      unduck();
+    }
+    speakLangDevice(said, lang);
+  }
+  function speakLangDevice(text, lang){
+    if (!("speechSynthesis" in window)) { toast("This browser can't read aloud. Try Chrome."); return; }
     const code = L[lang].voice, { v, male } = pickLangVoice(lang), any = speechSynthesis.getVoices().length;
     if (any && !v && !toldNoVoice[lang]) {
       toldNoVoice[lang] = true;

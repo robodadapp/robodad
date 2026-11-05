@@ -717,10 +717,67 @@ _tts_hits: dict[str, deque] = defaultdict(deque)
 class TTSRequest(BaseModel):
     text: str = Field(min_length=1, max_length=200)
     voice: str = Field(default="", max_length=20)
+    lang: str = Field(default="", max_length=4)             # "fr", "es" or "hi" for language practice
+
+
+# French, Spanish and Hindi: Groq's voices only speak English, so practice lines use
+# Microsoft Azure's neural voices (male, one per language, same on every phone).
+# Without AZURE_SPEECH_KEY the page uses the phone's own voice, as before.
+LANG_VOICES = {
+    "fr": ("fr-CA", os.getenv("TTS_VOICE_FR", "fr-CA-AntoineNeural")),
+    "es": ("es-MX", os.getenv("TTS_VOICE_ES", "es-MX-JorgeNeural")),
+    "hi": ("hi-IN", os.getenv("TTS_VOICE_HI", "hi-IN-MadhurNeural")),
+}
+LANG_TTS_DAILY_CHARS = int(os.getenv("LANG_TTS_DAILY_CHARS", "15000"))  # Azure free tier: 500k a month
+_lang_tts = {"day": date.today(), "chars": 0, "off_until": 0.0}
+
+
+async def _lang_tts(req: TTSRequest, request: Request) -> Response:
+    key = clean_secret(os.getenv("AZURE_SPEECH_KEY"))
+    region = re.sub(r"[^a-z0-9]", "", (os.getenv("AZURE_SPEECH_REGION") or "canadacentral").lower())
+    now = time.monotonic()
+    if not key or now < _lang_tts["off_until"]:
+        return JSONResponse({"error": "Voice is resting. Using this device's voice."}, status_code=503)
+    _prune(_tts_hits, 600, now)
+    q = _tts_hits[_client_ip(request)]
+    while q and now - q[0] > 600:
+        q.popleft()
+    if len(q) >= 60:
+        return JSONResponse({"error": "Too many voice clips. Try again soon."}, status_code=429)
+    if _lang_tts["day"] != date.today():
+        _lang_tts.update(day=date.today(), chars=0)
+    text = re.sub(r"\s+", " ", req.text).strip()
+    if _lang_tts["chars"] + len(text) > LANG_TTS_DAILY_CHARS:
+        return JSONResponse({"error": "Daily voice limit reached."}, status_code=503)
+    q.append(now)
+    _lang_tts["chars"] += len(text)
+    locale, voice = LANG_VOICES[req.lang]
+    safe = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    ssml = (f"<speak version='1.0' xml:lang='{locale}'><voice name='{voice}'>"
+            f"<prosody rate='-12%'>{safe}</prosody></voice></speak>")       # a little slower for learners
+    try:
+        r = await state["client"].post(
+            f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1",
+            headers={"Ocp-Apim-Subscription-Key": key, "Content-Type": "application/ssml+xml",
+                     "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3", "User-Agent": "RoboDad"},
+            content=ssml.encode("utf-8"),
+        )
+    except httpx.HTTPError as exc:
+        log.warning("Language TTS request failed: %s", type(exc).__name__)
+        return JSONResponse({"error": "Voice unavailable."}, status_code=503)
+    if r.status_code != 200:
+        log.warning("Language TTS error %s: %s", r.status_code, r.text[:300])
+        _lang_tts["off_until"] = now + (3600.0 if r.status_code in (401, 403) else 120.0)
+        return JSONResponse({"error": "Voice unavailable."}, status_code=503)
+    return Response(r.content, media_type="audio/mpeg", headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/tts")
 async def tts(req: TTSRequest, request: Request):
+    if req.lang:
+        if req.lang not in LANG_VOICES:
+            return JSONResponse({"error": "Voice unavailable."}, status_code=400)
+        return await _lang_tts(req, request)
     key = clean_secret(os.getenv("GROQ_API_KEY"))
     now = time.monotonic()
     if not key or now < _tts["off_until"]:
