@@ -243,9 +243,14 @@
     });
 
     apps.textContent = '';
-    var skip = {}; WATCH.forEach(function (w) { skip[w.pkg] = 1; });
-    list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) { apps.appendChild(tile(a)); });
-    apps.appendChild(tile({ name: '⚙ Settings', color: '#24364C', action: function () { TV && TV.settings(); } }));
+    var skip = { 'com.google.android.tv.remote.service': 1 };
+    WATCH.forEach(function (w) { skip[w.pkg] = 1; });
+    var hasSettings = false;
+    list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) {
+      if (/settings/i.test(a.pkg) || a.name === 'Settings') hasSettings = true;
+      apps.appendChild(tile(a));
+    });
+    if (!hasSettings) apps.appendChild(tile({ name: '⚙ Settings', color: '#24364C', action: function () { TV && TV.settings(); } }));
 
     if (focusedRow && focusedRow.children[focusedIdx]) focusedRow.children[focusedIdx].focus();
   }

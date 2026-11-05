@@ -53,45 +53,7 @@ jobs:
           arch: x86
           profile: tv_1080p
           disable-animations: true
-          script: |
-            adb install -r out/robodad-tv.apk
-            adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME > out/home-before.txt || true
-            adb logcat -c
-            adb shell am start -n app.robodad.tv/.HomeActivity
-            sleep 15
-            adb exec-out screencap -p > out/screen-1-home.png
-            sleep 4
-            adb exec-out screencap -p > out/screen-2-birthday-note.png
-            adb shell input keyevent KEYCODE_DPAD_CENTER
-            sleep 3
-            adb exec-out screencap -p > out/screen-3-note-closed.png
-            adb shell input keyevent KEYCODE_DPAD_DOWN
-            sleep 2
-            adb exec-out screencap -p > out/screen-4-watch-row.png
-            adb shell input keyevent KEYCODE_DPAD_DOWN
-            adb shell input keyevent KEYCODE_DPAD_RIGHT
-            sleep 2
-            adb exec-out screencap -p > out/screen-5-apps-row.png
-            # Same steps as on the real TV: switch off the stock home screen, press Home.
-            STOCK=$(sed -n 's#/.*##p' out/home-before.txt | grep -v '^app.robodad.tv$' | head -1)
-            echo "stock launcher: $STOCK" > out/home-after.txt
-            if [ -n "$STOCK" ]; then adb shell pm disable-user --user 0 "$STOCK" >> out/home-after.txt 2>&1 || true; fi
-            adb shell input keyevent KEYCODE_HOME
-            sleep 6
-            adb exec-out screencap -p > out/screen-6-after-home-button.png
-            adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME >> out/home-after.txt || true
-            adb shell input keyevent KEYCODE_DPAD_UP
-            adb shell input keyevent KEYCODE_DPAD_CENTER
-            sleep 20
-            adb exec-out screencap -p > out/screen-7-chat.png
-            adb shell input keyevent KEYCODE_BACK
-            sleep 3
-            adb exec-out screencap -p > out/screen-8-back-home.png
-            if [ -n "$STOCK" ]; then adb shell pm enable "$STOCK" >> out/home-after.txt 2>&1 || true; fi
-            adb logcat -d -v brief > out/logcat-full.txt
-            grep -E "chromium|AndroidRuntime|robodad|FATAL" out/logcat-full.txt | tail -300 > out/logcat.txt || true
-            rm out/logcat-full.txt
-            adb shell pidof app.robodad.tv > out/still-running.txt || echo "NOT RUNNING" > out/still-running.txt
+          script: bash android-tv/ci-tv-test.sh
 
       - name: Save the results to the android-tv-build branch
         if: always()
