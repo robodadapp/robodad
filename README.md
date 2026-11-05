@@ -310,7 +310,7 @@ then asks the provider for its current models and picks a chat model.
 - Voice input uses the browser's own speech recognition (Chrome and Edge send
   the audio to their speech service); nothing is recorded by RoboDad.
 - Keyword guardrails can miss things. Anyone running RoboDad publicly for real
-  children should add a moderation API and human review.
+  teens should add a moderation API and human review.
 
 ## Collecting Play Store testers
 
