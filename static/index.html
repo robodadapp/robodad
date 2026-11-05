@@ -3109,6 +3109,13 @@ const PLAYERS = {
       };
       setTimeout(go, 300);
     } }
+  // ?ask=… (from DAD QUEST's Dad Facts) puts a question in the chat box, ready to send
+  { const ask = new URLSearchParams(location.search).get("ask");
+    if (ask) {
+      window.history.replaceState?.(null, "", location.pathname);
+      const box = $("input");
+      if (box) { box.value = ask.slice(0, 300); box.dispatchEvent(new Event("input", { bubbles: true })); }
+    } }
   document.querySelectorAll("[data-open-lang]").forEach(b => b.addEventListener("click", () => {
     const fromSide = b.closest(".side"); if (fromSide) fromSide.classList.remove("open");
     openLang(b.dataset.openLang); if (fromSide) langReturn = $("sideBtn");
