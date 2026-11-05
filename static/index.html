@@ -564,6 +564,18 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 
 .hello{padding:32px 0 8px; display:flex; flex-direction:column; align-items:flex-start; gap:14px}
 .hello{position:relative; isolation:isolate}
+/* Shuffle spot: the decoration in the top-right corner (the rangoli at Diwali) is a button that surprises you with a new look, dad and tune */
+.shuffle-spot{position:absolute; z-index:2; top:4px; right:-10px; width:150px; height:150px; padding:0; border:0; border-radius:50%; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent}
+.shuffle-spot:focus-visible{outline:3px solid var(--sun, #FFC93C); outline-offset:-6px}
+.shuffle-spot .dice{position:absolute; right:30px; top:26px; font-size:2.2rem; line-height:1; opacity:.5; transition:transform .3s, opacity .3s; filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+:root:is([data-look="diwali"],[data-look="halloween"],[data-look="skate"],[data-look="chalk"],[data-look="lab"],[data-look="library"],[data-look="gym"],[data-look="cheat"]) .shuffle-spot .dice{right:14px; top:auto; bottom:14px; font-size:1.05rem; opacity:.6}
+.shuffle-spot:hover .dice, .shuffle-spot:focus-visible .dice{opacity:1; transform:rotate(20deg) scale(1.15)}
+.hello:has(.shuffle-spot:hover)::before{filter:brightness(1.25) saturate(1.2)}
+.shuffle-spot.rolling .dice{animation:diceroll .7s ease-out}
+.hello.rolling::before{animation:diceroll .7s ease-out}
+@keyframes diceroll{0%{transform:rotate(0) scale(1)} 50%{transform:rotate(200deg) scale(1.25)} 100%{transform:rotate(360deg) scale(1)}}
+@media (max-width:420px){ .shuffle-spot{width:120px; height:120px; right:-8px} }
+@media (prefers-reduced-motion:reduce){ .shuffle-spot.rolling .dice, .hello.rolling::before{animation:none} }
 .hello h2{margin:0; font-family:var(--display); font-size:clamp(2rem, 6vw, 2.9rem); line-height:1.05; font-weight:900; letter-spacing:-.02em; max-width:14ch}
 :root[data-look="arcade"] .hello h2{font-weight:400; letter-spacing:0; font-size:clamp(1.7rem, 5.4vw, 2.5rem); line-height:1.12;
   text-shadow:0 0 18px var(--glow), 0 0 2px var(--denim)}
@@ -1261,6 +1273,7 @@ textarea::placeholder{color:var(--muted)}
   <div class="log" id="log" aria-live="polite">
     <section class="hello" id="hello">
       <div class="spinner" aria-hidden="true"></div>
+      <button class="shuffle-spot" id="shuffleSpot" type="button" aria-label="Surprise me: new look, new dad and new music" title="Surprise me! New look, new dad and new music"><span class="dice" aria-hidden="true">🎲</span></button>
       <div class="herowrap" id="herowrap">
         <svg class="bot" id="avHero" width="120" height="120" viewBox="0 0 64 64" aria-hidden="true"><use href="#robodad"/></svg>
         <span class="hero-bubs" id="heroBubs"></span>
@@ -3542,6 +3555,28 @@ const PLAYERS = {
     radioUI();
   } else { radioW.hidden = true; $("qMusicWrap").hidden = true; }
   quickUI();
+
+  // Shuffle: tap the corner decoration (the rangoli at Diwali) for a random look, dad and station
+  const pickNew = (list, cur) => { const pool = list.filter(x => x !== cur); const from = pool.length ? pool : list; return from[Math.floor(Math.random() * from.length)]; };
+  function shuffleAll(){
+    const looks = [...menuDlg.querySelectorAll(".look")].filter(b => !b.hidden).map(b => b.dataset.look);
+    const look = pickNew(looks, document.documentElement.dataset.look || "classic");
+    let dadName = "";
+    if (AV) {
+      const dads = Object.entries(AV.AVATARS).filter(([k, a]) => (!a.secret || getPref("robodad.grandpa")) && (!a.season || seasonActive(a.season))).map(([k]) => k);
+      avPref = pickNew(dads, avKind); setPref(AV_KEY, avPref); dadName = AV.AVATARS[avPref].name;
+    }
+    applyLook(look);
+    let tune = "";
+    const R = window.RoboRadio;
+    if (R) { radioPrefs.st = pickNew(Object.keys(R.stations), radioPrefs.st); saveRadio(); R.play(radioPrefs.st); radioUI(); tune = R.stations[radioPrefs.st]; }
+    const tile = menuDlg.querySelector(`.look[data-look="${look}"] strong`);
+    const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : look;
+    showCap("", "🎲 " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
+    const spot = $("shuffleSpot"); [spot, hello].forEach(el => { el.classList.remove("rolling"); void el.offsetWidth; el.classList.add("rolling"); clearTimeout(el._rollT); el._rollT = setTimeout(() => el.classList.remove("rolling"), 750); });
+    setTimeout(() => avPlay(), 400);
+  }
+  $("shuffleSpot").addEventListener("click", shuffleAll);
 
   // Focus timer
   let tMinutes = 25, tRemaining = 25 * 60, tEnd = 0, tTick = null;
