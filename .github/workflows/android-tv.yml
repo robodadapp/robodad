@@ -1,0 +1,105 @@
+# Builds RoboDad TV (android-tv/): the home-screen app for Siddhant's Sony
+# Android TV. It is installed on the TV by hand with adb, not through Google Play.
+#
+# Each run builds robodad-tv.apk, opens it on a virtual Android TV, makes it the
+# home screen there the same way as on the real TV, and saves the APK plus
+# screenshots to the "android-tv-build" branch.
+name: Android TV app
+on:
+  push:
+    branches: [main, tv-launcher]
+    paths: ["android-tv/**", ".github/workflows/android-tv.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Build
+        env:
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          gradle -p android-tv --no-daemon assembleRelease
+          mkdir -p out
+          cp android-tv/app/build/outputs/apk/release/app-release.apk out/robodad-tv.apk
+          echo "$ANDROID_VERSION_CODE" > out/version-code.txt
+
+      - name: Allow the virtual TV to use hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Try it on a virtual Android TV
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          disable-animations: true
+          script: |
+            adb install -r out/robodad-tv.apk
+            adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME > out/home-before.txt || true
+            adb logcat -c
+            adb shell am start -n app.robodad.tv/.HomeActivity
+            sleep 15
+            adb exec-out screencap -p > out/screen-1-home.png
+            sleep 4
+            adb exec-out screencap -p > out/screen-2-birthday-note.png
+            adb shell input keyevent KEYCODE_DPAD_CENTER
+            sleep 3
+            adb exec-out screencap -p > out/screen-3-note-closed.png
+            adb shell input keyevent KEYCODE_DPAD_DOWN
+            sleep 2
+            adb exec-out screencap -p > out/screen-4-watch-row.png
+            adb shell input keyevent KEYCODE_DPAD_DOWN
+            adb shell input keyevent KEYCODE_DPAD_RIGHT
+            sleep 2
+            adb exec-out screencap -p > out/screen-5-apps-row.png
+            # Same steps as on the real TV: switch off the stock home screen, press Home.
+            STOCK=$(sed -n 's#/.*##p' out/home-before.txt | grep -v '^app.robodad.tv$' | head -1)
+            echo "stock launcher: $STOCK" > out/home-after.txt
+            if [ -n "$STOCK" ]; then adb shell pm disable-user --user 0 "$STOCK" >> out/home-after.txt 2>&1 || true; fi
+            adb shell input keyevent KEYCODE_HOME
+            sleep 6
+            adb exec-out screencap -p > out/screen-6-after-home-button.png
+            adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME >> out/home-after.txt || true
+            adb shell input keyevent KEYCODE_DPAD_UP
+            adb shell input keyevent KEYCODE_DPAD_CENTER
+            sleep 20
+            adb exec-out screencap -p > out/screen-7-chat.png
+            adb shell input keyevent KEYCODE_BACK
+            sleep 3
+            adb exec-out screencap -p > out/screen-8-back-home.png
+            if [ -n "$STOCK" ]; then adb shell pm enable "$STOCK" >> out/home-after.txt 2>&1 || true; fi
+            adb logcat -d -v brief > out/logcat-full.txt
+            grep -E "chromium|AndroidRuntime|robodad|FATAL" out/logcat-full.txt | tail -300 > out/logcat.txt || true
+            rm out/logcat-full.txt
+            adb shell pidof app.robodad.tv > out/still-running.txt || echo "NOT RUNNING" > out/still-running.txt
+
+      - name: Save the results to the android-tv-build branch
+        if: always()
+        run: |
+          mkdir -p out && cd out
+          echo "Built from ${GITHUB_SHA} on $(date -u)" > README.txt
+          git init -q -b android-tv-build
+          git config user.name "github-actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Android TV build ${GITHUB_RUN_NUMBER}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" android-tv-build

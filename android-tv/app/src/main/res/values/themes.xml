@@ -1,0 +1,8 @@
+<resources>
+    <style name="TvTheme" parent="android:Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/sky</item>
+        <item name="android:colorPrimary">#7FA9D6</item>
+        <item name="android:colorAccent">#FFC83D</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

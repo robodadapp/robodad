@@ -14,3 +14,9 @@ android/app/build/
 android/local.properties
 *.keystore
 *.jks
+
+# RoboDad TV sideload key (not the Play upload key): kept so TV updates install over the old version
+!android-tv/app/tv-sideload.keystore
+android-tv/.gradle/
+android-tv/build/
+android-tv/app/build/

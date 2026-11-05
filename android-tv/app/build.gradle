@@ -1,0 +1,45 @@
+plugins { id "com.android.application" }
+
+// RoboDad TV is a home-screen (launcher) app that is installed on one TV by
+// hand (adb install), never uploaded to Google Play. It is signed with the
+// small sideload key in this folder so every new build can be installed over
+// the old one without removing it first. It is NOT RoboDad's Play upload key.
+android {
+    namespace "app.robodad.tv"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "app.robodad.tv"
+        minSdk 24
+        targetSdk 36
+        versionCode Integer.parseInt(System.getenv("ANDROID_VERSION_CODE") ?: "1")
+        versionName "1.0." + (System.getenv("ANDROID_VERSION_CODE") ?: "1")
+    }
+
+    signingConfigs {
+        sideload {
+            storeFile file("tv-sideload.keystore")
+            storePassword "robodadtv"
+            keyAlias "robodadtv"
+            keyPassword "robodadtv"
+        }
+    }
+
+    buildTypes {
+        debug { signingConfig signingConfigs.sideload }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.sideload
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core:1.13.1"
+    implementation "androidx.webkit:webkit:1.12.1"
+}

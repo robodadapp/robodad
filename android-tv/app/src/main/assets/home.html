@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoboDad TV</title>
+<style>
+  :root {
+    --bg: #0E1620; --bg2: #16263A; --card: #1C2E44; --ink: #F4F7FB; --muted: #9DB2C9;
+    --gold: #FFC83D; --sky: #7FA9D6; --pink: #FF7A9A;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
+    font-family: "Roboto", "Segoe UI", system-ui, sans-serif; }
+  body { background: radial-gradient(120% 90% at 85% -10%, #24456B 0%, var(--bg) 55%) fixed; }
+  main { position: absolute; inset: 0; padding: 4.2vh 4.5vw 3vh; display: flex; flex-direction: column; gap: 2.6vh; }
+
+  header { display: flex; align-items: center; gap: 1.6vw; }
+  header img { width: 7.5vh; height: 7.5vh; border-radius: 22%; }
+  .hello { flex: 1; }
+  .hello h1 { margin: 0; font-size: 4.6vh; font-weight: 700; letter-spacing: -0.02em; }
+  .hello p { margin: 0.4vh 0 0; font-size: 2.4vh; color: var(--muted); }
+  .clock { text-align: right; }
+  .clock b { display: block; font-size: 5.4vh; font-weight: 300; letter-spacing: -0.03em; }
+  .clock span { font-size: 2.2vh; color: var(--muted); }
+
+  .top { display: flex; gap: 1.6vw; height: 27vh; }
+  .tile { position: relative; border: 0; border-radius: 1.6vh; background: var(--card); color: var(--ink);
+    font: inherit; text-align: left; padding: 0; overflow: hidden; outline: none; cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease; }
+  .tile:focus { transform: scale(1.06); box-shadow: 0 0 0 0.6vh var(--gold), 0 2vh 4vh rgba(0,0,0,.5); outline: none !important; z-index: 2; }
+
+  .hero { flex: 1.35; display: flex; align-items: center; gap: 2vw; padding: 0 2.6vw;
+    background: linear-gradient(120deg, #2E5C8A, #1E3A5C 60%, #23304F); }
+  .hero img { height: 19vh; width: 19vh; border-radius: 22%; flex: none; }
+  .hero h2 { margin: 0; font-size: 4.4vh; }
+  .hero p { margin: .8vh 0 0; font-size: 2.3vh; color: #D6E4F2; line-height: 1.35; }
+
+  .bday { flex: 1; padding: 2.4vh 2vw; background: linear-gradient(135deg, #5B2A6E, #8C3B6E 55%, #C7566C); }
+  .bday .cake { font-size: 6vh; line-height: 1; }
+  .bday h2 { margin: 1vh 0 .4vh; font-size: 3.6vh; }
+  .bday p { margin: 0; font-size: 2.1vh; color: #FFE3EC; }
+
+  section h3 { margin: 0 0 1.4vh; font-size: 2.4vh; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+  .row { display: flex; gap: 1.4vw; padding: 1vh .6vw 1.6vh; margin: -1vh -.6vw 0; overflow-x: auto; scroll-behavior: smooth; }
+  .row::-webkit-scrollbar { display: none; }
+  .app { flex: none; width: 16.6vw; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
+  .app img.banner { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .app img.icon { width: 38%; aspect-ratio: 1; object-fit: contain; margin-bottom: 14%; }
+  .app .name { position: absolute; left: 0; right: 0; bottom: 0; padding: .9vh .8vw; font-size: 1.9vh; font-weight: 600;
+    background: linear-gradient(transparent, rgba(0,0,0,.65)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app.has-banner .name { opacity: 0; transition: opacity .15s; }
+  .app.has-banner:focus .name { opacity: 1; }
+  .app.word { font-size: 2.8vh; font-weight: 700; }
+  .app.missing { opacity: .45; }
+  .watch .app { width: 19.6vw; }
+
+  footer { margin-top: auto; display: flex; align-items: center; gap: 1vw; font-size: 2.1vh; color: var(--muted); }
+  footer b { color: var(--gold); font-weight: 600; }
+  #toast { position: fixed; left: 50%; bottom: 6vh; transform: translateX(-50%) translateY(3vh); opacity: 0;
+    background: #000c; color: #fff; padding: 1.4vh 2vw; border-radius: 1vh; font-size: 2.2vh; transition: .25s; pointer-events: none; }
+  #toast.show { opacity: 1; transform: translateX(-50%); }
+
+  #note { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,10,18,.82); z-index: 10; }
+  #note.open { display: flex; }
+  #note .card { width: min(70vw, 120vh); background: linear-gradient(160deg, #2A1B3D, #3B1F45); border-radius: 2vh;
+    padding: 5vh 4vw; box-shadow: 0 3vh 8vh #000a; }
+  #note h2 { margin: 0 0 2vh; font-size: 4.4vh; }
+  #note p { font-size: 2.7vh; line-height: 1.5; margin: 0 0 1.8vh; color: #F3E6F7; }
+  #note .sign { color: var(--gold); font-weight: 600; }
+  #note button { margin-top: 2vh; font: inherit; font-size: 2.4vh; padding: 1.4vh 2.4vw; border-radius: 1vh; border: 0; background: var(--gold); color: #2A1B3D; font-weight: 700; }
+  #note button:focus { outline: 0.5vh solid #fff !important; }
+
+  canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="robodad.png" alt="">
+    <div class="hello">
+      <h1 id="greet">Hey there</h1>
+      <p id="sub">Ready when you are, champ.</p>
+    </div>
+    <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
+  </header>
+
+  <div class="top">
+    <button class="tile hero" id="chat" data-tv-first>
+      <img src="robodad.png" alt="">
+      <div>
+        <h2>Talk to RoboDad</h2>
+        <p>Homework help, life advice, terrible jokes and French or Hindi practice. Ask anything.</p>
+      </div>
+    </button>
+    <button class="tile bday" id="bday" hidden>
+      <div class="cake">🎂</div>
+      <h2>Happy 13th Birthday!</h2>
+      <p>Press OK, there's a note from Dad.</p>
+    </button>
+  </div>
+
+  <section class="watch">
+    <h3>Watch</h3>
+    <div class="row" id="watch"></div>
+  </section>
+
+  <section>
+    <h3>Your apps</h3>
+    <div class="row" id="apps"></div>
+  </section>
+
+  <footer><b>Dad joke of the day:</b> <span id="joke"></span></footer>
+</main>
+
+<div id="note" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2>Happy 13th, Siddhant! 🎉</h2>
+    <p>Thirteen. Officially a teenager. I still remember when you fit in one arm, and now you're nearly tall enough to steal my snacks off the top shelf.</p>
+    <p>This TV has a new brain, and it's one I built for you. RoboDad is here whenever you have a question, big or small, silly or serious. And so am I, always.</p>
+    <p>Be curious, be kind, and never stop laughing at my jokes (even the bad ones).</p>
+    <p class="sign">Love you to the moon and back, Dad</p>
+    <button id="noteClose">Let's go! ▶</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<canvas id="fx"></canvas>
+
+<script src="tvnav.js"></script>
+<script>
+(function () {
+  var TV = window.RoboDadTV || null;
+
+  // ---- who he is ----
+  var NAME = 'Siddhant';
+  var NICKNAMES = ['Siddhantosaurus Rex 🦖', 'Chiki', 'Gablu Baccha', 'Big Crunchy', 'Chonk', 'Siddhant'];
+  var BIRTHDAY_DAYS = 14; // the birthday card shows for two weeks after RoboDad TV first starts
+
+  // The four buttons on the remote, in the same order. Packages are the Android TV versions of each app.
+  var WATCH = [
+    { pkg: 'com.netflix.ninja', name: 'Netflix', color: '#141414' },
+    { pkg: 'com.amazon.amazonvideo.livingroom', name: 'Prime Video', color: '#0F2235' },
+    { pkg: 'com.disney.disneyplus', name: 'Disney+', color: '#0B1A3B' },
+    { pkg: 'com.google.android.youtube.tv', name: 'YouTube', color: '#2A0E0E' }
+  ];
+
+  var JOKES = [
+    "I'm reading a book about anti-gravity. It's impossible to put down.",
+    "Why did the scarecrow win an award? He was outstanding in his field.",
+    "I only know 25 letters of the alphabet. I don't know y.",
+    "What do you call a fake noodle? An impasta.",
+    "I used to hate facial hair, but then it grew on me.",
+    "Why don't eggs tell jokes? They'd crack each other up.",
+    "What do you call a dinosaur that's sleeping? A dino-snore.",
+    "I told my TV a joke. It didn't laugh, but at least it picked up on the remote possibility.",
+    "Why can't a bicycle stand up by itself? It's two tired.",
+    "What did the ocean say to the beach? Nothing, it just waved.",
+    "How does a computer get drunk? It takes screenshots.",
+    "Why did the math book look sad? It had too many problems.",
+    "I'm on a seafood diet. I see food and I eat it.",
+    "What's a robot's favourite snack? Computer chips.",
+    "Why was the robot so tired after the road trip? It had a hard drive."
+  ];
+
+  function store(k, v) {
+    try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
+  }
+  function dayNumber(d) { return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
+
+  // ---- greeting, clock, joke ----
+  var today = dayNumber(new Date());
+  var nick = NICKNAMES[today % NICKNAMES.length];
+  function tick() {
+    var d = new Date(), h = d.getHours();
+    var part = h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 22 ? 'Good evening' : 'Up late';
+    document.getElementById('greet').textContent = part + ', ' + nick;
+    document.getElementById('sub').textContent = h >= 22 || h < 5 ? "Don't stay up too late, champ." : "What are we doing today?";
+    document.getElementById('time').textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    document.getElementById('date').textContent = d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+  tick(); setInterval(tick, 10000);
+  document.getElementById('joke').textContent = JOKES[today % JOKES.length];
+
+  // ---- toast ----
+  var toastT;
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2600);
+  }
+
+  // ---- birthday ----
+  var first = parseInt(store('rdtv.first') || '0', 10);
+  if (!first) { first = today; store('rdtv.first', String(first)); }
+  var bday = document.getElementById('bday'), note = document.getElementById('note');
+  var isBirthday = today - first < BIRTHDAY_DAYS;
+  if (isBirthday) bday.hidden = false;
+  function openNote() { note.classList.add('open'); confetti(); setTimeout(function () { document.getElementById('noteClose').focus(); }, 50); }
+  function closeNote() { note.classList.remove('open'); store('rdtv.noteSeen', '1'); bday.focus(); }
+  bday.addEventListener('click', openNote);
+  document.getElementById('noteClose').addEventListener('click', closeNote);
+
+  // ---- tiles ----
+  function tile(app, extraClass) {
+    var b = document.createElement('button');
+    b.className = 'tile app' + (extraClass ? ' ' + extraClass : '');
+    var art = app.art || '';
+    if (art.indexOf('banner:') === 0) {
+      b.classList.add('has-banner');
+      var im = document.createElement('img'); im.className = 'banner'; im.src = art.slice(7); im.alt = ''; b.appendChild(im);
+    } else if (art.indexOf('icon:') === 0) {
+      var ic = document.createElement('img'); ic.className = 'icon'; ic.src = art.slice(5); ic.alt = ''; b.appendChild(ic);
+    } else {
+      b.classList.add('word'); b.style.background = app.color || 'var(--card)';
+      b.appendChild(document.createTextNode(app.name));
+    }
+    if (art) { var n = document.createElement('span'); n.className = 'name'; n.textContent = app.name; b.appendChild(n); }
+    b.addEventListener('click', function () {
+      if (app.action) { app.action(); return; }
+      if (!TV || !TV.launch(app.pkg)) toast(app.name + " isn't installed on this TV yet.");
+    });
+    return b;
+  }
+
+  function render() {
+    var list = [];
+    try { list = TV ? JSON.parse(TV.apps()) : []; } catch (e) { list = []; }
+    var byPkg = {};
+    list.forEach(function (a) { byPkg[a.pkg] = a; });
+
+    var watch = document.getElementById('watch'), apps = document.getElementById('apps');
+    var focusedIdx = -1, focusedRow = null;
+    [watch, apps].forEach(function (row) {
+      var kids = row.children;
+      for (var i = 0; i < kids.length; i++) if (kids[i] === document.activeElement) { focusedIdx = i; focusedRow = row; }
+    });
+
+    watch.textContent = '';
+    WATCH.forEach(function (w) {
+      var got = byPkg[w.pkg];
+      watch.appendChild(tile({ pkg: w.pkg, name: w.name, color: w.color, art: got ? got.art : '' }, got || !TV ? '' : 'missing'));
+    });
+
+    apps.textContent = '';
+    var skip = {}; WATCH.forEach(function (w) { skip[w.pkg] = 1; });
+    list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) { apps.appendChild(tile(a)); });
+    apps.appendChild(tile({ name: '⚙ Settings', color: '#24364C', action: function () { TV && TV.settings(); } }));
+
+    if (focusedRow && focusedRow.children[focusedIdx]) focusedRow.children[focusedIdx].focus();
+  }
+
+  document.getElementById('chat').addEventListener('click', function () {
+    if (TV) TV.chat(); else location.href = 'https://robodad.app/?source=tv';
+  });
+
+  // ---- what the TV tells the page ----
+  window.tvResume = function () { tick(); render(); if (!document.activeElement || document.activeElement === document.body) document.getElementById('chat').focus(); };
+  window.tvHome = function () { closeIfOpen(); document.getElementById('chat').focus(); document.querySelectorAll('.row').forEach(function (r) { r.scrollLeft = 0; }); };
+  window.tvBack = function () { if (!closeIfOpen()) document.getElementById('chat').focus(); };
+  function closeIfOpen() { if (note.classList.contains('open')) { closeNote(); return true; } return false; }
+
+  render();
+  document.getElementById('chat').focus();
+
+  // First switch-on during the birthday fortnight: open Dad's note with confetti.
+  if (isBirthday && !store('rdtv.noteSeen')) setTimeout(openNote, 900);
+
+  // ---- confetti ----
+  function confetti() {
+    var c = document.getElementById('fx'), x = c.getContext('2d');
+    var W = c.width = innerWidth * (devicePixelRatio || 1), H = c.height = innerHeight * (devicePixelRatio || 1);
+    var colors = ['#FFC83D', '#FF7A9A', '#7FA9D6', '#8EE3B0', '#FFFFFF', '#C59BFF'];
+    var bits = [];
+    for (var i = 0; i < 160; i++) bits.push({
+      x: Math.random() * W, y: -Math.random() * H * 0.6, s: (6 + Math.random() * 8) * (devicePixelRatio || 1),
+      vy: (2 + Math.random() * 3) * (devicePixelRatio || 1), vx: (Math.random() - .5) * 2, r: Math.random() * 6, vr: (Math.random() - .5) * .2,
+      c: colors[i % colors.length]
+    });
+    var start = performance.now();
+    (function frame(t) {
+      x.clearRect(0, 0, W, H);
+      bits.forEach(function (b) {
+        b.y += b.vy; b.x += b.vx + Math.sin((t + b.r * 100) / 400); b.r += b.vr;
+        x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.c; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore();
+      });
+      if (t - start < 5000) requestAnimationFrame(frame); else x.clearRect(0, 0, W, H);
+    })(start);
+  }
+})();
+</script>
+</body>
+</html>
