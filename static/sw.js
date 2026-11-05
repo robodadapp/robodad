@@ -4,7 +4,7 @@
 // version shows up on the next open. If the network is slow (the free server
 // waking up) or missing, the saved copy is used instead. Chat requests always
 // go to the network.
-const CACHE = "robodad-v58";
+const CACHE = "robodad-v59";
 const SHELL = ["/", "/privacy", "/changelog", "/manifest.webmanifest", "/static/favicon.svg", "/static/radio.js", "/static/lessons.js", "/static/maths.js", "/static/avatars.js", "/static/hunt.js", "/static/quest.js", "/static/icon-192.png", "/static/icon-512.png"];
 const PAGES = ["/", "/privacy", "/terms", "/testers", "/changelog", "/parents", "/learn", "/quest", "/attic"];
 const WAIT_MS = 3500;   // how long to wait for the network before using the saved copy
