@@ -1216,6 +1216,8 @@ textarea::placeholder{color:var(--muted)}
 .qopt[aria-checked="true"] .dot{border:5px solid var(--denim)}
 .qopt small{margin-left:auto; color:var(--muted); font-weight:600; font-size:.8rem}
 .fine{max-width:720px; margin:6px auto 0; font-size:.74rem; line-height:1.3; color:var(--muted); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+@media (max-width:380px){ .composer .fine{font-size:.66rem; letter-spacing:-.01em} }
+@media (max-width:340px){ .composer .fine{white-space:normal; overflow:visible} }   /* never cut off a link on the smallest phones */
 
 @media (max-width:520px){
   body{font-size:16px}
