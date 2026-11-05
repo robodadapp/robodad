@@ -571,7 +571,7 @@ TRACK_SOURCES = {
 }
 INTEREST_TOPICS = {
     "math", "science", "coding", "lang:pa", "lang:tl", "lang:zh", "lang:ta", "lang:ur", "lang:ar", "lang:mr",
-    "lang:gu", "lang:bn", "lang:te", "lang:ko", "lang:ja", "lang:pt", "lang:it", "lang:de", "lang:other",
+    "lang:gu", "lang:bn", "lang:te", "lang:tcy", "lang:ko", "lang:ja", "lang:pt", "lang:it", "lang:de", "lang:other",
 }
 _counted: dict[str, deque] = defaultdict(deque)
 
@@ -717,16 +717,18 @@ _tts_hits: dict[str, deque] = defaultdict(deque)
 class TTSRequest(BaseModel):
     text: str = Field(min_length=1, max_length=200)
     voice: str = Field(default="", max_length=20)
-    lang: str = Field(default="", max_length=4)             # "fr", "es" or "hi" for language practice
+    lang: str = Field(default="", max_length=4)             # "fr", "es", "hi", "mr" or "bn" for language practice
 
 
-# French, Spanish and Hindi: Groq's voices only speak English, so practice lines use
+# French, Spanish, Hindi, Marathi and Bengali: Groq's voices only speak English, so practice lines use
 # Microsoft Azure's neural voices (male, one per language, same on every phone).
 # Without AZURE_SPEECH_KEY the page uses the phone's own voice, as before.
 LANG_VOICES = {
     "fr": ("fr-CA", os.getenv("TTS_VOICE_FR", "fr-CA-AntoineNeural")),
     "es": ("es-MX", os.getenv("TTS_VOICE_ES", "es-MX-JorgeNeural")),
     "hi": ("hi-IN", os.getenv("TTS_VOICE_HI", "hi-IN-MadhurNeural")),
+    "mr": ("mr-IN", os.getenv("TTS_VOICE_MR", "mr-IN-ManoharNeural")),
+    "bn": ("bn-IN", os.getenv("TTS_VOICE_BN", "bn-IN-BashkarNeural")),
 }
 LANG_TTS_DAILY_CHARS = int(os.getenv("LANG_TTS_DAILY_CHARS", "15000"))  # Azure free tier: 500k a month
 _lang_usage = {"day": date.today(), "chars": 0, "off_until": 0.0}

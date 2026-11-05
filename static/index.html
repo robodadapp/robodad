@@ -1096,8 +1096,8 @@ details.why[open] summary::before{content:"–"}
 .lang-card{width:min(560px, 100%)}
 .lang-top{display:flex; justify-content:space-between; align-items:center; gap:8px}
 .teach-h{display:flex; align-items:center; gap:10px} .teach-h svg{width:46px; height:46px; flex:none; overflow:visible} .teach-h small{display:block; font-size:.8rem; font-weight:700; color:var(--muted); font-family:"Nunito", sans-serif}
-.lang-tabs{display:flex; gap:6px}
-.lang-tabs button{flex:1; border:1.5px solid var(--line); background:transparent; color:var(--ink); border-radius:12px; padding:9px; font:inherit; font-weight:900; cursor:pointer}
+.lang-tabs{display:flex; flex-wrap:wrap; gap:6px}
+.lang-tabs button{flex:1 1 30%; border:1.5px solid var(--line); background:transparent; color:var(--ink); border-radius:12px; padding:9px; font:inherit; font-weight:900; cursor:pointer}
 .lang-tabs button[aria-selected="true"]{background:var(--denim); border-color:var(--denim); color:var(--denim-ink)}
 .lang-sec{display:flex; justify-content:space-between; align-items:baseline; margin:2px 0 -6px; font-weight:900; color:var(--ink)}
 .lang-sec small{font-weight:700; color:var(--muted)}
@@ -1112,7 +1112,7 @@ details.why[open] summary::before{content:"–"}
 .phrase{display:flex; gap:10px; align-items:center; background:var(--sky); border-radius:14px; padding:10px 12px}
 .phrase div{flex:1; min-width:0}
 .phrase .t{display:block; font-weight:900; font-size:1.12rem; color:var(--ink); line-height:1.3}
-.phrase .t[lang="hi"]{font-size:1.25rem}
+.phrase .t[lang="hi"], .phrase .t[lang="mr"], .phrase .t[lang="bn"]{font-size:1.25rem}
 .phrase .r{display:block; font-weight:800; color:var(--denim); font-size:.92rem}
 .phrase .e{display:block; color:var(--muted); font-size:.9rem}
 .listen{flex:none; width:40px; height:40px; border-radius:50%; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); cursor:pointer; display:grid; place-items:center}
@@ -1535,10 +1535,10 @@ textarea::placeholder{color:var(--muted)}
         <div class="ch-row"><button class="primary ch-done" type="button">Done it!</button><small class="ch-count"></small></div>
       </section>
 
-  <section class="widget" aria-label="Practice French, Spanish and Hindi">
+  <section class="widget" aria-label="Practice French, Spanish, Hindi, Marathi and Bengali">
     <b>Practice with Dad</b>
-    <p id="langMini">Beginner French, Spanish and Hindi: 5 phrases a lesson, a quick quiz, then try them in a role-play.</p>
-    <div class="row"><button class="chipbtn" type="button" data-open-lang="fr">Français</button><button class="chipbtn" type="button" data-open-lang="es">Español</button><button class="chipbtn" type="button" data-open-lang="hi" lang="hi">हिन्दी Hindi</button></div>
+    <p id="langMini">Beginner French, Spanish, Hindi, Marathi and Bengali: 5 phrases a lesson, a quick quiz, then try them in a role-play.</p>
+    <div class="row"><button class="chipbtn" type="button" data-open-lang="fr">Français</button><button class="chipbtn" type="button" data-open-lang="es">Español</button><button class="chipbtn" type="button" data-open-lang="hi" lang="hi">हिन्दी Hindi</button><button class="chipbtn" type="button" data-open-lang="mr" lang="mr">मराठी Marathi</button><button class="chipbtn" type="button" data-open-lang="bn" lang="bn">বাংলা Bengali</button></div>
     <a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a>
   </section>
 
@@ -1716,6 +1716,8 @@ textarea::placeholder{color:var(--muted)}
       <button type="button" role="tab" data-lang="fr" aria-selected="true">Français · French</button>
       <button type="button" role="tab" data-lang="es" aria-selected="false">Español · Spanish</button>
       <button type="button" role="tab" data-lang="hi" aria-selected="false"><span lang="hi">हिन्दी</span> · Hindi</button>
+      <button type="button" role="tab" data-lang="mr" aria-selected="false"><span lang="mr">मराठी</span> · Marathi</button>
+      <button type="button" role="tab" data-lang="bn" aria-selected="false"><span lang="bn">বাংলা</span> · Bengali</button>
     </div>
     <div id="langBody" style="display:flex; flex-direction:column; gap:12px"></div>
   </div>
@@ -1826,7 +1828,7 @@ textarea::placeholder{color:var(--muted)}
   </form>
 </div>
 
-<script src="/static/lessons.js?v=40"></script>
+<script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/avatars.js?v=40"></script>
@@ -2693,6 +2695,14 @@ const PLAYERS = {
     ["hi4", "Shabaash!", "hi", "Finish 4 Hindi lessons", "Four Hindi lessons done. Shabaash!", "rare", "हि", (p) => p.done.length >= 4],
     ["hirp", "Chai Ready", "hi", "Keep a Hindi role-play going for 4 messages", "Kept a whole Hindi role-play going.", "rare", "हि", (p) => p.rp >= 4],
     ["hi8", "Poora Course", "hi", "Finish all 8 Hindi lessons", "Every Hindi lesson finished. Bahut badhiya!", "epic", "हि", (p) => p.done.length >= 8],
+    ["mr1", "Pahila Paul", "mr", "Finish your first Marathi lesson", "Finished a first Marathi lesson. Pahila paul, first step!", "common", "म", (p) => p.done.length >= 1],
+    ["mr4", "Chhan Chhan!", "mr", "Finish 4 Marathi lessons", "Four Marathi lessons done. Khup chhan!", "rare", "म", (p) => p.done.length >= 4],
+    ["mrrp", "Gappa Ready", "mr", "Keep a Marathi role-play going for 4 messages", "Kept a whole Marathi role-play going.", "rare", "म", (p) => p.rp >= 4],
+    ["mr8", "Lay Bhari", "mr", "Finish all 8 Marathi lessons", "Every Marathi lesson finished. Lay bhari!", "epic", "म", (p) => p.done.length >= 8],
+    ["bn1", "Prothom Dhap", "bn", "Finish your first Bengali lesson", "Finished a first Bengali lesson. Prothom dhap, first step!", "common", "বা", (p) => p.done.length >= 1],
+    ["bn4", "Khub Bhalo!", "bn", "Finish 4 Bengali lessons", "Four Bengali lessons done. Khub bhalo!", "rare", "বা", (p) => p.done.length >= 4],
+    ["bnrp", "Adda Ready", "bn", "Keep a Bengali role-play going for 4 messages", "Kept a whole Bengali role-play going.", "rare", "বা", (p) => p.rp >= 4],
+    ["bn8", "Darun!", "bn", "Finish all 8 Bengali lessons", "Every Bengali lesson finished. Darun!", "epic", "বা", (p) => p.done.length >= 8],
     ["es1", "¡Hola, Rookie!", "es", "Finish your first Spanish lesson", "Finished a first Spanish lesson.", "common", "Es", (p) => p.done.length >= 1],
     ["es4", "¡Muy Bien!", "es", "Finish 4 Spanish lessons", "Four Spanish lessons done. ¡Muy bien!", "rare", "Es", (p) => p.done.length >= 4],
     ["esrp", "Taco Talker", "es", "Keep a Spanish role-play going for 4 messages", "Kept a whole Spanish role-play going.", "rare", "Es", (p) => p.rp >= 4],
@@ -2704,7 +2714,7 @@ const PLAYERS = {
     ["st1", "First Focus", "study", "Finish a Study Hall focus session", "Finished a first focus session. Phone down, brain on.", "common", "St", (p) => (p.sessions || 0) >= 1],
     ["st5", "Study Buddy", "study", "Finish 5 Study Hall focus sessions", "Five focus sessions done. Professor Dad approves.", "rare", "St", (p) => (p.sessions || 0) >= 5],
     ["st600", "Ten-Hour Club", "study", "Focus for 10 hours in total in Study Hall", "Ten hours of focused study. That's dedication.", "epic", "St", (p) => (p.minutes || 0) >= 600],
-    ["globe", "Globe Trotter", "", "Finish every lesson in two languages", "Two whole courses finished. Très bien, ¡muy bien! and bahut badhiya!", "legendary", "", () => ["fr", "es", "hi"].filter(l => prog(l).done.length >= 8).length >= 2],
+    ["globe", "Globe Trotter", "", "Finish every lesson in two languages", "Two whole courses finished. Très bien, ¡muy bien! and bahut badhiya!", "legendary", "", () => ["fr", "es", "hi", "mr", "bn"].filter(l => prog(l).done.length >= 8).length >= 2],
   ];
   LANG_BADGES.forEach(([id, name, lang, todo, did, rar, glyph, test]) =>
     BADGES[id] = { id, name, lang, todo, did, rar, glyph, check: () => test(prog(lang || "fr")) });
@@ -2824,7 +2834,7 @@ const PLAYERS = {
         ? (b.lang === "study" ? `So far: ${p.sessions || 0} focus session${p.sessions === 1 ? "" : "s"} and ${p.minutes || 0} minutes of focus.`
           : b.lang === "math" ? `So far: ${p.done.length} of ${window.MATHS?.topics.length || 12} maths topics, and your longest coach chat was ${p.rp} message${p.rp === 1 ? "" : "s"}.`
           : `So far: ${p.done.length} of 8 ${name} lessons, and your longest ${name} role-play was ${p.rp} message${p.rp === 1 ? "" : "s"}.`)
-        : `So far: ${prog("fr").done.length} of 8 French, ${prog("es").done.length} of 8 Spanish and ${prog("hi").done.length} of 8 Hindi lessons.`} It unlocks by itself as you practise.</p>`;
+        : `So far: ${["fr", "es", "hi", "mr", "bn"].map(l => `${prog(l).done.length} of 8 ${window.LESSONS?.[l]?.name || l}`).join(", ")} lessons.`} It unlocks by itself as you practise.</p>`;
       h += `<p style="font-size:.85rem">${b.lang === "math" || b.lang === "study" ? "Learning badges show you've been practising. They aren't a school grade." : "Practice badges show you've been practising. They aren't a fluency certificate."}</p>`;
       btns = on ? `<button class="primary" data-act="share">Share</button><button class="ghost" data-act="close">Close</button>`
                 : `<button class="primary" data-act="practice">Practise now</button><button class="ghost" data-act="close">Not yet</button>`;
@@ -2999,7 +3009,7 @@ const PLAYERS = {
   $("beltDone").addEventListener("click", closeBelt);
   $("beltDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeBelt(); });
 
-  // ---------- Practice with Dad: beginner French and Hindi ----------
+  // ---------- Practice with Dad: beginner French, Spanish, Hindi, Marathi and Bengali ----------
   // Lessons and role-play scenes are hand-written (static/lessons.js). Role-plays use the
   // normal chat with a "practice" note, so every safety rule still applies.
   const L = window.LESSONS || {};
@@ -3020,6 +3030,8 @@ const PLAYERS = {
   const toldNoVoice = {};
   const MALE_LANG = {
     hi: [/hi-in-x-hi[de]/i, /Madhur/i, /Hemant/i, /Aarav/i, /Kunal/i],
+    mr: [/Manohar/i],
+    bn: [/Bashkar/i, /Pradeep/i],
     fr: [/fr-ca-x-ca[bd]/i, /fr-fr-x-fr[bd]/i, /Antoine/i, /Jean\b/i, /Thierry/i, /Henri/i, /R[ée]my/i, /\bPaul\b/i, /\bClaude\b/i, /Thomas/i, /Nicolas/i],
     es: [/es-us-x-esd/i, /es-es-x-ee[df]/i, /Jorge/i, /Ra[uú]l/i, /[AÁ]lvaro/i, /Pablo/i, /\bJuan\b/i, /Diego/i, /Gerardo/i],
   };
@@ -3032,7 +3044,8 @@ const PLAYERS = {
     return { v: near[0] || null, male:false };
   }
   function isEnglishReply(text, lang){
-    if (lang === "hi") return !/[\u0900-\u097F]/.test(text);              // no Devanagari at all
+    if (lang === "hi" || lang === "mr") return !/[\u0900-\u097F]/.test(text);   // no Devanagari at all
+    if (lang === "bn") return !/[\u0980-\u09FF]/.test(text);              // no Bengali script at all
     if (/\([^)]*\)/.test(text)) return false;                          // French/Spanish lines come with an (English) translation
     const en = (text.match(/\b(the|you|your|is|are|and|it|its|that|this|what|can|my|to|of|with|for|I|am|in|be|have|just|here|if|I'm|you're|don't)\b/gi) || []).length;
     const words = (text.match(/[A-Za-zÀ-ÿ']+/g) || []).length;
@@ -3099,7 +3112,9 @@ const PLAYERS = {
         return `<button class="lesson-btn${d ? " done" : ""}" type="button" data-lesson="${i}"><span class="n" aria-hidden="true">${d ? "✓" : i + 1}</span><span><b>${esc(ls.title)}</b><small${ls.p[0].r ? "" : ` lang="${langCur}"`}>${esc(ls.p[0].r || ls.p[0].t)}${d ? " · done" : ""}</small></span></button>`; }).join("")}</div>
       <p class="lang-sec"><span>Role-play with Dad</span><small>Chat in ${C.name}</small></p>
       <div class="scenes">${C.scenes.map(sc => `<button class="scene-btn" type="button" data-scene="${sc.id}"><b>${esc(sc.title)}</b><small>${esc(sc.who)}</small></button>`).join("")}</div>
-      ${langCur === "hi" ? `<p style="font-size:.85rem">Hindi is shown in Devanagari with Roman letters underneath. Type whichever you like.</p>` : ""}
+      ${langCur === "hi" || langCur === "mr" ? `<p style="font-size:.85rem">${esc(C.name)} is shown in Devanagari with Roman letters underneath. Type whichever you like.</p>` : ""}
+      ${langCur === "bn" ? `<p style="font-size:.85rem">Bengali is shown in Bengali script with Roman letters underneath. Type whichever you like.</p>` : ""}
+      ${C.review ? `<p style="font-size:.85rem"><b>New:</b> these family lessons are still being checked by fluent speakers. Words for relatives change from family to family, so ask your folks which ones they use.</p>` : ""}
       <p style="font-size:.85rem">Badges here are for practising, not proof of fluency. Dad's an AI and can slip up, so check anything important with a teacher or a fluent speaker.</p>`;
   }
   function renderLesson(i){

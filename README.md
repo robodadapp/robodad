@@ -390,8 +390,11 @@ Every look also has a slowly rotating centrepiece (`.spinner`), drawn as an inli
 - **Badges**: 9 practice-milestone badges (lessons done, a 4-message role-play, both courses).
   They unlock automatically, are stored only on the device, and are not a fluency certificate.
   No language is locked behind another.
+- **Family languages**: Hindi, Marathi and Bengali. Marathi and Bengali are "talk to your folks"
+  courses (home, food, elders, feelings, festivals) and show a note that fluent speakers are still
+  checking them. Tulu and others are collected as votes on the Learn page first.
 - **Safety**: every rule applies in practice mode; crisis keywords exist in French and Hindi, and
-  the AI crisis flag covers other languages. Marathi is planned once a fluent speaker can review it.
+  the AI crisis flag covers other languages, including Marathi and Bengali.
 
 ## Security
 

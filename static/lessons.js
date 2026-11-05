@@ -187,5 +187,130 @@
     ],
   };
 
-  window.LESSONS = { fr, es, hi };
+  // Marathi and Bengali: "talk to your folks" family courses. Phrases are for home:
+  // parents, grandparents and relatives, not tourist situations. New in v1.22 and
+  // still being checked by fluent speakers.
+  const mr = {
+    name: "Marathi", native: "मराठी", voice: "mr-IN", hello: "Namaskar", review: true,
+    lessons: [
+      { id:"greet", title:"Hellos at home", tip:"Marathi verbs care who's talking: a boy says aalo and bara, a girl says aale and bari.", p:[
+        { t:"नमस्कार!", r:"Namaskar!", e:"Hello! (respectful)" },
+        { t:"मी घरी आलो!", r:"Mi ghari aalo!", e:"I'm home! (girls: aale)" },
+        { t:"कसं काय?", r:"Kasa kay?", e:"How's it going? (casual)" },
+        { t:"मी बरा आहे.", r:"Mi bara aahe.", e:"I'm fine. (girls: bari)" },
+        { t:"शुभ रात्री!", r:"Shubh ratri!", e:"Good night!" } ] },
+      { id:"family", title:"Who's who", tip:"Dad's sister is Atya, Mom's sister is Mavshi. Mix them up and someone will correct you within seconds. Lovingly.", p:[
+        { t:"आई आणि बाबा", r:"Aai aani Baba", e:"Mom and Dad" },
+        { t:"आजी आणि आजोबा", r:"Aaji aani Ajoba", e:"Grandma and Grandpa" },
+        { t:"काका आणि आत्या", r:"Kaka aani Atya", e:"Dad's brother and Dad's sister" },
+        { t:"मामा आणि मावशी", r:"Mama aani Mavshi", e:"Mom's brother and Mom's sister" },
+        { t:"दादा आणि ताई", r:"Dada aani Tai", e:"Older brother and older sister" } ] },
+      { id:"food", title:"Food talk", tip:"Asking \"jevlis ka?\" is how Marathi families say I care about you. Expect a second helping.", p:[
+        { t:"तू जेवलीस का?", r:"Tu jevlis ka?", e:"Did you eat? (to Aai)" },
+        { t:"आज जेवायला काय आहे?", r:"Aaj jevayla kay aahe?", e:"What's for dinner today?" },
+        { t:"मला भूक लागली आहे.", r:"Mala bhook lagli aahe.", e:"I'm hungry." },
+        { t:"खूप छान झालंय!", r:"Khup chhan zalay!", e:"This turned out really good!" },
+        { t:"पुरे, पोट भरलं!", r:"Pure, pot bharla!", e:"Enough, I'm full!" } ] },
+      { id:"elders", title:"Talking to elders", tip:"Use tumhi with grandparents. Grandpa is \"kase aahat\", Grandma is \"kasha aahat\". Get it right and watch them smile.", p:[
+        { t:"आजोबा, तुम्ही कसे आहात?", r:"Ajoba, tumhi kase aahat?", e:"Grandpa, how are you?" },
+        { t:"आजी, तुम्ही कशा आहात?", r:"Aaji, tumhi kasha aahat?", e:"Grandma, how are you?" },
+        { t:"तुम्ही जेवलात का?", r:"Tumhi jevlat ka?", e:"Did you eat? (respectful)" },
+        { t:"मला मदत कराल का?", r:"Mala madat karal ka?", e:"Could you help me? (respectful)" },
+        { t:"आशीर्वाद द्या.", r:"Aashirvaad dya.", e:"Please bless me." } ] },
+      { id:"feel", title:"How you feel", tip:"In Marathi sleep and boredom \"come\" to you: mala zop yetey. Very relatable.", p:[
+        { t:"मी खूश आहे.", r:"Mi khush aahe.", e:"I'm happy." },
+        { t:"मला झोप येतेय.", r:"Mala zop yetey.", e:"I'm sleepy." },
+        { t:"मी थकलो आहे.", r:"Mi thaklo aahe.", e:"I'm tired. (girls: thakle)" },
+        { t:"मला कंटाळा आलाय.", r:"Mala kantala aalay.", e:"I'm bored." },
+        { t:"काही टेन्शन नाही!", r:"Kahi tension nahi!", e:"No worries!" } ] },
+      { id:"plans", title:"Coming and going", tip:"Always tell Aai where you're going and when you'll be back. In any language. Trust me.", p:[
+        { t:"मी बाहेर जातोय.", r:"Mi baher jatoy.", e:"I'm heading out. (girls: jatey)" },
+        { t:"आज मला उशीर होईल.", r:"Aaj mala ushir hoil.", e:"I'll be late today." },
+        { t:"मी लवकर येतो.", r:"Mi lavkar yeto.", e:"I'll be back soon. (girls: yete)" },
+        { t:"शाळा छान होती.", r:"Shala chhan hoti.", e:"School was good." },
+        { t:"उद्या माझी परीक्षा आहे.", r:"Udya mazi pariksha aahe.", e:"I have a test tomorrow." } ] },
+      { id:"heart", title:"Saying it", tip:"Ask a grandparent what they did when they were little. Clear your schedule. Bring snacks.", p:[
+        { t:"मला माफ करा.", r:"Mala maaf kara.", e:"I'm sorry. (respectful)" },
+        { t:"धन्यवाद!", r:"Dhanyavaad!", e:"Thank you!" },
+        { t:"मला तुमची आठवण येते.", r:"Mala tumchi aathvan yete.", e:"I miss you. (respectful)" },
+        { t:"आई, माझं तुझ्यावर खूप प्रेम आहे.", r:"Aai, maza tujhyavar khup prem aahe.", e:"Mom, I love you so much." },
+        { t:"तुम्ही लहान असताना काय करायचात?", r:"Tumhi lahan astana kay karaychat?", e:"What did you do when you were little?" } ] },
+      { id:"fest", title:"Festivals", tip:"Shubhechha means best wishes and works for almost every festival. Gudi Padwa is the Marathi new year, in spring.", p:[
+        { t:"दिवाळीच्या हार्दिक शुभेच्छा!", r:"Diwalichya hardik shubhechha!", e:"Happy Diwali!" },
+        { t:"गुढीपाडव्याच्या हार्दिक शुभेच्छा!", r:"Gudhipadvyachya hardik shubhechha!", e:"Happy Gudi Padwa! (Marathi new year)" },
+        { t:"गणपती बाप्पा मोरया!", r:"Ganpati Bappa Morya!", e:"Hail Ganpati Bappa! (Ganeshotsav)" },
+        { t:"वाढदिवसाच्या हार्दिक शुभेच्छा!", r:"Vaadhdivsachya hardik shubhechha!", e:"Happy birthday!" },
+        { t:"तिळगूळ घ्या, गोड गोड बोला!", r:"Tilgul ghya, god god bola!", e:"Have a sesame sweet and speak sweetly! (Sankranti)" } ] },
+    ],
+    scenes: [
+      { id:"home", title:"Home from school", who:"Dad's your Aai", open:"आलं का माझं बाळ? शाळा कशी होती? (Aala ka maza baal? Shala kashi hoti? = Is my little one home? How was school?)", hints:["Mi ghari aalo!", "Shala chhan hoti.", "Aaj jevayla kay aahe?"] },
+      { id:"aaji", title:"Phone call with Aaji", who:"Dad's your Aaji on the phone", open:"हॅलो बाळा! कसं काय? जेवण झालं का? (Hello bala! Kasa kay? Jevan zala ka? = Hello dear! How's it going? Have you eaten?)", hints:["Aaji, tumhi kasha aahat?", "Mi bara aahe.", "Mala tumchi aathvan yete."] },
+      { id:"diwali", title:"Diwali visit", who:"Dad's your Kaka", open:"अरे वा, आलात सगळे! दिवाळीच्या हार्दिक शुभेच्छा! (Are va, aalat sagle! Diwalichya hardik shubhechha! = Oh wow, you've all come! Happy Diwali!)", hints:["Diwalichya hardik shubhechha!", "Aashirvaad dya.", "Dhanyavaad!"] },
+      { id:"dinner", title:"Dinner table", who:"Dad's your Baba", open:"चला, जेवायला बसा! आज वरण-भात आहे. (Chala, jevayla basa! Aaj varan-bhaat aahe. = Come, sit down to eat! It's dal-rice today.)", hints:["Mala bhook lagli aahe.", "Khup chhan zalay!", "Pure, pot bharla!"] },
+      { id:"free", title:"Just chat", who:"Dad asks about your day", open:"नमस्कार! आज दिवस कसा होता? (Namaskar! Aaj divas kasa hota? = Hello! How was your day today?)", hints:["Mi khush aahe.", "Mala kantala aalay.", "Udya mazi pariksha aahe."] },
+    ],
+  };
+
+  const bn = {
+    name: "Bengali", native: "বাংলা", voice: "bn-IN", hello: "Nomoshkar", review: true,
+    lessons: [
+      { id:"greet", title:"Hellos at home", tip:"Bengali verbs don't change for boys or girls. One less thing to worry about. You're welcome.", p:[
+        { t:"নমস্কার!", r:"Nomoshkar!", e:"Hello! (respectful)" },
+        { t:"আমি বাড়ি এসে গেছি!", r:"Ami bari eshe gechhi!", e:"I'm home!" },
+        { t:"কী খবর?", r:"Ki khobor?", e:"What's up?" },
+        { t:"আমি ভালো আছি।", r:"Ami bhalo achhi.", e:"I'm fine." },
+        { t:"শুভ রাত্রি!", r:"Shubho ratri!", e:"Good night!" } ] },
+      { id:"family", title:"Who's who", tip:"Many Bangladeshi families say Ammu, Abbu, Dadi and Nani instead. Ask your folks which words your family uses.", p:[
+        { t:"মা আর বাবা", r:"Ma aar Baba", e:"Mom and Dad" },
+        { t:"ঠাকুমা আর দিদিমা", r:"Thakuma aar Didima", e:"Dad's mom and Mom's mom" },
+        { t:"কাকু আর পিসি", r:"Kaku aar Pishi", e:"Dad's brother and Dad's sister" },
+        { t:"মামা আর মাসি", r:"Mama aar Mashi", e:"Mom's brother and Mom's sister" },
+        { t:"দাদা আর দিদি", r:"Dada aar Didi", e:"Older brother and older sister" } ] },
+      { id:"food", title:"Food talk", tip:"\"Khide peyechhe\" means hunger has found you. Very dramatic. Very accurate.", p:[
+        { t:"তুমি খেয়েছ?", r:"Tumi kheyechho?", e:"Did you eat?" },
+        { t:"আজ কী রান্না হয়েছে?", r:"Aaj ki ranna hoyechhe?", e:"What got cooked today?" },
+        { t:"আমার খিদে পেয়েছে।", r:"Amar khide peyechhe.", e:"I'm hungry." },
+        { t:"খুব ভালো হয়েছে!", r:"Khub bhalo hoyechhe!", e:"This turned out really good!" },
+        { t:"আর না, পেট ভরে গেছে!", r:"Aar na, pet bhore gechhe!", e:"No more, I'm full!" } ] },
+      { id:"elders", title:"Talking to elders", tip:"Most kids say tumi to Ma, Baba and grandparents. Apni is for formal elders, like a teacher or a guest.", p:[
+        { t:"তুমি কেমন আছ?", r:"Tumi kemon achho?", e:"How are you?" },
+        { t:"আপনি কেমন আছেন?", r:"Apni kemon achhen?", e:"How are you? (formal)" },
+        { t:"আমাকে একটু সাহায্য করবে?", r:"Amake ektu shahajjo korbe?", e:"Can you help me a little?" },
+        { t:"আশীর্বাদ করো।", r:"Ashirbad koro.", e:"Please bless me." },
+        { t:"দাদু, একটা গল্প বলো না!", r:"Dadu, ekta golpo bolo na!", e:"Grandpa, tell me a story!" } ] },
+      { id:"feel", title:"How you feel", tip:"Darun means awesome. Use it often. Uncles will be delighted.", p:[
+        { t:"আমি খুশি।", r:"Ami khushi.", e:"I'm happy." },
+        { t:"আমার ঘুম পাচ্ছে।", r:"Amar ghum pachchhe.", e:"I'm sleepy." },
+        { t:"আমি ক্লান্ত।", r:"Ami klanto.", e:"I'm tired." },
+        { t:"আমার বোর লাগছে।", r:"Amar bor lagchhe.", e:"I'm bored." },
+        { t:"দারুণ!", r:"Darun!", e:"Awesome!" } ] },
+      { id:"plans", title:"Coming and going", tip:"Ektu means a little, and it softens everything. \"Ektu baire jachchhi\" sounds much nicer to Ma.", p:[
+        { t:"আমি একটু বাইরে যাচ্ছি।", r:"Ami ektu baire jachchhi.", e:"I'm heading out for a bit." },
+        { t:"আজ আমার দেরি হবে।", r:"Aaj amar deri hobe.", e:"I'll be late today." },
+        { t:"আমি তাড়াতাড়ি ফিরব।", r:"Ami taratari phirbo.", e:"I'll be back soon." },
+        { t:"স্কুল ভালো ছিল।", r:"School bhalo chhilo.", e:"School was good." },
+        { t:"কাল আমার পরীক্ষা আছে।", r:"Kaal amar porikkha achhe.", e:"I have a test tomorrow." } ] },
+      { id:"heart", title:"Saying it", tip:"Ask a grandparent what they did when they were little. Clear your schedule. Bring snacks.", p:[
+        { t:"আমাকে ক্ষমা করো।", r:"Amake khoma koro.", e:"Sorry, please forgive me." },
+        { t:"ধন্যবাদ!", r:"Dhonnobad!", e:"Thank you!" },
+        { t:"তোমার কথা খুব মনে পড়ে।", r:"Tomar kotha khub mone pore.", e:"I miss you a lot." },
+        { t:"মা, আমি তোমাকে খুব ভালোবাসি।", r:"Ma, ami tomake khub bhalobashi.", e:"Mom, I love you so much." },
+        { t:"তুমি ছোটবেলায় কী করতে?", r:"Tumi chhotobelay ki korte?", e:"What did you do when you were little?" } ] },
+      { id:"fest", title:"Festivals", tip:"After Durga Puja, everyone says Shubho Bijoya and touches elders' feet. Sweets follow. Lots of sweets.", p:[
+        { t:"শুভ শারদীয়া!", r:"Shubho Sharodiya!", e:"Happy Durga Puja!" },
+        { t:"শুভ বিজয়া!", r:"Shubho Bijoya!", e:"Happy Bijoya! (after Durga Puja)" },
+        { t:"শুভ নববর্ষ!", r:"Shubho Noboborsho!", e:"Happy New Year! (Poila Boishakh)" },
+        { t:"ঈদ মোবারক!", r:"Eid Mubarak!", e:"Happy Eid!" },
+        { t:"শুভ জন্মদিন!", r:"Shubho Jonmodin!", e:"Happy birthday!" } ] },
+    ],
+    scenes: [
+      { id:"home", title:"Home from school", who:"Dad's your Ma", open:"এসেছিস? স্কুল কেমন হল? (Eshechhish? School kemon holo? = You're back? How was school?)", hints:["Ami bari eshe gechhi!", "School bhalo chhilo.", "Aaj ki ranna hoyechhe?"] },
+      { id:"dadu", title:"Phone call with Dadu", who:"Dad's your Dadu on the phone", open:"হ্যালো সোনা! কেমন আছিস? খেয়েছিস? (Hello shona! Kemon achhish? Kheyechhish? = Hello sweetheart! How are you? Have you eaten?)", hints:["Ami bhalo achhi.", "Tumi kemon achho?", "Tomar kotha khub mone pore."] },
+      { id:"puja", title:"Durga Puja visit", who:"Dad's your Mama", open:"আরে, এসে গেছিস! শুভ শারদীয়া! ঠাকুর দেখতে যাবি? (Aare, eshe gechhish! Shubho Sharodiya! Thakur dekhte jabi? = Hey, you made it! Happy Puja! Want to go pandal-hopping?)", hints:["Shubho Sharodiya!", "Darun!", "Ashirbad koro."] },
+      { id:"dinner", title:"Dinner table", who:"Dad's your Baba", open:"চল, খেতে বস! আজ মাছের ঝোল হয়েছে। (Chol, khete bosh! Aaj maachher jhol hoyechhe. = Come, sit down to eat! There's fish curry today.)", hints:["Amar khide peyechhe.", "Khub bhalo hoyechhe!", "Aar na, pet bhore gechhe!"] },
+      { id:"free", title:"Just chat", who:"Dad asks about your day", open:"নমস্কার! আজ তোমার দিন কেমন কাটল? (Nomoshkar! Aaj tomar din kemon katlo? = Hello! How did your day go?)", hints:["Ami khushi.", "Amar ghum pachchhe.", "Kaal amar porikkha achhe."] },
+    ],
+  };
+
+  window.LESSONS = { fr, es, hi, mr, bn };
 })();

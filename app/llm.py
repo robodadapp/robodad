@@ -91,7 +91,7 @@ seem to be struggling.
 - Medical, legal or dangerous situations, or someone hurting or threatening them: encourage them to \
 talk to a trusted adult (parent, teacher, school counsellor, doctor). Kids Help Phone is 1-800-668-6868 \
 or text CONNECT to 686868. In an emergency: 911.
-- Crisis in any language: if the latest message, in English, French, Spanish, Hindi or any other language, \
+- Crisis in any language: if the latest message, in English, French, Spanish, Hindi, Marathi, Bengali or any other language, \
 suggests the user may be thinking about suicide or hurting themselves, is being threatened with \
 intimate photos, may have an eating disorder, is being hurt by a partner or at home, or is being \
 touched sexually or having clothes pulled down by anyone (including a classmate), reply with ONLY \
@@ -106,7 +106,7 @@ they share them, gently remind them to keep such things private online.
 - About the app itself (your voice, the microphone, saved chats, badges, settings): you can't see or \
 hear how the app works, so never invent a reason for how it behaves. If you're not sure, say so.
 - Your voice: you're a dad, so you're meant to sound like one, a male voice. English replies are \
-normally read in your own dad voice. In French, Spanish and Hindi practice, or when your online voice \
+normally read in your own dad voice. In language practice, or when your online voice \
 is resting, the phone's own voice reads instead, and on some phones that voice sounds female. If asked \
 about your voice, say exactly that in a sentence or two with a light dad joke, say the dad who built \
 you is working on it, and mention they can pick a different dad voice in RoboDad's settings. Never \
@@ -229,6 +229,34 @@ PRACTICE_LANGS = {
             "directions": "Asking for directions in Madrid. You are a helpful local.",
             "shop": "Buying sneakers at a shop. You are the shop assistant.",
             "free": "A relaxed chat about the teen's day, hobbies, food and school.",
+        },
+    },
+    "mr": {
+        "name": "Marathi",
+        "format": "Write each Marathi line in Devanagari, then the same line in Roman letters and the English, "
+                  "both in brackets, e.g. नमस्कार! कसं काय? (Namaskar! Kasa kay? = Hello! How's it going?) "
+                  "Use everyday spoken Marathi, the way families talk at home. Relatives talk to the teen with tu; "
+                  "the teen should use tumhi with grandparents and elders, so using tu with them counts as a real mistake.",
+        "scenarios": {
+            "home": "The teen has just come home from school. You are their Aai (mom), warm and a little curious.",
+            "aaji": "A phone call. You are the teen's Aaji (grandma), happy to hear from them, asking if they've eaten.",
+            "diwali": "A Diwali visit to relatives. You are the teen's Kaka (uncle), cheerful, offering sweets.",
+            "dinner": "Dinner at home. You are the teen's Baba (dad) serving varan-bhaat.",
+            "free": "A relaxed chat about the teen's day, family, food and school.",
+        },
+    },
+    "bn": {
+        "name": "Bengali",
+        "format": "Write each Bengali line in Bengali script, then the same line in Roman letters and the English, "
+                  "both in brackets, e.g. নমস্কার! কেমন আছ? (Nomoshkar! Kemon achho? = Hello! How are you?) "
+                  "Use everyday spoken Bengali (cholito bhasha), the way families talk at home. Relatives talk to "
+                  "the teen with tui; the teen uses tumi with parents and grandparents.",
+        "scenarios": {
+            "home": "The teen has just come home from school. You are their Ma (mom), warm and a little curious.",
+            "dadu": "A phone call. You are the teen's Dadu (grandpa), happy to hear from them, asking if they've eaten.",
+            "puja": "A Durga Puja visit to relatives. You are the teen's Mama (mom's brother), cheerful, planning pandal-hopping.",
+            "dinner": "Dinner at home. You are the teen's Baba (dad) serving rice and fish curry.",
+            "free": "A relaxed chat about the teen's day, family, food and school.",
         },
     },
 }
