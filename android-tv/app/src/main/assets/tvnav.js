@@ -24,9 +24,24 @@
     return s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity || '1') > 0.05;
   }
 
+  // An open popup (age check, dialog, menu) keeps the arrows inside it.
+  function openPopup() {
+    var c = document.querySelectorAll('dialog[open], [aria-modal="true"], [role="dialog"], .overlay:not([hidden]), .modal.open, .side.open');
+    for (var i = c.length - 1; i >= 0; i--) if (visible(c[i]) && c[i].querySelector(SEL)) return c[i];
+    return null;
+  }
+  // Skip anything hidden behind something else on screen.
+  function onTop(e) {
+    var r = e.getBoundingClientRect();
+    var x = Math.min(Math.max(r.left + r.width / 2, 0), innerWidth - 1), y = Math.min(Math.max(r.top + r.height / 2, 0), innerHeight - 1);
+    if (r.bottom < 0 || r.top > innerHeight) return true; // off screen: can't test, allow (it will scroll into view)
+    var hit = document.elementFromPoint(x, y);
+    return !hit || hit === e || e.contains(hit) || hit.contains(e) || (hit.closest && hit.closest('label') && hit.closest('label').contains(e));
+  }
   function candidates() {
-    var all = document.querySelectorAll(SEL), out = [];
-    for (var i = 0; i < all.length; i++) if (visible(all[i])) out.push(all[i]);
+    var scope = openPopup() || document;
+    var all = scope.querySelectorAll(SEL), out = [];
+    for (var i = 0; i < all.length; i++) if (visible(all[i]) && (scope !== document || onTop(all[i]))) out.push(all[i]);
     return out;
   }
 
@@ -35,10 +50,12 @@
   function move(key) {
     var cur = document.activeElement;
     if (!cur || cur === document.body || cur === document.documentElement || !visible(cur)) cur = null;
+    var pop = openPopup();
+    if (cur && pop && !pop.contains(cur)) cur = null;
     var list = candidates();
     if (!list.length) return false;
     if (!cur) {
-      var first = document.querySelector('[data-tv-first]') || list[0];
+      var first = (!openPopup() && document.querySelector('[data-tv-first]')) || list[0];
       first.focus();
       return true;
     }
@@ -78,7 +95,6 @@
       t.click(); e.preventDefault(); return;
     }
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.key) < 0) return;
-    if (t && t.tagName === 'SELECT') return;
     if (typingIn(t)) {
       var v = t.value || '';
       try {
@@ -89,6 +105,7 @@
       } catch (x) { }
     }
     if (move(e.key)) { e.preventDefault(); e.stopPropagation(); return; }
+    if (openPopup()) { e.preventDefault(); return; }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       window.scrollBy({ top: (e.key === 'ArrowDown' ? 1 : -1) * window.innerHeight * 0.4, behavior: 'smooth' });
       e.preventDefault();
