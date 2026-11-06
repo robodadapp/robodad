@@ -56,10 +56,25 @@
   #hMusic .word { right: auto; bottom: auto; font-size: 2.2vh; color: #ffd0d4; background: rgba(0,0,0,.35); }
   #hMusic .lbl { bottom: auto; top: -5vh; }
 
+  /* Siddhant's corner: crates under the desk */
+  .shelf { position: absolute; left: 60.94%; top: 73.6%; width: 33.33%; height: 23.6%; display: grid;
+    grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 1vh .55vw; z-index: 4; }
+  .crate { position: relative; border: .25vh solid #5a1015; border-radius: .9vh; padding: .9vh .5vw .7vh; color: #fff; font: inherit; text-align: left;
+    background: linear-gradient(160deg, #2a0b0f 0%, #120507 70%); display: flex; flex-direction: column; outline: none; cursor: pointer;
+    box-shadow: inset 0 .4vh 0 rgba(255,255,255,.06), 0 .6vh 1.2vh rgba(0,0,0,.6); transition: transform .2s cubic-bezier(.2,1.4,.4,1), box-shadow .2s; }
+  .crate:before { content: ""; position: absolute; left: 8%; right: 8%; top: 46%; height: .35vh; background: #3a0b10; border-radius: 1vh; }
+  .crate .em { font-size: 3.1vh; line-height: 1; }
+  .crate b { margin-top: auto; font-size: 1.55vh; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crate small { font-size: 1.2vh; color: #ff8a93; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+  .crate.hot-pick { background: linear-gradient(150deg, #B00813, #4A0509 80%); border-color: #FF2D3D; }
+  .crate.bday { background: linear-gradient(135deg, #5B2A6E, #C7566C); border-color: #FFC83D; }
+  .crate:focus { outline: none !important; z-index: 8; transform: scale(1.18); box-shadow: 0 0 0 .4vh #FF2D3D, 0 0 3vh rgba(255,45,61,.7); }
+
   /* RoboDad himself */
   #hBot { left: 37.24%; top: 33.33%; width: 23.44%; height: 62.96%; border-radius: 3vh; }
   #hBot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-  #hBot:focus { box-shadow: none; transform: scale(1.04); }
+  #hBot { z-index: 6; }
+  #hBot:focus { box-shadow: none; transform: scale(1.04); z-index: 7; }
   #hBot:focus .bot-glow { opacity: 1; }
   #hBot .lbl { bottom: auto; top: 44%; left: 96%; font-size: 2.4vh; transform: translateX(-1vw); }
   #hBot:focus .lbl { transform: translateX(0); }
@@ -392,9 +407,6 @@
           <path d="M48 322 L112 300 M402 322 L338 300" stroke="#FF2D3D" stroke-width="4" stroke-linecap="round"/>
           <!-- head -->
           <g class="nod">
-            <line x1="225" y1="22" x2="225" y2="58" stroke="#000" stroke-width="8"/>
-            <line x1="225" y1="22" x2="225" y2="58" stroke="url(#joint)" stroke-width="4"/>
-            <circle class="antenna" cx="225" cy="18" r="13" fill="#FF2D3D" stroke="#000" stroke-width="4"/>
             <path d="M112 128 Q114 56 225 50 Q336 56 338 128 L342 196 Q338 244 300 252 L150 252 Q112 244 108 196 Z" fill="url(#armor)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
             <path d="M140 84 Q225 50 310 84" fill="none" stroke="url(#gloss)" stroke-width="9" stroke-linecap="round"/>
             <path d="M225 54 L225 132" stroke="#000" stroke-width="3" opacity=".6"/>
@@ -421,14 +433,11 @@
       <span class="lbl">Talk to RoboDad</span>
     </button>
 
-    <div class="hint" id="hint">▼ more below</div>
+    <div class="shelf" id="corner"></div>
+    <div class="hint" id="hint">▼ all apps</div>
   </div>
 
   <div class="below">
-    <section>
-      <h3><i>■</i> <span id="cornerTitle">Siddhant's corner</span></h3>
-      <div class="row" id="corner"></div>
-    </section>
     <section>
       <h3><i>■</i> Your apps</h3>
       <div class="row" id="apps"></div>
@@ -573,22 +582,21 @@
   $('noteClose').addEventListener('click', closeNote);
 
   // ---- rows below ----
-  function pickTile(p, cls) {
+  function crate(p, cls) {
     var b = document.createElement('button');
-    b.className = 'tile pick' + (cls ? ' ' + cls : '');
-    b.innerHTML = '<span class="via"></span><span class="em"></span><b></b><small></small>';
-    b.querySelector('.via').textContent = p.via || (p.yt ? 'YouTube' : 'RoboDad');
+    b.className = 'crate' + (cls ? ' ' + cls : '');
+    b.innerHTML = '<span class="em"></span><b></b><small></small>';
     b.querySelector('.em').textContent = p.em;
     b.querySelector('b').textContent = p.title;
-    b.querySelector('small').textContent = p.sub;
+    b.querySelector('small').textContent = p.via || (p.yt ? 'YouTube' : 'RoboDad');
     b.addEventListener('click', function () { p.action ? p.action() : p.yt ? youtube(p.yt) : ask(p.ask); });
     return b;
   }
   function buildCorner() {
     var corner = $('corner'); corner.textContent = '';
-    if (isBirthday) corner.appendChild(pickTile({ em: '🎂', title: 'Happy 13th Birthday!', sub: "There's a note from Dad", via: 'From Dad', action: openNote }, 'bday'));
-    corner.appendChild(pickTile({ em: D.em, title: D.t, sub: D.x, via: "Today's challenge · " + D.k, ask: D.ask }, 'daily'));
-    CORNER.forEach(function (p) { corner.appendChild(pickTile(p)); });
+    if (isBirthday) corner.appendChild(crate({ em: '🎂', title: 'Note from Dad', via: 'Birthday', action: openNote }, 'bday'));
+    else corner.appendChild(crate({ em: D.em, title: D.t, via: 'Today', ask: D.ask }, 'hot-pick'));
+    CORNER.forEach(function (p) { corner.appendChild(crate(p)); });
     document.body.classList.toggle('birthday', isBirthday);
   }
   buildCorner();
