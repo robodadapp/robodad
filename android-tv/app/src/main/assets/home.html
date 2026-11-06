@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RoboDad TV</title>
 <style>
+  @font-face { font-family: "RD Display"; src: url("oswald-600.woff2") format("woff2"); font-weight: 600; font-display: block; }
   :root {
     --bg: #070709; --ink: #F6F3F3; --muted: #B9A9AB;
     --red: #E50914; --red2: #FF2D3D; --deep: #7A0A12; --gold: #FFC83D;
@@ -30,14 +31,14 @@
   .hot .word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 2.6vh; color: #fff; }
 
   /* wall TV (Netflix) */
-  #hTv { left: 30%; top: 11.48%; width: 31.67%; height: 31.85%; border-radius: .6vh; }
+  #hTv { left: 30%; top: 14.81%; width: 31.67%; height: 31.85%; border-radius: .6vh; }
   #hTv img { inset: 0; width: 100%; height: 100%; border-radius: .4vh; }
   #hTv .scan { position: absolute; inset: 0; border-radius: .4vh; background: linear-gradient(180deg, transparent 0 45%, rgba(255,255,255,.10) 50%, transparent 55% 100%);
     background-size: 100% 300%; animation: scan 5s linear infinite; pointer-events: none; }
   #hTv .lbl { bottom: auto; top: -5vh; }
 
   /* wall art (Disney+) */
-  #hArt { left: 75.94%; top: 20.56%; width: 11.67%; height: 20.74%; border-radius: 50%; background: #0a3140 center / cover no-repeat; overflow: hidden; }
+  #hArt { left: 75.94%; top: 20.19%; width: 11.67%; height: 20.74%; border-radius: 50%; background: #0a3140 center / cover no-repeat; overflow: hidden; }
   #hArt:focus { border-radius: 50%; }
   #hArt img { left: 0; top: 50%; width: 100%; height: auto; aspect-ratio: 16 / 9; transform: translateY(-50%); object-fit: contain; border-radius: 0; }
   #hArt .glare { border-radius: 50%; }
@@ -78,7 +79,8 @@
   /* screens: Netflix on a black TV, YouTube on a dark laptop desktop */
   .hot .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: inherit; overflow: hidden; }
   #hTv .screen { background: radial-gradient(60% 70% at 50% 50%, #1a0204, #000 70%); }
-  #hTv .screen img { inset: auto; position: static; height: 64%; width: auto; object-fit: contain; }
+  #hTv .screen { align-items: flex-start; justify-content: flex-start; padding: 5% 0 0 9%; }
+  #hTv .screen img { inset: auto; position: static; height: 44%; width: auto; object-fit: contain; }
   .desk { background: radial-gradient(80% 90% at 30% 20%, #232838, #0b0c11 70%); }
   .desk .menubar { position: absolute; left: 0; right: 0; top: 0; height: 7%; background: rgba(255,255,255,.08); }
   .desk .dock { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); display: flex; gap: .25vw; padding: .3vh .4vw; border-radius: .6vh; background: rgba(255,255,255,.12); }
@@ -97,6 +99,7 @@
   #hTubi img, #hTubi .sheen { animation-delay: 1.6s; } #hMusic img, #hMusic .note, #hMusic .sheen { animation-delay: 4s; }
   .hot:not(#hTv):not(#hLap):not(#hArt):not(#hBox):not(#hTubi):not(#hMusic) .sheen { display: none; }
   .hot:focus .sheen { display: none; }
+  #hMusic .sheen { top: 78%; bottom: 3%; left: 6%; }
 
   /* selected: each spot does its own thing */
   @keyframes tvOn { 0% { transform: scale(1, .02); filter: brightness(3) } 45% { transform: scale(1, 1.06); filter: brightness(1.6) } 100% { transform: none; filter: none } }
@@ -119,7 +122,7 @@
   #hBot:focus .core { animation-duration: .6s; }
 
   /* window with Toronto's live weather */
-  .window { position: absolute; left: 63.65%; top: 12.04%; width: 6.77%; height: 30.56%; z-index: 1; }
+  .window { position: absolute; left: 63.8%; top: 12.96%; width: 6.77%; height: 31.48%; z-index: 1; }
   .window .sky { position: absolute; inset: 0; overflow: hidden; border-radius: .4vh; background: linear-gradient(#4f8fd8, #9fd0f5); transition: background 2s; }
   .window .pane { position: absolute; inset: 0; border: .7vh solid #2a2a30; border-radius: .6vh; box-shadow: inset 0 0 0 .2vh #000, 0 .8vh 2vh rgba(0,0,0,.6);
     background: linear-gradient(90deg, transparent calc(50% - .25vh), #2a2a30 calc(50% - .25vh) calc(50% + .25vh), transparent calc(50% + .25vh)),
@@ -153,15 +156,41 @@
   .sky.storm .flash { animation: flash 7s linear infinite; }
   .sky.fog:after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, rgba(220,225,230,.75) 60%); }
 
+
+  /* one type system: Oswald for headings and labels, Roboto for reading */
+  .hud h1, .clock b, .bubble b, .hot .lbl, .crate b, .crate small, .window .temp, section h3, #note h2, #note button, #toast { font-family: "RD Display", "Roboto", sans-serif; font-weight: 600; }
+  .hud h1 { font-size: 5vh; letter-spacing: .01em; text-transform: uppercase; }
+  .hud p, .clock span { font-size: 2vh; color: var(--muted); letter-spacing: .04em; }
+  .clock b { font-size: 4.8vh; letter-spacing: .02em; }
+  .bubble b, .hot .lbl, .crate small, .window .temp, section h3 { text-transform: uppercase; letter-spacing: .12em; }
+  .hot .lbl { font-size: 1.9vh; padding: .6vh 1.1vw; border-width: .22vh; background: #0b0b0ee6; }
+  .bubble { font-size: 2.05vh; }
+  .vignette { position: absolute; inset: 0; pointer-events: none; z-index: 3;
+    background: radial-gradient(120% 100% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); }
+
+  /* crates: real wooden crates on the floor under the desk */
+  .crate { border: .3vh solid #1a0d07; border-radius: .4vh; padding: .9vh .55vw .7vh;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0) 0 31%, rgba(0,0,0,.55) 31% 34%, rgba(0,0,0,0) 34% 64%, rgba(0,0,0,.55) 64% 67%, rgba(0,0,0,0) 67%),
+      linear-gradient(90deg, rgba(0,0,0,.45) 0 5%, transparent 5% 95%, rgba(0,0,0,.45) 95%),
+      linear-gradient(160deg, #4a2a1a, #2b170d 70%);
+    box-shadow: inset 0 .3vh 0 rgba(255,255,255,.07), 0 1vh 1.6vh rgba(0,0,0,.75); }
+  .crate:before { display: none; }
+  .crate b { font-size: 1.75vh; letter-spacing: .03em; text-transform: uppercase; color: #f3e6dc; text-shadow: 0 .2vh 0 #000; }
+  .crate small { font-size: 1.15vh; color: #ff5a66; }
+  .crate.hot-pick { background:
+      linear-gradient(180deg, rgba(0,0,0,0) 0 31%, rgba(0,0,0,.45) 31% 34%, rgba(0,0,0,0) 34% 64%, rgba(0,0,0,.45) 64% 67%, rgba(0,0,0,0) 67%),
+      linear-gradient(160deg, #8a0a14, #3a0408 75%); border-color: #FF2D3D; }
+
   /* RoboDad himself */
-  #hBot { left: 37.24%; top: 33.33%; width: 23.44%; height: 62.96%; border-radius: 3vh; }
+  #hBot { left: 36.07%; top: 27.04%; width: 25.78%; height: 69.26%; border-radius: 3vh; }
   #hBot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   #hBot { z-index: 6; }
   #hBot:focus { box-shadow: none; transform: scale(1.04); z-index: 7; }
   #hBot:focus .bot-glow { opacity: 1; }
   #hBot .lbl { bottom: auto; top: 44%; left: 96%; font-size: 2.4vh; transform: translateX(-1vw); }
   #hBot:focus .lbl { transform: translateX(0); }
-  .bot-glow { opacity: .35; transition: opacity .3s; }
+  .bot-glow { opacity: .6; transition: opacity .3s; }
 
   /* speech bubble */
   .bubble { position: absolute; left: 14.6%; top: 17%; width: 13.6%; padding: 2vh 1.4vw; background: #111114ee; border: .3vh solid var(--red2);
@@ -250,7 +279,7 @@
   .neon { animation: neon 7s infinite; }
   .steam path { animation: steam 3s ease-out infinite; }
   .steam path:nth-child(2) { animation-delay: 1s } .steam path:nth-child(3) { animation-delay: 2s }
-  .sweep { position: absolute; top: 0; bottom: 0; width: 18%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+  .sweep { display: none; position: absolute; top: 0; bottom: 0; width: 18%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
     animation: sweep 9s ease-in-out infinite; pointer-events: none; }
   .ring { animation: spin 18s linear infinite; transform-box: fill-box; transform-origin: center; }
   .hat { display: none; } body.birthday .hat { display: inline; }
@@ -298,12 +327,15 @@
         <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1a1d"/><stop offset=".3" stop-color="#2a1214"/><stop offset="1" stop-color="#140809"/></linearGradient>
         <linearGradient id="alu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5f68"/><stop offset=".5" stop-color="#3a3d44"/><stop offset="1" stop-color="#24262b"/></linearGradient>
         <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4d55"/><stop offset="1" stop-color="#2c2e34"/></linearGradient>
-        <linearGradient id="boxFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c79563"/><stop offset="1" stop-color="#9c6d44"/></linearGradient>
-        <linearGradient id="boxTop" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e0b787"/><stop offset="1" stop-color="#cfa272"/></linearGradient>
-        <linearGradient id="boxSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7f5634"/><stop offset="1" stop-color="#5e3d22"/></linearGradient>
-        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".5" stop-color="#d4a23a"/><stop offset="1" stop-color="#8a6214"/></linearGradient>
+        <linearGradient id="boxFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d5d40"/><stop offset="1" stop-color="#553c26"/></linearGradient>
+        <linearGradient id="boxTop" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#93704d"/><stop offset="1" stop-color="#7d5d40"/></linearGradient>
+        <linearGradient id="boxSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#46301d"/><stop offset="1" stop-color="#2f2013"/></linearGradient>
+        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9dde3"/><stop offset=".5" stop-color="#8b929c"/><stop offset="1" stop-color="#3d4249"/></linearGradient>
         <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2f4f7"/><stop offset=".45" stop-color="#9aa3ad"/><stop offset=".55" stop-color="#5d656f"/><stop offset="1" stop-color="#c9d0d8"/></linearGradient>
-        <linearGradient id="crt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a6e60"/><stop offset=".5" stop-color="#584e43"/><stop offset="1" stop-color="#352e27"/></linearGradient>
+        <linearGradient id="crt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a4b50"/><stop offset=".5" stop-color="#303136"/><stop offset="1" stop-color="#1b1c20"/></linearGradient>
+        <radialGradient id="wallfade" cx=".46" cy=".35" r=".75"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".72"/></radialGradient>
+        <radialGradient id="floorspill" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff5a66" stop-opacity=".28"/><stop offset="1" stop-color="#ff5a66" stop-opacity="0"/></radialGradient>
+        <radialGradient id="softshadow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".75"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
         <linearGradient id="amp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0b0b0d"/></linearGradient>
         <pattern id="brick" width="120" height="60" patternUnits="userSpaceOnUse">
           <rect width="120" height="60" fill="none"/>
@@ -317,15 +349,21 @@
       <rect width="1920" height="1080" fill="url(#wall)"/>
       <rect width="1920" height="860" fill="url(#brick)"/>
       <path d="M0 860 H1920 V1080 H0Z" fill="url(#floor)"/>
-      <path d="M0 860 H1920" stroke="#FF2D3D" stroke-width="3" class="neon"/>
+      <path d="M0 860 H1920" stroke="#FF2D3D" stroke-width="3" opacity=".75"/>
+      <!-- depth: the back wall falls off into shadow at the edges -->
+      <rect width="1920" height="860" fill="url(#wallfade)"/>
+      <!-- the wall TV is the room's key light: it spills onto the floor in front -->
+      <ellipse cx="880" cy="930" rx="620" ry="110" fill="url(#floorspill)"/>
       <rect x="0" y="848" width="1920" height="24" fill="url(#redglow)" opacity=".8"/>
       <path d="M40 26 H1880" stroke="#FF2D3D" stroke-width="6" stroke-linecap="round" class="neon"/>
       <rect x="0" y="0" width="1920" height="80" fill="url(#redglow)" opacity=".6"/>
       <!-- rug under RoboDad -->
-      <ellipse cx="940" cy="1015" rx="420" ry="60" fill="#1b0608" stroke="#E50914" stroke-width="5"/>
-      <ellipse cx="940" cy="1015" rx="360" ry="44" fill="none" stroke="#3a0b10" stroke-width="10"/>
+      <ellipse cx="940" cy="1020" rx="380" ry="54" fill="#140406" stroke="#E50914" stroke-width="4"/>
+      <ellipse cx="940" cy="1020" rx="320" ry="40" fill="none" stroke="#3a0b10" stroke-width="8"/>
+      <ellipse cx="940" cy="1032" rx="190" ry="18" fill="url(#softshadow)"/>
 
       <!-- ===== wall TV (Netflix) ===== -->
+      <g transform="translate(0 36)">
       <ellipse cx="880" cy="295" rx="560" ry="320" fill="url(#tvglow)" class="glow-tv"/>
       <rect x="548" y="100" width="664" height="392" rx="10" fill="#000" opacity=".5" transform="translate(10 14)"/>
       <rect x="556" y="104" width="648" height="384" rx="12" fill="#0a0a0c" stroke="#3a3a44" stroke-width="3"/>
@@ -336,8 +374,9 @@
       <rect x="656" y="514" width="448" height="22" rx="11" fill="url(#grille)"/>
       <circle cx="1100" cy="525" r="3.5" fill="#FF2D3D" class="antenna"/>
 
+      </g>
       <!-- ===== wall art (Disney+) ===== -->
-      <g transform="translate(1570 336)">
+      <g transform="translate(1570 330)">
         <rect x="-196" y="-190" width="392" height="380" rx="12" fill="#000" opacity=".5" transform="translate(10 12)"/>
         <rect x="-196" y="-190" width="392" height="380" rx="12" fill="url(#gold)"/>
         <rect x="-180" y="-174" width="360" height="348" rx="6" fill="#0d0d10" stroke="#5a1015" stroke-width="3"/>
@@ -351,6 +390,8 @@
         <g fill="url(#gold)"><circle cx="-180" cy="-174" r="7"/><circle cx="180" cy="-174" r="7"/><circle cx="-180" cy="174" r="7"/><circle cx="180" cy="174" r="7"/></g>
       </g>
 
+      <ellipse cx="155" cy="866" rx="150" ry="16" fill="url(#softshadow)"/>
+      <ellipse cx="1144" cy="958" rx="40" ry="8" fill="url(#softshadow)"/><ellipse cx="1836" cy="958" rx="40" ry="8" fill="url(#softshadow)"/>
       <!-- ===== guitar amp + electric guitar ===== -->
       <g transform="translate(40 690)">
         <rect x="0" y="0" width="230" height="170" rx="10" fill="url(#amp)" stroke="#2a2a32" stroke-width="3"/>
@@ -388,7 +429,7 @@
         <path d="M35 0 L12 -120 L74 -192" fill="none" stroke="#2f2f37" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
         <circle cx="12" cy="-120" r="9" fill="#444"/>
         <path d="M54 -218 L118 -176 L86 -148 Z" fill="#D10A1A" stroke="#4a0509" stroke-width="3"/>
-        <path d="M100 -160 L240 0 L40 0 Z" fill="url(#lampcone)" class="glow-tv"/>
+        <path d="M100 -160 L240 0 L40 0 Z" fill="url(#lampcone)" opacity=".85"/>
       </g>
       <!-- laptop -->
       <rect x="1404" y="606" width="232" height="142" rx="9" fill="url(#alu)" stroke="#1a1b1f" stroke-width="3"/>
@@ -412,7 +453,7 @@
         <path d="M0 0 L40 -40 H250 L210 0 Z" fill="url(#boxTop)" stroke="#5a3b22" stroke-width="3"/>
         <path d="M210 0 L250 -40 V100 L210 140 Z" fill="url(#boxSide)" stroke="#5a3b22" stroke-width="3"/>
         <rect x="0" y="0" width="210" height="140" fill="url(#boxFront)" stroke="#5a3b22" stroke-width="3"/>
-        <rect x="88" y="0" width="34" height="26" fill="#e8d3ad" opacity=".85"/>
+        <rect x="88" y="0" width="34" height="26" fill="#a4927a" opacity=".7"/>
         <g transform="translate(220 30) skewY(-43)"><rect width="24" height="36" fill="#f4efe6" opacity=".9"/><g stroke="#222" stroke-width="1.6"><path d="M4 6v14 M7 6v14 M9 6v14 M13 6v14 M15 6v14 M19 6v14"/></g></g>
         <text x="10" y="132" font-size="11" font-weight="800" fill="#7a0a12" letter-spacing="1.5" font-family="Roboto, sans-serif">▲▲ THIS SIDE UP</text>
         <g transform="translate(176 22) rotate(10)"><rect x="-30" y="-11" width="60" height="18" rx="3" fill="none" stroke="#C11" stroke-width="2.5"/><text y="3" text-anchor="middle" font-size="11" font-weight="900" fill="#C11" font-family="Roboto, sans-serif">FRAGILE</text></g>
@@ -439,7 +480,7 @@
       </g>
     </svg>
     <canvas class="fx" id="embers"></canvas>
-    <div class="sweep"></div>
+    <div class="vignette"></div>
 
     <div class="hud in" style="animation-delay:.05s"><h1 id="greet">Hey there</h1><p id="sub"></p></div>
     <div class="clock in" style="animation-delay:.1s"><b id="time">--:--</b><span id="date"></span></div>
@@ -463,10 +504,12 @@
           <linearGradient id="joint" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a2c32"/><stop offset=".5" stop-color="#555963"/><stop offset="1" stop-color="#2a2c32"/></linearGradient>
           <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a74"/><stop offset=".45" stop-color="#FF1F30"/><stop offset="1" stop-color="#8a0610"/></linearGradient>
           <radialGradient id="core" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#FF4A57"/><stop offset="1" stop-color="#B00813"/></radialGradient>
+          <radialGradient id="rim" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd6da" stop-opacity=".35"/><stop offset="1" stop-color="#ff5a66" stop-opacity="0"/></radialGradient>
           <radialGradient id="botglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".55"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
           <clipPath id="visorClip"><path d="M126 150 Q225 132 324 150 L318 190 Q225 204 132 190 Z"/></clipPath>
         </defs>
-        <ellipse class="bot-glow" cx="225" cy="360" rx="270" ry="350" fill="url(#botglow)"/>
+        <ellipse class="bot-glow" cx="225" cy="300" rx="280" ry="330" fill="url(#botglow)"/>
+        <ellipse cx="225" cy="150" rx="190" ry="120" fill="url(#rim)"/>
         <g class="breathe">
           <!-- legs -->
           <rect x="166" y="496" width="44" height="40" rx="8" fill="url(#joint)" stroke="#000" stroke-width="3"/>
@@ -868,7 +911,7 @@
     var c = $('embers'), x = c.getContext('2d'), W, H, P = [];
     function size() { W = c.width = c.clientWidth; H = c.height = c.clientHeight; }
     size(); addEventListener('resize', size);
-    for (var i = 0; i < 34; i++) P.push({ x: Math.random(), y: Math.random(), s: 1 + Math.random() * 2.6, v: .0006 + Math.random() * .0012, d: Math.random() * 6 });
+    for (var i = 0; i < 18; i++) P.push({ x: Math.random(), y: Math.random(), s: 1 + Math.random() * 2.2, v: .00035 + Math.random() * .0006, d: Math.random() * 6 });
     (function f(t) {
       x.clearRect(0, 0, W, H);
       for (var i = 0; i < P.length; i++) {
