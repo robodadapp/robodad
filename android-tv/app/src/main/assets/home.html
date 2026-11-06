@@ -19,7 +19,7 @@
   /* ---------- the room ---------- */
   .scene { position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; overflow: hidden; }
   .scene > svg.room { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .hot { position: absolute; border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer; outline: none;
+  .hot { z-index: 4; position: absolute; border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer; outline: none;
     border-radius: 1vh; transition: transform .25s cubic-bezier(.2,1.4,.4,1), box-shadow .25s; }
   .hot:focus { outline: none !important; transform: scale(1.07); z-index: 5;
     box-shadow: 0 0 0 .45vh var(--red2), 0 0 3.5vh 1vh rgba(255,45,61,.65); }
@@ -79,8 +79,9 @@
   /* screens: Netflix on a black TV, YouTube on a dark laptop desktop */
   .hot .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: inherit; overflow: hidden; }
   #hTv .screen { background: radial-gradient(60% 70% at 50% 50%, #1a0204, #000 70%); }
-  #hTv .screen { align-items: flex-start; justify-content: flex-start; padding: 5% 0 0 9%; }
-  #hTv .screen img { inset: auto; position: static; height: 44%; width: auto; object-fit: contain; }
+  #hTv .screen { align-items: flex-start; justify-content: center; padding-top: 2%; }
+  #hTv .logo { display: flex; align-items: center; width: 74%; aspect-ratio: 450 / 118; overflow: hidden; filter: url(#nfRed); }
+  #hTv .screen img { inset: auto; position: static; display: block; width: 100%; height: auto; flex: none; }
   .desk { background: radial-gradient(80% 90% at 30% 20%, #232838, #0b0c11 70%); }
   .desk .menubar { position: absolute; left: 0; right: 0; top: 0; height: 7%; background: rgba(255,255,255,.08); }
   .desk .dock { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); display: flex; gap: .25vw; padding: .3vh .4vw; border-radius: .6vh; background: rgba(255,255,255,.12); }
@@ -314,6 +315,8 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="nfRed" color-interpolation-filters="sRGB">
+  <feColorMatrix type="matrix" values="0 0 0 0 .898  0 0 0 0 .035  0 0 0 0 .078  1.25 -1.25 0 0 0"/></filter></svg>
 <main id="main">
   <div class="scene" id="scene">
     <svg class="room" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -794,9 +797,14 @@
       var el = $(s.id), got = byPkg[s.pkg], img = el.querySelector('img'), word = el.querySelector('.word');
       var scr = el.querySelector('.screen');
       var src = got && got.art ? got.art.replace(/^(banner|icon):/, '') : '';
-      if (scr && got && got.icon) src = got.icon;          // TV + laptop show the app's icon on a dark screen
+      if (s.id === 'hLap' && got && got.icon) src = got.icon;   // laptop shows the YouTube app icon on its desktop
       if (src) {
-        if (!img) { img = document.createElement('img'); img.alt = ''; (scr || el).insertBefore(img, (scr || el).firstChild); }
+        if (!img) {
+          img = document.createElement('img'); img.alt = '';
+          var host = scr || el;
+          if (s.id === 'hTv') { host = document.createElement('span'); host.className = 'logo'; scr.insertBefore(host, scr.firstChild); }
+          host.insertBefore(img, host.firstChild);
+        }
         img.src = src; word.style.display = 'none';
         if (s.id === 'hArt' || s.id === 'hBox') el.style.backgroundImage = 'url("' + src + '")';
       } else { if (img) img.remove(); word.style.display = ''; }
