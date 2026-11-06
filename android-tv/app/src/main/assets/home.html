@@ -75,6 +75,84 @@
   .crate.bday { background: linear-gradient(135deg, #5B2A6E, #C7566C); border-color: #FFC83D; }
   .crate:focus { outline: none !important; z-index: 8; transform: scale(1.18); box-shadow: 0 0 0 .4vh #FF2D3D, 0 0 3vh rgba(255,45,61,.7); }
 
+  /* screens: Netflix on a black TV, YouTube on a dark laptop desktop */
+  .hot .screen { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: inherit; overflow: hidden; }
+  #hTv .screen { background: radial-gradient(60% 70% at 50% 50%, #1a0204, #000 70%); }
+  #hTv .screen img { inset: auto; position: static; height: 64%; width: auto; object-fit: contain; }
+  .desk { background: radial-gradient(80% 90% at 30% 20%, #232838, #0b0c11 70%); }
+  .desk .menubar { position: absolute; left: 0; right: 0; top: 0; height: 7%; background: rgba(255,255,255,.08); }
+  .desk .dock { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%); display: flex; gap: .25vw; padding: .3vh .4vw; border-radius: .6vh; background: rgba(255,255,255,.12); }
+  .desk .dock i { width: .55vw; height: .55vw; border-radius: 30%; background: rgba(255,255,255,.35); }
+  .desk .dock i:first-child { background: #FF2D3D; }
+  #hLap .desk img { position: static; inset: auto; height: 46%; width: auto; aspect-ratio: 1; object-fit: cover; border-radius: 22%; box-shadow: 0 .6vh 1.6vh rgba(0,0,0,.6); }
+
+  /* idle: a small shimmer every 5 s, staggered so they never fire together */
+  @keyframes idle { 0%, 86%, 100% { filter: none } 91% { filter: brightness(1.45) saturate(1.3) } }
+  @keyframes sheen { 0%, 80% { transform: translateX(-120%) skewX(-20deg) } 100% { transform: translateX(260%) skewX(-20deg) } }
+  .hot .sheen { position: absolute; top: 0; bottom: 0; left: 0; width: 45%; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent); animation: sheen 5s ease-in-out infinite; }
+  .hot img, .hot .note { animation: idle 5s ease-in-out infinite; }
+  #hTv img, #hTv .sheen { animation-delay: 0s; } #hArt img, #hArt .sheen { animation-delay: 1s; }
+  #hLap img, #hLap .sheen { animation-delay: 2s; } #hBox img, #hBox .sheen { animation-delay: 3s; }
+  #hTubi img, #hTubi .sheen { animation-delay: 1.6s; } #hMusic img, #hMusic .note, #hMusic .sheen { animation-delay: 4s; }
+  .hot:not(#hTv):not(#hLap):not(#hArt):not(#hBox):not(#hTubi):not(#hMusic) .sheen { display: none; }
+  .hot:focus .sheen { display: none; }
+
+  /* selected: each spot does its own thing */
+  @keyframes tvOn { 0% { transform: scale(1, .02); filter: brightness(3) } 45% { transform: scale(1, 1.06); filter: brightness(1.6) } 100% { transform: none; filter: none } }
+  @keyframes glow { 0%,100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255,45,61,0)) } 50% { filter: brightness(1.2) drop-shadow(0 0 1.4vh rgba(255,45,61,.9)) } }
+  @keyframes hop { 0%,100% { transform: translateY(0) scale(1) } 30% { transform: translateY(-14%) scale(1.08) } 55% { transform: translateY(0) scale(.96) } 75% { transform: translateY(-4%) scale(1.02) } }
+  @keyframes spinIn { 0% { transform: translateY(-50%) rotate(0) scale(1) } 60% { transform: translateY(-50%) rotate(360deg) scale(1.12) } 100% { transform: translateY(-50%) rotate(360deg) scale(1) } }
+  @keyframes wiggle { 0%,100% { transform: translateY(-50%) rotate(0) } 20% { transform: translateY(-50%) rotate(-10deg) scale(1.1) } 40% { transform: translateY(-50%) rotate(8deg) } 60% { transform: translateY(-50%) rotate(-5deg) } 80% { transform: translateY(-50%) rotate(3deg) } }
+  @keyframes vinyl { to { transform: rotate(360deg) } }
+  @keyframes noteHop { 0%,100% { transform: translateY(0) rotate(-8deg) scale(1) } 50% { transform: translateY(-14%) rotate(8deg) scale(1.12) } }
+  #hTv:focus img { animation: tvOn .55s ease-out, glow 1.6s ease-in-out .55s infinite; }
+  #hLap:focus img { animation: hop .9s ease-out, glow 1.6s ease-in-out .9s infinite; }
+  #hArt:focus img { animation: spinIn 1.1s cubic-bezier(.3,1.3,.5,1); }
+  #hBox:focus img { animation: wiggle .8s ease-in-out; }
+  #hTubi:focus .static { animation-duration: .07s; opacity: 1; }
+  #hTubi:focus .roll { animation-duration: 1.1s; }
+  #hTubi:focus img { animation: tvOn .45s ease-out; }
+  #hMusic:focus img { animation: vinyl 3s linear infinite; }
+  #hMusic:focus .note g { animation: noteHop .5s ease-in-out infinite; }
+  #hBot:focus .visor { animation-duration: .7s; }
+  #hBot:focus .core { animation-duration: .6s; }
+
+  /* window with Toronto's live weather */
+  .window { position: absolute; left: 63.65%; top: 12.04%; width: 6.77%; height: 30.56%; z-index: 1; }
+  .window .sky { position: absolute; inset: 0; overflow: hidden; border-radius: .4vh; background: linear-gradient(#4f8fd8, #9fd0f5); transition: background 2s; }
+  .window .pane { position: absolute; inset: 0; border: .7vh solid #2a2a30; border-radius: .6vh; box-shadow: inset 0 0 0 .2vh #000, 0 .8vh 2vh rgba(0,0,0,.6);
+    background: linear-gradient(90deg, transparent calc(50% - .25vh), #2a2a30 calc(50% - .25vh) calc(50% + .25vh), transparent calc(50% + .25vh)),
+                linear-gradient(0deg, transparent calc(50% - .25vh), #2a2a30 calc(50% - .25vh) calc(50% + .25vh), transparent calc(50% + .25vh)),
+                linear-gradient(125deg, rgba(255,255,255,.16), transparent 35%); }
+  .window .sill { position: absolute; left: -8%; right: -8%; bottom: -2.2vh; height: 2.2vh; border-radius: .3vh; background: linear-gradient(#3a3a42, #1b1b20); }
+  .window .temp { position: absolute; left: 50%; bottom: -6vh; transform: translateX(-50%); white-space: nowrap; font-size: 1.7vh; font-weight: 700; color: #ffd0d4; text-shadow: 0 0 1vh #000; }
+  .window .city { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 42%; }
+  .window canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .window .sun, .window .moon { position: absolute; left: 58%; top: 12%; width: 2.6vw; height: 2.6vw; border-radius: 50%; display: none; }
+  .window .sun { background: radial-gradient(circle, #fff6c8, #ffd24a 55%, rgba(255,210,74,0) 72%); animation: pulse 4s ease-in-out infinite; }
+  .window .moon { background: radial-gradient(circle at 35% 35%, #fffbe8, #d9d3b8 60%, rgba(217,211,184,0) 72%); }
+  .window .stars { position: absolute; inset: 0 0 40% 0; display: none; background-image: radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 40% 60%, #fff, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent), radial-gradient(1.5px 1.5px at 10% 75%, #fff, transparent); animation: pulse 3s ease-in-out infinite; }
+  .window .cloud { position: absolute; height: 9%; border-radius: 99px; background: rgba(255,255,255,.9); display: none; animation: drift 40s linear infinite; }
+  .window .cloud:before { content: ""; position: absolute; left: 22%; top: -55%; width: 45%; height: 120%; border-radius: 50%; background: inherit; }
+  .window .c1 { top: 14%; width: 70%; } .window .c2 { top: 30%; width: 55%; animation-duration: 55s; animation-delay: -20s; } .window .c3 { top: 46%; width: 62%; animation-duration: 48s; animation-delay: -35s; }
+  @keyframes drift { 0% { left: -80% } 100% { left: 110% } }
+  .window .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  @keyframes flash { 0%, 92%, 100% { opacity: 0 } 93% { opacity: .8 } 95% { opacity: .1 } 96% { opacity: .6 } }
+  .sky.day .sun, .sky.night .moon, .sky.night .stars { display: block; }
+  .sky.clouds .cloud, .sky.rain .cloud, .sky.snow .cloud, .sky.storm .cloud { display: block; }
+  .sky.partly .c1, .sky.partly .c3 { display: block; }
+  .sky.day { background: linear-gradient(#3f86d8, #a6d4f5); }
+  .sky.night { background: linear-gradient(#050a1c, #1b2850); }
+  .sky.day.clouds, .sky.day.rain, .sky.day.snow { background: linear-gradient(#7d8794, #b9c1ca); }
+  .sky.night.clouds, .sky.night.rain, .sky.night.snow { background: linear-gradient(#0e1118, #2a3040); }
+  .sky.night .cloud { background: rgba(120,130,150,.55); }
+  .sky.clouds .sun, .sky.rain .sun, .sky.snow .sun, .sky.storm .sun, .sky.clouds .moon, .sky.rain .moon, .sky.snow .moon, .sky.storm .moon, .sky.clouds .stars, .sky.rain .stars, .sky.storm .stars { display: none; }
+  .sky.storm { background: linear-gradient(#1a1d26, #3a3f4c) !important; }
+  .sky.storm .flash { animation: flash 7s linear infinite; }
+  .sky.fog:after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent, rgba(220,225,230,.75) 60%); }
+
   /* RoboDad himself */
   #hBot { left: 37.24%; top: 33.33%; width: 23.44%; height: 62.96%; border-radius: 3vh; }
   #hBot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -366,9 +444,10 @@
     <div class="hud in" style="animation-delay:.05s"><h1 id="greet">Hey there</h1><p id="sub"></p></div>
     <div class="clock in" style="animation-delay:.1s"><b id="time">--:--</b><span id="date"></span></div>
 
-    <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="word">Netflix</span><span class="scan"></span><span class="glare"></span><span class="lbl">Netflix</span></button>
+    <div class="window in" id="window" style="animation-delay:.35s"><div class="sky" id="sky"><span class="sun"></span><span class="moon"></span><span class="stars"></span><span class="cloud c1"></span><span class="cloud c2"></span><span class="cloud c3"></span><canvas id="wx"></canvas><span class="flash"></span><svg class="city" viewBox="0 0 130 120" preserveAspectRatio="xMidYMax slice"><path d="M0 120 V86 h10 v-14 h12 v20 h8 V60 h10 v32 h6 V78 h12 v42 Z M60 120 V24 h2 l1 -16 h2 l1 16 h2 v40 h4 v10 h-4 v46 Z M74 120 V70 h12 v-8 h10 v26 h8 V74 h14 v46 Z" fill="#07070a"/><g fill="#FFC83D" opacity=".75"><rect x="13" y="90" width="2" height="2"/><rect x="33" y="70" width="2" height="2"/><rect x="88" y="80" width="2" height="2"/><rect x="108" y="84" width="2" height="2"/><rect x="45" y="96" width="2" height="2"/></g></svg></div><span class="pane"></span><span class="sill"></span><span class="temp" id="wxTemp"></span></div>
+    <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="screen"></span><span class="word">Netflix</span><span class="scan"></span><span class="glare"></span><span class="lbl">Netflix</span></button>
     <button class="hot in" id="hArt" style="animation-delay:.4s"><span class="word">Disney+</span><span class="glare"></span><span class="lbl">Disney+</span></button>
-    <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="word">YouTube</span><span class="glare"></span><span class="lbl">YouTube</span></button>
+    <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="screen desk"><span class="menubar"></span><span class="dock"><i></i><i></i><i></i><i></i></span></span><span class="word">YouTube</span><span class="glare"></span><span class="lbl">YouTube</span></button>
     <button class="hot in" id="hMusic" style="animation-delay:.8s"><span class="word"></span><svg class="note" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#120507" stroke="#FF2D3D" stroke-width="4"/><g fill="#FF2D3D"><path d="M38 28 L72 20 V62 a9 8 0 1 1 -6 -7.5 V34 L44 39 V70 a9 8 0 1 1 -6 -7.5 Z"/></g></svg><span class="lbl" id="musicLbl">Music</span></button>
     <button class="hot in" id="hTubi" style="animation-delay:.75s"><span class="word">Tubi</span><span class="static"></span><span class="roll"></span><svg class="crack" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 0 L66 22 L74 30 L58 52 L64 60 L52 78" fill="none" stroke="#fff" stroke-width="1.6" opacity=".85"/><path d="M66 22 L86 34 M58 52 L40 56" fill="none" stroke="#fff" stroke-width="1" opacity=".7"/></svg><span class="lbl" id="tubiLbl">Tubi</span></button>
     <button class="hot in" id="hBox" style="animation-delay:.7s"><span class="word">Prime<br>Video</span><span class="lbl">Prime Video</span></button>
@@ -591,6 +670,10 @@
   ];
   var li = 0;
   function bubble() {
+    if (lines.length === 4 && WX && WX.temp != null) {
+      var t = Math.round(WX.temp), tip = t <= 0 ? 'Hat and gloves, champ.' : t <= 10 ? 'Grab a jacket.' : t >= 25 ? 'Drink some water out there.' : 'Nice one for a walk.';
+      lines.push(['Toronto right now', t + '\u00b0C and ' + WXWORDS[WX.kind] + '. ' + tip]);
+    }
     var b = $('bubble'); $('bTitle').textContent = lines[li][0]; $('bText').textContent = lines[li][1];
     b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
     li = (li + 1) % lines.length;
@@ -666,9 +749,11 @@
     // Put each app's own TV artwork into its place in the room.
     SPOTS.forEach(function (s) {
       var el = $(s.id), got = byPkg[s.pkg], img = el.querySelector('img'), word = el.querySelector('.word');
+      var scr = el.querySelector('.screen');
       var src = got && got.art ? got.art.replace(/^(banner|icon):/, '') : '';
+      if (scr && got && got.icon) src = got.icon;          // TV + laptop show the app's icon on a dark screen
       if (src) {
-        if (!img) { img = document.createElement('img'); img.alt = ''; el.insertBefore(img, el.firstChild); }
+        if (!img) { img = document.createElement('img'); img.alt = ''; (scr || el).insertBefore(img, (scr || el).firstChild); }
         img.src = src; word.style.display = 'none';
         if (s.id === 'hArt' || s.id === 'hBox') el.style.backgroundImage = 'url("' + src + '")';
       } else { if (img) img.remove(); word.style.display = ''; }
@@ -719,6 +804,56 @@
 
   render();
   toTop();
+  ['hTv', 'hArt', 'hLap', 'hBox', 'hTubi', 'hMusic'].forEach(function (id) {
+    var sh = document.createElement('span'); sh.className = 'sheen'; $(id).appendChild(sh);
+  });
+
+  // ---- Toronto weather in the window (Open-Meteo, no key needed) ----
+  var WX = null;
+  function wxKind(code) {
+    if (code >= 95) return 'storm';
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rain';
+    if (code === 45 || code === 48) return 'fog';
+    if (code === 3) return 'clouds';
+    if (code === 1 || code === 2) return 'partly';
+    return 'clear';
+  }
+  var WXWORDS = { storm: 'thunderstorms', snow: 'snowing', rain: 'raining', fog: 'foggy', clouds: 'cloudy', partly: 'partly cloudy', clear: 'clear skies' };
+  function applyWx(kind, isDay, temp) {
+    $('sky').className = 'sky ' + (isDay ? 'day' : 'night') + ' ' + kind + (kind === 'fog' ? ' clouds' : '');
+    $('wxTemp').textContent = temp == null ? 'Toronto' : 'Toronto ' + Math.round(temp) + '\u00b0C';
+    WX = { kind: kind, temp: temp };
+  }
+  function fallbackWx() { var h = new Date().getHours(); applyWx('clear', h >= 7 && h < 18, null); }
+  function loadWx() {
+    try {
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=43.6532&longitude=-79.3832&current=temperature_2m,weather_code,is_day&timezone=America%2FToronto')
+        .then(function (r) { return r.json(); })
+        .then(function (d) { var c = d.current; applyWx(wxKind(c.weather_code), c.is_day === 1, c.temperature_2m); })
+        .catch(function () { if (!WX) fallbackWx(); });
+    } catch (e) { if (!WX) fallbackWx(); }
+  }
+  fallbackWx(); WX = null; loadWx(); setInterval(loadWx, 15 * 60 * 1000);
+
+  // rain / snow falling past the window
+  (function precip() {
+    var c = $('wx'), x = c.getContext('2d'), P = [];
+    for (var i = 0; i < 40; i++) P.push({ x: Math.random(), y: Math.random(), v: .6 + Math.random() * .6 });
+    (function f() {
+      var W = c.width = c.clientWidth, H = c.height = c.clientHeight, k = WX && WX.kind;
+      x.clearRect(0, 0, W, H);
+      if (k === 'rain' || k === 'storm' || k === 'snow') {
+        for (var i = 0; i < P.length; i++) {
+          var p = P[i];
+          if (k === 'snow') { p.y += .0025 * p.v; p.x += Math.sin(p.y * 20 + i) * .0015; x.fillStyle = 'rgba(255,255,255,.9)'; x.beginPath(); x.arc(p.x * W, p.y * H, 1.6, 0, 6.283); x.fill(); }
+          else { p.y += .02 * p.v; x.strokeStyle = 'rgba(200,220,255,.7)'; x.lineWidth = 1.2; x.beginPath(); x.moveTo(p.x * W, p.y * H); x.lineTo(p.x * W - 2, p.y * H + 9); x.stroke(); }
+          if (p.y > 1.05) { p.y = -0.05; p.x = Math.random(); }
+        }
+      }
+      setTimeout(function () { requestAnimationFrame(f); }, 40);
+    })();
+  })();
 
   window.tvArm = function () {
     store('rdtv.bday', String(today)); start = today; isBirthday = true; buildCorner();
