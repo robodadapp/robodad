@@ -1,0 +1,300 @@
+I/AndroidRuntime( 3695): Using default boot image
+I/AndroidRuntime( 3695): Leaving lock profiling enabled
+D/AndroidRuntime( 3695): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 3695): Shutting down VM
+D/app.robodad.tv( 2989): PlayerBase::stop() from IPlayer
+I/chromium( 2433): [2433:2433:INFO:debug_endpoint_manager_grpc_client.cc(365)] gRPC client channel state changed to GRPC_CHANNEL_TRANSIENT_FAILURE
+I/RoleControllerServiceImpl(  704): Adding package as default/fallback role holder, package: app.robodad.tv, role: android.app.role.HOME
+I/chromium( 2433): [2433:2502:INFO:structure_info_from_trusted_devices.cc(311)] Getting trusted devices from HDS, num_in_flight_requests = 1
+W/chromium( 2433): [2433:2433:WARNING:client_auth_signer.cc(168)] No private key, hence empty signature.
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1437)] CreateJwt completed; running all done signing callbacks.
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1442)] Missing signature, return empty JWT
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1198)] CreateAndSignJwtAsync() returned invalid JWT. Not attaching to headers.
+E/chromium( 2433): [2433:2433:ERROR:cast_auth_headers.cc(169)] Unable to update signature header
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.GetTrustedDevices.Out
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1846)] Received response code 401 for message_id = fb23ae12-d043-4b19-919e-b5be4ffacc64 - 
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.GetTrustedDevices.Out.Error
+E/chromium( 2433): [2433:2502:ERROR:structure_info_from_trusted_devices.cc(379)] Failed to get trusted devices from HDS.
+D/AndroidRuntime( 3770): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 3770): Using default boot image
+I/AndroidRuntime( 3770): Leaving lock profiling enabled
+D/AndroidRuntime( 3770): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 3770): Shutting down VM
+I/ActivityTaskManager(  471): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=app.robodad.tv/.HomeActivity (has extras)} from uid 0
+I/ActivityTaskManager(  471): Displayed app.robodad.tv/.HomeActivity: +864ms
+D/AndroidRuntime( 3844): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 3844): Using default boot image
+I/AndroidRuntime( 3844): Leaving lock profiling enabled
+D/AndroidRuntime( 3844): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 3844): Shutting down VM
+I/ActivityTaskManager(  471): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=app.robodad.tv/.HomeActivity (has extras)} from uid 0
+D/AndroidRuntime( 3898): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 3898): Using default boot image
+I/AndroidRuntime( 3898): Leaving lock profiling enabled
+D/AndroidRuntime( 3898): Calling main entry com.android.commands.input.Input
+I/ActivityTaskManager(  471): START u0 {cmp=app.robodad.tv/.ChatActivity} from uid 10076
+D/AndroidRuntime( 3898): Shutting down VM
+I/chromium( 2433): [2433:2433:INFO:metrics_stat_logger.cc(55)] Metrics stat for the past 60 secs : total=31
+I/chromium( 2433): [metrics_stat_logger] AppReady=1
+I/chromium( 2433): [metrics_stat_logger] AppStarted=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Auth.Error.CertMissing=1
+I/chromium( 2433): [metrics_stat_logger] Cast.CRL.DownloadSuccess=1
+I/chromium( 2433): [metrics_stat_logger] Cast.DCS.DownloadSuccess=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Discovery.Mdns.ResponderStarted=2
+I/chromium( 2433): [metrics_stat_logger] Cast.Discovery.Mdns.ResponderStopped=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Discovery.Mdns.SocketCreated=2
+I/chromium( 2433): [metrics_stat_logger] Cast.Discovery.Mdns.SocketDestroyed=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Network.LocalIpFragment=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Network.Up=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Platform.OutputResolution=1
+I/chromium( 2433): [metrics_stat_logger] Cast.System.Timezone.ChangeSuccessful=1
+I/chromium( 2433): [metrics_stat_logger] Cast.Usonia.CommonTime.BecomeSource=1
+I/chromium( 2433): [metrics_stat_logger] CastV2.Connection.Connect.In=2
+I/chromium( 2433): [metrics_stat_logger] CastV2.Ipc.Sender.Connected=2
+I/chromium( 2433): [metrics_stat_logger] CastV2.Ipc.System.In.Internal=5
+I/chromium( 2433): [metrics_stat_logger] CastV2.Ipc.System.Out.Internal=1
+I/chromium( 2433): [metrics_stat_logger] CastV2.Receiver.DeviceStatus.Out=2
+I/chromium( 2433): [metrics_stat_logger] CastV2.Receiver.DeviceStatus.Out.Broadcast=1
+I/chromium( 2433): [metrics_stat_logger] CastV2.Transport.Accept=2
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.GetTrustedDevices.Out=2
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.GetTrustedDevices.Out.Error=2
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.Register.Out=1
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.Register.Out.Error=1
+I/chromium( 2433): [metrics_stat_logger] Dial.SsdpDeviceDesc.Linux=1
+I/chromium( 2433): [metrics_stat_logger] Dial.SsdpDeviceDesc.Linux.200=1
+I/chromium( 2433): [metrics_stat_logger] Gcm.Register.Out=2
+I/chromium( 2433): [metrics_stat_logger] Gcm.Register.Success=2
+I/chromium( 2433): [metrics_stat_logger] Setup.eureka_info.Local=4
+I/chromium( 2433): [metrics_stat_logger] Setup.eureka_info.Local.200=4
+I/ActivityTaskManager(  471): Displayed app.robodad.tv/.ChatActivity: +633ms
+W/chromium( 2433): [2433:2433:WARNING:ccs_manager_impl.cc(1522)] Device does not have a weave device id
+I/chromium( 2433): [2433:2433:INFO:ccs_transport_https.cc(1242)] No cloud settings for register request
+W/chromium( 2433): [2433:2433:WARNING:client_auth_signer.cc(168)] No private key, hence empty signature.
+I/chromium( 2433): [2433:2433:INFO:ccs_manager_impl.cc(1452)] Registering device with CCS: message_id = a5d50783-aa70-47d5-accf-55a8987ce371
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1437)] CreateJwt completed; running all done signing callbacks.
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1442)] Missing signature, return empty JWT
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1198)] CreateAndSignJwtAsync() returned invalid JWT. Not attaching to headers.
+E/chromium( 2433): [2433:2433:ERROR:cast_auth_headers.cc(169)] Unable to update signature header
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.Register.Out
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1846)] Received response code 403 for message_id = a5d50783-aa70-47d5-accf-55a8987ce371 - 
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.Register.Out.Error
+I/chromium( 2433): [2433:2433:INFO:ccs_manager_impl.cc(2465)] Scheduling next register for device in time: 108.901 s
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.RecognitionEvent" from publisher "InitializeInternal"
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "InitializeInternal"
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.MetricEvent" from publisher "RecordCastEventImpl"
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.ConversationEvent" from publisher "ActivityManagerImpl"
+I/katniss_interactor_UiActionExecutor( 1127): Foreground app = app.robodad.tv
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.ConversationEvent" from publisher "S3Session"
+E/chromium( 1127): [FTL:1127:3952:ERROR:action_processor.cc(537)] Module "feedback" tried to
+E/chromium( 1127): shadow action_path "feedback.UPLOAD_CRASH_REPORT", but it is already registered
+E/chromium( 1127): by "android_feedback"
+W/chromium( 1127): [FTL:1127:3952:WARNING:action_processor.cc(197)] Failed to find
+W/chromium( 1127): |conversation_id| for |interaction_id|: 0
+W/chromium( 1127): [FTL:1127:3952:WARNING:action_processor.cc(197)] Failed to find
+W/chromium( 1127): |conversation_id| for |interaction_id|: 66
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "ProcessSettingsAction"
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "ProcessSettingsAction"
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.ConversationEvent" from publisher "S3Session"
+W/chromium( 1127): [FTL:1127:3958:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.MetricEvent" from publisher "RecordCastEventImpl"
+W/chromium( 1127): [FTL:1127:3958:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.MetricEvent" from publisher "RecordCastEventImpl"
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "InitializeInternal"
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.MetricEvent" from publisher "UmaMetricsForwarder"
+I/katniss_interactor_UiActionExecutor( 1127): Foreground app = app.robodad.tv
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.ConversationEvent" from publisher "S3Session"
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "InitializeInternal"
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "InitializeInternal"
+E/chromium( 1127): [FTL:1127:3952:ERROR:action_processor.cc(537)] Module "feedback" tried to
+E/chromium( 1127): shadow action_path "feedback.UPLOAD_CRASH_REPORT", but it is already registered
+E/chromium( 1127): by "android_feedback"
+W/chromium( 1127): [FTL:1127:3952:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.ConversationEvent" from publisher "S3Session"
+I/chromium( 2433): [2433:2433:INFO:debug_endpoint_manager_grpc_client.cc(365)] gRPC client channel state changed to GRPC_CHANNEL_TRANSIENT_FAILURE
+D/AndroidRuntime( 4135): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4135): Using default boot image
+I/AndroidRuntime( 4135): Leaving lock profiling enabled
+D/AndroidRuntime( 4135): Calling main entry com.android.commands.input.Input
+D/app.robodad.tv( 2989): PlayerBase::PlayerBase()
+I/MediaFocusControl(  471): requestAudioFocus() from uid/pid 10076/2989 clientId=android.media.AudioManager@18b4b3forg.chromium.content.browser.AudioFocusDelegate@f92bc31 callingPack=app.robodad.tv req=1 flags=0x0 sdk=36
+I/MediaFocusControl(  471): abandonAudioFocus() from uid/pid 10076/2989 clientId=android.media.AudioManager@18b4b3forg.chromium.content.browser.AudioFocusDelegate@f92bc31
+D/AndroidRuntime( 4135): Shutting down VM
+D/app.robodad.tv( 2989): PlayerBase::start() from IPlayer
+D/AndroidRuntime( 4153): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4153): Using default boot image
+I/AndroidRuntime( 4153): Leaving lock profiling enabled
+D/AndroidRuntime( 4153): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4153): Shutting down VM
+D/AndroidRuntime( 4171): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4171): Using default boot image
+I/AndroidRuntime( 4171): Leaving lock profiling enabled
+D/AndroidRuntime( 4171): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4171): Shutting down VM
+D/AndroidRuntime( 4184): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4184): Using default boot image
+I/AndroidRuntime( 4184): Leaving lock profiling enabled
+D/AndroidRuntime( 4184): Calling main entry com.android.commands.input.Input
+D/app.robodad.tv( 2989): PlayerBase::stop() from IPlayer
+D/AndroidRuntime( 4184): Shutting down VM
+D/AndroidRuntime( 4242): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4242): Using default boot image
+I/AndroidRuntime( 4242): Leaving lock profiling enabled
+I/MediaFocusControl(  471): abandonAudioFocus() from uid/pid 10076/2989 clientId=android.media.AudioManager@18b4b3forg.chromium.content.browser.AudioFocusDelegate@f92bc31
+D/AndroidRuntime( 4242): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4242): Shutting down VM
+I/ActivityTaskManager(  471): START u0 {flg=0x10000000 cmp=app.robodad.tv/.HomeActivity (has extras)} from uid 2000
+D/AndroidRuntime( 4298): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4298): Using default boot image
+I/AndroidRuntime( 4298): Leaving lock profiling enabled
+D/AndroidRuntime( 4298): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4298): Shutting down VM
+W/ProcessStats(  471): Tracking association SourceState{f75c3a4 app.robodad.tv/10076 Top #7456} whose proc state 1 is better than process ProcessState{b98750d com.google.android.gms/10051 pkg=com.google.android.gms} proc state 2 (0 skipped)
+I/chromium( 2433): [2433:2433:INFO:shlib_volume_manager.cc(277)] New mute state for MEDIA: 1 (USER)
+I/chromium( 2433): [2433:2433:INFO:shlib_volume_manager.cc(277)] New mute state for ALARM: 1 (USER)
+I/chromium( 2433): [2433:2433:INFO:shlib_volume_manager.cc(277)] New mute state for COMMUNICATION: 1 (USER)
+I/chromium( 2433): [2433:2485:INFO:media_manager_impl.cc(925)] New active state: new_state=1, old_state=0
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] Record action: Cast.CecHdmiInputState.UnknownToInactive
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] Record action: Cast.CecStandby.UnknownToStandby
+I/chromium( 2433): [2433:2433:INFO:debug_endpoint_manager_grpc_client.cc(365)] gRPC client channel state changed to GRPC_CHANNEL_TRANSIENT_FAILURE
+D/AndroidRuntime( 4611): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4611): Using default boot image
+I/AndroidRuntime( 4611): Leaving lock profiling enabled
+D/AndroidRuntime( 4611): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4611): Shutting down VM
+I/chromium( 2433): [2433:2433:INFO:shlib_volume_manager.cc(277)] New mute state for MEDIA: 0 (USER)
+I/chromium( 2433): [2433:2433:INFO:shlib_volume_manager.cc(277)] New mute state for ALARM: 0 (USER)
+I/chromium( 2433): [2433:2433:INFO:shlib_volume_manager.cc(277)] New mute state for COMMUNICATION: 0 (USER)
+I/chromium( 2433): [2433:2485:INFO:media_manager_impl.cc(925)] New active state: new_state=3, old_state=1
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] Record action: Cast.CecHdmiInputState.InactiveToActive
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] Record action: Cast.CecStandby.StandbyToOn
+W/chromium( 1127): [FTL:1127:3947:WARNING:publisher.cc(34)] No subscribers for event
+W/chromium( 1127): "assistant.api.events.DeviceStateEvent" from publisher "InitializeInternal"
+I/chromium( 2433): [2433:2502:INFO:structure_info_from_trusted_devices.cc(311)] Getting trusted devices from HDS, num_in_flight_requests = 1
+W/chromium( 2433): [2433:2433:WARNING:client_auth_signer.cc(168)] No private key, hence empty signature.
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1437)] CreateJwt completed; running all done signing callbacks.
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1442)] Missing signature, return empty JWT
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1198)] CreateAndSignJwtAsync() returned invalid JWT. Not attaching to headers.
+E/chromium( 2433): [2433:2433:ERROR:cast_auth_headers.cc(169)] Unable to update signature header
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.GetTrustedDevices.Out
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1846)] Received response code 401 for message_id = f1ff9388-f536-418e-b889-c1931c62aac0 - 
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.GetTrustedDevices.Out.Error
+E/chromium( 2433): [2433:2502:ERROR:structure_info_from_trusted_devices.cc(379)] Failed to get trusted devices from HDS.
+I/chromium( 2433): [2433:2501:INFO:wifi_proximity.cc(177)] Request scan.
+I/chromium( 2433): [2433:2433:INFO:metrics_stat_logger.cc(55)] Metrics stat for the past 60 secs : total=14
+I/chromium( 2433): [metrics_stat_logger] Cast.CecHdmiInputState.InactiveToActive=1
+I/chromium( 2433): [metrics_stat_logger] Cast.CecHdmiInputState.UnknownToInactive=1
+I/chromium( 2433): [metrics_stat_logger] Cast.CecStandby.StandbyToOn=1
+I/chromium( 2433): [metrics_stat_logger] Cast.CecStandby.UnknownToStandby=1
+I/chromium( 2433): [metrics_stat_logger] CastV2.Receiver.DeviceStatus.Out=8
+I/chromium( 2433): [metrics_stat_logger] CastV2.Receiver.DeviceStatus.Out.Broadcast=4
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.GetTrustedDevices.Out=1
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.GetTrustedDevices.Out.Error=1
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.Register.Out=1
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.Register.Out.Error=1
+I/chromium( 2433): [metrics_stat_logger] Setup.eureka_info.Local=2
+I/chromium( 2433): [metrics_stat_logger] Setup.eureka_info.Local.200=2
+I/chromium( 2433): [metrics_stat_logger] VolumeMuted=1
+I/chromium( 2433): [metrics_stat_logger] VolumeUnmuted=1
+D/AndroidRuntime( 4652): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4652): Using default boot image
+I/AndroidRuntime( 4652): Leaving lock profiling enabled
+D/AndroidRuntime( 4652): Calling main entry com.android.commands.input.Input
+I/ActivityTaskManager(  471): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=app.robodad.tv/.HomeActivity (has extras)} from uid 0
+D/AndroidRuntime( 4652): Shutting down VM
+D/AndroidRuntime( 4667): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4667): Using default boot image
+I/AndroidRuntime( 4667): Leaving lock profiling enabled
+D/AndroidRuntime( 4667): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4667): Shutting down VM
+D/AndroidRuntime( 4682): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4682): Using default boot image
+I/AndroidRuntime( 4682): Leaving lock profiling enabled
+D/AndroidRuntime( 4682): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4682): Shutting down VM
+D/AndroidRuntime( 4700): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4700): Using default boot image
+I/AndroidRuntime( 4700): Leaving lock profiling enabled
+D/AndroidRuntime( 4700): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4700): Shutting down VM
+D/AndroidRuntime( 4713): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4713): Using default boot image
+I/AndroidRuntime( 4713): Leaving lock profiling enabled
+D/AndroidRuntime( 4713): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4713): Shutting down VM
+D/AndroidRuntime( 4726): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4726): Using default boot image
+I/AndroidRuntime( 4726): Leaving lock profiling enabled
+D/AndroidRuntime( 4726): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4726): Shutting down VM
+D/AndroidRuntime( 4739): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4739): Using default boot image
+I/AndroidRuntime( 4739): Leaving lock profiling enabled
+D/AndroidRuntime( 4739): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4739): Shutting down VM
+D/AndroidRuntime( 4754): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4754): Using default boot image
+I/AndroidRuntime( 4754): Leaving lock profiling enabled
+D/AndroidRuntime( 4754): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4754): Shutting down VM
+D/AndroidRuntime( 4833): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4833): Using default boot image
+I/AndroidRuntime( 4833): Leaving lock profiling enabled
+D/AndroidRuntime( 4833): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4833): Shutting down VM
+I/ActivityTaskManager(  471): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=app.robodad.tv/.HomeActivity (has extras)} from uid 0
+D/ArtManagerInternalImpl(  471): /data/misc/iorapd/app.robodad.tv/16/app.robodad.tv.HomeActivity/compiled_traces/compiled_trace.pb doesn't exist
+D/AndroidRuntime( 4922): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4922): Using default boot image
+I/AndroidRuntime( 4922): Leaving lock profiling enabled
+D/AndroidRuntime( 4922): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4922): Shutting down VM
+D/AndroidRuntime( 4949): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4949): Using default boot image
+I/AndroidRuntime( 4949): Leaving lock profiling enabled
+D/AndroidRuntime( 4949): Calling main entry com.android.commands.input.Input
+D/AndroidRuntime( 4949): Shutting down VM
+D/AndroidRuntime( 4963): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 4963): Using default boot image
+I/AndroidRuntime( 4963): Leaving lock profiling enabled
+D/AndroidRuntime( 4963): Calling main entry com.android.commands.input.Input
+I/ActivityTaskManager(  471): START u0 {flg=0x20000000 cmp=app.robodad.tv/.ChatActivity (has extras)} from uid 10076
+D/AndroidRuntime( 4963): Shutting down VM
+I/ActivityTaskManager(  471): Displayed app.robodad.tv/.ChatActivity: +1s212ms
+I/Finsky  ( 4976): [330] AIM: AppInfoManager-Perf > ItemModel > CacheSize=1, cacheHitCount=1, cacheMissCount=89, total appsWithNoServerDataCount=1. Missed  in cache (limit 10) : [com.android.inputdevices, com.android.systemui, com.google.android.youtube.tv, app.robodad.tv, com.google.android.configupdater, com.android.se, com.android.localtransport, com.android.dreams.basic, com.android.shell, com.google.android.hotspot2.osulogin]
+I/Finsky  ( 4976): [330] ItemStore: Not cached: app.robodad.tv
+E/Finsky  ( 4976): [329] ItemStore: getItems RPC failed for item app.robodad.tv
+W/chromium( 2433): [2433:2433:WARNING:ccs_manager_impl.cc(1522)] Device does not have a weave device id
+I/chromium( 2433): [2433:2433:INFO:ccs_transport_https.cc(1242)] No cloud settings for register request
+W/chromium( 2433): [2433:2433:WARNING:client_auth_signer.cc(168)] No private key, hence empty signature.
+I/chromium( 2433): [2433:2433:INFO:ccs_manager_impl.cc(1452)] Registering device with CCS: message_id = 5dba0c3a-f873-4305-98f2-fcb065c344c5
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1437)] CreateJwt completed; running all done signing callbacks.
+I/chromium( 2433): [2433:2433:INFO:application_identification_settings.cc(1442)] Missing signature, return empty JWT
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1198)] CreateAndSignJwtAsync() returned invalid JWT. Not attaching to headers.
+E/chromium( 2433): [2433:2433:ERROR:cast_auth_headers.cc(169)] Unable to update signature header
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.Register.Out
+E/chromium( 2433): [2433:2433:ERROR:ccs_transport_https.cc(1846)] Received response code 403 for message_id = 5dba0c3a-f873-4305-98f2-fcb065c344c5 - 
+I/chromium( 2433): [2433:2433:INFO:metrics_recorder.cc(188)] cast event: Cloud.Transport.Https.Register.Out.Error
+I/chromium( 2433): [2433:2433:INFO:ccs_manager_impl.cc(2465)] Scheduling next register for device in time: 229.477 s
+I/chromium( 2433): [2433:2433:INFO:metrics_stat_logger.cc(55)] Metrics stat for the past 60 secs : total=2
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.Register.Out=1
+I/chromium( 2433): [metrics_stat_logger] Cloud.Transport.Https.Register.Out.Error=1
+I/chromium( 2433): [2433:2433:INFO:debug_endpoint_manager_grpc_client.cc(365)] gRPC client channel state changed to GRPC_CHANNEL_TRANSIENT_FAILURE
+D/AndroidRuntime( 5260): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+I/AndroidRuntime( 5260): Using default boot image
+I/AndroidRuntime( 5260): Leaving lock profiling enabled
+D/AndroidRuntime( 5260): Calling main entry com.android.commands.input.Input
+I/ActivityTaskManager(  471): START u0 {act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=app.robodad.tv/.HomeActivity (has extras)} from uid 0
+D/AndroidRuntime( 5260): Shutting down VM
