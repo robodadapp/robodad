@@ -50,6 +50,12 @@
   #hBox img { inset: 0; width: 100%; height: 100%; border-radius: .2vh; opacity: .95; }
   #hBox .lbl { bottom: auto; top: -5vh; }
 
+  /* guitar + amp (Spotify / SiriusXM) */
+  #hMusic { left: 2.08%; top: 24%; width: 12%; height: 55.6%; border-radius: 1vh; }
+  #hMusic img, #hMusic .word { position: absolute; left: 6.1%; top: 78.5%; width: 87.8%; height: 19.3%; border-radius: .4vh; object-fit: cover; }
+  #hMusic .word { right: auto; bottom: auto; font-size: 2.2vh; color: #ffd0d4; background: rgba(0,0,0,.35); }
+  #hMusic .lbl { bottom: auto; top: -5vh; }
+
   /* RoboDad himself */
   #hBot { left: 37.24%; top: 33.33%; width: 23.44%; height: 62.96%; border-radius: 3vh; }
   #hBot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -60,7 +66,7 @@
   .bot-glow { opacity: .35; transition: opacity .3s; }
 
   /* speech bubble */
-  .bubble { position: absolute; left: 9.5%; top: 30%; width: 25%; padding: 2vh 1.4vw; background: #111114ee; border: .3vh solid var(--red2);
+  .bubble { position: absolute; left: 15%; top: 17%; width: 22%; padding: 2vh 1.4vw; background: #111114ee; border: .3vh solid var(--red2);
     border-radius: 2vh; font-size: 2.25vh; line-height: 1.4; box-shadow: 0 0 3vh rgba(229,9,20,.45); transform-origin: 100% 100%; }
   .bubble:after { content: ""; position: absolute; right: -2.2vh; bottom: 3vh; border: 1.2vh solid transparent; border-left: 2vh solid var(--red2); }
   .bubble b { display: block; color: var(--red2); font-size: 1.7vh; letter-spacing: .14em; text-transform: uppercase; margin-bottom: .6vh; }
@@ -157,6 +163,10 @@
   .breathe { animation: breathe 4s ease-in-out infinite; transform-box: view-box; transform-origin: 225px 660px; }
   .nod { animation: nod 8s ease-in-out infinite; transform-box: view-box; transform-origin: 225px 250px; }
   .glint { animation: glint 5s ease-in-out infinite; }
+  @keyframes visor { 0%,100% { opacity: .85 } 50% { opacity: 1 } }
+  @keyframes shine { 0%,70% { transform: skewX(-25deg) translateX(0) } 100% { transform: skewX(-25deg) translateX(420px) } }
+  .visor { animation: visor 2.4s ease-in-out infinite; }
+  .shine { animation: shine 6s ease-in-out infinite; }
   .hot .glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; animation: glare 6s ease-in-out infinite;
     background: linear-gradient(125deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.05) 28%, transparent 45%, transparent 70%, rgba(255,255,255,.06) 100%); }
   #hBox img { mix-blend-mode: multiply; filter: contrast(1.05) saturate(1.1); }
@@ -238,7 +248,7 @@
         <g fill="#111"><circle cx="40" cy="21" r="6"/><circle cx="68" cy="21" r="6"/><circle cx="96" cy="21" r="6"/><circle cx="124" cy="21" r="6"/><circle cx="152" cy="21" r="6"/></g>
         <circle cx="196" cy="21" r="5" fill="#FF2D3D" class="antenna"/>
       </g>
-      <g transform="translate(250 470) rotate(-12)">
+      <g transform="translate(110 318) scale(.8)">
         <rect x="52" y="-40" width="18" height="330" rx="6" fill="#6b4a2e" stroke="#160406" stroke-width="3"/>
         <g stroke="#f5f5f5" stroke-opacity=".35" stroke-width="1.4"><line x1="56" y1="-40" x2="56" y2="290"/><line x1="61" y1="-40" x2="61" y2="290"/><line x1="66" y1="-40" x2="66" y2="290"/></g>
         <path d="M46 -84 h30 l6 60 h-42 z" fill="#D10A1A" stroke="#160406" stroke-width="3"/>
@@ -250,9 +260,9 @@
         <rect x="36" y="388" width="50" height="12" rx="2" fill="url(#chrome)" stroke="#111" stroke-width="2"/>
         <circle cx="122" cy="392" r="8" fill="url(#chrome)"/><circle cx="104" cy="414" r="8" fill="url(#chrome)"/>
         <path d="M20 270 C 40 262 70 262 92 268" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="5" stroke-linecap="round"/>
-        <path d="M-20 470 L61 420 L142 470" fill="none" stroke="#3a3a44" stroke-width="9" stroke-linecap="round"/>
+        <path d="M40 -92 Q61 -110 82 -92" fill="none" stroke="#9aa3ad" stroke-width="7" stroke-linecap="round"/>
       </g>
-      <path d="M150 860 C 160 900 230 900 260 880" fill="none" stroke="#111" stroke-width="6"/>
+      <path d="M160 690 C 150 650 210 640 190 600" fill="none" stroke="#111" stroke-width="6"/>
 
       <!-- ===== desk with laptop (YouTube) ===== -->
       <rect x="1100" y="752" width="780" height="34" rx="6" fill="url(#wood)" stroke="#4a2225" stroke-width="2"/>
@@ -309,6 +319,7 @@
     <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="word">Netflix</span><span class="scan"></span><span class="glare"></span><span class="lbl">Netflix</span></button>
     <button class="hot in" id="hArt" style="animation-delay:.4s"><span class="word">Disney+</span><span class="glare"></span><span class="lbl">Disney+</span></button>
     <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="word">YouTube</span><span class="glare"></span><span class="lbl">YouTube</span></button>
+    <button class="hot in" id="hMusic" style="animation-delay:.8s"><span class="word">♪ Music</span><span class="lbl" id="musicLbl">Music</span></button>
     <button class="hot in" id="hBox" style="animation-delay:.7s"><span class="word">Prime Video</span><span class="lbl">Prime Video</span></button>
 
     <div class="bubble" id="bubble"><b id="bTitle">RoboDad</b><span id="bText"></span></div>
@@ -316,86 +327,94 @@
     <button class="hot in" id="hBot" data-tv-first style="animation-delay:.15s" aria-label="Talk to RoboDad">
       <svg viewBox="0 0 450 680">
         <defs>
-          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset=".5" stop-color="#b3bcc7"/><stop offset="1" stop-color="#6f7986"/></linearGradient>
-          <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c2c33"/><stop offset=".5" stop-color="#16161b"/><stop offset="1" stop-color="#08080a"/></linearGradient>
-          <linearGradient id="leatherHi" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-          <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset=".45" stop-color="#f2c94c"/><stop offset="1" stop-color="#a9781c"/></linearGradient>
-          <linearGradient id="denim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26385e"/><stop offset="1" stop-color="#16223b"/></linearGradient>
-          <linearGradient id="tee" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd3da"/></linearGradient>
-          <radialGradient id="eyeg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#FF4A57"/><stop offset="1" stop-color="#B00813"/></radialGradient>
+          <linearGradient id="armor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a3d46"/><stop offset=".35" stop-color="#1c1e24"/><stop offset="1" stop-color="#060608"/></linearGradient>
+          <linearGradient id="armor2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2f37"/><stop offset="1" stop-color="#0c0d10"/></linearGradient>
+          <linearGradient id="gloss" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <linearGradient id="joint" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2a2c32"/><stop offset=".5" stop-color="#555963"/><stop offset="1" stop-color="#2a2c32"/></linearGradient>
+          <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a74"/><stop offset=".45" stop-color="#FF1F30"/><stop offset="1" stop-color="#8a0610"/></linearGradient>
+          <radialGradient id="core" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#FF4A57"/><stop offset="1" stop-color="#B00813"/></radialGradient>
           <radialGradient id="botglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".55"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
-          <clipPath id="shades"><path d="M150 128 h62 l-6 22 q-24 8 -50 0 z M238 128 h62 l-6 22 q-24 8 -50 0 z"/></clipPath>
+          <clipPath id="visorClip"><path d="M126 150 Q225 132 324 150 L318 190 Q225 204 132 190 Z"/></clipPath>
         </defs>
         <ellipse class="bot-glow" cx="225" cy="360" rx="270" ry="350" fill="url(#botglow)"/>
         <g class="breathe">
-          <!-- legs: rolled-cuff jeans + boots -->
-          <path d="M148 488 L220 488 L214 618 L150 618 Z" fill="url(#denim)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M230 488 L302 488 L300 618 L236 618 Z" fill="url(#denim)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M184 500 L182 600 M266 500 L268 600" stroke="#3b5285" stroke-width="2" stroke-dasharray="6 5"/>
-          <rect x="146" y="596" width="72" height="22" rx="4" fill="#3b5285" stroke="#000" stroke-width="3"/>
-          <rect x="232" y="596" width="72" height="22" rx="4" fill="#3b5285" stroke="#000" stroke-width="3"/>
-          <path d="M136 660 q0 -40 30 -42 h50 q12 0 12 14 v28 z" fill="#0c0c0f" stroke="#000" stroke-width="4"/>
-          <path d="M314 660 q0 -40 -30 -42 h-50 q-12 0 -12 14 v28 z" fill="#0c0c0f" stroke="#000" stroke-width="4"/>
-          <rect x="134" y="654" width="96" height="10" rx="4" fill="#D10A1A"/><rect x="220" y="654" width="96" height="10" rx="4" fill="#D10A1A"/>
-          <!-- belt -->
-          <rect x="132" y="466" width="186" height="26" rx="6" fill="#1a0f0a" stroke="#000" stroke-width="3"/>
-          <rect x="206" y="466" width="38" height="26" rx="5" fill="url(#chrome)" stroke="#000" stroke-width="3"/>
-          <!-- torso: V-taper, white tee under an open leather biker jacket -->
-          <path d="M56 300 Q100 262 186 266 L225 292 L264 266 Q350 262 394 300 L360 472 Q225 494 90 472 Z" fill="url(#leather)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
-          <path d="M186 266 L225 292 L264 266 L276 470 Q225 482 174 470 Z" fill="url(#tee)" stroke="#000" stroke-width="3"/>
-          <path d="M200 330 Q225 342 250 330 M196 360 Q225 374 254 360" fill="none" stroke="#9aa1ab" stroke-width="3" opacity=".6"/>
-          <path d="M186 266 L150 330 L196 372 L206 300 Z" fill="#0b0b0e" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
-          <path d="M264 266 L300 330 L254 372 L244 300 Z" fill="#0b0b0e" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
-          <path d="M168 260 L140 236 L188 256 M282 260 L310 236 L262 256" fill="#0b0b0e" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M318 300 L284 470" stroke="url(#chrome)" stroke-width="5" stroke-dasharray="5 4"/>
-          <rect x="74" y="292" width="74" height="16" rx="5" fill="#0b0b0e" stroke="#000" stroke-width="3" transform="rotate(-12 111 300)"/>
-          <rect x="302" y="292" width="74" height="16" rx="5" fill="#0b0b0e" stroke="#000" stroke-width="3" transform="rotate(12 339 300)"/>
-          <circle cx="86" cy="304" r="5" fill="url(#chrome)"/><circle cx="364" cy="304" r="5" fill="url(#chrome)"/>
-          <path d="M100 290 Q130 276 168 278" fill="none" stroke="url(#leatherHi)" stroke-width="10" stroke-linecap="round"/>
-          <!-- crossed arms -->
-          <path d="M96 406 L312 372" stroke="#000" stroke-width="64" stroke-linecap="round"/>
-          <path d="M96 406 L312 372" stroke="url(#leather)" stroke-width="56" stroke-linecap="round"/>
-          <circle cx="318" cy="372" r="27" fill="url(#metal)" stroke="#000" stroke-width="4"/>
-          <path d="M354 410 L140 380" stroke="#000" stroke-width="66" stroke-linecap="round"/>
-          <path d="M354 410 L140 380" stroke="url(#leather)" stroke-width="58" stroke-linecap="round"/>
-          <path d="M176 362 L172 398" stroke="#D10A1A" stroke-width="8"/>
-          <circle cx="132" cy="380" r="27" fill="url(#metal)" stroke="#000" stroke-width="4"/>
-          <path d="M180 370 Q260 360 330 384" fill="none" stroke="url(#leatherHi)" stroke-width="8" stroke-linecap="round"/>
-          <!-- biceps -->
-          <path d="M58 302 C 30 330 34 420 92 434 C 122 420 128 352 110 312 Z" fill="url(#leather)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
-          <path d="M392 302 C 420 330 416 420 358 434 C 328 420 322 352 340 312 Z" fill="url(#leather)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
-          <path d="M56 336 C 52 370 60 400 78 414" fill="none" stroke="url(#leatherHi)" stroke-width="8" stroke-linecap="round"/>
-          <path d="M60 392 L104 404 M390 392 L346 404" stroke="#D10A1A" stroke-width="7"/>
-          <!-- neck -->
-          <rect x="190" y="236" width="70" height="38" rx="8" fill="#59616c" stroke="#000" stroke-width="4"/>
-          <path d="M198 250 h54 M198 262 h54" stroke="#3a4048" stroke-width="3"/>
+          <!-- legs -->
+          <rect x="166" y="496" width="44" height="40" rx="8" fill="url(#joint)" stroke="#000" stroke-width="3"/>
+          <rect x="240" y="496" width="44" height="40" rx="8" fill="url(#joint)" stroke="#000" stroke-width="3"/>
+          <path d="M146 500 L222 500 L214 560 L154 560 Z" fill="url(#armor)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M228 500 L304 500 L296 560 L236 560 Z" fill="url(#armor)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M160 512 L208 512 M242 512 L290 512" stroke="#FF2D3D" stroke-width="3"/>
+          <ellipse cx="184" cy="566" rx="26" ry="16" fill="url(#armor2)" stroke="#000" stroke-width="3"/>
+          <ellipse cx="266" cy="566" rx="26" ry="16" fill="url(#armor2)" stroke="#000" stroke-width="3"/>
+          <circle cx="184" cy="566" r="5" fill="#FF2D3D" class="antenna"/><circle cx="266" cy="566" r="5" fill="#FF2D3D" class="antenna"/>
+          <path d="M156 578 L212 578 L210 626 L158 626 Z" fill="url(#armor)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M238 578 L294 578 L292 626 L240 626 Z" fill="url(#armor)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M132 662 q0 -40 34 -40 h46 q12 0 12 14 v26 z" fill="url(#armor)" stroke="#000" stroke-width="4"/>
+          <path d="M318 662 q0 -40 -34 -40 h-46 q-12 0 -12 14 v26 z" fill="url(#armor)" stroke="#000" stroke-width="4"/>
+          <rect x="132" y="656" width="92" height="8" rx="4" fill="#FF2D3D" class="neon"/><rect x="226" y="656" width="92" height="8" rx="4" fill="#FF2D3D" class="neon"/>
+          <!-- hips -->
+          <path d="M130 462 L320 462 L310 504 L225 520 L140 504 Z" fill="url(#armor2)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <rect x="204" y="468" width="42" height="26" rx="5" fill="#0a0a0c" stroke="#FF2D3D" stroke-width="3"/>
+          <!-- torso -->
+          <rect x="182" y="240" width="86" height="40" rx="10" fill="url(#joint)" stroke="#000" stroke-width="4"/>
+          <path d="M190 252 h70 M190 264 h70" stroke="#1a1b20" stroke-width="3"/>
+          <path d="M84 300 Q120 268 225 270 Q330 268 366 300 L338 470 Q225 492 112 470 Z" fill="url(#armor)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M122 296 Q170 282 214 290 L206 362 Q160 372 128 352 Z" fill="url(#armor2)" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M328 296 Q280 282 236 290 L244 362 Q290 372 322 352 Z" fill="url(#armor2)" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M134 302 Q170 290 204 296" fill="none" stroke="url(#gloss)" stroke-width="6" stroke-linecap="round"/>
+          <path d="M246 296 Q280 290 316 302" fill="none" stroke="url(#gloss)" stroke-width="6" stroke-linecap="round"/>
+          <!-- red hexagon core -->
+          <path d="M225 300 L246 312 L246 336 L225 348 L204 336 L204 312 Z" fill="#0a0a0c" stroke="#FF2D3D" stroke-width="3"/>
+          <path class="core" d="M225 310 L238 318 L238 330 L225 338 L212 330 L212 318 Z" fill="url(#core)"/>
+          <!-- abs plates -->
+          <g fill="url(#armor2)" stroke="#000" stroke-width="3">
+            <rect x="182" y="372" width="40" height="26" rx="5"/><rect x="228" y="372" width="40" height="26" rx="5"/>
+            <rect x="184" y="402" width="38" height="24" rx="5"/><rect x="228" y="402" width="38" height="24" rx="5"/>
+            <rect x="186" y="430" width="36" height="24" rx="5"/><rect x="228" y="430" width="36" height="24" rx="5"/>
+          </g>
+          <path d="M140 380 L170 452 M310 380 L280 452" stroke="#FF2D3D" stroke-width="4" stroke-linecap="round"/>
+          <!-- crossed armored arms -->
+          <path d="M100 410 L312 376" stroke="#000" stroke-width="64" stroke-linecap="round"/>
+          <path d="M100 410 L312 376" stroke="url(#armor2)" stroke-width="56" stroke-linecap="round"/>
+          <circle cx="318" cy="376" r="26" fill="url(#armor)" stroke="#000" stroke-width="4"/>
+          <path d="M352 412 L140 382" stroke="#000" stroke-width="66" stroke-linecap="round"/>
+          <path d="M352 412 L140 382" stroke="url(#armor)" stroke-width="58" stroke-linecap="round"/>
+          <path d="M180 372 L176 404 M214 376 L210 408" stroke="#FF2D3D" stroke-width="5"/>
+          <path d="M190 378 Q260 368 330 392" fill="none" stroke="url(#gloss)" stroke-width="7" stroke-linecap="round"/>
+          <circle cx="132" cy="382" r="26" fill="url(#armor)" stroke="#000" stroke-width="4"/>
+          <!-- upper arms + shoulder pauldrons -->
+          <path d="M64 320 C 44 350 50 420 98 434 C 124 418 128 360 112 324 Z" fill="url(#armor2)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M386 320 C 406 350 400 420 352 434 C 326 418 322 360 338 324 Z" fill="url(#armor2)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M40 318 C 44 270 92 250 136 272 C 128 300 112 326 76 342 C 56 340 44 332 40 318 Z" fill="url(#armor)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M410 318 C 406 270 358 250 314 272 C 322 300 338 326 374 342 C 394 340 406 332 410 318 Z" fill="url(#armor)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M54 300 C 70 278 100 270 126 278" fill="none" stroke="url(#gloss)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M396 300 C 380 278 350 270 324 278" fill="none" stroke="url(#gloss)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M48 322 L112 300 M402 322 L338 300" stroke="#FF2D3D" stroke-width="4" stroke-linecap="round"/>
           <!-- head -->
           <g class="nod">
-            <rect x="106" y="86" width="238" height="166" rx="56" fill="url(#metal)" stroke="#000" stroke-width="5"/>
-            <path d="M130 228 Q225 268 320 228 L314 244 Q225 278 136 244 Z" fill="#8a94a1" stroke="#000" stroke-width="3"/>
-            <rect x="84" y="140" width="28" height="62" rx="13" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-            <rect x="338" y="140" width="28" height="62" rx="13" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-            <rect x="138" y="160" width="174" height="74" rx="34" fill="#0e0e12" stroke="#000" stroke-width="4"/>
-            <ellipse class="eye" cx="190" cy="194" rx="19" ry="14" fill="url(#eyeg)"/>
-            <ellipse class="eye" cx="260" cy="194" rx="19" ry="14" fill="url(#eyeg)"/>
-            <path d="M168 176 L212 184 M282 176 L238 184" stroke="#000" stroke-width="7" stroke-linecap="round"/>
-            <path d="M204 218 Q236 230 266 210" fill="none" stroke="#FF2D3D" stroke-width="6" stroke-linecap="round"/>
-            <!-- '50s blonde pompadour -->
-            <path d="M110 150 C 100 110 112 82 140 64 C 150 18 204 -10 264 -4 C 320 2 356 32 352 70 C 342 54 320 48 300 52 C 332 70 346 100 346 130 C 330 106 298 94 264 94 C 232 94 198 98 170 112 C 142 124 122 138 110 150 Z" fill="url(#hair)" stroke="#5c3d08" stroke-width="4" stroke-linejoin="round"/>
-            <path d="M150 70 C 168 30 214 10 262 12 C 302 14 330 30 338 52" fill="none" stroke="#fff6c8" stroke-width="6" stroke-linecap="round" opacity=".85"/>
-            <path d="M142 100 C 176 72 230 62 286 70 M156 120 C 190 100 236 92 282 98" fill="none" stroke="#b88a24" stroke-width="4" stroke-linecap="round" opacity=".8"/>
-            <path d="M300 52 C 318 58 334 74 340 96" fill="none" stroke="#fff6c8" stroke-width="4" stroke-linecap="round" opacity=".7"/>
-            <path d="M110 150 C 112 170 112 186 106 200 M344 132 C 348 150 348 170 346 186" fill="none" stroke="#c9952b" stroke-width="10" stroke-linecap="round"/>
-            <!-- shades pushed up on his hair -->
-            <g>
-              <path d="M150 128 h62 l-6 22 q-24 8 -50 0 z M238 128 h62 l-6 22 q-24 8 -50 0 z" fill="#0b0b0e" stroke="#000" stroke-width="3"/>
-              <path d="M212 132 h26" stroke="#000" stroke-width="5"/>
-              <g clip-path="url(#shades)"><rect class="glint" x="120" y="110" width="22" height="60" fill="#fff" opacity=".55" transform="skewX(-25)"/></g>
-              <path d="M156 132 h20 M244 132 h20" stroke="#FF2D3D" stroke-width="3" opacity=".8"/>
+            <line x1="225" y1="22" x2="225" y2="58" stroke="#000" stroke-width="8"/>
+            <line x1="225" y1="22" x2="225" y2="58" stroke="url(#joint)" stroke-width="4"/>
+            <circle class="antenna" cx="225" cy="18" r="13" fill="#FF2D3D" stroke="#000" stroke-width="4"/>
+            <path d="M112 128 Q114 56 225 50 Q336 56 338 128 L342 196 Q338 244 300 252 L150 252 Q112 244 108 196 Z" fill="url(#armor)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M140 84 Q225 50 310 84" fill="none" stroke="url(#gloss)" stroke-width="9" stroke-linecap="round"/>
+            <path d="M225 54 L225 132" stroke="#000" stroke-width="3" opacity=".6"/>
+            <path d="M162 70 Q225 58 288 70" fill="none" stroke="#FF2D3D" stroke-width="3" opacity=".7"/>
+            <!-- ear pucks -->
+            <circle cx="104" cy="170" r="24" fill="url(#armor2)" stroke="#000" stroke-width="4"/><circle cx="104" cy="170" r="11" fill="#FF2D3D" class="antenna"/>
+            <circle cx="346" cy="170" r="24" fill="url(#armor2)" stroke="#000" stroke-width="4"/><circle cx="346" cy="170" r="11" fill="#FF2D3D" class="antenna"/>
+            <!-- visor -->
+            <path d="M120 146 Q225 126 330 146 L324 196 Q225 212 126 196 Z" fill="#050506" stroke="#000" stroke-width="4"/>
+            <path class="visor" d="M126 150 Q225 132 324 150 L318 190 Q225 204 132 190 Z" fill="url(#visor)"/>
+            <g clip-path="url(#visorClip)">
+              <rect class="shine" x="60" y="120" width="40" height="100" fill="#fff" opacity=".45" transform="skewX(-25)"/>
+              <path d="M132 160 Q225 144 318 160" fill="none" stroke="#ffd0d4" stroke-width="3" opacity=".8"/>
             </g>
+            <!-- jaw plate with straight vents -->
+            <path d="M152 214 Q225 228 298 214 L292 246 Q225 258 158 246 Z" fill="url(#armor2)" stroke="#000" stroke-width="3"/>
+            <path d="M186 228 h78 M190 238 h70" stroke="#FF2D3D" stroke-width="3" stroke-linecap="round" opacity=".85"/>
             <!-- party hat, only on his birthday -->
-            <g class="hat"><path d="M214 2 L250 -96 L290 6 Z" fill="#FFC83D" stroke="#000" stroke-width="4"/>
-              <path d="M226 -26 L276 -38 M236 -56 L264 -62" stroke="#D10A1A" stroke-width="8"/><circle cx="250" cy="-98" r="12" fill="#FF2D3D" stroke="#000" stroke-width="3"/></g>
+            <g class="hat"><path d="M190 58 L232 -50 L270 60 Z" fill="#FFC83D" stroke="#000" stroke-width="4"/>
+              <path d="M202 24 L256 10 M214 -8 L246 -16" stroke="#D10A1A" stroke-width="8"/><circle cx="232" cy="-52" r="12" fill="#FF2D3D" stroke="#000" stroke-width="3"/></g>
           </g>
         </g>
       </svg>
@@ -537,6 +556,14 @@
   $('hBot').addEventListener('click', function () { if (TV) TV.chat(); else location.href = 'https://robodad.app/?source=tv'; });
   SPOTS.forEach(function (s) { $(s.id).addEventListener('click', function () { launch(s.pkg, s.name); }); });
 
+  // The guitar + amp open Spotify, or SiriusXM, whichever is on the TV (Spotify first).
+  var MUSIC = { pkg: '', name: 'Spotify' };
+  $('hMusic').addEventListener('click', function () {
+    if (MUSIC.pkg) { launch(MUSIC.pkg, MUSIC.name); return; }
+    toast('Spotify isn\u2019t on this TV yet. Opening the Play Store\u2026');
+    if (TV && TV.market) TV.market('com.spotify.tv.android');
+  });
+
   // ---- birthday (only after Dad arms the surprise) ----
   var note = $('note');
   var start = parseInt(store('rdtv.bday') || '0', 10);
@@ -596,11 +623,21 @@
       } else { if (img) img.remove(); word.style.display = ''; }
     });
 
+    var mu = list.filter(function (a) { return /spotify/i.test(a.pkg); })[0] || list.filter(function (a) { return /sirius/i.test(a.pkg); })[0];
+    MUSIC.pkg = mu ? mu.pkg : ''; MUSIC.name = mu ? mu.name : 'Spotify';
+    $('musicLbl').textContent = mu ? mu.name : 'Get Spotify';
+    var mEl = $('hMusic'), mImg = mEl.querySelector('img'), mWord = mEl.querySelector('.word');
+    if (mu && mu.art) {
+      if (!mImg) { mImg = document.createElement('img'); mImg.alt = ''; mEl.insertBefore(mImg, mEl.firstChild); }
+      mImg.src = mu.art.replace(/^(banner|icon):/, ''); mWord.style.display = 'none';
+    } else { if (mImg) mImg.remove(); mWord.style.display = ''; }
+
     var apps = $('apps'), fIdx = -1;
     for (var i = 0; i < apps.children.length; i++) if (apps.children[i] === document.activeElement) fIdx = i;
     apps.textContent = '';
     var skip = { 'com.google.android.tv.remote.service': 1 };
     SPOTS.forEach(function (s) { skip[s.pkg] = 1; });
+    if (MUSIC.pkg) skip[MUSIC.pkg] = 1;
     var hasSettings = false;
     list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) {
       if (/settings/i.test(a.pkg) || a.name === 'Settings') hasSettings = true;

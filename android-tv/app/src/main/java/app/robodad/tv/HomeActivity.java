@@ -230,6 +230,15 @@ public class HomeActivity extends Activity {
             return launch(pkg);
         }
 
+        /** Opens an app's Play Store page so it can be installed. */
+        @JavascriptInterface
+        public void market(String pkg) {
+            ui.post(() -> {
+                try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + pkg)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
+                catch (Exception e) { launch("com.android.vending"); }
+            });
+        }
+
         @JavascriptInterface
         public void settings() {
             ui.post(() -> {
