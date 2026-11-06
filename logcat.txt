@@ -1,0 +1,222 @@
+I/ActivityTaskManager(  526): START u0 {flg=0x10000000 cmp=app.robodad/.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+D/CoreBackPreview(  526): Window{6c7e6c7 u0 Splash Screen app.robodad}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@29c53f0, mPriority=0, mIsAnimationCallback=false}
+I/app.robodad( 2336): Late-enabling -Xcheck:jni
+I/app.robodad( 2336): Using CollectorTypeCC GC.
+W/app.robodad( 2336): Unexpected CPU variant for x86: x86_64.
+W/app.robodad( 2336): Known variants: atom, sandybridge, silvermont, goldmont, goldmont-plus, tremont, kabylake, default
+I/ActivityManager(  526): Start proc 2336:app.robodad/u0a192 for next-top-activity {app.robodad/app.robodad.MainActivity}
+I/SdkSandboxManager(  526): No SDKs used. Skipping SDK data reconcilation for CallingInfo{mUid=10192, mPackageName='app.robodad, mAppProcessToken='null'}
+W/ziparchive( 2336): Unable to open '/data/app/~~QYyMxMqvwdAMxURzC6Shvw==/app.robodad-J5Wm8TAiOMHh0EZEt8QVuA==/base.dm': No such file or directory
+W/ziparchive( 2336): Unable to open '/data/app/~~QYyMxMqvwdAMxURzC6Shvw==/app.robodad-J5Wm8TAiOMHh0EZEt8QVuA==/base.dm': No such file or directory
+D/nativeloader( 2336): Configuring clns-6 for other apk /data/app/~~QYyMxMqvwdAMxURzC6Shvw==/app.robodad-J5Wm8TAiOMHh0EZEt8QVuA==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~QYyMxMqvwdAMxURzC6Shvw==/app.robodad-J5Wm8TAiOMHh0EZEt8QVuA==/lib/x86_64, permitted_path=/data:/mnt/expand:/data/user/0/app.robodad
+V/GraphicsEnvironment( 2336): ANGLE GameManagerService for app.robodad: false
+V/GraphicsEnvironment( 2336): app.robodad is not listed in per-application setting
+E/app.robodad( 2336): Failed to open APK '/data/resource-cache/com.android.systemui-neutral-VFZv.frro': Invalid file
+E/app.robodad( 2336): Failed to open APK '/data/resource-cache/com.android.systemui-accent-SYzh.frro': Invalid file
+E/app.robodad( 2336): Failed to open APK '/data/resource-cache/com.android.systemui-dynamic-8grD.frro': Invalid file
+W/app.robodad( 2336): Entry not found
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{38318e0 com.android.cts.priv.ctsshim/10183} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{da60799 com.google.android.youtube/10139} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f580a5e com.android.internal.display.cutout.emulation.corner/10025} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{e593e3f com.android.internal.display.cutout.emulation.double/10048} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b0e30c com.google.android.onetimeinitializer/10126} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{7c68455 com.google.android.ext.shared/10100} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{a966e6a com.android.internal.systemui.navbar.gestural_wide_back/10007} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{7ad7f5b com.android.virtualmachine.res/10179} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d0f23f8 com.google.android.federatedcompute/10190} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{63810d1 com.android.managedprovisioning.auto_generated_rro_product__/10024} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{da50736 com.android.carrierconfig.auto_generated_rro_vendor__/10078} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{13ab637 com.android.systemui.emulation.pixel_3_xl/10034} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f0e87a4 com.android.systemui.emulation.pixel_4_xl/10059} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{35be90d com.android.systemui.emulation.pixel_fold/10009} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c3260c2 com.android.simappdialog.auto_generated_rro_product__/10030} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{2fa7ed3 com.android.htmlviewer/10115} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{17e7a10 com.google.android.health.connect.backuprestore/10188} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{46b0909 com.android.systemui.auto_generated_rro_product__/10031} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{449c70e com.google.android.soundpicker/10136} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{e4352f com.google.android.marvin.talkbackoverlay/10077} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ab9273c com.google.android.configupdater/10129} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f322cc5 com.android.internal.emulation.pixel_3a_xl/10044} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{75f461a com.android.internal.emulation.pixel_6_pro/10018} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d08f54b com.android.internal.emulation.pixel_7_pro/10004} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{a8f7b28 com.android.internal.emulation.pixel_8_pro/10058} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f8dd041 com.android.internal.emulation.pixel_3a/10053} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{81ba9e6 com.android.internal.emulation.pixel_4a/10011} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f6f9b27 com.android.internal.emulation.pixel_6a/10023} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{af521d4 com.android.internal.emulation.pixel_7a/10033} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{8a62f7d com.google.android.overlay.googlewebview/10049} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{8e87e72 com.google.android.hotspot2.osulogin/10172} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{fb0c2c3 com.android.simappdialog/10111} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f6c8740 com.android.internal.display.cutout.emulation.hole/10073} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{deb4679 com.android.internal.display.cutout.emulation.tall/10065} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{73c0fbe com.android.internal.systemui.navbar.threebutton/10068} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c52c81f com.android.camera2/10145} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f32d76c com.android.systemui.auto_generated_rro_vendor__/10076} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{fd0d135 com.google.android.deskclock/10152} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{fa569ca com.android.internal.systemui.navbar.twobutton/10020} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{be5c73b com.android.internal.systemui.navbar.gestural_extra_wide_back/10045} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{62bfe58 com.android.systemui.emulation.pixel_3/10015} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{84a4bb1 com.android.systemui.emulation.pixel_4/10037} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{6985896 com.android.systemui.emulation.pixel_5/10071} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{3df9c17 com.android.systemui.emulation.pixel_6/10074} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{88ea804 com.android.systemui.emulation.pixel_7/10072} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{306f1ed com.android.systemui.emulation.pixel_8/10070} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{1f96822 com.android.nfc.auto_generated_rro_product__/10027} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{137e2b3 com.android.printspooler/10104} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{5504070 com.android.emergency.auto_generated_rro_product__/10041} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d6dbfe9 com.google.android.connectivity.resources.goldfish.overlay/10079} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f69e46e com.android.dreams.basic/10103} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ec3f70f com.google.android.networkstack.tethering.emulator/10022} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{350f39c com.android.providers.settings.auto_generated_rro_product__/10002} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{a5971a5 com.google.android.as.oss/10122} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{353d97a com.android.traceur.auto_generated_rro_product__/10005} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{552f52b com.google.android.devicelockcontroller/10189} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{547ad88 com.android.internal.emulation.pixel_3/10046} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{5948321 com.android.internal.emulation.pixel_4/10060} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{cb61346 com.android.internal.emulation.pixel_5/10012} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{189b907 com.android.internal.emulation.pixel_6/10038} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{6e1a34 com.android.internal.emulation.pixel_7/10067} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{315305d com.android.internal.emulation.pixel_8/10039} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{9b01dd2 com.google.android.captiveportallogin/10113} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b7edea3 com.android.musicfx/10088} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f769f5e com.google.android.apps.maps/10156} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{1eca5a0 com.google.android.modulemetadata/10146} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{5f97559 com.google.android.markup/10135} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{8ce451e com.android.providers.settings.auto_generated_rro_vendor__/10080} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c16c1ff com.google.android.rkpdapp/10186} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f067bcc com.google.android.contacts/10154} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b430e15 com.android.server.telecom.auto_generated_rro_product__/10032} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{315952a com.google.android.overlay.googleconfig/10055} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c1f7f1b com.android.bips.auto_generated_rro_product__/10035} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c0588b8 com.google.android.apps.customization.pixel/10143} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{4537691 com.google.android.tag/10084} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{acfd9f6 com.google.android.overlay.permissioncontroller/10003} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{92cf1f7 com.google.android.partnersetup/10125} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{5e67864 com.google.android.apps.wallpaper.nexus/10141} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d27eacd com.google.android.apps.nexuslauncher/10169} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b179f82 com.google.android.nearby.halfsheet/10178} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c34b693 com.android.theme.font.notoserifsource/10066} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ac4b6d0 com.google.android.safetycenter.resources/10181} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{a5566c9 com.android.internal.display.cutout.emulation.waterfall/10040} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{42431ce com.android.internal.systemui.navbar.transparent/10029} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{dea28ef com.google.android.connectivity.resources/10177} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d066ffc com.android.providers.contacts.auto_generated_rro_product__/10019} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ac4a685 com.google.android.feedback/10162} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{559cda com.google.android.printservice.recommendation/10110} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{4da650b com.google.android.apps.photos/10140} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d488fe8 com.google.android.documentsui/10098} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{e00aca6 com.android.systemui.emulation.pixel_3a_xl/10021} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{70ac294 com.android.systemui.emulation.pixel_6_pro/10063} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{956213d com.android.systemui.emulation.pixel_7_pro/10054} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{9faed32 com.android.systemui.emulation.pixel_8_pro/10001} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ac86a83 com.google.mainline.telemetry/10151} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c1b7400 com.android.carrierconfig.auto_generated_rro_product__/10064} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d089439 com.android.providers.partnerbookmarks/10101} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{6e6aa7e com.android.wallpaper.livepicker/10090} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{39d2bdf com.android.providers.telephony.auto_generated_rro_product__/10062} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ac3d02c com.android.phone.auto_generated_rro_vendor__/10081} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{cd53af5 com.google.mainline.adservices/10137} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d3ef08a com.android.imsserviceentitlement/10117} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{5d2a6fb com.google.android.healthconnect.controller/10187} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ab3c318 com.android.internal.emulation.pixel_2_xl/10016} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{8b9171 com.android.internal.emulation.pixel_3_xl/10056} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{238b56 com.android.internal.emulation.pixel_4_xl/10047} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{e1ab7d7 com.android.internal.emulation.pixel_fold/10006} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{cadf8c4 com.android.bookmarkprovider/10114} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{376d3ad com.google.android.overlay.pixelconfigcommon/10014} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{2e506e2 com.android.systemui.accessibility.accessibilitymenu.auto_generated_rro_product__/10050} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{868fa73 com.android.systemui.emulation.pixel_3a/10013} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{8f3dd30 com.android.systemui.emulation.pixel_4a/10000} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{59fda9 com.android.systemui.emulation.pixel_6a/10042} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b50af2e com.android.systemui.emulation.pixel_7a/10017} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{24ecacf com.google.android.settings.intelligence/10118} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{873e87d com.google.android.projection.gearhead/10123} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{8719c5c com.google.android.uwb.resources/10174} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{7de4372 com.android.cts.ctsshim/10184} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{12bcb65 com.google.android.wifi.resources/10170} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{cbc903a com.google.android.wifi.dialog/10171} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{71744eb com.google.android.apps.wallpaper/10160} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{4aa2248 com.google.android.odad/10121} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{e92b8e1 com.android.settings.auto_generated_rro_product__/10028} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{7d37606 com.android.internal.systemui.navbar.gestural/10051} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{1a344c7 com.google.android.apps.youtube.music/10155} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{a631af4 com.android.bluetoothmidiservice/10107} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b21021d com.android.storagemanager.auto_generated_rro_product__/10026} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b20ec92 com.google.android.cellbroadcastreceiver/10180} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{56663 com.android.phone.auto_generated_rro_product__/10061} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b10f260 android.auto_generated_rro_product__/10069} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{650a319 com.android.internal.systemui.navbar.gestural_narrow_back/10052} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{4de05bf com.google.android.inputmethod.latin/10144} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{902d48c android.auto_generated_rro_vendor__/10075} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{33f57d5 com.google.android.apps.restore/10120} BLOCKED
+W/app.robodad( 2336): Accessing hidden method Landroid/os/Trace;->isTagEnabled(J)Z (unsupported, reflection, allowed)
+W/app.robodad( 2336): Accessing hidden method Landroid/os/Trace;->traceBegin(JLjava/lang/String;)V (unsupported, reflection, allowed)
+W/app.robodad( 2336): Accessing hidden method Landroid/os/Trace;->traceEnd(J)V (unsupported, reflection, allowed)
+W/app.robodad( 2336): Accessing hidden method Landroid/os/Trace;->asyncTraceBegin(JLjava/lang/String;I)V (unsupported, reflection, allowed)
+W/app.robodad( 2336): Accessing hidden method Landroid/os/Trace;->asyncTraceEnd(JLjava/lang/String;I)V (unsupported, reflection, allowed)
+I/cr_VariationsUtils( 2336): Failed reading seed file "/data/user/0/app.robodad/app_webview/variations_seed_new"
+I/cr_VariationsUtils( 2336): Failed reading seed file "/data/user/0/app.robodad/app_webview/variations_seed"
+V/WindowManager(  526):     info={id=5 t=CLOSE f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{RemoteToken{8ba01ac Task{f029d18 #8 type=standard A=10192:app.robodad}}} m=OPEN f=MOVE_TO_TOP leash=Surface(name=Task=8)/@0x3ae6fb9 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0},{WCT{RemoteToken{abd4e75 Task{bf1336d #1 type=home}}} m=TO_BACK f=NONE leash=Surface(name=Task=1)/@0x5e3fc09 sb=Rect(0, 0 - 320, 640) eb=Rect(0, 0 - 320, 640) d=0}]}
+I/ActivityManager(  526): Start proc 2462:com.google.android.webview:webview_service/u0a134 for service {com.google.android.webview/org.chromium.android_webview.services.VariationsSeedServer}
+I/ActivityManager(  526): Start proc 2475:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {app.robodad/org.chromium.content.app.SandboxedProcessService0:0}
+D/SharedPreferencesImpl( 2336): Time required to fsync /data/user/0/app.robodad/shared_prefs/WebViewChromiumPrefs.xml: [<1: 0, <2: 0, <4: 0, <8: 0, <16: 0, <32: 0, <64: 0, <128: 0, <256: 0, <512: 1, <1024: 0, <2048: 0, <4096: 0, <8192: 0, <16384: 0, >=16384: 0]
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{da60799 com.google.android.youtube/10139} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{552f52b com.google.android.devicelockcontroller/10189} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{9825cb7 com.google.android.contacts/10154} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{92cf1f7 com.google.android.partnersetup/10125} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{b20ec92 com.google.android.cellbroadcastreceiver/10180} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{4de05bf com.google.android.inputmethod.latin/10144} BLOCKED
+I/cr_WebViewApkApp( 2475): Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+D/ConnectivityService(  526): requestNetwork for uid/pid:10192/2336 activeRequest: null callbackRequest: 63 [NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: app.robodad UnderlyingNetworks: Null] ]] callback flags: 0 order: 2147483647
+D/WifiNetworkFactory(  526): got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: app.robodad UnderlyingNetworks: Null] ]
+D/UntrustedWifiNetworkFactory(  526): got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: app.robodad UnderlyingNetworks: Null] ]
+D/OemPaidWifiNetworkFactory(  526): got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: app.robodad UnderlyingNetworks: Null] ]
+D/MultiInternetWifiNetworkFactory(  526): got request NetworkRequest [ REQUEST id=64, [ Capabilities: INTERNET&NOT_RESTRICTED&TRUSTED&NOT_VCN_MANAGED Uid: 10192 RequestorUid: 10192 RequestorPkg: app.robodad UnderlyingNetworks: Null] ]
+I/Launcher.IconCache( 1115): Database bulk icon loading failed, using fallback bulk icon loading for: ComponentInfo{app.robodad/app.robodad.MainActivity}
+D/CarrierSvcBindHelper( 1055): onPackageAdded: app.robodad
+D/CoreBackPreview(  526): Window{3359326 u0 app.robodad/app.robodad.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@160a7b1, mPriority=0, mIsAnimationCallback=false}
+I/ActivityManager(  526): Start proc 2816:com.google.android.webview:webview_apk/u0a134 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+W/ziparchive(  526): Unable to open '/data/app/~~QYyMxMqvwdAMxURzC6Shvw==/app.robodad-J5Wm8TAiOMHh0EZEt8QVuA==/base.dm': No such file or directory
+I/ActivityTaskManager(  526): Displayed app.robodad/.MainActivity for user 0: +4s31ms
+W/InputManager-JNI(  526): Input channel object '6c7e6c7 Splash Screen app.robodad (client)' was disposed without first being removed with the input manager!
+D/CoreBackPreview(  526): Window{6c7e6c7 u0 Splash Screen app.robodad EXITING}: Setting back callback null
+I/ImeTracker(  526): app.robodad:5ebe41e3: onRequestHide at ORIGIN_SERVER_HIDE_INPUT reason HIDE_UNSPECIFIED_WINDOW
+I/ImeTracker(  526): app.robodad:5ebe41e3: onCancelled at PHASE_SERVER_SHOULD_HIDE
+I/GoogleInputMethodService( 1555): GoogleInputMethodService.onStartInput():1877 onStartInput(EditorInfo{inputType=0x0(NULL) imeOptions=0x0 privateImeOptions=null actionName=UNSPECIFIED actionLabel=null actionId=0 initialSelStart=-1 initialSelEnd=-1 initialCapsMode=0x0 hintText=null label=null packageName=app.robodad fieldId=0 fieldName=null extras=null}, false)
+I/ActivityManager(  526): Start proc 2829:com.android.chrome/u0a150 for service {com.android.chrome/org.chromium.chrome.browser.customtabs.CustomTabsConnectionService}
+I/SafetyLabelChangedBroadcastReceiver(  843): received broadcast packageName: app.robodad, current user: UserHandle{0}, packageChangeEvent: NEW_INSTALL, intent user: UserHandle{0}
+D/ImsResolver( 1055): maybeAddedImsService, packageName: app.robodad
+D/CarrierSvcBindHelper( 1055): onPackageModified: app.robodad
+D/ImsResolver( 1055): maybeAddedImsService, packageName: app.robodad
+I/chromium( 2336): [INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'payment'.", source:  (0)
+I/chromium( 2336): [INFO:CONSOLE(0)] "Error with Permissions-Policy header: Unrecognized feature: 'usb'.", source:  (0)
+I/chromium( 2336): [INFO:CONSOLE(0)] "Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'interest-cohort'.", source:  (0)
+W/app.robodad( 2336): Long monitor contention with owner main (2336) at android.view.InputDevice android.hardware.input.InputManagerGlobal.getInputDevice(int)(InputManagerGlobal.java:195) waiters=0 in void android.hardware.input.InputManagerGlobal.onInputDevicesChanged(int[]) for 101ms
+W/cr_AWNetworkFetcherTask( 2816): 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+D/ProfileInstaller( 2336): Installing profile for app.robodad
+I/AiAiEcho( 1657): AppFetcherImplV2 updateApps package:[app.robodad], userId:[0], reason:[package is added.].
+W/earchbox:search( 1762): Verification of org.chromium.net.ICronetEngineBuilder hr.enableHttpCache(int, long) took 143.936ms (34.74 bytecodes/s) (1344B approximate peak alloc)
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{ea7341 com.google.android.youtube/10139} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{2860d4 com.google.android.contacts/10154} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{6aa027d com.google.android.apps.youtube.music/10155} BLOCKED
+W/earchbox:search( 1762): Verification of void org.chromium.net.impl.CronetUrlRequest.onError(int, int, int, java.lang.String, long) took 240.607ms (581.86 bytecodes/s) (4536B approximate peak alloc)
+I/AiAiEcho( 1657): AppFetcherImpl onPackageChanged app.robodad.
+I/AiAiEcho( 1657): AppIndexer Package:[app.robodad] UserProfile:[0] Enabled:[true].
+I/AiAiEcho( 1657): AppFetcherImplV2 updateApps package:[app.robodad], userId:[0], reason:[package is updated.].
+W/.gms.persistent( 1414): Verification of void org.chromium.net.impl.CronetUrlRequestContext.addThroughputListener(org.chromium.net.NetworkQualityThroughputListener) took 106.207ms (517.86 bytecodes/s) (3096B approximate peak alloc)
+W/.gms.persistent( 1414): Verification of void org.chromium.net.impl.CronetUrlRequestContext.f(org.chromium.net.RequestFinishedInfo) took 169.586ms (347.90 bytecodes/s) (3208B approximate peak alloc)
+I/app.robodad( 2336): Background concurrent copying GC freed 94605(4494KB) AllocSpace objects, 7(332KB) LOS objects, 49% free, 3105KB/6211KB, paused 58us,40us total 271.785ms
+I/BlockstoreStorage( 1473): Clearing Blockstore Data for package app.robodad [CONTEXT service_id=258 ]
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{90cea3a com.google.android.settings.intelligence/10118} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{cb996eb com.google.android.settings.intelligence/10118} BLOCKED
+I/FontLog ( 1414): Package app.robodad has no metadata [CONTEXT service_id=132 ]
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{e9dacf1 com.android.camera2/10145} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{73a40d6 com.google.android.devicelockcontroller/10189} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{f12ff57 com.google.android.rkpdapp/10186} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{d8d27ac com.google.android.projection.gearhead/10123} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c0e02c2 com.google.android.settings.intelligence/10118} BLOCKED
+W/InputDispatcher(  526): Not sending touch gesture to a072639 ActivityRecordInputSink app.robodad/.MainActivity because it has config NO_INPUT_CHANNEL
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{58b376 com.google.android.youtube/10139} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{22fcd30 com.google.android.apps.maps/10156} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{fb68d77 com.google.android.contacts/10154} BLOCKED
+I/AppsFilter(  526): interaction: PackageSetting{e616e3 app.robodad/10192} -> PackageSetting{c8b7ad9 com.google.android.contacts/10154} BLOCKED
