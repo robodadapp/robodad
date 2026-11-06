@@ -6,151 +6,338 @@
 <title>RoboDad TV</title>
 <style>
   :root {
-    --bg: #0B121B; --card: #1A2A3E; --ink: #F4F7FB; --muted: #9DB2C9;
-    --gold: #FFC83D; --sky: #7FA9D6;
+    --bg: #070709; --ink: #F6F3F3; --muted: #B9A9AB;
+    --red: #E50914; --red2: #FF2D3D; --deep: #7A0A12; --gold: #FFC83D;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
     font-family: "Roboto", "Segoe UI", system-ui, sans-serif; }
-  body { background: radial-gradient(120% 90% at 85% -10%, #22405F 0%, var(--bg) 55%) fixed; }
-  main { position: absolute; inset: 0; overflow-y: auto; padding: 4vh 4.5vw 4vh; display: flex; flex-direction: column; gap: 2.4vh; scroll-behavior: smooth; scroll-padding: 9vh 0; }
+  main { position: absolute; inset: 0; overflow-y: auto; scroll-behavior: smooth; scroll-padding: 8vh 0; }
   main::-webkit-scrollbar { display: none; }
 
-  header { display: flex; align-items: center; gap: 1.6vw; flex: none; }
-  header img { width: 7.5vh; height: 7.5vh; border-radius: 22%; }
-  .hello { flex: 1; }
-  .hello h1 { margin: 0; font-size: 4.4vh; font-weight: 700; letter-spacing: -0.02em; }
-  .hello p { margin: .4vh 0 0; font-size: 2.3vh; color: var(--muted); }
-  .clock { text-align: right; }
-  .clock b { display: block; font-size: 5.2vh; font-weight: 300; letter-spacing: -0.03em; }
-  .clock span { font-size: 2.1vh; color: var(--muted); }
+  /* ---------- the room ---------- */
+  .scene { position: relative; width: 100vw; height: 56.25vw; max-height: 100vh; overflow: hidden; }
+  .scene > svg.room { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hot { position: absolute; border: 0; padding: 0; margin: 0; background: transparent; cursor: pointer; outline: none;
+    border-radius: 1vh; transition: transform .25s cubic-bezier(.2,1.4,.4,1), box-shadow .25s; }
+  .hot:focus { outline: none !important; transform: scale(1.07); z-index: 5;
+    box-shadow: 0 0 0 .45vh var(--red2), 0 0 3.5vh 1vh rgba(255,45,61,.65); }
+  .hot img { position: absolute; display: block; object-fit: cover; }
+  .hot .lbl { position: absolute; left: 50%; bottom: -5.2vh; transform: translateX(-50%) translateY(1vh) scale(.9); opacity: 0;
+    background: #000c; border: .25vh solid var(--red2); color: #fff; font-weight: 700; font-size: 2.1vh; letter-spacing: .04em;
+    padding: .7vh 1.2vw; border-radius: 99px; white-space: nowrap; transition: .2s; pointer-events: none; }
+  .hot:focus .lbl { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  .hot .word { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 2.6vh; color: #fff; }
 
-  .top { display: flex; gap: 1.6vw; height: 26vh; flex: none; }
-  .tile { position: relative; border: 0; border-radius: 1.6vh; background: var(--card); color: var(--ink);
-    font: inherit; text-align: left; padding: 0; overflow: hidden; outline: none; cursor: pointer;
-    transition: transform .15s ease, box-shadow .15s ease; }
-  .tile:focus { transform: scale(1.06); box-shadow: 0 0 0 .6vh var(--gold), 0 2vh 4vh rgba(0,0,0,.5); outline: none !important; z-index: 2; }
+  /* wall TV (Netflix) */
+  #hTv { left: 30%; top: 11.48%; width: 31.67%; height: 31.85%; border-radius: .6vh; }
+  #hTv img { inset: 0; width: 100%; height: 100%; border-radius: .4vh; }
+  #hTv .scan { position: absolute; inset: 0; border-radius: .4vh; background: linear-gradient(180deg, transparent 0 45%, rgba(255,255,255,.10) 50%, transparent 55% 100%);
+    background-size: 100% 300%; animation: scan 5s linear infinite; pointer-events: none; }
+  #hTv .lbl { bottom: auto; top: -5vh; }
 
-  .hero { flex: 1.25; display: flex; align-items: center; gap: 2vw; padding: 0 2.4vw;
-    background: linear-gradient(120deg, #2E5C8A, #1E3A5C 60%, #23304F); }
-  .hero img { height: 18vh; width: 18vh; border-radius: 22%; flex: none; }
-  .hero h2 { margin: 0; font-size: 4.2vh; }
-  .hero p { margin: .8vh 0 0; font-size: 2.2vh; color: #D6E4F2; line-height: 1.35; }
-  .hero .try { margin-top: 1.2vh; font-size: 2vh; color: var(--gold); }
+  /* wall art (Disney+) */
+  #hArt { left: 76.04%; top: 22.04%; width: 11.46%; height: 11.48%; border-radius: .4vh; }
+  #hArt img { inset: 0; width: 100%; height: 100%; border-radius: .3vh; }
 
-  .daily { flex: 1; padding: 2.4vh 2vw; display: flex; flex-direction: column; }
-  .daily .kicker { font-size: 1.8vh; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
-  .daily h2 { margin: .8vh 0 .6vh; font-size: 3.3vh; line-height: 1.15; }
-  .daily p { margin: 0; font-size: 2.05vh; line-height: 1.4; opacity: .92; }
-  .daily .go { margin-top: auto; font-size: 1.9vh; font-weight: 600; color: var(--gold); }
-  .daily .emoji { position: absolute; right: 1.6vw; top: 1.6vh; font-size: 6vh; opacity: .9; }
+  /* laptop (YouTube) */
+  #hLap { left: 70.31%; top: 54.07%; width: 14.58%; height: 15%; border-radius: .4vh; }
+  #hLap img { inset: 0; width: 100%; height: 100%; border-radius: .3vh; }
+  #hLap .lbl { bottom: auto; top: -5vh; }
 
-  .bday { flex: 1; padding: 2.4vh 2vw; background: linear-gradient(135deg, #5B2A6E, #8C3B6E 55%, #C7566C); }
-  .bday .cake { font-size: 6vh; line-height: 1; }
-  .bday h2 { margin: 1vh 0 .4vh; font-size: 3.6vh; }
-  .bday p { margin: 0; font-size: 2.1vh; color: #FFE3EC; }
+  /* shipping box (Prime Video) */
+  #hBox { left: 19.27%; top: 79.63%; width: 10.42%; height: 10.37%; border-radius: .3vh; }
+  #hBox img { inset: 0; width: 100%; height: 100%; border-radius: .2vh; opacity: .95; }
+  #hBox .lbl { bottom: auto; top: -5vh; }
 
-  section { flex: none; }
-  section h3 { margin: 0 0 1.2vh; font-size: 2.4vh; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+  /* RoboDad himself */
+  #hBot { left: 37.24%; top: 33.33%; width: 23.44%; height: 62.96%; border-radius: 3vh; }
+  #hBot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  #hBot:focus { box-shadow: none; transform: scale(1.04); }
+  #hBot:focus .bot-glow { opacity: 1; }
+  #hBot .lbl { bottom: 1vh; font-size: 2.4vh; }
+  .bot-glow { opacity: .35; transition: opacity .3s; }
+
+  /* speech bubble */
+  .bubble { position: absolute; left: 9.5%; top: 30%; width: 25%; padding: 2vh 1.4vw; background: #111114ee; border: .3vh solid var(--red2);
+    border-radius: 2vh; font-size: 2.25vh; line-height: 1.4; box-shadow: 0 0 3vh rgba(229,9,20,.45); transform-origin: 100% 100%; }
+  .bubble:after { content: ""; position: absolute; right: -2.2vh; bottom: 3vh; border: 1.2vh solid transparent; border-left: 2vh solid var(--red2); }
+  .bubble b { display: block; color: var(--red2); font-size: 1.7vh; letter-spacing: .14em; text-transform: uppercase; margin-bottom: .6vh; }
+  .bubble.pop { animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+
+  /* greeting + clock over the scene */
+  .hud { position: absolute; left: 3.4%; top: 4%; }
+  .hud h1 { margin: 0; font-size: 4.6vh; font-weight: 800; letter-spacing: -.02em; text-shadow: 0 0 2vh rgba(229,9,20,.6); }
+  .hud p { margin: .4vh 0 0; font-size: 2.2vh; color: var(--muted); }
+  .clock { position: absolute; right: 3.4%; top: 3.2%; text-align: right; }
+  .clock b { display: block; font-size: 4.6vh; font-weight: 300; }
+  .clock span { font-size: 1.9vh; color: var(--muted); }
+  .hint { position: absolute; left: 50%; bottom: 1.4vh; transform: translateX(-50%); font-size: 1.8vh; color: var(--muted); letter-spacing: .08em;
+    animation: hint 2.4s ease-in-out infinite; }
+
+  /* ---------- rows below the room ---------- */
+  .below { padding: 3vh 4.5vw 5vh; background: linear-gradient(180deg, #0b0b0e, #070709); }
+  section { margin-bottom: 2.6vh; }
+  section h3 { margin: 0 0 1.2vh; font-size: 2.4vh; font-weight: 700; color: var(--muted); letter-spacing: .03em; }
+  section h3 i { font-style: normal; color: var(--red2); }
   .row { display: flex; gap: 1.3vw; padding: 1.2vh .8vw 1.8vh; margin: -1.2vh -.8vw 0; overflow-x: auto; scroll-behavior: smooth; }
   .row::-webkit-scrollbar { display: none; }
-
-  .app { flex: none; width: 16.6vw; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
+  .tile { position: relative; border: 0; border-radius: 1.6vh; color: var(--ink); font: inherit; text-align: left; padding: 0;
+    overflow: hidden; outline: none; cursor: pointer; transition: transform .2s cubic-bezier(.2,1.4,.4,1), box-shadow .2s; background: #1a1a1f; }
+  .tile:focus { transform: scale(1.07); box-shadow: 0 0 0 .5vh var(--red2), 0 0 3vh rgba(255,45,61,.5); outline: none !important; z-index: 2; }
+  .pick { flex: none; width: 15.2vw; height: 19vh; padding: 1.8vh 1vw 1.6vh; display: flex; flex-direction: column;
+    background: linear-gradient(150deg, #2a0b0f, #0d0d10 70%); border: .2vh solid #3a1418; }
+  .pick .em { font-size: 5.2vh; line-height: 1; }
+  .pick b { margin-top: auto; font-size: 2.3vh; line-height: 1.15; }
+  .pick small { margin-top: .5vh; font-size: 1.7vh; opacity: .8; }
+  .pick .via { position: absolute; top: 1.4vh; right: .9vw; font-size: 1.45vh; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; padding: .35vh .5vw; border-radius: .6vh; background: var(--red); color: #fff; }
+  .pick.daily { width: 24vw; background: linear-gradient(140deg, #B00813, #4A0509 75%); border-color: #ff2d3d; }
+  .pick.daily b { font-size: 2.7vh; } .pick.daily small { font-size: 1.85vh; opacity: .95; }
+  .pick.bday { width: 20vw; background: linear-gradient(135deg, #5B2A6E, #8C3B6E 55%, #C7566C); }
+  .app { flex: none; width: 14.5vw; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
   .app img.banner { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .app img.icon { width: 38%; aspect-ratio: 1; object-fit: contain; margin-bottom: 14%; }
-  .app .name { position: absolute; left: 0; right: 0; bottom: 0; padding: .9vh .8vw; font-size: 1.9vh; font-weight: 600;
-    background: linear-gradient(transparent, rgba(0,0,0,.65)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app .name { position: absolute; left: 0; right: 0; bottom: 0; padding: .9vh .8vw; font-size: 1.8vh; font-weight: 600;
+    background: linear-gradient(transparent, rgba(0,0,0,.7)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .app.has-banner .name { opacity: 0; transition: opacity .15s; }
   .app.has-banner:focus .name { opacity: 1; }
-  .app.word { font-size: 2.8vh; font-weight: 700; }
-  .app.missing { opacity: .45; }
-  .watch .app { width: 18.4vw; }
+  .app.word { font-size: 2.6vh; font-weight: 700; }
 
-  .pick { flex: none; width: 15.2vw; height: 19vh; padding: 1.8vh 1vw 1.6vh; display: flex; flex-direction: column; }
-  .pick .em { font-size: 5.4vh; line-height: 1; }
-  .pick b { margin-top: auto; font-size: 2.3vh; line-height: 1.15; }
-  .pick small { margin-top: .5vh; font-size: 1.7vh; opacity: .85; }
-  .pick .via { position: absolute; top: 1.4vh; right: .9vw; font-size: 1.45vh; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; padding: .35vh .5vw; border-radius: .6vh; background: rgba(0,0,0,.28); }
-
-  .t-guitar { background: linear-gradient(150deg, #B2361E, #5E1A12); }
-  .t-chess  { background: linear-gradient(150deg, #4C5566, #20242C); }
-  .t-tkd    { background: linear-gradient(150deg, #1F5FA8, #142C55); }
-  .t-draw   { background: linear-gradient(150deg, #2F8F6B, #134434); }
-  .t-hitman { background: linear-gradient(150deg, #E04A8A, #2B1020); }
-  .t-cena   { background: linear-gradient(150deg, #4E8A2E, #1C3312); }
-  .t-tribal { background: linear-gradient(150deg, #3A3F48, #0E0F12); }
-  .t-tribal b { color: #FFD76A; }
-
-  footer { flex: none; display: flex; align-items: baseline; gap: 1vw; font-size: 2.1vh; color: var(--muted); padding-bottom: 1vh; }
-  footer b { color: var(--gold); font-weight: 600; white-space: nowrap; }
-  #toast { position: fixed; left: 50%; bottom: 6vh; transform: translateX(-50%) translateY(3vh); opacity: 0;
-    background: #000c; color: #fff; padding: 1.4vh 2vw; border-radius: 1vh; font-size: 2.2vh; transition: .25s; pointer-events: none; z-index: 30; }
+  #toast { position: fixed; left: 50%; bottom: 6vh; transform: translateX(-50%) translateY(3vh); opacity: 0; background: #000d;
+    border: .2vh solid var(--red2); color: #fff; padding: 1.4vh 2vw; border-radius: 1vh; font-size: 2.2vh; transition: .25s; pointer-events: none; z-index: 30; }
   #toast.show { opacity: 1; transform: translateX(-50%); }
 
-  #note { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,10,18,.82); z-index: 10; }
+  #note { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,5,8,.85); z-index: 10; }
   #note.open { display: flex; }
-  #note .card { width: min(70vw, 120vh); background: linear-gradient(160deg, #2A1B3D, #3B1F45); border-radius: 2vh;
-    padding: 5vh 4vw; box-shadow: 0 3vh 8vh #000a; }
+  #note .card { width: min(70vw, 120vh); background: linear-gradient(160deg, #2a0b0f, #120609); border: .3vh solid var(--red2); border-radius: 2vh;
+    padding: 5vh 4vw; box-shadow: 0 0 6vh rgba(229,9,20,.5); }
   #note h2 { margin: 0 0 2vh; font-size: 4.4vh; }
-  #note p { font-size: 2.7vh; line-height: 1.5; margin: 0 0 1.8vh; color: #F3E6F7; }
+  #note p { font-size: 2.7vh; line-height: 1.5; margin: 0 0 1.8vh; color: #F3E6E8; }
   #note .sign { color: var(--gold); font-weight: 600; }
-  #note button { margin-top: 2vh; font: inherit; font-size: 2.4vh; padding: 1.4vh 2.4vw; border-radius: 1vh; border: 0; background: var(--gold); color: #2A1B3D; font-weight: 700; }
+  #note button { margin-top: 2vh; font: inherit; font-size: 2.4vh; padding: 1.4vh 2.4vw; border-radius: 1vh; border: 0; background: var(--red2); color: #fff; font-weight: 800; }
   #note button:focus { outline: .5vh solid #fff !important; }
+  canvas.fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #confetti { position: fixed; z-index: 20; }
 
-  canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
+  /* ---------- animation ---------- */
+  @keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-1.2%) } }
+  @keyframes blink { 0%,92%,100% { transform: scaleY(1) } 95% { transform: scaleY(.08) } }
+  @keyframes wave { 0%,60%,100% { transform: rotate(0) } 66% { transform: rotate(-16deg) } 74% { transform: rotate(10deg) } 82% { transform: rotate(-14deg) } 90% { transform: rotate(6deg) } }
+  @keyframes pulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+  @keyframes core { 0%,100% { transform: scale(1); opacity: .9 } 50% { transform: scale(1.18); opacity: 1 } }
+  @keyframes flicker { 0%,100% { opacity: .55 } 7% { opacity: .35 } 9% { opacity: .62 } 50% { opacity: .5 } 52% { opacity: .66 } }
+  @keyframes neon { 0%,100% { opacity: .9 } 40% { opacity: .55 } 42% { opacity: 1 } 44% { opacity: .7 } }
+  @keyframes steam { 0% { transform: translateY(0); opacity: 0 } 30% { opacity: .5 } 100% { transform: translateY(-60px); opacity: 0 } }
+  @keyframes scan { 0% { background-position: 0 100% } 100% { background-position: 0 -200% } }
+  @keyframes sweep { 0% { transform: translateX(-60%) skewX(-20deg) } 100% { transform: translateX(260%) skewX(-20deg) } }
+  @keyframes pop { 0% { transform: scale(.6); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+  @keyframes hint { 0%,100% { opacity: .35; transform: translateX(-50%) translateY(0) } 50% { opacity: .9; transform: translateX(-50%) translateY(.6vh) } }
+  @keyframes enter { 0% { opacity: 0; transform: translateY(4%) scale(.96) } 100% { opacity: 1; transform: none } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .in { opacity: 0; animation: enter .8s cubic-bezier(.2,1.2,.4,1) forwards; }
+  .bob { animation: bob 3.2s ease-in-out infinite; transform-box: fill-box; }
+  .eye { animation: blink 4.5s infinite; transform-box: fill-box; transform-origin: center; }
+  .arm-wave { animation: wave 6s ease-in-out infinite; transform-box: view-box; transform-origin: 345px 300px; }
+  .antenna { animation: pulse 1.6s ease-in-out infinite; }
+  .core { animation: core 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .glow-tv { animation: flicker 4s infinite; }
+  .neon { animation: neon 7s infinite; }
+  .steam path { animation: steam 3s ease-out infinite; }
+  .steam path:nth-child(2) { animation-delay: 1s } .steam path:nth-child(3) { animation-delay: 2s }
+  .sweep { position: absolute; top: 0; bottom: 0; width: 18%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+    animation: sweep 9s ease-in-out infinite; pointer-events: none; }
+  .ring { animation: spin 18s linear infinite; transform-box: fill-box; transform-origin: center; }
+  .hat { display: none; } body.birthday .hat { display: inline; }
 </style>
 </head>
 <body>
 <main id="main">
-  <header>
-    <img src="robodad.png" alt="">
-    <div class="hello">
-      <h1 id="greet">Hey there</h1>
-      <p id="sub">What are we doing today?</p>
-    </div>
-    <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
-  </header>
+  <div class="scene" id="scene">
+    <svg class="room" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#121216"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
+        <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16090b"/><stop offset="1" stop-color="#050506"/></linearGradient>
+        <radialGradient id="tvglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#E50914" stop-opacity=".55"/><stop offset="1" stop-color="#E50914" stop-opacity="0"/></radialGradient>
+        <radialGradient id="redglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".5"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
+        <radialGradient id="lampcone" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#FF3B4A" stop-opacity=".45"/><stop offset="1" stop-color="#FF3B4A" stop-opacity="0"/></radialGradient>
+        <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1416"/><stop offset="1" stop-color="#160a0b"/></linearGradient>
+        <linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8875a"/><stop offset="1" stop-color="#8a6140"/></linearGradient>
+        <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#ffffff" stroke-opacity=".025" stroke-width="2"/></pattern>
+      </defs>
 
-  <div class="top">
-    <button class="tile hero" id="chat" data-tv-first>
-      <img src="robodad.png" alt="">
-      <div>
-        <h2>Talk to RoboDad</h2>
-        <p>Homework, guitar, chess, training, life stuff. Ask anything.</p>
-        <div class="try" id="try"></div>
-      </div>
+      <!-- wall, floor -->
+      <rect width="1920" height="1080" fill="url(#wall)"/>
+      <rect width="1920" height="860" fill="url(#grid)"/>
+      <path d="M0 860 H1920 V1080 H0Z" fill="url(#floor)"/>
+      <path d="M0 860 H1920" stroke="#FF2D3D" stroke-width="3" class="neon" opacity=".9"/>
+      <rect x="0" y="852" width="1920" height="16" fill="url(#redglow)" opacity=".8"/>
+      <!-- ceiling neon -->
+      <path d="M40 26 H1880" stroke="#FF2D3D" stroke-width="6" stroke-linecap="round" class="neon"/>
+      <rect x="0" y="0" width="1920" height="70" fill="url(#redglow)" opacity=".6"/>
+
+      <!-- glow behind the wall TV -->
+      <ellipse cx="880" cy="290" rx="520" ry="300" fill="url(#tvglow)" class="glow-tv"/>
+      <!-- wall TV -->
+      <rect x="856" y="482" width="48" height="20" fill="#1c1c22"/>
+      <rect x="560" y="108" width="640" height="376" rx="14" fill="#050506" stroke="#2a2a32" stroke-width="4"/>
+      <rect x="1180" y="470" width="8" height="8" rx="4" fill="#FF2D3D" class="antenna"/>
+
+      <!-- wall art frame (Disney+), an original RoboDad crest around it -->
+      <g transform="translate(1570 300)">
+        <rect x="-190" y="-185" width="380" height="370" rx="10" fill="#0c0c0f" stroke="#FF2D3D" stroke-width="6"/>
+        <rect x="-178" y="-173" width="356" height="346" rx="6" fill="none" stroke="#3a0b10" stroke-width="2"/>
+        <g class="ring" opacity=".85">
+          <circle r="150" fill="none" stroke="#E50914" stroke-width="5" stroke-dasharray="28 16"/>
+        </g>
+        <path d="M-150 -40 L-112 0 L-150 40" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
+        <path d="M150 -40 L112 0 L150 40" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
+        <path d="M-26 -160 L8 -120 L-10 -120 L18 -90" fill="none" stroke="#FFC83D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        <text y="155" text-anchor="middle" font-size="26" font-weight="800" fill="#FF2D3D" letter-spacing="8" font-family="Roboto, sans-serif">ROBODAD</text>
+      </g>
+
+      <!-- electric guitar on a stand (left) -->
+      <g transform="translate(36 470) rotate(-10)">
+        <rect x="52" y="-40" width="18" height="330" rx="6" fill="#6b4a2e" stroke="#160406" stroke-width="3"/>
+        <rect x="46" y="-80" width="30" height="58" rx="8" fill="#D10A1A" stroke="#160406" stroke-width="3"/>
+        <g fill="#111"><circle cx="40" cy="-70" r="5"/><circle cx="40" cy="-52" r="5"/><circle cx="40" cy="-34" r="5"/><circle cx="82" cy="-70" r="5"/><circle cx="82" cy="-52" r="5"/><circle cx="82" cy="-34" r="5"/></g>
+        <g fill="#D10A1A" stroke="#160406" stroke-width="5" stroke-linejoin="round">
+          <path d="M61 250 C 40 250 20 238 8 214 C 0 236 -6 262 2 282 C -30 300 -44 340 -32 382 C -20 428 20 448 61 448 C 102 448 142 428 154 382 C 166 340 152 300 120 282 C 128 262 122 236 114 220 C 102 240 82 250 61 250 Z"/>
+        </g>
+        <path d="M14 300 C 30 286 92 286 108 300 L 116 380 C 100 410 22 410 6 380 Z" fill="#111" opacity=".85"/>
+        <rect x="58" y="-40" width="6" height="430" fill="#ddd" opacity=".55"/>
+        <rect x="38" y="306" width="46" height="13" rx="3" fill="#e8e8e8" stroke="#111" stroke-width="2"/>
+        <rect x="38" y="336" width="46" height="13" rx="3" fill="#e8e8e8" stroke="#111" stroke-width="2"/>
+        <rect x="36" y="388" width="50" height="12" rx="2" fill="#bbb" stroke="#111" stroke-width="2"/>
+        <circle cx="122" cy="392" r="8" fill="#e8e8e8"/><circle cx="104" cy="414" r="8" fill="#e8e8e8"/>
+        <path d="M-20 470 L61 420 L142 470" fill="none" stroke="#3a3a44" stroke-width="9" stroke-linecap="round"/>
+      </g>
+
+      <!-- desk -->
+      <rect x="1110" y="760" width="760" height="28" rx="6" fill="url(#wood)" stroke="#3b1a1d" stroke-width="2"/>
+      <rect x="1140" y="788" width="26" height="160" fill="#1a0c0d"/><rect x="1814" y="788" width="26" height="160" fill="#1a0c0d"/>
+      <!-- desk lamp -->
+      <g transform="translate(1210 760)">
+        <path d="M0 0 h70" stroke="#222" stroke-width="10" stroke-linecap="round"/>
+        <path d="M35 0 L10 -120 L70 -190" fill="none" stroke="#2c2c34" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M50 -215 L110 -175 L80 -150 Z" fill="#D10A1A"/>
+        <path d="M95 -162 L230 0 L40 0 Z" fill="url(#lampcone)" class="glow-tv"/>
+      </g>
+      <!-- laptop (screen is the YouTube button) -->
+      <rect x="1338" y="572" width="304" height="186" rx="10" fill="#0b0b0e" stroke="#33333d" stroke-width="5"/>
+      <path d="M1312 758 H1668 L1690 772 H1290 Z" fill="#2a2a32"/>
+      <!-- chess pieces on the desk -->
+      <g transform="translate(1260 762)" fill="#eee" stroke="#111" stroke-width="3">
+        <path d="M-14 0 h28 l-4 -10 h-6 l4 -36 a12 12 0 1 0 -16 0 l4 36 h-6z"/>
+      </g>
+      <g transform="translate(1290 762)" fill="#D10A1A" stroke="#111" stroke-width="3">
+        <path d="M-16 0 h32 l-4 -10 h-6 l4 -46 h-8 v-10 h-4 v-8 h-4 v8 h-4 v10 h-8 l4 46 h-6z"/>
+      </g>
+      <!-- mug + steam -->
+      <g transform="translate(1730 700)">
+        <rect x="0" y="0" width="56" height="60" rx="8" fill="#D10A1A" stroke="#160406" stroke-width="4"/>
+        <path d="M56 14 q24 0 24 18 q0 18 -24 18" fill="none" stroke="#160406" stroke-width="7"/>
+        <g class="steam" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round">
+          <path d="M14 -8 q-10 -14 0 -28"/><path d="M28 -8 q10 -14 0 -28"/><path d="M42 -8 q-10 -14 0 -28"/>
+        </g>
+      </g>
+
+      <!-- shipping box (Prime Video on its side) -->
+      <g transform="translate(330 820)">
+        <path d="M0 0 L50 -50 H330 L280 0 Z" fill="#c99a6a" stroke="#5a3b22" stroke-width="4"/>
+        <path d="M280 0 L330 -50 V140 L280 190 Z" fill="#8a6140" stroke="#5a3b22" stroke-width="4"/>
+        <rect x="0" y="0" width="280" height="190" fill="url(#card)" stroke="#5a3b22" stroke-width="4"/>
+        <path d="M130 -50 L105 0 H150 L175 -50 Z" fill="#d8c19c" opacity=".8"/>
+        <rect x="105" y="0" width="45" height="190" fill="#d8c19c" opacity=".55"/>
+        <text x="140" y="183" text-anchor="middle" font-size="16" font-weight="700" fill="#5a3b22" letter-spacing="3" font-family="Roboto, sans-serif">THIS SIDE UP ▲</text>
+      </g>
+      <rect x="290" y="1000" width="400" height="30" rx="15" fill="#000" opacity=".5"/>
+
+      <!-- floor reflection under RoboDad -->
+      <ellipse cx="940" cy="1040" rx="260" ry="34" fill="#000" opacity=".55"/>
+      <ellipse cx="940" cy="1040" rx="230" ry="26" fill="url(#redglow)" opacity=".7" class="antenna"/>
+    </svg>
+    <canvas class="fx" id="embers"></canvas>
+    <div class="sweep"></div>
+
+    <div class="hud in" style="animation-delay:.05s"><h1 id="greet">Hey there</h1><p id="sub"></p></div>
+    <div class="clock in" style="animation-delay:.1s"><b id="time">--:--</b><span id="date"></span></div>
+
+    <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="word">Netflix</span><span class="scan"></span><span class="lbl">Netflix</span></button>
+    <button class="hot in" id="hArt" style="animation-delay:.4s"><span class="word">Disney+</span><span class="lbl">Disney+</span></button>
+    <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="word">YouTube</span><span class="lbl">YouTube</span></button>
+    <button class="hot in" id="hBox" style="animation-delay:.7s"><span class="word">Prime Video</span><span class="lbl">Prime Video</span></button>
+
+    <div class="bubble" id="bubble"><b id="bTitle">RoboDad</b><span id="bText"></span></div>
+
+    <button class="hot in" id="hBot" data-tv-first style="animation-delay:.15s" aria-label="Talk to RoboDad">
+      <svg viewBox="0 0 450 680">
+        <defs>
+          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9edf2"/><stop offset=".55" stop-color="#b8c0ca"/><stop offset="1" stop-color="#7d8794"/></linearGradient>
+          <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#202027"/><stop offset="1" stop-color="#0e0e12"/></linearGradient>
+          <radialGradient id="eyeg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#FF4A57"/><stop offset="1" stop-color="#B00813"/></radialGradient>
+          <radialGradient id="botglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".6"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
+        </defs>
+        <ellipse class="bot-glow" cx="225" cy="360" rx="260" ry="340" fill="url(#botglow)"/>
+        <g class="bob">
+          <!-- legs -->
+          <rect x="150" y="470" width="62" height="160" rx="22" fill="#18181e" stroke="#000" stroke-width="4"/>
+          <rect x="238" y="470" width="62" height="160" rx="22" fill="#18181e" stroke="#000" stroke-width="4"/>
+          <path d="M136 650 q0 -34 34 -34 h46 q14 0 14 14 v26 z" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+          <path d="M314 650 q0 -34 -34 -34 h-46 q-14 0 -14 14 v26 z" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+          <!-- left arm (down, holding a guitar pick) -->
+          <rect x="72" y="292" width="54" height="170" rx="26" fill="url(#jacket)" stroke="#000" stroke-width="4" transform="rotate(8 99 292)"/>
+          <circle cx="88" cy="470" r="30" fill="url(#metal)" stroke="#000" stroke-width="4"/>
+          <!-- body -->
+          <path d="M112 285 Q225 250 338 285 L352 470 Q225 500 98 470 Z" fill="url(#jacket)" stroke="#000" stroke-width="5"/>
+          <path d="M180 270 L225 330 L270 270" fill="#D10A1A" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M140 300 L160 460" stroke="#D10A1A" stroke-width="10" stroke-linecap="round"/>
+          <path d="M310 300 L290 460" stroke="#D10A1A" stroke-width="10" stroke-linecap="round"/>
+          <rect x="104" y="450" width="242" height="26" rx="8" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+          <rect x="208" y="452" width="34" height="22" rx="4" fill="#FFC83D" stroke="#000" stroke-width="3"/>
+          <circle cx="225" cy="385" r="34" fill="#0b0b0e" stroke="#000" stroke-width="4"/>
+          <circle class="core" cx="225" cy="385" r="20" fill="url(#eyeg)"/>
+          <!-- right arm (waving) -->
+          <g class="arm-wave">
+            <rect x="318" y="150" width="54" height="160" rx="26" fill="url(#jacket)" stroke="#000" stroke-width="4"/>
+            <circle cx="345" cy="140" r="34" fill="url(#metal)" stroke="#000" stroke-width="4"/>
+            <rect x="330" y="96" width="10" height="28" rx="5" fill="url(#metal)" stroke="#000" stroke-width="3"/>
+            <rect x="344" y="92" width="10" height="30" rx="5" fill="url(#metal)" stroke="#000" stroke-width="3"/>
+            <rect x="358" y="98" width="10" height="26" rx="5" fill="url(#metal)" stroke="#000" stroke-width="3"/>
+          </g>
+          <!-- neck + head -->
+          <rect x="198" y="238" width="54" height="34" rx="6" fill="#59616c" stroke="#000" stroke-width="4"/>
+          <line x1="225" y1="40" x2="225" y2="84" stroke="#000" stroke-width="8"/>
+          <circle class="antenna" cx="225" cy="32" r="16" fill="#FF2D3D" stroke="#000" stroke-width="4"/>
+          <rect x="105" y="78" width="240" height="172" rx="64" fill="url(#metal)" stroke="#000" stroke-width="5"/>
+          <rect x="82" y="132" width="30" height="66" rx="14" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+          <rect x="338" y="132" width="30" height="66" rx="14" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+          <rect x="138" y="112" width="174" height="104" rx="44" fill="#0e0e12" stroke="#000" stroke-width="4"/>
+          <ellipse class="eye" cx="190" cy="156" rx="20" ry="22" fill="url(#eyeg)"/>
+          <ellipse class="eye" cx="260" cy="156" rx="20" ry="22" fill="url(#eyeg)"/>
+          <path d="M192 192 Q225 214 258 192" fill="none" stroke="#FF2D3D" stroke-width="7" stroke-linecap="round"/>
+          <path d="M126 100 Q225 50 324 100" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="6" stroke-linecap="round"/>
+          <!-- party hat, only on his birthday -->
+          <g class="hat"><path d="M190 86 L238 -20 L284 92 Z" fill="#FFC83D" stroke="#000" stroke-width="4"/>
+            <path d="M205 55 L262 40 M218 25 L250 18" stroke="#D10A1A" stroke-width="8"/><circle cx="238" cy="-22" r="12" fill="#FF2D3D" stroke="#000" stroke-width="3"/></g>
+        </g>
+      </svg>
+      <span class="lbl">Talk to RoboDad</span>
     </button>
-    <button class="tile daily" id="daily">
-      <span class="emoji" id="dEmoji"></span>
-      <span class="kicker" id="dKicker"></span>
-      <h2 id="dTitle"></h2>
-      <p id="dText"></p>
-      <span class="go" id="dGo"></span>
-    </button>
-    <button class="tile bday" id="bday" hidden>
-      <div class="cake">🎂</div>
-      <h2>Happy 13th Birthday!</h2>
-      <p>Press OK, there's a note from Dad.</p>
-    </button>
+
+    <div class="hint" id="hint">▼ more below</div>
   </div>
 
-  <section class="watch">
-    <h3>Watch</h3>
-    <div class="row" id="watch"></div>
-  </section>
-
-  <section>
-    <h3 id="cornerTitle">Siddhant's corner</h3>
-    <div class="row" id="corner"></div>
-  </section>
-
-  <section>
-    <h3>Your apps</h3>
-    <div class="row" id="apps"></div>
-  </section>
-
-  <footer><b id="fLabel">Dad joke of the day:</b> <span id="fText"></span></footer>
+  <div class="below">
+    <section>
+      <h3><i>■</i> <span id="cornerTitle">Siddhant's corner</span></h3>
+      <div class="row" id="corner"></div>
+    </section>
+    <section>
+      <h3><i>■</i> Your apps</h3>
+      <div class="row" id="apps"></div>
+    </section>
+  </div>
 </main>
 
 <div id="note" role="dialog" aria-modal="true">
@@ -165,87 +352,78 @@
 </div>
 
 <div id="toast"></div>
-<canvas id="fx"></canvas>
+<canvas class="fx" id="confetti"></canvas>
 
 <script src="tvnav.js"></script>
 <script>
 (function () {
   var TV = window.RoboDadTV || null;
+  var $ = function (id) { return document.getElementById(id); };
 
-  // ---- who he is ----
   var NICKNAMES = ['Siddhantosaurus Rex 🦖', 'Chiki', 'Gablu Baccha', 'Big Crunchy', 'Chonk', 'Siddhant'];
-  var BIRTHDAY_DAYS = 14; // after Dad arms the surprise, the birthday card stays for two weeks
+  var BIRTHDAY_DAYS = 14;
+  var SUBS = ['Guitar, chess or a few rounds of kicks?', 'Ready to shred?', 'Your move, grandmaster.',
+              'Black belt mindset: one more rep.', 'Grab a pencil. Something cool is waiting to be drawn.', 'What are we doing today?'];
 
-  var SUBS = [
-    'Guitar, chess or a few rounds of kicks?',
-    'Ready to shred?',
-    'Your move, grandmaster.',
-    'Black belt mindset: one more rep.',
-    'Grab a pencil. Something cool is waiting to be drawn.',
-    'What are we doing today?'
+  // The four apps that live inside the room.
+  var SPOTS = [
+    { id: 'hTv',  pkg: 'com.netflix.ninja', name: 'Netflix' },
+    { id: 'hArt', pkg: 'com.disney.disneyplus', name: 'Disney+' },
+    { id: 'hLap', pkg: 'com.google.android.youtube.tv', name: 'YouTube' },
+    { id: 'hBox', pkg: 'com.amazon.amazonvideo.livingroom', name: 'Prime Video' }
   ];
 
-  // The four buttons on the remote, in the same order.
-  var WATCH = [
-    { pkg: 'com.netflix.ninja', name: 'Netflix', color: '#141414' },
-    { pkg: 'com.amazon.amazonvideo.livingroom', name: 'Prime Video', color: '#0F2235' },
-    { pkg: 'com.disney.disneyplus', name: 'Disney+', color: '#0B1A3B' },
-    { pkg: 'com.google.android.youtube.tv', name: 'YouTube', color: '#2A0E0E' }
-  ];
-
-  // Siddhant's corner: ask RoboDad, or open a YouTube search.
   var CORNER = [
-    { cls: 't-guitar', em: '🎸', title: 'Guitar lab', sub: 'A new riff or scale', ask: "I play electric guitar. Teach me something new to practise today: a riff, a scale or a technique, step by step, with a short practice plan." },
-    { cls: 't-chess', em: '♟️', title: 'Chess puzzle', sub: 'Sharpen your tactics', ask: "Give me a chess puzzle at a good level for a strong teenage player. Describe the position clearly, let me try first, and only give the answer when I ask." },
-    { cls: 't-tkd', em: '🥋', title: 'Dojang drills', sub: 'Road to 3rd dan', ask: "I'm a 2nd degree black belt in taekwondo. Give me a 20-minute home training session for kicks, flexibility and speed, and tips for working toward my 3rd dan." },
-    { cls: 't-draw', em: '🎨', title: 'Draw this', sub: "Today's drawing idea", ask: "Give me a fun drawing challenge for today with a couple of tips to make it look awesome. I like guitars, chess, martial arts and wrestling." },
-    { cls: 't-hitman', em: '🕶️', title: 'Hitman classics', sub: 'Bret Hart matches', yt: 'Bret Hart classic match' },
-    { cls: 't-tribal', em: '☝️', title: 'Tribal Chief', sub: 'Roman Reigns', yt: 'Roman Reigns highlights' },
-    { cls: 't-cena', em: '🎬', title: 'Cena movie night', sub: 'John Cena trailers', yt: 'John Cena movie trailer' }
+    { em: '🎸', title: 'Guitar lab', sub: 'A new riff or scale', ask: "I play electric guitar. Teach me something new to practise today: a riff, a scale or a technique, step by step, with a short practice plan." },
+    { em: '♟️', title: 'Chess puzzle', sub: 'Sharpen your tactics', ask: "Give me a chess puzzle at a good level for a strong teenage player. Describe the position clearly, let me try first, and only give the answer when I ask." },
+    { em: '🥋', title: 'Dojang drills', sub: 'Road to 3rd dan', ask: "I'm a 2nd degree black belt in taekwondo. Give me a 20-minute home training session for kicks, flexibility and speed, and tips for working toward my 3rd dan." },
+    { em: '🎨', title: 'Draw this', sub: "Today's drawing idea", ask: "Give me a fun drawing challenge for today with a couple of tips to make it look awesome. I like guitars, chess, martial arts and wrestling." },
+    { em: '🕶️', title: 'Hitman classics', sub: 'Bret Hart matches', yt: 'Bret Hart classic match' },
+    { em: '☝️', title: 'Tribal Chief', sub: 'Roman Reigns', yt: 'Roman Reigns highlights' },
+    { em: '🎬', title: 'Cena movie night', sub: 'John Cena trailers', yt: 'John Cena movie trailer' }
   ];
 
-  // Today's challenge: rotates daily through his favourite things.
   var DAILY = [
-    { cls: 't-guitar', em: '🎸', k: 'Guitar', t: 'A minor pentatonic, 5th fret', x: 'The box shape behind a huge share of rock solos. Learn it once, use it forever.', ask: "Teach me the A minor pentatonic scale at the 5th fret on electric guitar, step by step, then give me a simple lick to practise with it." },
-    { cls: 't-chess', em: '♟️', k: 'Chess', t: 'The Italian Game', x: '1.e4 e5 2.Nf3 Nc6 3.Bc4. A classic opening that aims straight at f7.', ask: "Explain the Italian Game (1.e4 e5 2.Nf3 Nc6 3.Bc4): the main ideas for White and Black and the traps to watch for." },
-    { cls: 't-tkd', em: '🥋', k: 'Taekwondo', t: 'Higher, faster kicks', x: 'Flexibility plus snap. Ten minutes a day makes a real difference.', ask: "I'm a 2nd degree black belt in taekwondo. Give me a 10-minute daily stretching and drilling routine for higher, faster kicks." },
-    { cls: 't-hitman', em: '🕶️', k: 'Wrestling', t: 'The Excellence of Execution', x: "Bret \"The Hitman\" Hart's finisher was the Sharpshooter. He learned to wrestle in his dad Stu Hart's famous basement gym, the Dungeon.", ask: "Tell me the story of Bret \"The Hitman\" Hart: the Hart family Dungeon, the Sharpshooter, and his best matches to watch." },
-    { cls: 't-draw', em: '🎨', k: 'Draw this', t: 'A robot guitar hero', x: 'Give RoboDad a flying-V, sunglasses and a stage full of smoke.', ask: "Help me draw a robot playing an electric guitar on stage. Break it into easy steps and give me tips for shading and making it look cool." },
-    { cls: 't-chess', em: '♟️', k: 'Chess', t: 'Fork, pin, skewer', x: 'The three tactics that win most games. Can you spot them in your next match?', ask: "Explain the fork, the pin and the skewer in chess with an example of each, then quiz me." },
-    { cls: 't-tribal', em: '☝️', k: 'Wrestling', t: 'Acknowledge the Tribal Chief', x: 'Roman Reigns held the Universal Championship for over 1,300 days. The Spear is his finisher.', ask: "Tell me about Roman Reigns' career: the Shield, the Bloodline, his long Universal title reign and his biggest matches." },
-    { cls: 't-guitar', em: '🎸', k: 'Guitar', t: 'Palm muting', x: 'Rest the side of your picking hand on the strings by the bridge for that tight, chugging rock sound.', ask: "Teach me palm muting on electric guitar, with a simple chugging riff to practise it." },
-    { cls: 't-hitman', em: '🕶️', k: 'Wrestling', t: 'Iron Man, WrestleMania XII', x: 'Bret Hart vs Shawn Michaels battled for a full hour in 1996. One of the most famous matches ever.', ask: "Tell me about the Bret Hart vs Shawn Michaels Iron Man match at WrestleMania XII. Why is it so famous?" },
-    { cls: 't-cena', em: '🎬', k: 'Movie night', t: 'You can’t see me', x: 'John Cena went from wrestling champ to movie star: Bumblebee, F9, Playing with Fire and more.', ask: "What are John Cena's best movies and shows for a 13-year-old to watch? Give me a ranked list with one line on each." },
-    { cls: 't-tkd', em: '🥋', k: 'Taekwondo', t: 'Spinning hook kick', x: 'Spot, spin, snap. Drill it slowly first, then add speed.', ask: "Break down the taekwondo spinning hook kick step by step with drills to make it faster and more accurate." },
-    { cls: 't-draw', em: '🎨', k: 'Draw this', t: 'Your wrestling superstar', x: 'Invent a wrestler: name, gear, entrance and finisher. Then draw them mid-entrance.', ask: "Help me invent and draw my own pro wrestling character: name, ring gear, entrance and finishing move." }
+    { em: '🎸', k: 'Guitar', t: 'A minor pentatonic, 5th fret', x: 'The box shape behind a huge share of rock solos.', ask: "Teach me the A minor pentatonic scale at the 5th fret on electric guitar, step by step, then give me a simple lick to practise with it." },
+    { em: '♟️', k: 'Chess', t: 'The Italian Game', x: '1.e4 e5 2.Nf3 Nc6 3.Bc4. Straight at f7.', ask: "Explain the Italian Game (1.e4 e5 2.Nf3 Nc6 3.Bc4): the main ideas for White and Black and the traps to watch for." },
+    { em: '🥋', k: 'Taekwondo', t: 'Higher, faster kicks', x: 'Ten minutes a day makes a real difference.', ask: "I'm a 2nd degree black belt in taekwondo. Give me a 10-minute daily stretching and drilling routine for higher, faster kicks." },
+    { em: '🕶️', k: 'Wrestling', t: 'The Excellence of Execution', x: "Bret Hart learned in Stu Hart's basement gym, the Dungeon.", ask: "Tell me the story of Bret \"The Hitman\" Hart: the Hart family Dungeon, the Sharpshooter, and his best matches to watch." },
+    { em: '🎨', k: 'Draw this', t: 'A robot guitar hero', x: 'Flying-V, sunglasses, a stage full of smoke.', ask: "Help me draw a robot playing an electric guitar on stage. Break it into easy steps and give me tips for shading and making it look cool." },
+    { em: '♟️', k: 'Chess', t: 'Fork, pin, skewer', x: 'The three tactics that win most games.', ask: "Explain the fork, the pin and the skewer in chess with an example of each, then quiz me." },
+    { em: '☝️', k: 'Wrestling', t: 'Acknowledge the Tribal Chief', x: 'Over 1,300 days as Universal Champion.', ask: "Tell me about Roman Reigns' career: the Shield, the Bloodline, his long Universal title reign and his biggest matches." },
+    { em: '🎸', k: 'Guitar', t: 'Palm muting', x: 'That tight, chugging rock sound.', ask: "Teach me palm muting on electric guitar, with a simple chugging riff to practise it." },
+    { em: '🕶️', k: 'Wrestling', t: 'Iron Man, WrestleMania XII', x: 'Bret Hart vs Shawn Michaels: a full hour in 1996.', ask: "Tell me about the Bret Hart vs Shawn Michaels Iron Man match at WrestleMania XII. Why is it so famous?" },
+    { em: '🎬', k: 'Movie night', t: 'You can’t see me', x: 'Bumblebee, F9, Playing with Fire and more.', ask: "What are John Cena's best movies and shows for a 13-year-old to watch? Give me a ranked list with one line on each." },
+    { em: '🥋', k: 'Taekwondo', t: 'Spinning hook kick', x: 'Spot, spin, snap. Slow first, then fast.', ask: "Break down the taekwondo spinning hook kick step by step with drills to make it faster and more accurate." },
+    { em: '🎨', k: 'Draw this', t: 'Your wrestling superstar', x: 'Name, gear, entrance, finisher. Then draw it.', ask: "Help me invent and draw my own pro wrestling character: name, ring gear, entrance and finishing move." }
   ];
 
   var JOKES = [
     "I'm reading a book about anti-gravity. It's impossible to put down.",
-    "Why did the scarecrow win an award? He was outstanding in his field.",
-    "I only know 25 letters of the alphabet. I don't know y.",
-    "What do you call a fake noodle? An impasta.",
-    "Why don't eggs tell jokes? They'd crack each other up.",
-    "Why did the chess player bring a ladder? To reach the next rank.",
     "Why are pawns so brave? They always go forward.",
     "What's a guitarist's favourite season? Strum-mer.",
-    "Why did the taekwondo student cross the road? To practise his side kick on the other side.",
-    "Why can't a bicycle stand up by itself? It's two tired.",
+    "What do you call a fake noodle? An impasta.",
+    "Why did the chess player bring a ladder? To reach the next rank.",
     "What's a robot's favourite snack? Computer chips.",
-    "Why did the math book look sad? It had too many problems.",
+    "I only know 25 letters of the alphabet. I don't know y.",
     "I asked the wrestler for a joke. He gave me a Sharpshooter instead."
   ];
+  var FACTS = [
+    "Bret Hart's catchphrase: the best there is, the best there was, the best there ever will be.",
+    'The longest possible chess game under the 50-move rule is 5,949 moves.',
+    'Taekwondo has been an Olympic sport since the 2000 Sydney Games.',
+    'John Cena holds the record for the most Make-A-Wish wishes granted: over 650.',
+    'The word "checkmate" comes from the Persian "shah mat": the king is helpless.',
+    'Roman Reigns is part of the Anoaʻi family, one of wrestling’s famous dynasties.'
+  ];
+  var TRY = ['"Who would win: Bret Hart or Roman Reigns?"', '"Give me a chess puzzle"', '"Teach me a power-chord riff"',
+             '"How do I get more height on my kicks?"', '"Give me a drawing idea"', '"Help me with my maths homework"'];
 
-  function store(k, v) {
-    try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
-  }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
   function dayNumber(d) { return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
-  var $ = function (id) { return document.getElementById(id); };
-
   var today = dayNumber(new Date());
   var nick = NICKNAMES[today % NICKNAMES.length];
 
-  // ---- greeting, clock ----
   function tick() {
     var d = new Date(), h = d.getHours();
     var part = h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 22 ? 'Good evening' : 'Up late';
@@ -256,129 +434,108 @@
   }
   tick(); setInterval(tick, 10000);
 
-  // ---- toast ----
   var toastT;
-  function toast(msg) {
-    var t = $('toast');
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2600);
-  }
-
-  // ---- actions ----
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2600); }
   function ask(q) { if (TV && TV.ask) TV.ask(q); else if (TV) TV.chat(); else toast('Opens the chat on the TV'); }
   function youtube(q) { if (!TV || !TV.youtube || !TV.youtube(q)) toast("YouTube isn't installed on this TV yet."); }
+  function launch(pkg, name) { if (!TV || !TV.launch(pkg)) toast(name + " isn't installed on this TV yet."); }
 
-  // ---- today's challenge (changes every day) ----
+  // ---- RoboDad's speech bubble: cycles through a few lines ----
   var D = DAILY[today % DAILY.length];
-  var daily = $('daily');
-  daily.classList.add(D.cls);
-  $('dEmoji').textContent = D.em; $('dKicker').textContent = "Today's challenge · " + D.k;
-  $('dTitle').textContent = D.t; $('dText').textContent = D.x; $('dGo').textContent = 'Press OK to ask RoboDad ▶';
-  daily.addEventListener('click', function () { ask(D.ask); });
-
-  // A different "try asking" line on the big tile each day
-  var TRY = ['"Who would win: Bret Hart or Roman Reigns?"', '"Give me a chess puzzle"', '"Teach me a power-chord riff"',
-             '"How do I get more height on my kicks?"', '"Give me a drawing idea"', '"Help me with my maths homework"'];
-  $('try').textContent = 'Try: ' + TRY[today % TRY.length];
-
-  // ---- footer: dad joke and a fun fact, alternating days ----
-  var FACTS = [
-    "Bret Hart's catchphrase: the best there is, the best there was, the best there ever will be.",
-    'The longest possible chess game under the 50-move rule is 5,949 moves.',
-    'Taekwondo has been an Olympic sport since the 2000 Sydney Games.',
-    'John Cena holds the record for the most Make-A-Wish wishes granted: over 650.',
-    'The word "checkmate" comes from the Persian "shah mat": the king is helpless.',
-    'Roman Reigns is part of the Anoaʻi family, one of wrestling’s most famous dynasties.'
+  var lines = [
+    ['RoboDad', 'Hey ' + nick.replace(/ .*/, '') + '! Press OK on me to talk. Try ' + TRY[today % TRY.length]],
+    ["Today's challenge", D.em + ' ' + D.t + '. ' + D.x],
+    ['Dad joke', JOKES[today % JOKES.length]],
+    ['Did you know?', FACTS[today % FACTS.length]]
   ];
-  if (today % 2) { $('fLabel').textContent = 'Did you know?'; $('fText').textContent = FACTS[Math.floor(today / 2) % FACTS.length]; }
-  else $('fText').textContent = JOKES[Math.floor(today / 2) % JOKES.length];
+  var li = 0;
+  function bubble() {
+    var b = $('bubble'); $('bTitle').textContent = lines[li][0]; $('bText').textContent = lines[li][1];
+    b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    li = (li + 1) % lines.length;
+  }
+  bubble(); setInterval(bubble, 9000);
+
+  // ---- the room's hotspots ----
+  $('hBot').addEventListener('click', function () { if (TV) TV.chat(); else location.href = 'https://robodad.app/?source=tv'; });
+  SPOTS.forEach(function (s) { $(s.id).addEventListener('click', function () { launch(s.pkg, s.name); }); });
 
   // ---- birthday (only after Dad arms the surprise) ----
-  var bday = $('bday'), note = $('note');
+  var note = $('note');
   var start = parseInt(store('rdtv.bday') || '0', 10);
   var isBirthday = !!start && today - start < BIRTHDAY_DAYS;
-  function showBirthday(on) { bday.hidden = !on; daily.hidden = on; }
-  showBirthday(isBirthday);
   function openNote() { note.classList.add('open'); confetti(); setTimeout(function () { $('noteClose').focus(); }, 50); }
-  function closeNote() { note.classList.remove('open'); store('rdtv.armed', ''); bday.focus(); }
-  bday.addEventListener('click', openNote);
+  function closeNote() { note.classList.remove('open'); store('rdtv.armed', ''); $('hBot').focus(); }
   $('noteClose').addEventListener('click', closeNote);
 
-  // ---- tiles ----
-  function appTile(app, extraClass) {
+  // ---- rows below ----
+  function pickTile(p, cls) {
     var b = document.createElement('button');
-    b.className = 'tile app' + (extraClass ? ' ' + extraClass : '');
+    b.className = 'tile pick' + (cls ? ' ' + cls : '');
+    b.innerHTML = '<span class="via"></span><span class="em"></span><b></b><small></small>';
+    b.querySelector('.via').textContent = p.via || (p.yt ? 'YouTube' : 'RoboDad');
+    b.querySelector('.em').textContent = p.em;
+    b.querySelector('b').textContent = p.title;
+    b.querySelector('small').textContent = p.sub;
+    b.addEventListener('click', function () { p.action ? p.action() : p.yt ? youtube(p.yt) : ask(p.ask); });
+    return b;
+  }
+  function buildCorner() {
+    var corner = $('corner'); corner.textContent = '';
+    if (isBirthday) corner.appendChild(pickTile({ em: '🎂', title: 'Happy 13th Birthday!', sub: "There's a note from Dad", via: 'From Dad', action: openNote }, 'bday'));
+    corner.appendChild(pickTile({ em: D.em, title: D.t, sub: D.x, via: "Today's challenge · " + D.k, ask: D.ask }, 'daily'));
+    CORNER.forEach(function (p) { corner.appendChild(pickTile(p)); });
+    document.body.classList.toggle('birthday', isBirthday);
+  }
+  buildCorner();
+
+  function appTile(app) {
+    var b = document.createElement('button');
+    b.className = 'tile app';
     var art = app.art || '';
     if (art.indexOf('banner:') === 0) {
       b.classList.add('has-banner');
       var im = document.createElement('img'); im.className = 'banner'; im.src = art.slice(7); im.alt = ''; b.appendChild(im);
     } else if (art.indexOf('icon:') === 0) {
       var ic = document.createElement('img'); ic.className = 'icon'; ic.src = art.slice(5); ic.alt = ''; b.appendChild(ic);
-    } else {
-      b.classList.add('word'); b.style.background = app.color || 'var(--card)';
-      b.appendChild(document.createTextNode(app.name));
-    }
+    } else { b.classList.add('word'); b.appendChild(document.createTextNode(app.name)); }
     if (art) { var n = document.createElement('span'); n.className = 'name'; n.textContent = app.name; b.appendChild(n); }
-    b.addEventListener('click', function () {
-      if (app.action) { app.action(); return; }
-      if (!TV || !TV.launch(app.pkg)) toast(app.name + " isn't installed on this TV yet.");
-    });
+    b.addEventListener('click', function () { app.action ? app.action() : launch(app.pkg, app.name); });
     return b;
   }
-
-  function pickTile(p) {
-    var b = document.createElement('button');
-    b.className = 'tile pick ' + p.cls;
-    b.innerHTML = '<span class="via"></span><span class="em"></span><b></b><small></small>';
-    b.querySelector('.via').textContent = p.yt ? 'YouTube' : 'RoboDad';
-    b.querySelector('.em').textContent = p.em;
-    b.querySelector('b').textContent = p.title;
-    b.querySelector('small').textContent = p.sub;
-    b.addEventListener('click', function () { p.yt ? youtube(p.yt) : ask(p.ask); });
-    return b;
-  }
-  var corner = $('corner');
-  CORNER.forEach(function (p) { corner.appendChild(pickTile(p)); });
 
   function render() {
     var list = [];
     try { list = TV ? JSON.parse(TV.apps()) : []; } catch (e) { list = []; }
-    var byPkg = {};
-    list.forEach(function (a) { byPkg[a.pkg] = a; });
+    var byPkg = {}; list.forEach(function (a) { byPkg[a.pkg] = a; });
 
-    var watch = $('watch'), apps = $('apps');
-    var focusedIdx = -1, focusedRow = null;
-    [watch, apps].forEach(function (row) {
-      var kids = row.children;
-      for (var i = 0; i < kids.length; i++) if (kids[i] === document.activeElement) { focusedIdx = i; focusedRow = row; }
+    // Put each app's own TV artwork into its place in the room.
+    SPOTS.forEach(function (s) {
+      var el = $(s.id), got = byPkg[s.pkg], img = el.querySelector('img'), word = el.querySelector('.word');
+      var src = got && got.art ? got.art.replace(/^(banner|icon):/, '') : '';
+      if (src) {
+        if (!img) { img = document.createElement('img'); img.alt = ''; el.insertBefore(img, el.firstChild); }
+        img.src = src; word.style.display = 'none';
+      } else { if (img) img.remove(); word.style.display = ''; }
     });
 
-    watch.textContent = '';
-    WATCH.forEach(function (w) {
-      var got = byPkg[w.pkg];
-      watch.appendChild(appTile({ pkg: w.pkg, name: w.name, color: w.color, art: got ? got.art : '' }, got || !TV ? '' : 'missing'));
-    });
-
+    var apps = $('apps'), fIdx = -1;
+    for (var i = 0; i < apps.children.length; i++) if (apps.children[i] === document.activeElement) fIdx = i;
     apps.textContent = '';
     var skip = { 'com.google.android.tv.remote.service': 1 };
-    WATCH.forEach(function (w) { skip[w.pkg] = 1; });
+    SPOTS.forEach(function (s) { skip[s.pkg] = 1; });
     var hasSettings = false;
     list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) {
       if (/settings/i.test(a.pkg) || a.name === 'Settings') hasSettings = true;
       apps.appendChild(appTile(a));
     });
-    if (!hasSettings) apps.appendChild(appTile({ name: '⚙ Settings', color: '#24364C', action: function () { TV && TV.settings(); } }));
-
-    if (focusedRow && focusedRow.children[focusedIdx]) focusedRow.children[focusedIdx].focus();
+    if (!hasSettings) apps.appendChild(appTile({ name: '⚙ Settings', action: function () { TV && TV.settings(); } }));
+    if (fIdx >= 0 && apps.children[fIdx]) apps.children[fIdx].focus();
   }
 
-  $('chat').addEventListener('click', function () {
-    if (TV) TV.chat(); else location.href = 'https://robodad.app/?source=tv';
-  });
+  function toTop() { $('main').scrollTop = 0; document.querySelectorAll('.row').forEach(function (r) { r.scrollLeft = 0; }); $('hBot').focus({ preventScroll: true }); }
+  document.addEventListener('focusin', function (e) { $('hint').style.opacity = e.target.closest('.below') ? 0 : ''; });
 
-  function toTop() { $('main').scrollTop = 0; document.querySelectorAll('.row').forEach(function (r) { r.scrollLeft = 0; }); $('chat').focus({ preventScroll: true }); }
-
-  // ---- what the TV tells the page ----
   window.tvResume = function () { tick(); render(); if (!document.activeElement || document.activeElement === document.body) toTop(); };
   window.tvHome = function () { closeIfOpen(); toTop(); };
   window.tvBack = function () { if (!closeIfOpen()) toTop(); };
@@ -387,37 +544,45 @@
   render();
   toTop();
 
-  // The surprise: once Dad arms it (one adb command), the note and confetti play the next
-  // time the TV is switched on, and the birthday card replaces today's challenge for two weeks.
   window.tvArm = function () {
-    store('rdtv.bday', String(today)); start = today; isBirthday = true; showBirthday(true);
+    store('rdtv.bday', String(today)); start = today; isBirthday = true; buildCorner();
     closeIfOpen(); store('rdtv.armed', '1');
     toast('Surprise armed 🎁 Switch the TV off. It plays next time it turns on.');
   };
-  window.tvWake = function () {
-    tick(); render();
-    if (store('rdtv.armed') === '1') setTimeout(openNote, 1500);
-  };
+  window.tvWake = function () { tick(); render(); if (store('rdtv.armed') === '1') setTimeout(openNote, 1500); };
   if (store('rdtv.armed') === '1') setTimeout(openNote, 1500);
 
-  // ---- confetti ----
+  // ---- embers drifting up through the room (light enough for an older TV) ----
+  (function embers() {
+    var c = $('embers'), x = c.getContext('2d'), W, H, P = [];
+    function size() { W = c.width = c.clientWidth; H = c.height = c.clientHeight; }
+    size(); addEventListener('resize', size);
+    for (var i = 0; i < 34; i++) P.push({ x: Math.random(), y: Math.random(), s: 1 + Math.random() * 2.6, v: .0006 + Math.random() * .0012, d: Math.random() * 6 });
+    (function f(t) {
+      x.clearRect(0, 0, W, H);
+      for (var i = 0; i < P.length; i++) {
+        var p = P[i]; p.y -= p.v; if (p.y < -0.02) { p.y = 1.02; p.x = Math.random(); }
+        var px = (p.x + Math.sin(t / 1400 + p.d) * .006) * W, py = p.y * H;
+        x.globalAlpha = .25 + .45 * Math.abs(Math.sin(t / 900 + p.d));
+        x.fillStyle = i % 3 ? '#FF2D3D' : '#FF9A3D';
+        x.beginPath(); x.arc(px, py, p.s, 0, 6.283); x.fill();
+      }
+      requestAnimationFrame(f);
+    })(0);
+  })();
+
   function confetti() {
-    var c = $('fx'), x = c.getContext('2d');
-    var W = c.width = innerWidth * (devicePixelRatio || 1), H = c.height = innerHeight * (devicePixelRatio || 1);
-    var colors = ['#FFC83D', '#FF7A9A', '#7FA9D6', '#8EE3B0', '#FFFFFF', '#C59BFF'];
+    var c = $('confetti'), x = c.getContext('2d');
+    var W = c.width = innerWidth, H = c.height = innerHeight;
+    var colors = ['#FF2D3D', '#E50914', '#FFC83D', '#FFFFFF', '#2a2a2a'];
     var bits = [];
-    for (var i = 0; i < 160; i++) bits.push({
-      x: Math.random() * W, y: -Math.random() * H * 0.6, s: (6 + Math.random() * 8) * (devicePixelRatio || 1),
-      vy: (2 + Math.random() * 3) * (devicePixelRatio || 1), vx: (Math.random() - .5) * 2, r: Math.random() * 6, vr: (Math.random() - .5) * .2,
-      c: colors[i % colors.length]
-    });
+    for (var i = 0; i < 150; i++) bits.push({ x: Math.random() * W, y: -Math.random() * H * .6, s: 6 + Math.random() * 8,
+      vy: 2 + Math.random() * 3, vx: (Math.random() - .5) * 2, r: Math.random() * 6, vr: (Math.random() - .5) * .2, c: colors[i % colors.length] });
     var t0 = performance.now();
     (function frame(t) {
       x.clearRect(0, 0, W, H);
-      bits.forEach(function (b) {
-        b.y += b.vy; b.x += b.vx + Math.sin((t + b.r * 100) / 400); b.r += b.vr;
-        x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.c; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore();
-      });
+      bits.forEach(function (b) { b.y += b.vy; b.x += b.vx + Math.sin((t + b.r * 100) / 400); b.r += b.vr;
+        x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.c; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore(); });
       if (t - t0 < 5000) requestAnimationFrame(frame); else x.clearRect(0, 0, W, H);
     })(t0);
   }
