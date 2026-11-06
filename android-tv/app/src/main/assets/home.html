@@ -48,14 +48,17 @@
   #hLap .lbl { bottom: auto; top: -5vh; }
 
   /* shipping box (Prime Video) */
-  #hBox { left: 19.27%; top: 78.33%; width: 10.94%; height: 10.93%; border-radius: .3vh; }
-  #hBox img { inset: 0; width: 100%; height: 100%; border-radius: .2vh; opacity: .95; }
+  #hBox { left: 22.24%; top: 82.59%; width: 5.21%; height: 9.26%; border-radius: 50%; background: #1a98ff center / cover no-repeat; overflow: hidden; }
+  #hBox:focus { border-radius: 50%; }
+  #hBox img { left: 0; top: 50%; width: 100%; height: auto; aspect-ratio: 16 / 9; transform: translateY(-50%); object-fit: contain; }
   #hBox .lbl { bottom: auto; top: -5vh; }
 
   /* guitar + amp (Spotify / SiriusXM) */
   #hMusic { left: 2.08%; top: 24%; width: 12%; height: 55.6%; border-radius: 1vh; }
-  #hMusic img, #hMusic .word { position: absolute; left: 6.1%; top: 78.5%; width: 87.8%; height: 19.3%; border-radius: .4vh; object-fit: cover; }
-  #hMusic .word { right: auto; bottom: auto; font-size: 2.2vh; color: #ffd0d4; background: rgba(0,0,0,.35); }
+  #hMusic img { position: absolute; left: 27.4%; top: 79.5%; width: 45.2%; height: 17.33%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 2vh rgba(30,215,96,.5); }
+  #hMusic .word { display: none !important; }
+  @keyframes notebob { 0%,100% { transform: translateY(0) rotate(-6deg) } 50% { transform: translateY(-8%) rotate(6deg) } }
+  #hMusic .note g { animation: notebob 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
   #hMusic .lbl { bottom: auto; top: -5vh; }
 
   /* Siddhant's corner: crates under the desk */
@@ -186,8 +189,21 @@
   .shine { animation: shine 6s ease-in-out infinite; }
   .hot .glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; animation: glare 6s ease-in-out infinite;
     background: linear-gradient(125deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.05) 28%, transparent 45%, transparent 70%, rgba(255,255,255,.06) 100%); }
-  #hBox img { mix-blend-mode: multiply; filter: contrast(1.05) saturate(1.1); }
-  #hBox .word { color: #5a3b22; }
+  #hBox .word { font-size: 1.5vh; text-align: center; line-height: 1.1; color: #fff; background: #1a98ff; }
+  /* busted CRT (Tubi) */
+  #hTubi { left: 21.46%; top: 66.67%; width: 6.15%; height: 8.89%; border-radius: 1.6vh; background: #3a0d6e center / cover no-repeat; overflow: hidden; }
+  #hTubi img { left: 0; top: 50%; width: 100%; height: auto; aspect-ratio: 16 / 9; transform: translateY(-50%); object-fit: contain; }
+  #hTubi .word { font-size: 1.6vh; color: #fff; background: #2a0b4a; }
+  #hTubi .static { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.10) 0 1px, transparent 1px 3px); animation: crt 0.18s steps(2) infinite; }
+  #hTubi .roll { position: absolute; left: 0; right: 0; height: 18%; pointer-events: none; background: linear-gradient(transparent, rgba(255,255,255,.22), transparent);
+    animation: roll 3.5s linear infinite; }
+  #hTubi svg.crack { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #hTubi .lbl { bottom: auto; top: -9vh; }
+  @keyframes crt { 0% { background-position: 0 0; opacity: .7 } 100% { background-position: 0 2px; opacity: 1 } }
+  @keyframes roll { 0% { top: -20% } 100% { top: 110% } }
+  /* music note on the amp */
+  #hMusic .note { position: absolute; left: 27.4%; top: 79.5%; width: 45.2%; height: 17.33%; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -209,6 +225,7 @@
         <linearGradient id="boxSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7f5634"/><stop offset="1" stop-color="#5e3d22"/></linearGradient>
         <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".5" stop-color="#d4a23a"/><stop offset="1" stop-color="#8a6214"/></linearGradient>
         <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2f4f7"/><stop offset=".45" stop-color="#9aa3ad"/><stop offset=".55" stop-color="#5d656f"/><stop offset="1" stop-color="#c9d0d8"/></linearGradient>
+        <linearGradient id="crt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a6e60"/><stop offset=".5" stop-color="#584e43"/><stop offset="1" stop-color="#352e27"/></linearGradient>
         <linearGradient id="amp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0b0b0d"/></linearGradient>
         <pattern id="brick" width="120" height="60" patternUnits="userSpaceOnUse">
           <rect width="120" height="60" fill="none"/>
@@ -312,19 +329,36 @@
         <path d="M58 14 q24 0 24 18 q0 18 -24 18" fill="none" stroke="#160406" stroke-width="7"/>
         <g class="steam" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"><path d="M14 -8 q-10 -14 0 -28"/><path d="M29 -8 q10 -14 0 -28"/><path d="M44 -8 q-10 -14 0 -28"/></g>
       </g>
-      <!-- ===== shipping box (Prime Video) ===== -->
-      <g transform="translate(330 812)">
-        <path d="M0 0 L56 -54 H346 L290 0 Z" fill="url(#boxTop)" stroke="#5a3b22" stroke-width="3"/>
-        <path d="M290 0 L346 -54 V146 L290 200 Z" fill="url(#boxSide)" stroke="#5a3b22" stroke-width="3"/>
-        <rect x="0" y="0" width="290" height="200" fill="url(#boxFront)" stroke="#5a3b22" stroke-width="3"/>
-        <path d="M128 -54 L100 0 H150 L178 -54 Z" fill="#e8d3ad" opacity=".85"/>
-        <rect x="100" y="0" width="50" height="34" fill="#e8d3ad" opacity=".85"/>
-        <path d="M0 0 H290" stroke="#5a3b22" stroke-width="2" opacity=".5"/>
-        <g transform="translate(300 40) skewY(-43)"><rect width="36" height="52" fill="#f4efe6" opacity=".9"/><g stroke="#222" stroke-width="2"><path d="M5 8v20 M9 8v20 M12 8v20 M17 8v20 M20 8v20 M25 8v20 M29 8v20"/></g></g>
-        <text x="20" y="190" font-size="15" font-weight="800" fill="#7a0a12" letter-spacing="2" font-family="Roboto, sans-serif">▲▲ THIS SIDE UP</text>
-        <g transform="translate(236 182) rotate(-8)"><rect x="-44" y="-16" width="88" height="24" rx="3" fill="none" stroke="#C11" stroke-width="3"/><text y="2" text-anchor="middle" font-size="15" font-weight="900" fill="#C11" font-family="Roboto, sans-serif">FRAGILE</text></g>
+      <!-- ===== shipping box (Prime Video sticker) ===== -->
+      <g transform="translate(372 872)">
+        <path d="M0 0 L40 -40 H250 L210 0 Z" fill="url(#boxTop)" stroke="#5a3b22" stroke-width="3"/>
+        <path d="M210 0 L250 -40 V100 L210 140 Z" fill="url(#boxSide)" stroke="#5a3b22" stroke-width="3"/>
+        <rect x="0" y="0" width="210" height="140" fill="url(#boxFront)" stroke="#5a3b22" stroke-width="3"/>
+        <rect x="88" y="0" width="34" height="26" fill="#e8d3ad" opacity=".85"/>
+        <g transform="translate(220 30) skewY(-43)"><rect width="24" height="36" fill="#f4efe6" opacity=".9"/><g stroke="#222" stroke-width="1.6"><path d="M4 6v14 M7 6v14 M9 6v14 M13 6v14 M15 6v14 M19 6v14"/></g></g>
+        <text x="10" y="132" font-size="11" font-weight="800" fill="#7a0a12" letter-spacing="1.5" font-family="Roboto, sans-serif">▲▲ THIS SIDE UP</text>
+        <g transform="translate(176 22) rotate(10)"><rect x="-30" y="-11" width="60" height="18" rx="3" fill="none" stroke="#C11" stroke-width="2.5"/><text y="3" text-anchor="middle" font-size="11" font-weight="900" fill="#C11" font-family="Roboto, sans-serif">FRAGILE</text></g>
+        <circle cx="105" cy="70" r="55" fill="none" stroke="#f4efe6" stroke-width="6" opacity=".9"/>
       </g>
-      <ellipse cx="500" cy="1018" rx="230" ry="18" fill="#000" opacity=".55"/>
+      <ellipse cx="490" cy="1018" rx="170" ry="14" fill="#000" opacity=".55"/>
+
+      <!-- ===== busted mini CRT (Tubi) on top of the box ===== -->
+      <g>
+        <path d="M470 700 L432 636" stroke="#9aa3ad" stroke-width="4" stroke-linecap="round"/>
+        <path d="M472 700 L500 664 L538 676" fill="none" stroke="#9aa3ad" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="432" cy="636" r="5" fill="#c9d0d8"/><circle cx="538" cy="676" r="5" fill="#c9d0d8"/>
+        <ellipse cx="471" cy="702" rx="18" ry="7" fill="#2a2620" stroke="#000" stroke-width="2"/>
+        <rect x="392" y="700" width="186" height="150" rx="16" fill="url(#crt)" stroke="#120f0c" stroke-width="4"/>
+        <rect x="404" y="712" width="134" height="112" rx="18" fill="#0a0a0b" stroke="#000" stroke-width="3"/>
+        <g fill="#1c1915" stroke="#000" stroke-width="2"><circle cx="558" cy="738" r="9"/><circle cx="558" cy="768" r="9"/></g>
+        <path d="M558 730 v8 M552 772 l6 -4" stroke="#c9d0d8" stroke-width="2"/>
+        <path d="M548 794 h22 M548 804 h22 M548 814 h22 M548 824 h22" stroke="#1c1915" stroke-width="3"/>
+        <rect x="402" y="852" width="34" height="10" rx="3" fill="#1c1915"/><rect x="536" y="852" width="34" height="10" rx="3" fill="#1c1915"/>
+        <g transform="rotate(-28 402 706)" fill="#8d8f93" opacity=".9"><rect x="380" y="700" width="56" height="13" rx="2"/></g>
+        <g transform="rotate(22 402 706)" fill="#a6a8ac" opacity=".9"><rect x="380" y="700" width="56" height="13" rx="2"/></g>
+        <path d="M578 790 q-8 10 0 22" fill="none" stroke="#120f0c" stroke-width="3"/>
+        <circle cx="420" cy="838" r="3" fill="#FF2D3D" class="antenna"/>
+      </g>
     </svg>
     <canvas class="fx" id="embers"></canvas>
     <div class="sweep"></div>
@@ -335,8 +369,9 @@
     <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="word">Netflix</span><span class="scan"></span><span class="glare"></span><span class="lbl">Netflix</span></button>
     <button class="hot in" id="hArt" style="animation-delay:.4s"><span class="word">Disney+</span><span class="glare"></span><span class="lbl">Disney+</span></button>
     <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="word">YouTube</span><span class="glare"></span><span class="lbl">YouTube</span></button>
-    <button class="hot in" id="hMusic" style="animation-delay:.8s"><span class="word">♪ Music</span><span class="lbl" id="musicLbl">Music</span></button>
-    <button class="hot in" id="hBox" style="animation-delay:.7s"><span class="word">Prime Video</span><span class="lbl">Prime Video</span></button>
+    <button class="hot in" id="hMusic" style="animation-delay:.8s"><span class="word"></span><svg class="note" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#120507" stroke="#FF2D3D" stroke-width="4"/><g fill="#FF2D3D"><path d="M38 28 L72 20 V62 a9 8 0 1 1 -6 -7.5 V34 L44 39 V70 a9 8 0 1 1 -6 -7.5 Z"/></g></svg><span class="lbl" id="musicLbl">Music</span></button>
+    <button class="hot in" id="hTubi" style="animation-delay:.75s"><span class="word">Tubi</span><span class="static"></span><span class="roll"></span><svg class="crack" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M78 0 L66 22 L74 30 L58 52 L64 60 L52 78" fill="none" stroke="#fff" stroke-width="1.6" opacity=".85"/><path d="M66 22 L86 34 M58 52 L40 56" fill="none" stroke="#fff" stroke-width="1" opacity=".7"/></svg><span class="lbl" id="tubiLbl">Tubi</span></button>
+    <button class="hot in" id="hBox" style="animation-delay:.7s"><span class="word">Prime<br>Video</span><span class="lbl">Prime Video</span></button>
 
     <div class="bubble" id="bubble"><b id="bTitle">RoboDad</b><span id="bText"></span></div>
 
@@ -568,6 +603,12 @@
 
   // The guitar + amp open Spotify, or SiriusXM, whichever is on the TV (Spotify first).
   var MUSIC = { pkg: '', name: 'Spotify' };
+  var TUBI = { pkg: '' };
+  $('hTubi').addEventListener('click', function () {
+    if (TUBI.pkg) { launch(TUBI.pkg, 'Tubi'); return; }
+    toast('Tubi isn\u2019t on this TV yet. Opening the Play Store\u2026');
+    if (TV && TV.market) TV.market('com.tubitv');
+  });
   $('hMusic').addEventListener('click', function () {
     if (MUSIC.pkg) { launch(MUSIC.pkg, MUSIC.name); return; }
     toast('Spotify isn\u2019t on this TV yet. Opening the Play Store\u2026');
@@ -629,18 +670,28 @@
       if (src) {
         if (!img) { img = document.createElement('img'); img.alt = ''; el.insertBefore(img, el.firstChild); }
         img.src = src; word.style.display = 'none';
-        if (s.id === 'hArt') el.style.backgroundImage = 'url("' + src + '")';
+        if (s.id === 'hArt' || s.id === 'hBox') el.style.backgroundImage = 'url("' + src + '")';
       } else { if (img) img.remove(); word.style.display = ''; }
     });
 
     var mu = list.filter(function (a) { return /spotify/i.test(a.pkg); })[0] || list.filter(function (a) { return /sirius/i.test(a.pkg); })[0];
     MUSIC.pkg = mu ? mu.pkg : ''; MUSIC.name = mu ? mu.name : 'Spotify';
     $('musicLbl').textContent = mu ? mu.name : 'Get Spotify';
-    var mEl = $('hMusic'), mImg = mEl.querySelector('img'), mWord = mEl.querySelector('.word');
-    if (mu && mu.art) {
+    var mEl = $('hMusic'), mImg = mEl.querySelector('img'), note = mEl.querySelector('.note');
+    if (mu && (mu.icon || mu.art)) {
       if (!mImg) { mImg = document.createElement('img'); mImg.alt = ''; mEl.insertBefore(mImg, mEl.firstChild); }
-      mImg.src = mu.art.replace(/^(banner|icon):/, ''); mWord.style.display = 'none';
-    } else { if (mImg) mImg.remove(); mWord.style.display = ''; }
+      mImg.src = mu.icon || mu.art.replace(/^(banner|icon):/, ''); note.style.display = 'none';
+    } else { if (mImg) mImg.remove(); note.style.display = ''; }
+
+    var tu = list.filter(function (a) { return /tubi/i.test(a.pkg); })[0];
+    TUBI.pkg = tu ? tu.pkg : '';
+    $('tubiLbl').textContent = tu ? 'Tubi' : 'Get Tubi';
+    var tEl = $('hTubi'), tImg = tEl.querySelector('img'), tWord = tEl.querySelector('.word');
+    var tSrc = tu && tu.art ? tu.art.replace(/^(banner|icon):/, '') : '';
+    if (tSrc) {
+      if (!tImg) { tImg = document.createElement('img'); tImg.alt = ''; tEl.insertBefore(tImg, tEl.firstChild); }
+      tImg.src = tSrc; tEl.style.backgroundImage = 'url("' + tSrc + '")'; tWord.style.display = 'none';
+    } else { if (tImg) tImg.remove(); tEl.style.backgroundImage = ''; tWord.style.display = ''; }
 
     var apps = $('apps'), fIdx = -1;
     for (var i = 0; i < apps.children.length; i++) if (apps.children[i] === document.activeElement) fIdx = i;
@@ -648,6 +699,7 @@
     var skip = { 'com.google.android.tv.remote.service': 1 };
     SPOTS.forEach(function (s) { skip[s.pkg] = 1; });
     if (MUSIC.pkg) skip[MUSIC.pkg] = 1;
+    if (TUBI.pkg) skip[TUBI.pkg] = 1;
     var hasSettings = false;
     list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) {
       if (/settings/i.test(a.pkg) || a.name === 'Settings') hasSettings = true;

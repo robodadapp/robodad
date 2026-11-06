@@ -179,6 +179,7 @@ public class HomeActivity extends Activity {
                     o.put("pkg", a.packageName);
                     o.put("name", String.valueOf(r.loadLabel(pm)));
                     o.put("art", art(pm, a));
+                    o.put("icon", iconArt(pm, a));
                     out.add(o);
                 } catch (Exception ignored) { }
             }
@@ -268,6 +269,25 @@ public class HomeActivity extends Activity {
             try { i = pm.getLaunchIntentForPackage(pkg); } catch (Exception ignored) { }
         }
         return i;
+    }
+
+    /** The app's square launcher icon, for round or odd-shaped spots in the room. */
+    private String iconArt(PackageManager pm, ActivityInfo a) {
+        String key = "icon:" + a.packageName;
+        synchronized (artCache) { if (artCache.containsKey(key)) return artCache.get(key); }
+        String result = "";
+        try {
+            Drawable d = a.loadIcon(pm);
+            Bitmap b = Bitmap.createBitmap(192, 192, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(b);
+            d.setBounds(0, 0, 192, 192);
+            d.draw(c);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            b.compress(Bitmap.CompressFormat.PNG, 100, out);
+            result = "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+        } catch (Exception ignored) { }
+        synchronized (artCache) { artCache.put(key, result); }
+        return result;
     }
 
     /** The app's own TV banner (or its icon if it has none), as a picture the page can show. */
