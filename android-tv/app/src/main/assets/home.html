@@ -37,16 +37,16 @@
   #hTv .lbl { bottom: auto; top: -5vh; }
 
   /* wall art (Disney+) */
-  #hArt { left: 76.04%; top: 22.04%; width: 11.46%; height: 11.48%; border-radius: .4vh; }
+  #hArt { left: 75.63%; top: 21.57%; width: 12.29%; height: 12.31%; border-radius: .4vh; }
   #hArt img { inset: 0; width: 100%; height: 100%; border-radius: .3vh; }
 
   /* laptop (YouTube) */
-  #hLap { left: 70.31%; top: 54.07%; width: 14.58%; height: 15%; border-radius: .4vh; }
+  #hLap { left: 69.69%; top: 52.59%; width: 15.83%; height: 17.04%; border-radius: .4vh; }
   #hLap img { inset: 0; width: 100%; height: 100%; border-radius: .3vh; }
   #hLap .lbl { bottom: auto; top: -5vh; }
 
   /* shipping box (Prime Video) */
-  #hBox { left: 19.27%; top: 79.63%; width: 10.42%; height: 10.37%; border-radius: .3vh; }
+  #hBox { left: 19.27%; top: 78.33%; width: 10.94%; height: 10.93%; border-radius: .3vh; }
   #hBox img { inset: 0; width: 100%; height: 100%; border-radius: .2vh; opacity: .95; }
   #hBox .lbl { bottom: auto; top: -5vh; }
 
@@ -55,7 +55,8 @@
   #hBot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   #hBot:focus { box-shadow: none; transform: scale(1.04); }
   #hBot:focus .bot-glow { opacity: 1; }
-  #hBot .lbl { bottom: 1vh; font-size: 2.4vh; }
+  #hBot .lbl { bottom: auto; top: 44%; left: 96%; font-size: 2.4vh; transform: translateX(-1vw); }
+  #hBot:focus .lbl { transform: translateX(0); }
   .bot-glow { opacity: .35; transition: opacity .3s; }
 
   /* speech bubble */
@@ -149,6 +150,17 @@
     animation: sweep 9s ease-in-out infinite; pointer-events: none; }
   .ring { animation: spin 18s linear infinite; transform-box: fill-box; transform-origin: center; }
   .hat { display: none; } body.birthday .hat { display: inline; }
+  @keyframes breathe { 0%,100% { transform: translateY(0) scale(1) } 50% { transform: translateY(-.6%) scale(1.008) } }
+  @keyframes nod { 0%,70%,100% { transform: rotate(0) } 76% { transform: rotate(-3deg) } 84% { transform: rotate(2deg) } 90% { transform: rotate(0) } }
+  @keyframes glint { 0%,75% { transform: skewX(-25deg) translateX(0) } 100% { transform: skewX(-25deg) translateX(260px) } }
+  @keyframes glare { 0%,100% { opacity: .55 } 50% { opacity: .8 } }
+  .breathe { animation: breathe 4s ease-in-out infinite; transform-box: view-box; transform-origin: 225px 660px; }
+  .nod { animation: nod 8s ease-in-out infinite; transform-box: view-box; transform-origin: 225px 250px; }
+  .glint { animation: glint 5s ease-in-out infinite; }
+  .hot .glare { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; animation: glare 6s ease-in-out infinite;
+    background: linear-gradient(125deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.05) 28%, transparent 45%, transparent 70%, rgba(255,255,255,.06) 100%); }
+  #hBox img { mix-blend-mode: multiply; filter: contrast(1.05) saturate(1.1); }
+  #hBox .word { color: #5a3b22; }
 </style>
 </head>
 <body>
@@ -156,106 +168,137 @@
   <div class="scene" id="scene">
     <svg class="room" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
-        <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#121216"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
-        <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16090b"/><stop offset="1" stop-color="#050506"/></linearGradient>
-        <radialGradient id="tvglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#E50914" stop-opacity=".55"/><stop offset="1" stop-color="#E50914" stop-opacity="0"/></radialGradient>
-        <radialGradient id="redglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".5"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
+        <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#141418"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
+        <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0a0c"/><stop offset="1" stop-color="#050506"/></linearGradient>
+        <radialGradient id="tvglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#E50914" stop-opacity=".6"/><stop offset="1" stop-color="#E50914" stop-opacity="0"/></radialGradient>
+        <radialGradient id="redglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".55"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
         <radialGradient id="lampcone" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#FF3B4A" stop-opacity=".45"/><stop offset="1" stop-color="#FF3B4A" stop-opacity="0"/></radialGradient>
-        <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1416"/><stop offset="1" stop-color="#160a0b"/></linearGradient>
-        <linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b8875a"/><stop offset="1" stop-color="#8a6140"/></linearGradient>
-        <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#ffffff" stroke-opacity=".025" stroke-width="2"/></pattern>
+        <radialGradient id="screenglow" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#9ec7ff" stop-opacity=".22"/><stop offset="1" stop-color="#9ec7ff" stop-opacity="0"/></radialGradient>
+        <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a1a1d"/><stop offset=".3" stop-color="#2a1214"/><stop offset="1" stop-color="#140809"/></linearGradient>
+        <linearGradient id="alu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5f68"/><stop offset=".5" stop-color="#3a3d44"/><stop offset="1" stop-color="#24262b"/></linearGradient>
+        <linearGradient id="deck" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4d55"/><stop offset="1" stop-color="#2c2e34"/></linearGradient>
+        <linearGradient id="boxFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c79563"/><stop offset="1" stop-color="#9c6d44"/></linearGradient>
+        <linearGradient id="boxTop" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e0b787"/><stop offset="1" stop-color="#cfa272"/></linearGradient>
+        <linearGradient id="boxSide" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7f5634"/><stop offset="1" stop-color="#5e3d22"/></linearGradient>
+        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/><stop offset=".5" stop-color="#d4a23a"/><stop offset="1" stop-color="#8a6214"/></linearGradient>
+        <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2f4f7"/><stop offset=".45" stop-color="#9aa3ad"/><stop offset=".55" stop-color="#5d656f"/><stop offset="1" stop-color="#c9d0d8"/></linearGradient>
+        <linearGradient id="amp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d1d22"/><stop offset="1" stop-color="#0b0b0d"/></linearGradient>
+        <pattern id="brick" width="120" height="60" patternUnits="userSpaceOnUse">
+          <rect width="120" height="60" fill="none"/>
+          <path d="M0 0.5H120 M0 30.5H120 M60 0V30 M0 30V60 M120 30V60" stroke="#ffffff" stroke-opacity=".035" stroke-width="3"/>
+        </pattern>
+        <pattern id="grille" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="2.2" fill="#000" opacity=".7"/></pattern>
+        <pattern id="keys" width="22" height="12" patternUnits="userSpaceOnUse"><rect x="1.5" y="1.5" width="19" height="9" rx="2" fill="#17181c"/></pattern>
       </defs>
 
       <!-- wall, floor -->
       <rect width="1920" height="1080" fill="url(#wall)"/>
-      <rect width="1920" height="860" fill="url(#grid)"/>
+      <rect width="1920" height="860" fill="url(#brick)"/>
       <path d="M0 860 H1920 V1080 H0Z" fill="url(#floor)"/>
-      <path d="M0 860 H1920" stroke="#FF2D3D" stroke-width="3" class="neon" opacity=".9"/>
-      <rect x="0" y="852" width="1920" height="16" fill="url(#redglow)" opacity=".8"/>
-      <!-- ceiling neon -->
+      <path d="M0 860 H1920" stroke="#FF2D3D" stroke-width="3" class="neon"/>
+      <rect x="0" y="848" width="1920" height="24" fill="url(#redglow)" opacity=".8"/>
       <path d="M40 26 H1880" stroke="#FF2D3D" stroke-width="6" stroke-linecap="round" class="neon"/>
-      <rect x="0" y="0" width="1920" height="70" fill="url(#redglow)" opacity=".6"/>
+      <rect x="0" y="0" width="1920" height="80" fill="url(#redglow)" opacity=".6"/>
+      <!-- rug under RoboDad -->
+      <ellipse cx="940" cy="1015" rx="420" ry="60" fill="#1b0608" stroke="#E50914" stroke-width="5"/>
+      <ellipse cx="940" cy="1015" rx="360" ry="44" fill="none" stroke="#3a0b10" stroke-width="10"/>
 
-      <!-- glow behind the wall TV -->
-      <ellipse cx="880" cy="290" rx="520" ry="300" fill="url(#tvglow)" class="glow-tv"/>
-      <!-- wall TV -->
-      <rect x="856" y="482" width="48" height="20" fill="#1c1c22"/>
-      <rect x="560" y="108" width="640" height="376" rx="14" fill="#050506" stroke="#2a2a32" stroke-width="4"/>
-      <rect x="1180" y="470" width="8" height="8" rx="4" fill="#FF2D3D" class="antenna"/>
+      <!-- ===== wall TV (Netflix) ===== -->
+      <ellipse cx="880" cy="295" rx="560" ry="320" fill="url(#tvglow)" class="glow-tv"/>
+      <rect x="548" y="100" width="664" height="392" rx="10" fill="#000" opacity=".5" transform="translate(10 14)"/>
+      <rect x="556" y="104" width="648" height="384" rx="12" fill="#0a0a0c" stroke="#3a3a44" stroke-width="3"/>
+      <rect x="560" y="108" width="640" height="376" rx="9" fill="#050506"/>
+      <rect x="872" y="476" width="16" height="6" rx="3" fill="#FF2D3D" class="antenna"/>
+      <!-- soundbar -->
+      <rect x="640" y="508" width="480" height="34" rx="17" fill="#141418" stroke="#2d2d35" stroke-width="2"/>
+      <rect x="656" y="514" width="448" height="22" rx="11" fill="url(#grille)"/>
+      <circle cx="1100" cy="525" r="3.5" fill="#FF2D3D" class="antenna"/>
 
-      <!-- wall art frame (Disney+), an original RoboDad crest around it -->
+      <!-- ===== wall art (Disney+) ===== -->
       <g transform="translate(1570 300)">
-        <rect x="-190" y="-185" width="380" height="370" rx="10" fill="#0c0c0f" stroke="#FF2D3D" stroke-width="6"/>
-        <rect x="-178" y="-173" width="356" height="346" rx="6" fill="none" stroke="#3a0b10" stroke-width="2"/>
-        <g class="ring" opacity=".85">
-          <circle r="150" fill="none" stroke="#E50914" stroke-width="5" stroke-dasharray="28 16"/>
-        </g>
-        <path d="M-150 -40 L-112 0 L-150 40" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
-        <path d="M150 -40 L112 0 L150 40" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
-        <path d="M-26 -160 L8 -120 L-10 -120 L18 -90" fill="none" stroke="#FFC83D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-        <text y="155" text-anchor="middle" font-size="26" font-weight="800" fill="#FF2D3D" letter-spacing="8" font-family="Roboto, sans-serif">ROBODAD</text>
+        <rect x="-196" y="-190" width="392" height="380" rx="12" fill="#000" opacity=".5" transform="translate(10 12)"/>
+        <rect x="-196" y="-190" width="392" height="380" rx="12" fill="url(#gold)"/>
+        <rect x="-180" y="-174" width="360" height="348" rx="6" fill="#0d0d10" stroke="#5a1015" stroke-width="3"/>
+        <g class="ring"><circle r="152" fill="none" stroke="#E50914" stroke-width="4" stroke-dasharray="26 14"/></g>
+        <circle r="138" fill="none" stroke="#FF2D3D" stroke-width="2" opacity=".5"/>
+        <path d="M-160 -42 L-122 0 L-160 42" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
+        <path d="M160 -42 L122 0 L160 42" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
+        <path d="M-24 -166 L8 -126 L-10 -126 L18 -94" fill="none" stroke="url(#gold)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="-118" y="-70" width="236" height="140" rx="8" fill="#000" stroke="#FF2D3D" stroke-width="4"/>
+        <text y="150" text-anchor="middle" font-size="24" font-weight="900" fill="url(#gold)" letter-spacing="9" font-family="Roboto, sans-serif">ROBODAD</text>
+        <g fill="url(#gold)"><circle cx="-180" cy="-174" r="7"/><circle cx="180" cy="-174" r="7"/><circle cx="-180" cy="174" r="7"/><circle cx="180" cy="174" r="7"/></g>
       </g>
 
-      <!-- electric guitar on a stand (left) -->
-      <g transform="translate(36 470) rotate(-10)">
+      <!-- ===== guitar amp + electric guitar ===== -->
+      <g transform="translate(40 690)">
+        <rect x="0" y="0" width="230" height="170" rx="10" fill="url(#amp)" stroke="#2a2a32" stroke-width="3"/>
+        <rect x="14" y="40" width="202" height="116" rx="6" fill="#2a0b0f"/>
+        <rect x="14" y="40" width="202" height="116" rx="6" fill="url(#grille)" opacity=".8"/>
+        <rect x="14" y="10" width="202" height="22" rx="4" fill="url(#gold)"/>
+        <g fill="#111"><circle cx="40" cy="21" r="6"/><circle cx="68" cy="21" r="6"/><circle cx="96" cy="21" r="6"/><circle cx="124" cy="21" r="6"/><circle cx="152" cy="21" r="6"/></g>
+        <circle cx="196" cy="21" r="5" fill="#FF2D3D" class="antenna"/>
+      </g>
+      <g transform="translate(250 470) rotate(-12)">
         <rect x="52" y="-40" width="18" height="330" rx="6" fill="#6b4a2e" stroke="#160406" stroke-width="3"/>
-        <rect x="46" y="-80" width="30" height="58" rx="8" fill="#D10A1A" stroke="#160406" stroke-width="3"/>
-        <g fill="#111"><circle cx="40" cy="-70" r="5"/><circle cx="40" cy="-52" r="5"/><circle cx="40" cy="-34" r="5"/><circle cx="82" cy="-70" r="5"/><circle cx="82" cy="-52" r="5"/><circle cx="82" cy="-34" r="5"/></g>
-        <g fill="#D10A1A" stroke="#160406" stroke-width="5" stroke-linejoin="round">
-          <path d="M61 250 C 40 250 20 238 8 214 C 0 236 -6 262 2 282 C -30 300 -44 340 -32 382 C -20 428 20 448 61 448 C 102 448 142 428 154 382 C 166 340 152 300 120 282 C 128 262 122 236 114 220 C 102 240 82 250 61 250 Z"/>
-        </g>
+        <g stroke="#f5f5f5" stroke-opacity=".35" stroke-width="1.4"><line x1="56" y1="-40" x2="56" y2="290"/><line x1="61" y1="-40" x2="61" y2="290"/><line x1="66" y1="-40" x2="66" y2="290"/></g>
+        <path d="M46 -84 h30 l6 60 h-42 z" fill="#D10A1A" stroke="#160406" stroke-width="3"/>
+        <g fill="url(#chrome)"><circle cx="38" cy="-74" r="5"/><circle cx="38" cy="-56" r="5"/><circle cx="38" cy="-38" r="5"/><circle cx="86" cy="-74" r="5"/><circle cx="86" cy="-56" r="5"/><circle cx="86" cy="-38" r="5"/></g>
+        <path d="M61 250 C 40 250 20 238 8 214 C 0 236 -6 262 2 282 C -30 300 -44 340 -32 382 C -20 428 20 448 61 448 C 102 448 142 428 154 382 C 166 340 152 300 120 282 C 128 262 122 236 114 220 C 102 240 82 250 61 250 Z" fill="#D10A1A" stroke="#160406" stroke-width="5" stroke-linejoin="round"/>
         <path d="M14 300 C 30 286 92 286 108 300 L 116 380 C 100 410 22 410 6 380 Z" fill="#111" opacity=".85"/>
-        <rect x="58" y="-40" width="6" height="430" fill="#ddd" opacity=".55"/>
-        <rect x="38" y="306" width="46" height="13" rx="3" fill="#e8e8e8" stroke="#111" stroke-width="2"/>
-        <rect x="38" y="336" width="46" height="13" rx="3" fill="#e8e8e8" stroke="#111" stroke-width="2"/>
-        <rect x="36" y="388" width="50" height="12" rx="2" fill="#bbb" stroke="#111" stroke-width="2"/>
-        <circle cx="122" cy="392" r="8" fill="#e8e8e8"/><circle cx="104" cy="414" r="8" fill="#e8e8e8"/>
+        <rect x="38" y="306" width="46" height="13" rx="3" fill="url(#chrome)" stroke="#111" stroke-width="2"/>
+        <rect x="38" y="336" width="46" height="13" rx="3" fill="url(#chrome)" stroke="#111" stroke-width="2"/>
+        <rect x="36" y="388" width="50" height="12" rx="2" fill="url(#chrome)" stroke="#111" stroke-width="2"/>
+        <circle cx="122" cy="392" r="8" fill="url(#chrome)"/><circle cx="104" cy="414" r="8" fill="url(#chrome)"/>
+        <path d="M20 270 C 40 262 70 262 92 268" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="5" stroke-linecap="round"/>
         <path d="M-20 470 L61 420 L142 470" fill="none" stroke="#3a3a44" stroke-width="9" stroke-linecap="round"/>
       </g>
+      <path d="M150 860 C 160 900 230 900 260 880" fill="none" stroke="#111" stroke-width="6"/>
 
-      <!-- desk -->
-      <rect x="1110" y="760" width="760" height="28" rx="6" fill="url(#wood)" stroke="#3b1a1d" stroke-width="2"/>
-      <rect x="1140" y="788" width="26" height="160" fill="#1a0c0d"/><rect x="1814" y="788" width="26" height="160" fill="#1a0c0d"/>
-      <!-- desk lamp -->
-      <g transform="translate(1210 760)">
-        <path d="M0 0 h70" stroke="#222" stroke-width="10" stroke-linecap="round"/>
-        <path d="M35 0 L10 -120 L70 -190" fill="none" stroke="#2c2c34" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M50 -215 L110 -175 L80 -150 Z" fill="#D10A1A"/>
-        <path d="M95 -162 L230 0 L40 0 Z" fill="url(#lampcone)" class="glow-tv"/>
+      <!-- ===== desk with laptop (YouTube) ===== -->
+      <rect x="1100" y="752" width="780" height="34" rx="6" fill="url(#wood)" stroke="#4a2225" stroke-width="2"/>
+      <rect x="1110" y="752" width="760" height="5" fill="#fff" opacity=".07"/>
+      <rect x="1130" y="786" width="28" height="170" fill="#1a0c0d"/><rect x="1822" y="786" width="28" height="170" fill="#1a0c0d"/>
+      <rect x="1290" y="744" width="420" height="10" rx="3" fill="#7a0a12"/>
+      <path d="M1330 752 L1260 860 H1720 L1650 752 Z" fill="url(#screenglow)"/>
+      <!-- lamp -->
+      <g transform="translate(1180 752)">
+        <ellipse cx="35" cy="0" rx="40" ry="8" fill="#1b1b20"/>
+        <path d="M35 0 L12 -120 L74 -192" fill="none" stroke="#2f2f37" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="-120" r="9" fill="#444"/>
+        <path d="M54 -218 L118 -176 L86 -148 Z" fill="#D10A1A" stroke="#4a0509" stroke-width="3"/>
+        <path d="M100 -160 L240 0 L40 0 Z" fill="url(#lampcone)" class="glow-tv"/>
       </g>
-      <!-- laptop (screen is the YouTube button) -->
-      <rect x="1338" y="572" width="304" height="186" rx="10" fill="#0b0b0e" stroke="#33333d" stroke-width="5"/>
-      <path d="M1312 758 H1668 L1690 772 H1290 Z" fill="#2a2a32"/>
-      <!-- chess pieces on the desk -->
-      <g transform="translate(1260 762)" fill="#eee" stroke="#111" stroke-width="3">
-        <path d="M-14 0 h28 l-4 -10 h-6 l4 -36 a12 12 0 1 0 -16 0 l4 36 h-6z"/>
+      <!-- laptop -->
+      <rect x="1330" y="560" width="320" height="200" rx="12" fill="url(#alu)" stroke="#1a1b1f" stroke-width="3"/>
+      <rect x="1338" y="568" width="304" height="184" rx="8" fill="#050506"/>
+      <circle cx="1490" cy="564" r="2.2" fill="#2a2a2f"/>
+      <path d="M1312 760 H1668 L1712 790 H1268 Z" fill="url(#deck)" stroke="#1a1b1f" stroke-width="2"/>
+      <path d="M1340 764 H1640 L1660 778 H1320 Z" fill="url(#keys)"/>
+      <rect x="1455" y="780" width="70" height="8" rx="2" fill="#3a3d44"/>
+      <rect x="1268" y="789" width="444" height="5" rx="2.5" fill="#1a1b1f"/>
+      <!-- chess pieces -->
+      <g transform="translate(1250 752)" fill="#eee" stroke="#111" stroke-width="3"><path d="M-14 0 h28 l-4 -10 h-6 l4 -36 a12 12 0 1 0 -16 0 l4 36 h-6z"/></g>
+      <g transform="translate(1284 752)" fill="#D10A1A" stroke="#111" stroke-width="3"><path d="M-16 0 h32 l-4 -10 h-6 l4 -46 h-8 v-10 h-4 v-8 h-4 v8 h-4 v10 h-8 l4 46 h-6z"/></g>
+      <!-- mug -->
+      <g transform="translate(1740 692)">
+        <rect x="0" y="0" width="58" height="62" rx="9" fill="#D10A1A" stroke="#160406" stroke-width="4"/>
+        <text x="29" y="40" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" font-family="Roboto, sans-serif">#1</text>
+        <path d="M58 14 q24 0 24 18 q0 18 -24 18" fill="none" stroke="#160406" stroke-width="7"/>
+        <g class="steam" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round"><path d="M14 -8 q-10 -14 0 -28"/><path d="M29 -8 q10 -14 0 -28"/><path d="M44 -8 q-10 -14 0 -28"/></g>
       </g>
-      <g transform="translate(1290 762)" fill="#D10A1A" stroke="#111" stroke-width="3">
-        <path d="M-16 0 h32 l-4 -10 h-6 l4 -46 h-8 v-10 h-4 v-8 h-4 v8 h-4 v10 h-8 l4 46 h-6z"/>
+      <!-- ===== shipping box (Prime Video) ===== -->
+      <g transform="translate(330 812)">
+        <path d="M0 0 L56 -54 H346 L290 0 Z" fill="url(#boxTop)" stroke="#5a3b22" stroke-width="3"/>
+        <path d="M290 0 L346 -54 V146 L290 200 Z" fill="url(#boxSide)" stroke="#5a3b22" stroke-width="3"/>
+        <rect x="0" y="0" width="290" height="200" fill="url(#boxFront)" stroke="#5a3b22" stroke-width="3"/>
+        <path d="M128 -54 L100 0 H150 L178 -54 Z" fill="#e8d3ad" opacity=".85"/>
+        <rect x="100" y="0" width="50" height="34" fill="#e8d3ad" opacity=".85"/>
+        <path d="M0 0 H290" stroke="#5a3b22" stroke-width="2" opacity=".5"/>
+        <g transform="translate(300 40) skewY(-43)"><rect width="36" height="52" fill="#f4efe6" opacity=".9"/><g stroke="#222" stroke-width="2"><path d="M5 8v20 M9 8v20 M12 8v20 M17 8v20 M20 8v20 M25 8v20 M29 8v20"/></g></g>
+        <text x="20" y="190" font-size="15" font-weight="800" fill="#7a0a12" letter-spacing="2" font-family="Roboto, sans-serif">▲▲ THIS SIDE UP</text>
+        <g transform="translate(236 182) rotate(-8)"><rect x="-44" y="-16" width="88" height="24" rx="3" fill="none" stroke="#C11" stroke-width="3"/><text y="2" text-anchor="middle" font-size="15" font-weight="900" fill="#C11" font-family="Roboto, sans-serif">FRAGILE</text></g>
       </g>
-      <!-- mug + steam -->
-      <g transform="translate(1730 700)">
-        <rect x="0" y="0" width="56" height="60" rx="8" fill="#D10A1A" stroke="#160406" stroke-width="4"/>
-        <path d="M56 14 q24 0 24 18 q0 18 -24 18" fill="none" stroke="#160406" stroke-width="7"/>
-        <g class="steam" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="4" stroke-linecap="round">
-          <path d="M14 -8 q-10 -14 0 -28"/><path d="M28 -8 q10 -14 0 -28"/><path d="M42 -8 q-10 -14 0 -28"/>
-        </g>
-      </g>
-
-      <!-- shipping box (Prime Video on its side) -->
-      <g transform="translate(330 820)">
-        <path d="M0 0 L50 -50 H330 L280 0 Z" fill="#c99a6a" stroke="#5a3b22" stroke-width="4"/>
-        <path d="M280 0 L330 -50 V140 L280 190 Z" fill="#8a6140" stroke="#5a3b22" stroke-width="4"/>
-        <rect x="0" y="0" width="280" height="190" fill="url(#card)" stroke="#5a3b22" stroke-width="4"/>
-        <path d="M130 -50 L105 0 H150 L175 -50 Z" fill="#d8c19c" opacity=".8"/>
-        <rect x="105" y="0" width="45" height="190" fill="#d8c19c" opacity=".55"/>
-        <text x="140" y="183" text-anchor="middle" font-size="16" font-weight="700" fill="#5a3b22" letter-spacing="3" font-family="Roboto, sans-serif">THIS SIDE UP ▲</text>
-      </g>
-      <rect x="290" y="1000" width="400" height="30" rx="15" fill="#000" opacity=".5"/>
-
-      <!-- floor reflection under RoboDad -->
-      <ellipse cx="940" cy="1040" rx="260" ry="34" fill="#000" opacity=".55"/>
-      <ellipse cx="940" cy="1040" rx="230" ry="26" fill="url(#redglow)" opacity=".7" class="antenna"/>
+      <ellipse cx="500" cy="1018" rx="230" ry="18" fill="#000" opacity=".55"/>
     </svg>
     <canvas class="fx" id="embers"></canvas>
     <div class="sweep"></div>
@@ -263,9 +306,9 @@
     <div class="hud in" style="animation-delay:.05s"><h1 id="greet">Hey there</h1><p id="sub"></p></div>
     <div class="clock in" style="animation-delay:.1s"><b id="time">--:--</b><span id="date"></span></div>
 
-    <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="word">Netflix</span><span class="scan"></span><span class="lbl">Netflix</span></button>
-    <button class="hot in" id="hArt" style="animation-delay:.4s"><span class="word">Disney+</span><span class="lbl">Disney+</span></button>
-    <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="word">YouTube</span><span class="lbl">YouTube</span></button>
+    <button class="hot in" id="hTv" style="animation-delay:.25s"><span class="word">Netflix</span><span class="scan"></span><span class="glare"></span><span class="lbl">Netflix</span></button>
+    <button class="hot in" id="hArt" style="animation-delay:.4s"><span class="word">Disney+</span><span class="glare"></span><span class="lbl">Disney+</span></button>
+    <button class="hot in" id="hLap" style="animation-delay:.55s"><span class="word">YouTube</span><span class="glare"></span><span class="lbl">YouTube</span></button>
     <button class="hot in" id="hBox" style="animation-delay:.7s"><span class="word">Prime Video</span><span class="lbl">Prime Video</span></button>
 
     <div class="bubble" id="bubble"><b id="bTitle">RoboDad</b><span id="bText"></span></div>
@@ -273,53 +316,87 @@
     <button class="hot in" id="hBot" data-tv-first style="animation-delay:.15s" aria-label="Talk to RoboDad">
       <svg viewBox="0 0 450 680">
         <defs>
-          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e9edf2"/><stop offset=".55" stop-color="#b8c0ca"/><stop offset="1" stop-color="#7d8794"/></linearGradient>
-          <linearGradient id="jacket" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#202027"/><stop offset="1" stop-color="#0e0e12"/></linearGradient>
+          <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1f4f8"/><stop offset=".5" stop-color="#b3bcc7"/><stop offset="1" stop-color="#6f7986"/></linearGradient>
+          <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c2c33"/><stop offset=".5" stop-color="#16161b"/><stop offset="1" stop-color="#08080a"/></linearGradient>
+          <linearGradient id="leatherHi" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+          <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset=".45" stop-color="#f2c94c"/><stop offset="1" stop-color="#a9781c"/></linearGradient>
+          <linearGradient id="denim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26385e"/><stop offset="1" stop-color="#16223b"/></linearGradient>
+          <linearGradient id="tee" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd3da"/></linearGradient>
           <radialGradient id="eyeg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#FF4A57"/><stop offset="1" stop-color="#B00813"/></radialGradient>
-          <radialGradient id="botglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".6"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
+          <radialGradient id="botglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF2D3D" stop-opacity=".55"/><stop offset="1" stop-color="#FF2D3D" stop-opacity="0"/></radialGradient>
+          <clipPath id="shades"><path d="M150 128 h62 l-6 22 q-24 8 -50 0 z M238 128 h62 l-6 22 q-24 8 -50 0 z"/></clipPath>
         </defs>
-        <ellipse class="bot-glow" cx="225" cy="360" rx="260" ry="340" fill="url(#botglow)"/>
-        <g class="bob">
-          <!-- legs -->
-          <rect x="150" y="470" width="62" height="160" rx="22" fill="#18181e" stroke="#000" stroke-width="4"/>
-          <rect x="238" y="470" width="62" height="160" rx="22" fill="#18181e" stroke="#000" stroke-width="4"/>
-          <path d="M136 650 q0 -34 34 -34 h46 q14 0 14 14 v26 z" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-          <path d="M314 650 q0 -34 -34 -34 h-46 q-14 0 -14 14 v26 z" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-          <!-- left arm (down, holding a guitar pick) -->
-          <rect x="72" y="292" width="54" height="170" rx="26" fill="url(#jacket)" stroke="#000" stroke-width="4" transform="rotate(8 99 292)"/>
-          <circle cx="88" cy="470" r="30" fill="url(#metal)" stroke="#000" stroke-width="4"/>
-          <!-- body -->
-          <path d="M112 285 Q225 250 338 285 L352 470 Q225 500 98 470 Z" fill="url(#jacket)" stroke="#000" stroke-width="5"/>
-          <path d="M180 270 L225 330 L270 270" fill="#D10A1A" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
-          <path d="M140 300 L160 460" stroke="#D10A1A" stroke-width="10" stroke-linecap="round"/>
-          <path d="M310 300 L290 460" stroke="#D10A1A" stroke-width="10" stroke-linecap="round"/>
-          <rect x="104" y="450" width="242" height="26" rx="8" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-          <rect x="208" y="452" width="34" height="22" rx="4" fill="#FFC83D" stroke="#000" stroke-width="3"/>
-          <circle cx="225" cy="385" r="34" fill="#0b0b0e" stroke="#000" stroke-width="4"/>
-          <circle class="core" cx="225" cy="385" r="20" fill="url(#eyeg)"/>
-          <!-- right arm (waving) -->
-          <g class="arm-wave">
-            <rect x="318" y="150" width="54" height="160" rx="26" fill="url(#jacket)" stroke="#000" stroke-width="4"/>
-            <circle cx="345" cy="140" r="34" fill="url(#metal)" stroke="#000" stroke-width="4"/>
-            <rect x="330" y="96" width="10" height="28" rx="5" fill="url(#metal)" stroke="#000" stroke-width="3"/>
-            <rect x="344" y="92" width="10" height="30" rx="5" fill="url(#metal)" stroke="#000" stroke-width="3"/>
-            <rect x="358" y="98" width="10" height="26" rx="5" fill="url(#metal)" stroke="#000" stroke-width="3"/>
+        <ellipse class="bot-glow" cx="225" cy="360" rx="270" ry="350" fill="url(#botglow)"/>
+        <g class="breathe">
+          <!-- legs: rolled-cuff jeans + boots -->
+          <path d="M148 488 L220 488 L214 618 L150 618 Z" fill="url(#denim)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M230 488 L302 488 L300 618 L236 618 Z" fill="url(#denim)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M184 500 L182 600 M266 500 L268 600" stroke="#3b5285" stroke-width="2" stroke-dasharray="6 5"/>
+          <rect x="146" y="596" width="72" height="22" rx="4" fill="#3b5285" stroke="#000" stroke-width="3"/>
+          <rect x="232" y="596" width="72" height="22" rx="4" fill="#3b5285" stroke="#000" stroke-width="3"/>
+          <path d="M136 660 q0 -40 30 -42 h50 q12 0 12 14 v28 z" fill="#0c0c0f" stroke="#000" stroke-width="4"/>
+          <path d="M314 660 q0 -40 -30 -42 h-50 q-12 0 -12 14 v28 z" fill="#0c0c0f" stroke="#000" stroke-width="4"/>
+          <rect x="134" y="654" width="96" height="10" rx="4" fill="#D10A1A"/><rect x="220" y="654" width="96" height="10" rx="4" fill="#D10A1A"/>
+          <!-- belt -->
+          <rect x="132" y="466" width="186" height="26" rx="6" fill="#1a0f0a" stroke="#000" stroke-width="3"/>
+          <rect x="206" y="466" width="38" height="26" rx="5" fill="url(#chrome)" stroke="#000" stroke-width="3"/>
+          <!-- torso: V-taper, white tee under an open leather biker jacket -->
+          <path d="M56 300 Q100 262 186 266 L225 292 L264 266 Q350 262 394 300 L360 472 Q225 494 90 472 Z" fill="url(#leather)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M186 266 L225 292 L264 266 L276 470 Q225 482 174 470 Z" fill="url(#tee)" stroke="#000" stroke-width="3"/>
+          <path d="M200 330 Q225 342 250 330 M196 360 Q225 374 254 360" fill="none" stroke="#9aa1ab" stroke-width="3" opacity=".6"/>
+          <path d="M186 266 L150 330 L196 372 L206 300 Z" fill="#0b0b0e" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M264 266 L300 330 L254 372 L244 300 Z" fill="#0b0b0e" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M168 260 L140 236 L188 256 M282 260 L310 236 L262 256" fill="#0b0b0e" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M318 300 L284 470" stroke="url(#chrome)" stroke-width="5" stroke-dasharray="5 4"/>
+          <rect x="74" y="292" width="74" height="16" rx="5" fill="#0b0b0e" stroke="#000" stroke-width="3" transform="rotate(-12 111 300)"/>
+          <rect x="302" y="292" width="74" height="16" rx="5" fill="#0b0b0e" stroke="#000" stroke-width="3" transform="rotate(12 339 300)"/>
+          <circle cx="86" cy="304" r="5" fill="url(#chrome)"/><circle cx="364" cy="304" r="5" fill="url(#chrome)"/>
+          <path d="M100 290 Q130 276 168 278" fill="none" stroke="url(#leatherHi)" stroke-width="10" stroke-linecap="round"/>
+          <!-- crossed arms -->
+          <path d="M96 406 L312 372" stroke="#000" stroke-width="64" stroke-linecap="round"/>
+          <path d="M96 406 L312 372" stroke="url(#leather)" stroke-width="56" stroke-linecap="round"/>
+          <circle cx="318" cy="372" r="27" fill="url(#metal)" stroke="#000" stroke-width="4"/>
+          <path d="M354 410 L140 380" stroke="#000" stroke-width="66" stroke-linecap="round"/>
+          <path d="M354 410 L140 380" stroke="url(#leather)" stroke-width="58" stroke-linecap="round"/>
+          <path d="M176 362 L172 398" stroke="#D10A1A" stroke-width="8"/>
+          <circle cx="132" cy="380" r="27" fill="url(#metal)" stroke="#000" stroke-width="4"/>
+          <path d="M180 370 Q260 360 330 384" fill="none" stroke="url(#leatherHi)" stroke-width="8" stroke-linecap="round"/>
+          <!-- biceps -->
+          <path d="M58 302 C 30 330 34 420 92 434 C 122 420 128 352 110 312 Z" fill="url(#leather)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M392 302 C 420 330 416 420 358 434 C 328 420 322 352 340 312 Z" fill="url(#leather)" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M56 336 C 52 370 60 400 78 414" fill="none" stroke="url(#leatherHi)" stroke-width="8" stroke-linecap="round"/>
+          <path d="M60 392 L104 404 M390 392 L346 404" stroke="#D10A1A" stroke-width="7"/>
+          <!-- neck -->
+          <rect x="190" y="236" width="70" height="38" rx="8" fill="#59616c" stroke="#000" stroke-width="4"/>
+          <path d="M198 250 h54 M198 262 h54" stroke="#3a4048" stroke-width="3"/>
+          <!-- head -->
+          <g class="nod">
+            <rect x="106" y="86" width="238" height="166" rx="56" fill="url(#metal)" stroke="#000" stroke-width="5"/>
+            <path d="M130 228 Q225 268 320 228 L314 244 Q225 278 136 244 Z" fill="#8a94a1" stroke="#000" stroke-width="3"/>
+            <rect x="84" y="140" width="28" height="62" rx="13" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+            <rect x="338" y="140" width="28" height="62" rx="13" fill="#D10A1A" stroke="#000" stroke-width="4"/>
+            <rect x="138" y="160" width="174" height="74" rx="34" fill="#0e0e12" stroke="#000" stroke-width="4"/>
+            <ellipse class="eye" cx="190" cy="194" rx="19" ry="14" fill="url(#eyeg)"/>
+            <ellipse class="eye" cx="260" cy="194" rx="19" ry="14" fill="url(#eyeg)"/>
+            <path d="M168 176 L212 184 M282 176 L238 184" stroke="#000" stroke-width="7" stroke-linecap="round"/>
+            <path d="M204 218 Q236 230 266 210" fill="none" stroke="#FF2D3D" stroke-width="6" stroke-linecap="round"/>
+            <!-- '50s blonde pompadour -->
+            <path d="M110 150 C 100 110 112 82 140 64 C 150 18 204 -10 264 -4 C 320 2 356 32 352 70 C 342 54 320 48 300 52 C 332 70 346 100 346 130 C 330 106 298 94 264 94 C 232 94 198 98 170 112 C 142 124 122 138 110 150 Z" fill="url(#hair)" stroke="#5c3d08" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M150 70 C 168 30 214 10 262 12 C 302 14 330 30 338 52" fill="none" stroke="#fff6c8" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+            <path d="M142 100 C 176 72 230 62 286 70 M156 120 C 190 100 236 92 282 98" fill="none" stroke="#b88a24" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+            <path d="M300 52 C 318 58 334 74 340 96" fill="none" stroke="#fff6c8" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+            <path d="M110 150 C 112 170 112 186 106 200 M344 132 C 348 150 348 170 346 186" fill="none" stroke="#c9952b" stroke-width="10" stroke-linecap="round"/>
+            <!-- shades pushed up on his hair -->
+            <g>
+              <path d="M150 128 h62 l-6 22 q-24 8 -50 0 z M238 128 h62 l-6 22 q-24 8 -50 0 z" fill="#0b0b0e" stroke="#000" stroke-width="3"/>
+              <path d="M212 132 h26" stroke="#000" stroke-width="5"/>
+              <g clip-path="url(#shades)"><rect class="glint" x="120" y="110" width="22" height="60" fill="#fff" opacity=".55" transform="skewX(-25)"/></g>
+              <path d="M156 132 h20 M244 132 h20" stroke="#FF2D3D" stroke-width="3" opacity=".8"/>
+            </g>
+            <!-- party hat, only on his birthday -->
+            <g class="hat"><path d="M214 2 L250 -96 L290 6 Z" fill="#FFC83D" stroke="#000" stroke-width="4"/>
+              <path d="M226 -26 L276 -38 M236 -56 L264 -62" stroke="#D10A1A" stroke-width="8"/><circle cx="250" cy="-98" r="12" fill="#FF2D3D" stroke="#000" stroke-width="3"/></g>
           </g>
-          <!-- neck + head -->
-          <rect x="198" y="238" width="54" height="34" rx="6" fill="#59616c" stroke="#000" stroke-width="4"/>
-          <line x1="225" y1="40" x2="225" y2="84" stroke="#000" stroke-width="8"/>
-          <circle class="antenna" cx="225" cy="32" r="16" fill="#FF2D3D" stroke="#000" stroke-width="4"/>
-          <rect x="105" y="78" width="240" height="172" rx="64" fill="url(#metal)" stroke="#000" stroke-width="5"/>
-          <rect x="82" y="132" width="30" height="66" rx="14" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-          <rect x="338" y="132" width="30" height="66" rx="14" fill="#D10A1A" stroke="#000" stroke-width="4"/>
-          <rect x="138" y="112" width="174" height="104" rx="44" fill="#0e0e12" stroke="#000" stroke-width="4"/>
-          <ellipse class="eye" cx="190" cy="156" rx="20" ry="22" fill="url(#eyeg)"/>
-          <ellipse class="eye" cx="260" cy="156" rx="20" ry="22" fill="url(#eyeg)"/>
-          <path d="M192 192 Q225 214 258 192" fill="none" stroke="#FF2D3D" stroke-width="7" stroke-linecap="round"/>
-          <path d="M126 100 Q225 50 324 100" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="6" stroke-linecap="round"/>
-          <!-- party hat, only on his birthday -->
-          <g class="hat"><path d="M190 86 L238 -20 L284 92 Z" fill="#FFC83D" stroke="#000" stroke-width="4"/>
-            <path d="M205 55 L262 40 M218 25 L250 18" stroke="#D10A1A" stroke-width="8"/><circle cx="238" cy="-22" r="12" fill="#FF2D3D" stroke="#000" stroke-width="3"/></g>
         </g>
       </svg>
       <span class="lbl">Talk to RoboDad</span>
