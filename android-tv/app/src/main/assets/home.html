@@ -6,44 +6,55 @@
 <title>RoboDad TV</title>
 <style>
   :root {
-    --bg: #0E1620; --bg2: #16263A; --card: #1C2E44; --ink: #F4F7FB; --muted: #9DB2C9;
-    --gold: #FFC83D; --sky: #7FA9D6; --pink: #FF7A9A;
+    --bg: #0B121B; --card: #1A2A3E; --ink: #F4F7FB; --muted: #9DB2C9;
+    --gold: #FFC83D; --sky: #7FA9D6;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink);
     font-family: "Roboto", "Segoe UI", system-ui, sans-serif; }
-  body { background: radial-gradient(120% 90% at 85% -10%, #24456B 0%, var(--bg) 55%) fixed; }
-  main { position: absolute; inset: 0; padding: 4.2vh 4.5vw 3vh; display: flex; flex-direction: column; gap: 2.6vh; }
+  body { background: radial-gradient(120% 90% at 85% -10%, #22405F 0%, var(--bg) 55%) fixed; }
+  main { position: absolute; inset: 0; overflow-y: auto; padding: 4vh 4.5vw 4vh; display: flex; flex-direction: column; gap: 2.4vh; scroll-behavior: smooth; scroll-padding: 9vh 0; }
+  main::-webkit-scrollbar { display: none; }
 
-  header { display: flex; align-items: center; gap: 1.6vw; }
+  header { display: flex; align-items: center; gap: 1.6vw; flex: none; }
   header img { width: 7.5vh; height: 7.5vh; border-radius: 22%; }
   .hello { flex: 1; }
-  .hello h1 { margin: 0; font-size: 4.6vh; font-weight: 700; letter-spacing: -0.02em; }
-  .hello p { margin: 0.4vh 0 0; font-size: 2.4vh; color: var(--muted); }
+  .hello h1 { margin: 0; font-size: 4.4vh; font-weight: 700; letter-spacing: -0.02em; }
+  .hello p { margin: .4vh 0 0; font-size: 2.3vh; color: var(--muted); }
   .clock { text-align: right; }
-  .clock b { display: block; font-size: 5.4vh; font-weight: 300; letter-spacing: -0.03em; }
-  .clock span { font-size: 2.2vh; color: var(--muted); }
+  .clock b { display: block; font-size: 5.2vh; font-weight: 300; letter-spacing: -0.03em; }
+  .clock span { font-size: 2.1vh; color: var(--muted); }
 
-  .top { display: flex; gap: 1.6vw; height: 27vh; }
+  .top { display: flex; gap: 1.6vw; height: 26vh; flex: none; }
   .tile { position: relative; border: 0; border-radius: 1.6vh; background: var(--card); color: var(--ink);
     font: inherit; text-align: left; padding: 0; overflow: hidden; outline: none; cursor: pointer;
     transition: transform .15s ease, box-shadow .15s ease; }
-  .tile:focus { transform: scale(1.06); box-shadow: 0 0 0 0.6vh var(--gold), 0 2vh 4vh rgba(0,0,0,.5); outline: none !important; z-index: 2; }
+  .tile:focus { transform: scale(1.06); box-shadow: 0 0 0 .6vh var(--gold), 0 2vh 4vh rgba(0,0,0,.5); outline: none !important; z-index: 2; }
 
-  .hero { flex: 1.35; display: flex; align-items: center; gap: 2vw; padding: 0 2.6vw;
+  .hero { flex: 1.25; display: flex; align-items: center; gap: 2vw; padding: 0 2.4vw;
     background: linear-gradient(120deg, #2E5C8A, #1E3A5C 60%, #23304F); }
-  .hero img { height: 19vh; width: 19vh; border-radius: 22%; flex: none; }
-  .hero h2 { margin: 0; font-size: 4.4vh; }
-  .hero p { margin: .8vh 0 0; font-size: 2.3vh; color: #D6E4F2; line-height: 1.35; }
+  .hero img { height: 18vh; width: 18vh; border-radius: 22%; flex: none; }
+  .hero h2 { margin: 0; font-size: 4.2vh; }
+  .hero p { margin: .8vh 0 0; font-size: 2.2vh; color: #D6E4F2; line-height: 1.35; }
+  .hero .try { margin-top: 1.2vh; font-size: 2vh; color: var(--gold); }
+
+  .daily { flex: 1; padding: 2.4vh 2vw; display: flex; flex-direction: column; }
+  .daily .kicker { font-size: 1.8vh; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  .daily h2 { margin: .8vh 0 .6vh; font-size: 3.3vh; line-height: 1.15; }
+  .daily p { margin: 0; font-size: 2.05vh; line-height: 1.4; opacity: .92; }
+  .daily .go { margin-top: auto; font-size: 1.9vh; font-weight: 600; color: var(--gold); }
+  .daily .emoji { position: absolute; right: 1.6vw; top: 1.6vh; font-size: 6vh; opacity: .9; }
 
   .bday { flex: 1; padding: 2.4vh 2vw; background: linear-gradient(135deg, #5B2A6E, #8C3B6E 55%, #C7566C); }
   .bday .cake { font-size: 6vh; line-height: 1; }
   .bday h2 { margin: 1vh 0 .4vh; font-size: 3.6vh; }
   .bday p { margin: 0; font-size: 2.1vh; color: #FFE3EC; }
 
-  section h3 { margin: 0 0 1.4vh; font-size: 2.4vh; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
-  .row { display: flex; gap: 1.4vw; padding: 1vh .6vw 1.6vh; margin: -1vh -.6vw 0; overflow-x: auto; scroll-behavior: smooth; }
+  section { flex: none; }
+  section h3 { margin: 0 0 1.2vh; font-size: 2.4vh; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+  .row { display: flex; gap: 1.3vw; padding: 1.2vh .8vw 1.8vh; margin: -1.2vh -.8vw 0; overflow-x: auto; scroll-behavior: smooth; }
   .row::-webkit-scrollbar { display: none; }
+
   .app { flex: none; width: 16.6vw; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
   .app img.banner { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .app img.icon { width: 38%; aspect-ratio: 1; object-fit: contain; margin-bottom: 14%; }
@@ -53,12 +64,28 @@
   .app.has-banner:focus .name { opacity: 1; }
   .app.word { font-size: 2.8vh; font-weight: 700; }
   .app.missing { opacity: .45; }
-  .watch .app { width: 19.6vw; }
+  .watch .app { width: 18.4vw; }
 
-  footer { margin-top: auto; display: flex; align-items: center; gap: 1vw; font-size: 2.1vh; color: var(--muted); }
-  footer b { color: var(--gold); font-weight: 600; }
+  .pick { flex: none; width: 15.2vw; height: 19vh; padding: 1.8vh 1vw 1.6vh; display: flex; flex-direction: column; }
+  .pick .em { font-size: 5.4vh; line-height: 1; }
+  .pick b { margin-top: auto; font-size: 2.3vh; line-height: 1.15; }
+  .pick small { margin-top: .5vh; font-size: 1.7vh; opacity: .85; }
+  .pick .via { position: absolute; top: 1.4vh; right: .9vw; font-size: 1.45vh; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; padding: .35vh .5vw; border-radius: .6vh; background: rgba(0,0,0,.28); }
+
+  .t-guitar { background: linear-gradient(150deg, #B2361E, #5E1A12); }
+  .t-chess  { background: linear-gradient(150deg, #4C5566, #20242C); }
+  .t-tkd    { background: linear-gradient(150deg, #1F5FA8, #142C55); }
+  .t-draw   { background: linear-gradient(150deg, #2F8F6B, #134434); }
+  .t-hitman { background: linear-gradient(150deg, #E04A8A, #2B1020); }
+  .t-cena   { background: linear-gradient(150deg, #4E8A2E, #1C3312); }
+  .t-tribal { background: linear-gradient(150deg, #3A3F48, #0E0F12); }
+  .t-tribal b { color: #FFD76A; }
+
+  footer { flex: none; display: flex; align-items: baseline; gap: 1vw; font-size: 2.1vh; color: var(--muted); padding-bottom: 1vh; }
+  footer b { color: var(--gold); font-weight: 600; white-space: nowrap; }
   #toast { position: fixed; left: 50%; bottom: 6vh; transform: translateX(-50%) translateY(3vh); opacity: 0;
-    background: #000c; color: #fff; padding: 1.4vh 2vw; border-radius: 1vh; font-size: 2.2vh; transition: .25s; pointer-events: none; }
+    background: #000c; color: #fff; padding: 1.4vh 2vw; border-radius: 1vh; font-size: 2.2vh; transition: .25s; pointer-events: none; z-index: 30; }
   #toast.show { opacity: 1; transform: translateX(-50%); }
 
   #note { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,10,18,.82); z-index: 10; }
@@ -69,18 +96,18 @@
   #note p { font-size: 2.7vh; line-height: 1.5; margin: 0 0 1.8vh; color: #F3E6F7; }
   #note .sign { color: var(--gold); font-weight: 600; }
   #note button { margin-top: 2vh; font: inherit; font-size: 2.4vh; padding: 1.4vh 2.4vw; border-radius: 1vh; border: 0; background: var(--gold); color: #2A1B3D; font-weight: 700; }
-  #note button:focus { outline: 0.5vh solid #fff !important; }
+  #note button:focus { outline: .5vh solid #fff !important; }
 
   canvas#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
 </style>
 </head>
 <body>
-<main>
+<main id="main">
   <header>
     <img src="robodad.png" alt="">
     <div class="hello">
       <h1 id="greet">Hey there</h1>
-      <p id="sub">Ready when you are, champ.</p>
+      <p id="sub">What are we doing today?</p>
     </div>
     <div class="clock"><b id="time">--:--</b><span id="date"></span></div>
   </header>
@@ -90,8 +117,16 @@
       <img src="robodad.png" alt="">
       <div>
         <h2>Talk to RoboDad</h2>
-        <p>Homework help, life advice, terrible jokes and French or Hindi practice. Ask anything.</p>
+        <p>Homework, guitar, chess, training, life stuff. Ask anything.</p>
+        <div class="try" id="try"></div>
       </div>
+    </button>
+    <button class="tile daily" id="daily">
+      <span class="emoji" id="dEmoji"></span>
+      <span class="kicker" id="dKicker"></span>
+      <h2 id="dTitle"></h2>
+      <p id="dText"></p>
+      <span class="go" id="dGo"></span>
     </button>
     <button class="tile bday" id="bday" hidden>
       <div class="cake">🎂</div>
@@ -106,11 +141,16 @@
   </section>
 
   <section>
+    <h3 id="cornerTitle">Siddhant's corner</h3>
+    <div class="row" id="corner"></div>
+  </section>
+
+  <section>
     <h3>Your apps</h3>
     <div class="row" id="apps"></div>
   </section>
 
-  <footer><b>Dad joke of the day:</b> <span id="joke"></span></footer>
+  <footer><b id="fLabel">Dad joke of the day:</b> <span id="fText"></span></footer>
 </main>
 
 <div id="note" role="dialog" aria-modal="true">
@@ -133,11 +173,19 @@
   var TV = window.RoboDadTV || null;
 
   // ---- who he is ----
-  var NAME = 'Siddhant';
   var NICKNAMES = ['Siddhantosaurus Rex 🦖', 'Chiki', 'Gablu Baccha', 'Big Crunchy', 'Chonk', 'Siddhant'];
-  var BIRTHDAY_DAYS = 14; // the birthday card shows for two weeks after RoboDad TV first starts
+  var BIRTHDAY_DAYS = 14; // after Dad arms the surprise, the birthday card stays for two weeks
 
-  // The four buttons on the remote, in the same order. Packages are the Android TV versions of each app.
+  var SUBS = [
+    'Guitar, chess or a few rounds of kicks?',
+    'Ready to shred?',
+    'Your move, grandmaster.',
+    'Black belt mindset: one more rep.',
+    'Grab a pencil. Something cool is waiting to be drawn.',
+    'What are we doing today?'
+  ];
+
+  // The four buttons on the remote, in the same order.
   var WATCH = [
     { pkg: 'com.netflix.ninja', name: 'Netflix', color: '#141414' },
     { pkg: 'com.amazon.amazonvideo.livingroom', name: 'Prime Video', color: '#0F2235' },
@@ -145,64 +193,119 @@
     { pkg: 'com.google.android.youtube.tv', name: 'YouTube', color: '#2A0E0E' }
   ];
 
+  // Siddhant's corner: ask RoboDad, or open a YouTube search.
+  var CORNER = [
+    { cls: 't-guitar', em: '🎸', title: 'Guitar lab', sub: 'A new riff or scale', ask: "I play electric guitar. Teach me something new to practise today: a riff, a scale or a technique, step by step, with a short practice plan." },
+    { cls: 't-chess', em: '♟️', title: 'Chess puzzle', sub: 'Sharpen your tactics', ask: "Give me a chess puzzle at a good level for a strong teenage player. Describe the position clearly, let me try first, and only give the answer when I ask." },
+    { cls: 't-tkd', em: '🥋', title: 'Dojang drills', sub: 'Road to 3rd dan', ask: "I'm a 2nd degree black belt in taekwondo. Give me a 20-minute home training session for kicks, flexibility and speed, and tips for working toward my 3rd dan." },
+    { cls: 't-draw', em: '🎨', title: 'Draw this', sub: "Today's drawing idea", ask: "Give me a fun drawing challenge for today with a couple of tips to make it look awesome. I like guitars, chess, martial arts and wrestling." },
+    { cls: 't-hitman', em: '🕶️', title: 'Hitman classics', sub: 'Bret Hart matches', yt: 'Bret Hart classic match' },
+    { cls: 't-tribal', em: '☝️', title: 'Tribal Chief', sub: 'Roman Reigns', yt: 'Roman Reigns highlights' },
+    { cls: 't-cena', em: '🎬', title: 'Cena movie night', sub: 'John Cena trailers', yt: 'John Cena movie trailer' }
+  ];
+
+  // Today's challenge: rotates daily through his favourite things.
+  var DAILY = [
+    { cls: 't-guitar', em: '🎸', k: 'Guitar', t: 'A minor pentatonic, 5th fret', x: 'The box shape behind a huge share of rock solos. Learn it once, use it forever.', ask: "Teach me the A minor pentatonic scale at the 5th fret on electric guitar, step by step, then give me a simple lick to practise with it." },
+    { cls: 't-chess', em: '♟️', k: 'Chess', t: 'The Italian Game', x: '1.e4 e5 2.Nf3 Nc6 3.Bc4. A classic opening that aims straight at f7.', ask: "Explain the Italian Game (1.e4 e5 2.Nf3 Nc6 3.Bc4): the main ideas for White and Black and the traps to watch for." },
+    { cls: 't-tkd', em: '🥋', k: 'Taekwondo', t: 'Higher, faster kicks', x: 'Flexibility plus snap. Ten minutes a day makes a real difference.', ask: "I'm a 2nd degree black belt in taekwondo. Give me a 10-minute daily stretching and drilling routine for higher, faster kicks." },
+    { cls: 't-hitman', em: '🕶️', k: 'Wrestling', t: 'The Excellence of Execution', x: "Bret \"The Hitman\" Hart's finisher was the Sharpshooter. He learned to wrestle in his dad Stu Hart's famous basement gym, the Dungeon.", ask: "Tell me the story of Bret \"The Hitman\" Hart: the Hart family Dungeon, the Sharpshooter, and his best matches to watch." },
+    { cls: 't-draw', em: '🎨', k: 'Draw this', t: 'A robot guitar hero', x: 'Give RoboDad a flying-V, sunglasses and a stage full of smoke.', ask: "Help me draw a robot playing an electric guitar on stage. Break it into easy steps and give me tips for shading and making it look cool." },
+    { cls: 't-chess', em: '♟️', k: 'Chess', t: 'Fork, pin, skewer', x: 'The three tactics that win most games. Can you spot them in your next match?', ask: "Explain the fork, the pin and the skewer in chess with an example of each, then quiz me." },
+    { cls: 't-tribal', em: '☝️', k: 'Wrestling', t: 'Acknowledge the Tribal Chief', x: 'Roman Reigns held the Universal Championship for over 1,300 days. The Spear is his finisher.', ask: "Tell me about Roman Reigns' career: the Shield, the Bloodline, his long Universal title reign and his biggest matches." },
+    { cls: 't-guitar', em: '🎸', k: 'Guitar', t: 'Palm muting', x: 'Rest the side of your picking hand on the strings by the bridge for that tight, chugging rock sound.', ask: "Teach me palm muting on electric guitar, with a simple chugging riff to practise it." },
+    { cls: 't-hitman', em: '🕶️', k: 'Wrestling', t: 'Iron Man, WrestleMania XII', x: 'Bret Hart vs Shawn Michaels battled for a full hour in 1996. One of the most famous matches ever.', ask: "Tell me about the Bret Hart vs Shawn Michaels Iron Man match at WrestleMania XII. Why is it so famous?" },
+    { cls: 't-cena', em: '🎬', k: 'Movie night', t: 'You can’t see me', x: 'John Cena went from wrestling champ to movie star: Bumblebee, F9, Playing with Fire and more.', ask: "What are John Cena's best movies and shows for a 13-year-old to watch? Give me a ranked list with one line on each." },
+    { cls: 't-tkd', em: '🥋', k: 'Taekwondo', t: 'Spinning hook kick', x: 'Spot, spin, snap. Drill it slowly first, then add speed.', ask: "Break down the taekwondo spinning hook kick step by step with drills to make it faster and more accurate." },
+    { cls: 't-draw', em: '🎨', k: 'Draw this', t: 'Your wrestling superstar', x: 'Invent a wrestler: name, gear, entrance and finisher. Then draw them mid-entrance.', ask: "Help me invent and draw my own pro wrestling character: name, ring gear, entrance and finishing move." }
+  ];
+
   var JOKES = [
     "I'm reading a book about anti-gravity. It's impossible to put down.",
     "Why did the scarecrow win an award? He was outstanding in his field.",
     "I only know 25 letters of the alphabet. I don't know y.",
     "What do you call a fake noodle? An impasta.",
-    "I used to hate facial hair, but then it grew on me.",
     "Why don't eggs tell jokes? They'd crack each other up.",
-    "What do you call a dinosaur that's sleeping? A dino-snore.",
-    "I told my TV a joke. It didn't laugh, but at least it picked up on the remote possibility.",
+    "Why did the chess player bring a ladder? To reach the next rank.",
+    "Why are pawns so brave? They always go forward.",
+    "What's a guitarist's favourite season? Strum-mer.",
+    "Why did the taekwondo student cross the road? To practise his side kick on the other side.",
     "Why can't a bicycle stand up by itself? It's two tired.",
-    "What did the ocean say to the beach? Nothing, it just waved.",
-    "How does a computer get drunk? It takes screenshots.",
-    "Why did the math book look sad? It had too many problems.",
-    "I'm on a seafood diet. I see food and I eat it.",
     "What's a robot's favourite snack? Computer chips.",
-    "Why was the robot so tired after the road trip? It had a hard drive."
+    "Why did the math book look sad? It had too many problems.",
+    "I asked the wrestler for a joke. He gave me a Sharpshooter instead."
   ];
 
   function store(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
   }
   function dayNumber(d) { return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); }
+  var $ = function (id) { return document.getElementById(id); };
 
-  // ---- greeting, clock, joke ----
   var today = dayNumber(new Date());
   var nick = NICKNAMES[today % NICKNAMES.length];
+
+  // ---- greeting, clock ----
   function tick() {
     var d = new Date(), h = d.getHours();
     var part = h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 22 ? 'Good evening' : 'Up late';
-    document.getElementById('greet').textContent = part + ', ' + nick;
-    document.getElementById('sub').textContent = h >= 22 || h < 5 ? "Don't stay up too late, champ." : "What are we doing today?";
-    document.getElementById('time').textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    document.getElementById('date').textContent = d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    $('greet').textContent = part + ', ' + nick;
+    $('sub').textContent = h >= 22 || h < 5 ? "Don't stay up too late, champ." : SUBS[today % SUBS.length];
+    $('time').textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    $('date').textContent = d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
   }
   tick(); setInterval(tick, 10000);
-  document.getElementById('joke').textContent = JOKES[today % JOKES.length];
 
   // ---- toast ----
   var toastT;
   function toast(msg) {
-    var t = document.getElementById('toast');
+    var t = $('toast');
     t.textContent = msg; t.classList.add('show');
     clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2600);
   }
 
-  // ---- birthday ----
-  var first = parseInt(store('rdtv.first') || '0', 10);
-  if (!first) { first = today; store('rdtv.first', String(first)); }
-  var bday = document.getElementById('bday'), note = document.getElementById('note');
-  var isBirthday = today - first < BIRTHDAY_DAYS;
-  if (isBirthday) bday.hidden = false;
-  function openNote() { note.classList.add('open'); confetti(); setTimeout(function () { document.getElementById('noteClose').focus(); }, 50); }
+  // ---- actions ----
+  function ask(q) { if (TV && TV.ask) TV.ask(q); else if (TV) TV.chat(); else toast('Opens the chat on the TV'); }
+  function youtube(q) { if (!TV || !TV.youtube || !TV.youtube(q)) toast("YouTube isn't installed on this TV yet."); }
+
+  // ---- today's challenge (changes every day) ----
+  var D = DAILY[today % DAILY.length];
+  var daily = $('daily');
+  daily.classList.add(D.cls);
+  $('dEmoji').textContent = D.em; $('dKicker').textContent = "Today's challenge · " + D.k;
+  $('dTitle').textContent = D.t; $('dText').textContent = D.x; $('dGo').textContent = 'Press OK to ask RoboDad ▶';
+  daily.addEventListener('click', function () { ask(D.ask); });
+
+  // A different "try asking" line on the big tile each day
+  var TRY = ['"Who would win: Bret Hart or Roman Reigns?"', '"Give me a chess puzzle"', '"Teach me a power-chord riff"',
+             '"How do I get more height on my kicks?"', '"Give me a drawing idea"', '"Help me with my maths homework"'];
+  $('try').textContent = 'Try: ' + TRY[today % TRY.length];
+
+  // ---- footer: dad joke and a fun fact, alternating days ----
+  var FACTS = [
+    "Bret Hart's catchphrase: the best there is, the best there was, the best there ever will be.",
+    'The longest possible chess game under the 50-move rule is 5,949 moves.',
+    'Taekwondo has been an Olympic sport since the 2000 Sydney Games.',
+    'John Cena holds the record for the most Make-A-Wish wishes granted: over 650.',
+    'The word "checkmate" comes from the Persian "shah mat": the king is helpless.',
+    'Roman Reigns is part of the Anoaʻi family, one of wrestling’s most famous dynasties.'
+  ];
+  if (today % 2) { $('fLabel').textContent = 'Did you know?'; $('fText').textContent = FACTS[Math.floor(today / 2) % FACTS.length]; }
+  else $('fText').textContent = JOKES[Math.floor(today / 2) % JOKES.length];
+
+  // ---- birthday (only after Dad arms the surprise) ----
+  var bday = $('bday'), note = $('note');
+  var start = parseInt(store('rdtv.bday') || '0', 10);
+  var isBirthday = !!start && today - start < BIRTHDAY_DAYS;
+  function showBirthday(on) { bday.hidden = !on; daily.hidden = on; }
+  showBirthday(isBirthday);
+  function openNote() { note.classList.add('open'); confetti(); setTimeout(function () { $('noteClose').focus(); }, 50); }
   function closeNote() { note.classList.remove('open'); store('rdtv.armed', ''); bday.focus(); }
   bday.addEventListener('click', openNote);
-  document.getElementById('noteClose').addEventListener('click', closeNote);
+  $('noteClose').addEventListener('click', closeNote);
 
   // ---- tiles ----
-  function tile(app, extraClass) {
+  function appTile(app, extraClass) {
     var b = document.createElement('button');
     b.className = 'tile app' + (extraClass ? ' ' + extraClass : '');
     var art = app.art || '';
@@ -223,13 +326,27 @@
     return b;
   }
 
+  function pickTile(p) {
+    var b = document.createElement('button');
+    b.className = 'tile pick ' + p.cls;
+    b.innerHTML = '<span class="via"></span><span class="em"></span><b></b><small></small>';
+    b.querySelector('.via').textContent = p.yt ? 'YouTube' : 'RoboDad';
+    b.querySelector('.em').textContent = p.em;
+    b.querySelector('b').textContent = p.title;
+    b.querySelector('small').textContent = p.sub;
+    b.addEventListener('click', function () { p.yt ? youtube(p.yt) : ask(p.ask); });
+    return b;
+  }
+  var corner = $('corner');
+  CORNER.forEach(function (p) { corner.appendChild(pickTile(p)); });
+
   function render() {
     var list = [];
     try { list = TV ? JSON.parse(TV.apps()) : []; } catch (e) { list = []; }
     var byPkg = {};
     list.forEach(function (a) { byPkg[a.pkg] = a; });
 
-    var watch = document.getElementById('watch'), apps = document.getElementById('apps');
+    var watch = $('watch'), apps = $('apps');
     var focusedIdx = -1, focusedRow = null;
     [watch, apps].forEach(function (row) {
       var kids = row.children;
@@ -239,7 +356,7 @@
     watch.textContent = '';
     WATCH.forEach(function (w) {
       var got = byPkg[w.pkg];
-      watch.appendChild(tile({ pkg: w.pkg, name: w.name, color: w.color, art: got ? got.art : '' }, got || !TV ? '' : 'missing'));
+      watch.appendChild(appTile({ pkg: w.pkg, name: w.name, color: w.color, art: got ? got.art : '' }, got || !TV ? '' : 'missing'));
     });
 
     apps.textContent = '';
@@ -248,32 +365,32 @@
     var hasSettings = false;
     list.filter(function (a) { return !skip[a.pkg]; }).forEach(function (a) {
       if (/settings/i.test(a.pkg) || a.name === 'Settings') hasSettings = true;
-      apps.appendChild(tile(a));
+      apps.appendChild(appTile(a));
     });
-    if (!hasSettings) apps.appendChild(tile({ name: '⚙ Settings', color: '#24364C', action: function () { TV && TV.settings(); } }));
+    if (!hasSettings) apps.appendChild(appTile({ name: '⚙ Settings', color: '#24364C', action: function () { TV && TV.settings(); } }));
 
     if (focusedRow && focusedRow.children[focusedIdx]) focusedRow.children[focusedIdx].focus();
   }
 
-  document.getElementById('chat').addEventListener('click', function () {
+  $('chat').addEventListener('click', function () {
     if (TV) TV.chat(); else location.href = 'https://robodad.app/?source=tv';
   });
 
+  function toTop() { $('main').scrollTop = 0; document.querySelectorAll('.row').forEach(function (r) { r.scrollLeft = 0; }); $('chat').focus({ preventScroll: true }); }
+
   // ---- what the TV tells the page ----
-  window.tvResume = function () { tick(); render(); if (!document.activeElement || document.activeElement === document.body) document.getElementById('chat').focus(); };
-  window.tvHome = function () { closeIfOpen(); document.getElementById('chat').focus(); document.querySelectorAll('.row').forEach(function (r) { r.scrollLeft = 0; }); };
-  window.tvBack = function () { if (!closeIfOpen()) document.getElementById('chat').focus(); };
+  window.tvResume = function () { tick(); render(); if (!document.activeElement || document.activeElement === document.body) toTop(); };
+  window.tvHome = function () { closeIfOpen(); toTop(); };
+  window.tvBack = function () { if (!closeIfOpen()) toTop(); };
   function closeIfOpen() { if (note.classList.contains('open')) { closeNote(); return true; } return false; }
 
   render();
-  document.getElementById('chat').focus();
+  toTop();
 
-  // The surprise: once Dad arms it (one adb command after setup), the note and confetti
-  // play the next time the TV is switched on, then the birthday card stays for two weeks.
+  // The surprise: once Dad arms it (one adb command), the note and confetti play the next
+  // time the TV is switched on, and the birthday card replaces today's challenge for two weeks.
   window.tvArm = function () {
-    store('rdtv.armed', '1');
-    first = today; store('rdtv.first', String(first));
-    isBirthday = true; bday.hidden = false;
+    store('rdtv.bday', String(today)); start = today; isBirthday = true; showBirthday(true);
     closeIfOpen(); store('rdtv.armed', '1');
     toast('Surprise armed 🎁 Switch the TV off. It plays next time it turns on.');
   };
@@ -285,7 +402,7 @@
 
   // ---- confetti ----
   function confetti() {
-    var c = document.getElementById('fx'), x = c.getContext('2d');
+    var c = $('fx'), x = c.getContext('2d');
     var W = c.width = innerWidth * (devicePixelRatio || 1), H = c.height = innerHeight * (devicePixelRatio || 1);
     var colors = ['#FFC83D', '#FF7A9A', '#7FA9D6', '#8EE3B0', '#FFFFFF', '#C59BFF'];
     var bits = [];
@@ -294,15 +411,15 @@
       vy: (2 + Math.random() * 3) * (devicePixelRatio || 1), vx: (Math.random() - .5) * 2, r: Math.random() * 6, vr: (Math.random() - .5) * .2,
       c: colors[i % colors.length]
     });
-    var start = performance.now();
+    var t0 = performance.now();
     (function frame(t) {
       x.clearRect(0, 0, W, H);
       bits.forEach(function (b) {
         b.y += b.vy; b.x += b.vx + Math.sin((t + b.r * 100) / 400); b.r += b.vr;
         x.save(); x.translate(b.x, b.y); x.rotate(b.r); x.fillStyle = b.c; x.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); x.restore();
       });
-      if (t - start < 5000) requestAnimationFrame(frame); else x.clearRect(0, 0, W, H);
-    })(start);
+      if (t - t0 < 5000) requestAnimationFrame(frame); else x.clearRect(0, 0, W, H);
+    })(t0);
   }
 })();
 </script>

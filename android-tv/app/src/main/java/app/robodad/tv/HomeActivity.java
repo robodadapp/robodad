@@ -207,6 +207,29 @@ public class HomeActivity extends Activity {
             ui.post(() -> startActivity(new Intent(HomeActivity.this, ChatActivity.class)));
         }
 
+        /** Opens the chat and asks RoboDad this question. */
+        @JavascriptInterface
+        public void ask(String q) {
+            ui.post(() -> startActivity(new Intent(HomeActivity.this, ChatActivity.class)
+                    .putExtra("ask", q).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)));
+        }
+
+        /** Opens YouTube on the TV with this search. */
+        @JavascriptInterface
+        public boolean youtube(String q) {
+            String pkg = "com.google.android.youtube.tv";
+            Uri u = Uri.parse("https://www.youtube.com/results?search_query=" + Uri.encode(q));
+            Intent[] tries = {
+                new Intent(Intent.ACTION_VIEW, u).setPackage(pkg),
+                new Intent(Intent.ACTION_SEARCH).setPackage(pkg).putExtra(android.app.SearchManager.QUERY, q),
+            };
+            for (Intent i : tries) {
+                try { startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true; }
+                catch (Exception ignored) { }
+            }
+            return launch(pkg);
+        }
+
         @JavascriptInterface
         public void settings() {
             ui.post(() -> {

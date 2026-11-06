@@ -69,6 +69,9 @@ public class ChatActivity extends Activity {
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private String bridgeJs = "";
+    /** A question to type into the chat and send once the page is ready (from a home-screen tile). */
+    private String pendingAsk = null;
+    private boolean pageReady = false;
     private boolean scriptAtStart = false;
 
     private TextToSpeech tts;
@@ -121,6 +124,7 @@ public class ChatActivity extends Activity {
         });
 
         Uri data = getIntent() != null ? getIntent().getData() : null;
+        if (saved == null && getIntent() != null) pendingAsk = getIntent().getStringExtra("ask");
         if (saved != null) web.restoreState(saved);
         else web.loadUrl(data != null && isOurs(data) ? data.toString() : START_URL);
     }
@@ -143,6 +147,22 @@ public class ChatActivity extends Activity {
         super.onNewIntent(intent);
         Uri data = intent.getData();
         if (data != null && isOurs(data)) web.loadUrl(data.toString());
+        String q = intent.getStringExtra("ask");
+        if (q != null && !q.isEmpty()) { pendingAsk = q; if (pageReady) sendPendingAsk(); }
+    }
+
+    /** Waits for the chat box (and for any age check or panel to be closed), then types and sends the question. */
+    private void sendPendingAsk() {
+        if (pendingAsk == null || web == null) return;
+        String q = org.json.JSONObject.quote(pendingAsk);
+        pendingAsk = null;
+        web.evaluateJavascript("(function(q){var n=0;(function go(){"
+            + "var i=document.getElementById('input'),f=document.getElementById('form');"
+            + "var busy=document.querySelector('.overlay:not([hidden])')||document.querySelector('.side.open');"
+            + "if(!i||!f||busy){if(++n<600)setTimeout(go,500);return;}"
+            + "i.value=q;i.dispatchEvent(new Event('input',{bubbles:true}));"
+            + "setTimeout(function(){var b=document.getElementById('send');if(b){b.disabled=false;b.click();}else{f.requestSubmit();}},150);"
+            + "})();})(" + q + ");", null);
     }
 
     @Override
@@ -212,6 +232,7 @@ public class ChatActivity extends Activity {
         @Override
         public void onPageFinished(WebView view, String url) {
             if (!scriptAtStart && url != null && isOurs(Uri.parse(url))) view.evaluateJavascript(bridgeJs, null);
+            if (url != null && isOurs(Uri.parse(url))) { pageReady = true; sendPendingAsk(); }
         }
 
         @Override

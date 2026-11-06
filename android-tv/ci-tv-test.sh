@@ -57,6 +57,28 @@ adb shell input keyevent KEYCODE_WAKEUP
 sleep 6
 adb exec-out screencap -p > $O/screen-10-surprise-on-wake.png
 
+# Siddhant's corner: the row of interest tiles, a YouTube tile and an ask-RoboDad tile.
+adb shell input keyevent KEYCODE_HOME
+sleep 2
+adb shell input keyevent KEYCODE_DPAD_DOWN
+adb shell input keyevent KEYCODE_DPAD_DOWN
+sleep 2
+adb exec-out screencap -p > $O/screen-11-corner.png
+for i in 1 2 3 4; do adb shell input keyevent KEYCODE_DPAD_RIGHT; done
+adb shell input keyevent KEYCODE_DPAD_CENTER
+sleep 10
+adb exec-out screencap -p > $O/screen-12-youtube-hitman.png
+adb shell dumpsys window windows | grep -E 'mCurrentFocus' > $O/youtube-focus.txt
+adb shell input keyevent KEYCODE_HOME
+sleep 3
+adb shell input keyevent KEYCODE_DPAD_DOWN
+adb shell input keyevent KEYCODE_DPAD_DOWN
+adb shell input keyevent KEYCODE_DPAD_CENTER
+sleep 25
+adb exec-out screencap -p > $O/screen-13-ask-guitar.png
+adb shell input keyevent KEYCODE_HOME
+sleep 2
+
 # Undo, as you would on the real TV.
 [ -n "$STOCK" ] && adb shell pm enable "$STOCK" >> $O/home-after.txt 2>&1
 adb logcat -d -v brief > $O/logcat-full.txt
