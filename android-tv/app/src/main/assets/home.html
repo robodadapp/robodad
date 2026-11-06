@@ -37,11 +37,13 @@
   #hTv .lbl { bottom: auto; top: -5vh; }
 
   /* wall art (Disney+) */
-  #hArt { left: 75.63%; top: 21.57%; width: 12.29%; height: 12.31%; border-radius: .4vh; }
-  #hArt img { inset: 0; width: 100%; height: 100%; border-radius: .3vh; }
+  #hArt { left: 75.94%; top: 20.56%; width: 11.67%; height: 20.74%; border-radius: 50%; background: #0a3140 center / cover no-repeat; overflow: hidden; }
+  #hArt:focus { border-radius: 50%; }
+  #hArt img { left: 0; top: 50%; width: 100%; height: auto; aspect-ratio: 16 / 9; transform: translateY(-50%); object-fit: contain; border-radius: 0; }
+  #hArt .glare { border-radius: 50%; }
 
   /* laptop (YouTube) */
-  #hLap { left: 69.69%; top: 52.59%; width: 15.83%; height: 17.04%; border-radius: .4vh; }
+  #hLap { left: 73.44%; top: 56.67%; width: 11.46%; height: 12.04%; border-radius: .3vh; }
   #hLap img { inset: 0; width: 100%; height: 100%; border-radius: .3vh; }
   #hLap .lbl { bottom: auto; top: -5vh; }
 
@@ -240,7 +242,7 @@
       <circle cx="1100" cy="525" r="3.5" fill="#FF2D3D" class="antenna"/>
 
       <!-- ===== wall art (Disney+) ===== -->
-      <g transform="translate(1570 300)">
+      <g transform="translate(1570 336)">
         <rect x="-196" y="-190" width="392" height="380" rx="12" fill="#000" opacity=".5" transform="translate(10 12)"/>
         <rect x="-196" y="-190" width="392" height="380" rx="12" fill="url(#gold)"/>
         <rect x="-180" y="-174" width="360" height="348" rx="6" fill="#0d0d10" stroke="#5a1015" stroke-width="3"/>
@@ -248,8 +250,8 @@
         <circle r="138" fill="none" stroke="#FF2D3D" stroke-width="2" opacity=".5"/>
         <path d="M-160 -42 L-122 0 L-160 42" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
         <path d="M160 -42 L122 0 L160 42" fill="none" stroke="#FF2D3D" stroke-width="10" stroke-linejoin="round"/>
-        <path d="M-24 -166 L8 -126 L-10 -126 L18 -94" fill="none" stroke="url(#gold)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="-118" y="-70" width="236" height="140" rx="8" fill="#000" stroke="#FF2D3D" stroke-width="4"/>
+        <path d="M-18 -178 L8 -150 L-8 -150 L14 -126" fill="none" stroke="url(#gold)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle r="120" fill="#000" stroke="#FF2D3D" stroke-width="5"/>
         <text y="150" text-anchor="middle" font-size="24" font-weight="900" fill="url(#gold)" letter-spacing="9" font-family="Roboto, sans-serif">ROBODAD</text>
         <g fill="url(#gold)"><circle cx="-180" cy="-174" r="7"/><circle cx="180" cy="-174" r="7"/><circle cx="-180" cy="174" r="7"/><circle cx="180" cy="174" r="7"/></g>
       </g>
@@ -284,7 +286,7 @@
       <rect x="1110" y="752" width="760" height="5" fill="#fff" opacity=".07"/>
       <rect x="1130" y="786" width="28" height="170" fill="#1a0c0d"/><rect x="1822" y="786" width="28" height="170" fill="#1a0c0d"/>
       <rect x="1290" y="744" width="420" height="10" rx="3" fill="#7a0a12"/>
-      <path d="M1330 752 L1260 860 H1720 L1650 752 Z" fill="url(#screenglow)"/>
+      <path d="M1420 752 L1380 860 H1660 L1620 752 Z" fill="url(#screenglow)"/>
       <!-- lamp -->
       <g transform="translate(1180 752)">
         <ellipse cx="35" cy="0" rx="40" ry="8" fill="#1b1b20"/>
@@ -294,13 +296,12 @@
         <path d="M100 -160 L240 0 L40 0 Z" fill="url(#lampcone)" class="glow-tv"/>
       </g>
       <!-- laptop -->
-      <rect x="1330" y="560" width="320" height="200" rx="12" fill="url(#alu)" stroke="#1a1b1f" stroke-width="3"/>
-      <rect x="1338" y="568" width="304" height="184" rx="8" fill="#050506"/>
-      <circle cx="1490" cy="564" r="2.2" fill="#2a2a2f"/>
-      <path d="M1312 760 H1668 L1712 790 H1268 Z" fill="url(#deck)" stroke="#1a1b1f" stroke-width="2"/>
-      <path d="M1340 764 H1640 L1660 778 H1320 Z" fill="url(#keys)"/>
-      <rect x="1455" y="780" width="70" height="8" rx="2" fill="#3a3d44"/>
-      <rect x="1268" y="789" width="444" height="5" rx="2.5" fill="#1a1b1f"/>
+      <rect x="1404" y="606" width="232" height="142" rx="9" fill="url(#alu)" stroke="#1a1b1f" stroke-width="3"/>
+      <rect x="1410" y="612" width="220" height="130" rx="6" fill="#050506"/>
+      <circle cx="1520" cy="609" r="1.8" fill="#2a2a2f"/>
+      <path d="M1390 746 H1650 L1674 760 H1366 Z" fill="url(#deck)" stroke="#1a1b1f" stroke-width="2"/>
+      <path d="M1404 748 H1636 L1650 756 H1390 Z" fill="url(#keys)" opacity=".9"/>
+      <rect x="1366" y="759" width="308" height="4" rx="2" fill="#1a1b1f"/>
       <!-- chess pieces -->
       <g transform="translate(1250 752)" fill="#eee" stroke="#111" stroke-width="3"><path d="M-14 0 h28 l-4 -10 h-6 l4 -36 a12 12 0 1 0 -16 0 l4 36 h-6z"/></g>
       <g transform="translate(1284 752)" fill="#D10A1A" stroke="#111" stroke-width="3"><path d="M-16 0 h32 l-4 -10 h-6 l4 -46 h-8 v-10 h-4 v-8 h-4 v8 h-4 v10 h-8 l4 46 h-6z"/></g>
@@ -628,6 +629,7 @@
       if (src) {
         if (!img) { img = document.createElement('img'); img.alt = ''; el.insertBefore(img, el.firstChild); }
         img.src = src; word.style.display = 'none';
+        if (s.id === 'hArt') el.style.backgroundImage = 'url("' + src + '")';
       } else { if (img) img.remove(); word.style.display = ''; }
     });
 
