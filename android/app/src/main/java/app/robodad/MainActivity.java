@@ -122,7 +122,11 @@ public class MainActivity extends Activity {
 
         Uri data = getIntent() != null ? getIntent().getData() : null;
         if (saved != null) web.restoreState(saved);
-        else web.loadUrl(data != null && isOurs(data) ? data.toString() : START_URL);
+        else if (data != null && isOurs(data)) web.loadUrl(data.toString());
+        else {
+            String last = getPreferences(MODE_PRIVATE).getString("lastUrl", null);
+            web.loadUrl(last != null && isOurs(Uri.parse(last)) ? last : START_URL);
+        }
     }
 
     // Keep RoboDad clear of the status bar, navigation bar and keyboard (Android 15 draws edge to edge).
@@ -155,6 +159,8 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         CookieManager.getInstance().flush();
+        String url = web.getUrl();
+        if (url != null && isOurs(Uri.parse(url))) getPreferences(MODE_PRIVATE).edit().putString("lastUrl", url).apply();
         if (tts != null) tts.stop();
         if (recognizer != null) recognizer.cancel();
         endRec();
