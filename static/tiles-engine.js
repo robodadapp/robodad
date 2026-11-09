@@ -21,13 +21,15 @@
 
   // RoboDad's own bonus-square layout, mirrored into all four corners.
   // dl/tl: double/triple the letter; dw/tw: double/triple the whole word.
+  // sim: a Simile Square. No multiplier; covering one starts the simile bonus round.
   const PREMIUM = new Array(N * N).fill("");
   (function layout() {
     const q = {
       tw: [[0, 3], [3, 0]],
       dw: [[1, 1], [2, 6], [6, 2], [4, 4], [7, 7]],
       tl: [[1, 5], [5, 1], [5, 5], [3, 3]],
-      dl: [[0, 0], [2, 3], [3, 2], [6, 6], [0, 7], [7, 0], [4, 7], [7, 4]],
+      dl: [[0, 0], [2, 3], [3, 2], [6, 6], [0, 7], [7, 0]],
+      sim: [[4, 7], [7, 4]],
     };
     for (const kind in q) for (const [r, c] of q[kind]) {
       for (const [rr, cc] of [[r, c], [r, N - 1 - c], [N - 1 - r, c], [N - 1 - r, N - 1 - c]]) PREMIUM[rr * N + cc] = kind;
@@ -263,20 +265,21 @@
     return v;
   }
 
+  // Tile Talk's own ladder (not the chess one): for words, Bookworm Dad is the boss.
   // Each pair in a tier is the same strength, different style.
-  // pool: which words he plays. pick: how often he settles for less than his best.
+  // pool: which words he plays. topFrac/topN: how often he settles for less than his best.
+  // unlock: Bookworm only opens after you beat a Tier 3 dad or higher.
   const TIERS = {
-    modern:    { name: "Modern Dad",    tier: 1, pool: "common", maxLen: 6,  topFrac: 0.6, leave: 0,   style: {} },
-    skater:    { name: "Skater Dad",    tier: 2, pool: "common", maxLen: 8,  topFrac: 0.3, leave: 0,   style: { long: 2 } },
+    gamer:     { name: "Gamer Dad",     tier: 1, pool: "common", maxLen: 5,  topFrac: 0.6, leave: 0,   style: { heavy: 1.5 } },
+    skater:    { name: "Skater Dad",    tier: 1, pool: "common", maxLen: 5,  topFrac: 0.6, leave: 0,   style: { long: 2 } },
     eighties:  { name: "Arcade Dad",    tier: 2, pool: "common", maxLen: 8,  topFrac: 0.3, leave: 0,   style: { bonus: 4 } },
-    gamer:     { name: "Gamer Dad",     tier: 3, pool: "all",    maxLen: 15, topN: 5,      leave: 0.3, style: { heavy: 1.5 } },
-    coach:     { name: "Coach Dad",     tier: 3, pool: "all",    maxLen: 15, topN: 5,      leave: 0.8, style: {} },
-    bookworm:  { name: "Bookworm Dad",  tier: 4, pool: "all",    maxLen: 15, topN: 2,      leave: 0.8, style: { long: 1.5 } },
-    labdad:    { name: "Lab Dad",       tier: 4, pool: "all",    maxLen: 15, topN: 2,      leave: 0.8, style: { heavy: 1 } },
-    professor: { name: "Professor Dad", tier: 5, pool: "all",    maxLen: 15, topN: 1,      leave: 1,   style: {} },
-    grandpa:   { name: "Robo-Grandpa",  tier: 6, pool: "all",    maxLen: 15, topN: 1,      leave: 1.4, style: {}, smartSwap: true, secret: true },
+    coach:     { name: "Coach Dad",     tier: 2, pool: "common", maxLen: 8,  topFrac: 0.3, leave: 0.5, style: {} },
+    modern:    { name: "Modern Dad",    tier: 3, pool: "all",    maxLen: 15, topN: 5,      leave: 0.5, style: {} },
+    labdad:    { name: "Lab Dad",       tier: 3, pool: "all",    maxLen: 15, topN: 5,      leave: 0.3, style: { heavy: 1 } },
+    professor: { name: "Professor Dad", tier: 4, pool: "all",    maxLen: 15, topN: 2,      leave: 0.8, style: { long: 1 } },
+    grandpa:   { name: "Robo-Grandpa",  tier: 4, pool: "all",    maxLen: 15, topN: 2,      leave: 0.8, style: { bonus: 2 }, secret: true },
+    bookworm:  { name: "Bookworm Dad",  tier: 5, pool: "all",    maxLen: 15, topN: 1,      leave: 1.4, style: {}, smartSwap: true, boss: true, unlockTier: 3 },
   };
-
   function styleBonus(m, style) {
     let b = 0;
     if (style.long) b += style.long * Math.max(0, m.main.length - 4);

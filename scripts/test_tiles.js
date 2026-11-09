@@ -79,7 +79,7 @@ const results = [];
 let slowest = 0;
 for (let g = 0; g < 6; g++) {
   const s = T.newGame(rnd);
-  const tiers = [["modern", "professor"], ["skater", "grandpa"], ["coach", "labdad"]][g % 3];
+  const tiers = [["gamer", "bookworm"], ["skater", "professor"], ["coach", "labdad"]][g % 3];
   let turns = 0, overlap = false;
   while (!s.over && turns < 200) {
     const t1 = Date.now();
@@ -103,13 +103,21 @@ const lowWords = [];
 {
   const s = T.newGame(T.mulberry(7));
   for (let i = 0; i < 12 && !s.over; i++) {
-    const mv = T.chooseMove(s, "modern", dict, common, Math.random);
+    const mv = T.chooseMove(s, "gamer", dict, common, Math.random);
     if (mv.type !== "play") { T.applyPass(s); continue; }
     lowWords.push(mv.move.main);
     T.applyPlay(s, mv.move.tiles, T.evaluatePlay(s.board, mv.move.tiles, dict));
   }
 }
-check("Modern Dad only plays everyday words", lowWords.every((w) => common.has(w) && w.length <= 6), lowWords.join(" "));
+check("Gamer Dad only plays short everyday words", lowWords.every((w) => common.has(w) && w.length <= 5), lowWords.join(" "));
+check("Bookworm Dad is the boss", Object.values(T.TIERS).every((t) => t.tier <= T.TIERS.bookworm.tier) && T.TIERS.bookworm.boss);
+check("four Simile Squares", T.PREMIUM.filter((p) => p === "sim").length === 4);
+{
+  const b2 = empty.slice();
+  for (const t of row(7, 5, "cat")) b2[t.r * 15 + t.c] = { ch: t.ch, blank: false };
+  ev = T.evaluatePlay(b2, [{ r: 7, c: 4, ch: "s" }], dict);
+  check("a Simile Square has no multiplier: S+CAT = SCAT scores 1+3+1+1 = 6", ev.ok && ev.score === 6, JSON.stringify(ev));
+}
 
 console.log(failed ? `\n${failed} failed` : "\nall passed");
 process.exit(failed ? 1 : 0);
