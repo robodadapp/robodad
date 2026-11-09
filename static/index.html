@@ -1078,6 +1078,9 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .brain-msg{font-weight:700}
 .toast{position:fixed; left:50%; top:calc(14px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:40;
   background:var(--ink); color:var(--sky); font-weight:800; padding:10px 18px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); width:max-content; max-width:min(440px, calc(100vw - 32px)); text-align:center; line-height:1.35}
+.toast .toast-act{margin-left:10px; border:0; border-radius:999px; padding:5px 12px; background:var(--sun, #FFC93C); color:#1C1C1C; font:800 .85rem/1 var(--body, system-ui), sans-serif; cursor:pointer; vertical-align:middle}
+.toast .toast-act:focus-visible{outline:3px solid var(--sky); outline-offset:2px}
+.shuffle-note{margin:4px 0 0; color:var(--muted); font-size:.85rem; font-weight:700}
 .report-btn{border:0; background:transparent; cursor:pointer; padding:3px 6px; border-radius:8px; color:var(--muted); font-size:.85rem; font-weight:700; display:inline-flex; gap:4px; align-items:center}
 .report-btn svg{width:15px; height:15px}
 .report-btn:hover{background:var(--surface); color:var(--ink)}
@@ -1419,7 +1422,7 @@ textarea::placeholder{color:var(--muted)}
   <div class="log" id="log" aria-live="polite">
     <section class="hello" id="hello">
       <div class="spinner" aria-hidden="true"></div>
-      <button class="shuffle-spot" id="shuffleSpot" type="button" aria-label="Shuffle theme: new look, new dad and new music" title="Tap for a new look, dad and music"><span class="shuffle-hint" id="shuffleHint" hidden>tap me ✨</span></button>
+      <button class="shuffle-spot" id="shuffleSpot" type="button" aria-label="Shuffle: changes your look, your dad and your music. You can undo it right after." title="Shuffle: changes your look, dad and music (you can undo)"><span class="shuffle-hint" id="shuffleHint" hidden>tap to shuffle ✨</span></button>
       <div class="herowrap" id="herowrap">
         <svg class="bot" id="avHero" width="120" height="120" viewBox="0 0 64 64" aria-hidden="true"><use href="#robodad"/></svg>
         <span class="hero-bubs" id="heroBubs"></span>
@@ -1716,7 +1719,8 @@ textarea::placeholder{color:var(--muted)}
         <strong>Cheat Code</strong><small>Secret unlocked. Extra lives!</small>
       </button>
     </div>
-    <div class="row" style="justify-content:flex-start; margin-top:10px"><button class="ghost" id="shuffleMenu" type="button">✨ Shuffle theme</button></div>
+    <div class="row" style="justify-content:flex-start; margin-top:10px; gap:8px; flex-wrap:wrap"><button class="ghost" id="shuffleMenu" type="button">✨ Shuffle look, dad &amp; music</button><button class="ghost" id="shuffleUndo" type="button" hidden>↩ Undo shuffle</button></div>
+    <p class="shuffle-note">Shuffle swaps your look, your dad and your music all at once. Changed your mind? Tap Undo.</p>
     <div class="avpick">
       <p class="coll-head" style="margin:0!important"><span>Avatar</span><small>Tap RoboDad any time to see a move</small></p>
       <div class="avs" role="radiogroup" aria-label="Avatar" id="avPick"></div>
@@ -2813,9 +2817,14 @@ const PLAYERS = {
 
   // ---------- toast ----------
   let toastTimer;
-  function toast(msg){
+  function toast(msg, action){
     const t = $("toast"); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, msg.length > 60 ? 6000 : 3200);
+    if (action) {                                   // optional button, e.g. { label:"Undo", run:fn }
+      const b = document.createElement("button"); b.type = "button"; b.className = "toast-act"; b.textContent = action.label;
+      b.addEventListener("click", () => { clearTimeout(toastTimer); t.hidden = true; action.run(); });
+      t.appendChild(b);
+    }
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, action ? 9000 : msg.length > 60 ? 6000 : 3200);
   }
 
   // ---------- Life Skills Belt: collectible badges ----------
@@ -3952,7 +3961,30 @@ const PLAYERS = {
 
   // Shuffle: tap the corner decoration (the rangoli at Diwali) for a random look, dad and station
   const pickNew = (list, cur) => { const pool = list.filter(x => x !== cur); const from = pool.length ? pool : list; return from[Math.floor(Math.random() * from.length)]; };
+  // Undo: every shuffle remembers what you had before, so a stray tap never costs you the setup you picked
+  const shufHist = [];
+  const lookNameOf = (look) => { const tile = menuDlg.querySelector(`.look[data-look="${look}"] strong`); return tile ? (tile.firstChild?.textContent || tile.textContent).trim() : look; };
+  function shuffleSnap(){
+    const R = window.RoboRadio;
+    return { look: document.documentElement.dataset.look || "classic", av: avPref, st: radioPrefs.st, playing: !!(R && R.playing) };
+  }
+  function shuffleUndoUI(){ $("shuffleUndo").hidden = !shufHist.length; }
+  function shuffleUndo(){
+    const s = shufHist.pop(); if (!s) return;
+    avPref = s.av; setPref(AV_KEY, s.av);
+    const restore = () => {
+      applyLook(s.look);
+      const R = window.RoboRadio;
+      if (R) { radioPrefs.st = s.st; saveRadio(); if (s.playing) R.play(s.st); else if (R.playing) R.stop(); radioUI(); }
+    };
+    document.startViewTransition ? document.startViewTransition(restore) : restore();
+    shuffleUndoUI();
+    const dadKey = AV ? avKindFor(s.look) : "", dadName = dadKey && AV.AVATARS[dadKey] ? AV.AVATARS[dadKey].name : "";
+    hideCap(); toast("↩ Back to " + [lookNameOf(s.look), dadName].filter(Boolean).join(" · "), shufHist.length ? { label:"Undo again", run:shuffleUndo } : null);
+  }
+  $("shuffleUndo").addEventListener("click", () => { closeMenu(); shuffleUndo(); });
   function shuffleAll(){
+    shufHist.push(shuffleSnap()); if (shufHist.length > 20) shufHist.shift();
     const looks = [...menuDlg.querySelectorAll(".look")].filter(b => !b.hidden).map(b => b.dataset.look);
     const look = pickNew(looks, document.documentElement.dataset.look || "classic");
     let dadName = "";
@@ -3964,9 +3996,8 @@ const PLAYERS = {
     let tune = "";
     const R = window.RoboRadio;
     if (R) { radioPrefs.st = pickNew(Object.keys(R.stations), radioPrefs.st); saveRadio(); R.play(radioPrefs.st); radioUI(); tune = R.stations[radioPrefs.st]; }
-    const tile = menuDlg.querySelector(`.look[data-look="${look}"] strong`);
-    const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : look;
-    hideCap(); toast("✨ " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
+    shuffleUndoUI();
+    hideCap(); toast("✨ " + [lookNameOf(look), dadName, tune && "♪ " + tune].filter(Boolean).join(" · "), { label:"↩ Undo", run:shuffleUndo });
   }
   const SHUF_KEY = "robodad.shuffled";
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
