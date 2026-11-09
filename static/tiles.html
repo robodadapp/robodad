@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tile Talk · Beat Dad at words</title>
+<meta name="description" content="A crossword tile game against RoboDad's dads. Build words, hit the bonus squares, and try to outscore Dad.">
+<meta name="theme-color" content="#0B0B14">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/avatar-moves.css">
+<style>
+:root{--bg:#0B0B14; --panel:#16142A; --ink:#FFF6D6; --muted:#9A93B8; --gold:#F5C518; --edge:#2A2650;
+  --cellbg:#221F3D; --tile:#F3E6C4; --tile-ink:#1B1530; --pending:#FFD84D; --last:#9BE7C4;
+  --dl:#2F6F9E; --tl:#1D4C8C; --dw:#A8456B; --tw:#B8432F;
+  --metal:#C9D3DC; --hair:#3A2A1E; --jacket:#3D7CB8; --jacket2:#1B2A3A; --lens:#38B6FF;
+  --bw:min(96vw, 560px); --cell:calc(var(--bw) / 15)}
+*{box-sizing:border-box}
+html,body{margin:0; background:var(--bg); color:var(--ink); font:600 16px/1.4 "Nunito", ui-rounded, system-ui, sans-serif}
+body{min-height:100dvh; padding:12px 8px 28px; display:flex; flex-direction:column; align-items:center; gap:10px}
+h1{margin:0; font-size:1.5rem; font-weight:900; letter-spacing:-.01em}
+.top,.opp,.score,.status,.controls,.log,.tiers,.foot{width:100%; max-width:600px}
+.top{display:flex; justify-content:space-between; align-items:center; gap:8px}
+.top a{color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 12px; text-decoration:none; font-size:14px}
+.top a:hover{border-color:var(--gold)}
+.opp{display:flex; gap:12px; align-items:center; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:8px 12px}
+.opp svg{width:52px; height:52px; flex:none; overflow:visible}
+.opp .name{font-weight:900; font-size:1.05rem}
+.opp .tierlbl{color:var(--muted); font-size:.9rem}
+.bubble{margin-left:auto; max-width:50%; background:var(--ink); color:#1B1530; border-radius:12px; padding:8px 10px; font-size:.92rem; min-height:2.4em}
+.bubble:empty{visibility:hidden}
+.score{display:flex; justify-content:space-between; gap:8px; font-size:.95rem; color:var(--muted)}
+.score b{color:var(--ink); font-size:1.15rem}
+.score .turn b{color:var(--gold)}
+.board{width:var(--bw); aspect-ratio:1; display:grid; grid-template-columns:repeat(15,1fr); gap:1px; background:var(--edge); border:3px solid var(--edge); border-radius:8px; overflow:hidden; touch-action:manipulation}
+.cell{position:relative; border:0; padding:0; margin:0; background:var(--cellbg); color:var(--ink); display:flex; align-items:center; justify-content:center; font:800 calc(var(--cell) * .28)/1 "Nunito", ui-rounded, system-ui, sans-serif; cursor:pointer; min-width:0}
+.cell.dl{background:var(--dl)} .cell.tl{background:var(--tl)} .cell.dw{background:var(--dw)} .cell.tw{background:var(--tw)}
+.cell .lbl{opacity:.85; letter-spacing:-.02em}
+.cell.star .lbl{font-size:calc(var(--cell) * .55); color:var(--gold); opacity:1}
+.cell.drop{box-shadow:inset 0 0 0 2px var(--gold)}
+.tile{position:absolute; inset:1px; border-radius:calc(var(--cell) * .14); background:var(--tile); color:var(--tile-ink); display:flex; align-items:center; justify-content:center; font-size:calc(var(--cell) * .6); font-weight:900; text-transform:uppercase; box-shadow:0 1px 0 #0006}
+.tile i{position:absolute; right:calc(var(--cell) * .08); bottom:calc(var(--cell) * .02); font-style:normal; font-size:calc(var(--cell) * .26); font-weight:800}
+.tile.blank{color:#7A4FD0}
+.tile.pending{background:var(--pending)}
+.tile.last{background:var(--last)}
+.tile.hint{outline:2px dashed #38B6FF; outline-offset:-3px}
+.cell:focus-visible{outline:3px solid var(--gold); outline-offset:-3px; z-index:1}
+.rack{display:flex; gap:6px; justify-content:center; min-height:52px; width:100%; max-width:600px}
+.rtile{position:relative; width:min(12.5vw, 52px); aspect-ratio:1; border:0; border-radius:10px; background:var(--tile); color:var(--tile-ink); font:900 clamp(20px,6vw,28px)/1 "Nunito", ui-rounded, system-ui, sans-serif; text-transform:uppercase; cursor:pointer; box-shadow:0 3px 0 #0008}
+.rtile i{position:absolute; right:5px; bottom:3px; font-style:normal; font-size:12px; font-weight:800}
+.rtile.sel{transform:translateY(-6px); box-shadow:0 0 0 3px var(--gold), 0 6px 0 #0008}
+.rtile.swap{background:#FF8FA3}
+.rtile:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+.status{background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px; min-height:3em; font-size:.96rem}
+.status strong{color:var(--gold)}
+.letters{display:grid; grid-template-columns:repeat(9,1fr); gap:4px; margin-top:6px}
+.letters button{padding:6px 0; font:900 15px/1 "Nunito", ui-rounded, system-ui, sans-serif; border-radius:8px; border:2px solid var(--edge); background:var(--tile); color:var(--tile-ink); cursor:pointer; text-transform:uppercase}
+.controls{display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
+button.btn{background:transparent; color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:8px 12px; font:inherit; font-size:14px; cursor:pointer}
+button.btn:hover:not(:disabled){border-color:var(--gold)}
+button.btn:disabled{opacity:.45; cursor:default}
+button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gold); font-weight:900}
+.log{background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:8px 12px; font-size:.9rem; max-height:9.5em; overflow:auto}
+.log h2,.tiers h2{font-size:1rem; margin:2px 0 6px; color:var(--muted); font-weight:800}
+.log ol{margin:0; padding-left:1.4em}
+.log li{margin:2px 0}
+.log .w{font-weight:900; letter-spacing:.04em; text-transform:uppercase}
+.log .pts{color:var(--gold); font-weight:900}
+.log .dad{color:var(--muted)}
+.tier-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:8px}
+.tier{display:flex; gap:8px; align-items:center; text-align:left; background:var(--panel); color:var(--ink); border:2px solid var(--edge); border-radius:12px; padding:6px 8px; font:inherit; font-size:14px; cursor:pointer}
+.tier svg{width:36px; height:36px; flex:none}
+.tier[aria-checked="true"]{border-color:var(--gold)}
+.tier small{display:block; color:var(--muted); font-size:12px; font-weight:700}
+.tier[disabled]{opacity:.5; cursor:default}
+.foot{color:var(--muted); font-size:13px; text-align:center}
+.key{display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; font-size:12px; color:var(--muted)}
+.key span::before{content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:4px; vertical-align:-2px; background:var(--c)}
+.loading{color:var(--muted)}
+.dots::after{content:"\2026"; display:inline-block; width:1.1em; text-align:left; animation:dots 1.4s steps(1,end) infinite}
+@keyframes dots{0%{content:"."}33%{content:".."}66%{content:"..."}}
+@media (prefers-reduced-motion: reduce){.dots::after{content:"\2026"; animation:none} .rtile.sel{transform:none}}
+.cell.sim{background:#2E7D5B}
+.power,.bonus,.explain{width:100%; max-width:600px; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:8px 12px; font-size:.92rem}
+.power{border-color:#6B5A12}
+.power b{color:var(--gold); letter-spacing:.04em}
+.bonus{border-color:var(--gold)}
+.bonus h2,.explain h2{margin:0 0 4px; font-size:1rem; font-weight:900; color:var(--gold)}
+.bonus p,.explain p{margin:4px 0}
+.bonus input{width:100%; font:inherit; padding:8px 10px; border-radius:10px; border:2px solid var(--edge); background:#0F0D1E; color:var(--ink)}
+.bonus .row,.explain .row{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.bonus .opt{min-width:44%}
+.bonus .reply{color:var(--ink)}
+.bonus .good{color:#9BE7C4} .bonus .bad{color:#FF8FA3}
+.log button.wbtn{background:none; border:0; padding:0; font:inherit; color:inherit; cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px}
+.log .bon{color:#9BE7C4}
+.explain .w{font-size:1.2rem; font-weight:900; letter-spacing:.05em; text-transform:uppercase}
+.toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:var(--gold); color:#1B1530; font-weight:900; padding:10px 16px; border-radius:12px; box-shadow:0 6px 20px #0008; z-index:9; max-width:92vw; text-align:center}
+.tier.boss{border-style:double; border-width:4px}
+.opp{flex-wrap:wrap}
+.opp .lesson{flex-basis:100%; font-size:.82rem; color:var(--gold); border-top:1px solid var(--edge); padding-top:4px}
+.opp .lesson:empty{display:none}
+.hiscore{font-family:ui-monospace, "Courier New", monospace; color:#A5F3FC; letter-spacing:.08em; margin:6px 0; padding-left:1.6em}
+.hiscore .me{color:var(--gold)}
+.boss-wrap{position:fixed; inset:0; background:#0009; display:flex; align-items:center; justify-content:center; padding:16px; z-index:8}
+.boss-card{max-width:420px; text-align:center; border:3px solid #C084FC; border-radius:18px; background:linear-gradient(#2A1D45, #16142A); padding:18px 16px; box-shadow:0 10px 40px #000a}
+.boss-card h2{margin:6px 0; font-size:1.6rem; font-weight:900; color:#E9D5FF; letter-spacing:.08em}
+.boss-card svg{width:96px; height:96px}
+.opp .bubble{flex:1 1 140px; max-width:none}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="/">← RoboDad</a>
+  <h1>Tile Talk</h1>
+  <button class="btn" id="talkBtn" type="button" aria-pressed="true">Trash talk: on</button>
+</div>
+
+<section class="opp" aria-label="Your opponent">
+  <div id="oppArt" class="bot"></div>
+  <div>
+    <div class="name" id="oppName">Gamer Dad</div>
+    <div class="tierlbl" id="oppTier">Tier 1</div>
+    <div class="tierlbl" id="oppRecord"></div>
+  </div>
+  <div class="bubble" id="say" role="status" aria-live="polite"></div>
+  <div class="lesson" id="oppLesson"></div>
+</section>
+
+<div class="score" aria-live="polite">
+  <span id="youScore">You <b>0</b></span>
+  <span id="bagLeft">Tiles left <b>86</b></span>
+  <span id="dadScore">Dad <b>0</b></span>
+</div>
+
+<div class="power" id="power" hidden></div>
+
+<div class="board" id="board" role="group" aria-label="Game board, 15 by 15"></div>
+<div class="key" aria-hidden="true">
+  <span style="--c:var(--dl)">2L double letter</span><span style="--c:var(--tl)">3L triple letter</span>
+  <span style="--c:var(--dw)">2W double word</span><span style="--c:var(--tw)">3W triple word</span><span style="--c:#2E7D5B">✦ Simile Square</span>
+</div>
+
+<div class="rack" id="rack" role="group" aria-label="Your tiles"></div>
+
+<section class="bonus" id="bonus" aria-live="polite" hidden></section>
+
+<div class="status" id="status" aria-live="polite"><span class="loading">Dad is unpacking the dictionary<span class="dots" aria-hidden="true"></span></span></div>
+
+<div class="controls">
+  <button class="btn primary" id="playBtn" type="button">Play word</button>
+  <button class="btn" id="recallBtn" type="button">Take back tiles</button>
+  <button class="btn" id="shuffleBtn" type="button">Shuffle</button>
+  <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
+  <button class="btn" id="swapBtn" type="button">Swap tiles</button>
+  <button class="btn" id="passBtn" type="button">Pass</button>
+  <button class="btn" id="newBtn" type="button">New game</button>
+</div>
+
+<section class="explain" id="explain" aria-live="polite" hidden></section>
+
+<section class="log" aria-labelledby="logTitle">
+  <h2 id="logTitle">Words played <small style="font-weight:700">(tap a word and Dad explains it)</small></h2>
+  <ol id="log"></ol>
+</section>
+
+<section class="tiers" aria-labelledby="pickTitle">
+  <h2 id="pickTitle">Pick your dad</h2>
+  <div class="tier-grid" id="tierGrid" role="radiogroup" aria-label="Opponent"></div>
+</section>
+
+<p class="foot">Tap one of your tiles, then tap a square to put it there. Tap a tile on the board to take it back. All your tiles go in one line, across or down, and join up with what's already there. The first word covers the star. Use all seven tiles in one go for a Full House: 50 extra points.</p>
+<p class="foot"><b>Bonuses:</b> play a Glow-Up word (a classier word for an everyday one) for +10, and the day's Power Word for double points. Cover a ✦ Simile Square, play a verb, or every few turns, and Dad gives you a quick bonus round: a simile, a Tense Twist or a sentence.</p>
+
+<script src="/static/avatars.js"></script>
+<script src="/static/words.js"></script>
+<script src="/static/glowup.js"></script>
+<script src="/static/tenses.js"></script>
+<script src="/static/tiles-badges.js"></script>
+<script src="/static/tiles-dads.js"></script>
+<script src="/static/tiles-engine.js"></script>
+<script>
+(() => {
+  "use strict";
+  const T = window.RoboTiles;
+  const AV = window.RoboAvatars;
+  const N = T.N;
+  const $ = (id) => document.getElementById(id);
+  const ORDER = ["gamer", "skater", "eighties", "coach", "modern", "labdad", "professor", "grandpa", "bookworm"];
+  const TALK_KEY = "robodad.tiles.talk", GAME_KEY = "robodad.tiles.game", STATS_KEY = "robodad.tiles.stats", TIER_KEY = "robodad.tiles.tier";
+  const UNLOCK_KEY = "robodad.grandpa";       // shared with chess: find him once, play him anywhere
+  const COLS = "ABCDEFGHIJKLMNO";
+  const PREM_LABEL = { dl: "2L", tl: "3L", dw: "2W", tw: "3W", sim: "✦" };
+  const PREM_NAME = { dl: "double letter", tl: "triple letter", dw: "double word", tw: "triple word", sim: "Simile Square" };
+
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+    del: (k) => { try { localStorage.removeItem(k); } catch {} },
+  };
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const up = (w) => w.toUpperCase();
+  const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // Trash talk: playful, about the words and the board, never about the player.
+  const LINES = {
+    start: ["Let's see your vocabulary, kiddo.", "Dictionary's loaded. So am I.", "Good luck. Spelling counts."],
+    playerBig: ["Okay, that word had muscles.", "Big points. Did you swallow a dictionary?", "Fine. That one was good."],
+    playerFull: ["A Full House? Every tile? I need to sit down.", "All seven tiles. That's just showing off. Respect."],
+    playerSmall: ["Small word, still counts.", "Every point adds up.", "Short and sweet."],
+    notWord: ["That's not in Dad's dictionary. Nice try though.", "Hmm, I don't think that one's a word.", "Creative spelling. Dictionary says no."],
+    hint: ["Dad doesn't hand these out often. Here's one idea.", "Psst. Try this."],
+    swap: ["Fresh tiles. Good thinking.", "New letters, new chances."],
+    dadSwap: ["My tiles were a mess. Swapping.", "Dad needs better letters. Swap."],
+    dadPass: ["Nothing fits. Your turn again.", "I've got nothing. Pass."],
+    dadBig: ["Look at the points on that one!", "That's how Dad does it.", "Bonus square, baby."],
+    dadFull: ["FULL HOUSE! All seven. Read 'em and weep.", "Every tile, one word. Dad's still got it."],
+    playerWins: ["You beat me. Fair and square. Rematch?", "Well played. I'm framing that score."],
+    dadWins: ["Good game. Want another go?", "Dad wins this one. You'll get me next time."],
+    draw: ["A tie! Same score. Rematch?"],
+    bossStart: ["So. You made it to the boss. I've read the dictionary. Twice.", "Welcome to the library, kiddo. Shh."],
+    bossLoses: ["Beaten by my own kid at words. I've never been prouder. Or more confused."],
+    glowup: ["Ooh, fancy! Glow-Up bonus.", "Look at that vocabulary. Very classy.", "Someone's been reading."],
+    power: ["THE POWER WORD! Double points!", "You found today's Power Word. Respect."],
+    thinking: {
+      modern:    ["Hmm, let me see what I've got.", "Moving tiles around. Hang on."],
+      skater:    ["Looking for something long and flashy.", "There's a sick word in here somewhere."],
+      eighties:  ["Scanning for bonus squares. Beep boop.", "Insert coin. Finding a word."],
+      gamer:     ["Hunting the high-value letters.", "Working out the combo."],
+      coach:     ["Planning two turns ahead.", "Keeping a good rack for later."],
+      bookworm:  ["Every word I know is on standby. All of them.", "Consulting the mental library. It's a big library."],
+      labdad:    ["Running the experiment.", "Hypothesis: there's a Q in here somewhere."],
+      professor: ["Considering all the options. All of them.", "Chalk dust everywhere. Still thinking."],
+      grandpa:   ["Back in my day we spelled with wooden tiles.", "I've seen this board before. 1974."],
+    },
+  };
+  let talkOn = store.get(TALK_KEY) !== "0";
+  const talk = (kind) => { $("say").textContent = talkOn ? pick(LINES[kind]) : ""; };
+
+  let dict = null, common = null;
+  let s = null;                       // game state (racks[0] is you, racks[1] is Dad)
+  let tierKey = store.get(TIER_KEY) || "gamer";
+  let pending = [];                   // tiles you've put down this turn: { r, c, ch, blank, idx }
+  let sel = -1;                       // selected rack index
+  let swapMode = false, swapSel = new Set();
+  let hintsLeft = 3, busy = false, lastDad = [], hintKeys = new Set();
+  let askBlank = null;                // pending tile waiting for its letter
+  let confirmNew = false, confirmPass = false, confirmTier = null;
+  let plays = 0, lastBonus = "";      // your plays this game, and the last bonus round you got
+
+  // ---------------------------------------------------------------- vocabulary and grammar data
+  const dayNumber = () => { const n = new Date(); return Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 86400000); };
+  const FANCY = new Map();            // word -> { means, plain }
+  for (const g of window.ROBO_GLOWUP || []) FANCY.set(g.fancy, { means: g.means, plain: g.plain });
+  const WOTD = new Map((window.ROBO_WORDS || []).map((w) => [w.w, w]));
+  for (const w of window.ROBO_WORDS || []) if (!FANCY.has(w.w) && /^[a-z]+$/.test(w.w)) FANCY.set(w.w, { means: w.means, plain: "" });
+  const POWER = (() => {
+    const pool = (window.ROBO_GLOWUP || []).filter((g) => g.fancy.length >= 4 && g.fancy.length <= 7);
+    return pool.length ? pool[dayNumber() % pool.length] : null;
+  })();
+  const VERBS = new Map((window.ROBO_VERBS || []).map((v) => [v[0], v]));
+  const GLOW_POINTS = 10, TENSE_POINTS = 5, SENTENCE_POINTS = 5, SIMILE_POINTS = 10, QUIZ_POINTS = 5;
+
+  // ---------------------------------------------------------------- the dads' personalities (tiles-dads.js)
+  const DADS = window.TILE_DADS || {};
+  const DAD = () => DADS[tierKey] || { favs: {}, lines: {} };
+  let pers = {};                      // this game's personality state: naps, experiment, halftime, phase two, combo
+  function newPers() {
+    const p = { dadTurns: 0, combo: 0 };
+    if (tierKey === "grandpa") { const a = 3 + Math.floor(Math.random() * 5); p.naps = [a, a + 5 + Math.floor(Math.random() * 5)]; }
+    if (tierKey === "labdad") p.gambleTurn = 3 + Math.floor(Math.random() * 6);
+    return p;
+  }
+  const sayDad = (kind) => { const l = DAD().lines[kind]; if (talkOn && l && l.length) $("say").textContent = pick(l); };
+  function celebrate(move) {
+    const el = $("oppArt");
+    if (!move || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
+    void el.getBoundingClientRect(); el.classList.add("do-" + move);
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + move), 3300);
+  }
+  function applyTheme() {
+    const t = DAD().theme || {}, st = document.documentElement.style;
+    st.setProperty("--tile", t.tile || "#F3E6C4"); st.setProperty("--tile-ink", t.ink || "#1B1530"); st.setProperty("--cellbg", t.cell || "#221F3D");
+  }
+  // The teaching note for one of a dad's favourite words, or "" if it isn't one.
+  function favNote(dadKey, word) {
+    const d = DADS[dadKey]; if (!d || !d.favs[word]) return "";
+    return dadKey === "professor" ? `${up(word)} means ${d.favs[word]}.` : d.favs[word];
+  }
+  // Professor Dad's affix lesson: only when the word really is base + affix (REDO = RE + DO).
+  function affixNote(word) {
+    for (const [a, note] of DADS.professor ? DADS.professor.affixes : []) {
+      const pre = !["ness", "less", "ful", "able", "ment", "est", "ly", "ing", "er"].includes(a);
+      const base = pre ? word.slice(a.length) : word.slice(0, -a.length);
+      if ((pre ? word.startsWith(a) : word.endsWith(a)) && base.length >= 3 && dict.has(base)) return note;
+    }
+    return "";
+  }
+  function rootNote(word) {
+    for (const [r, note] of DADS.labdad ? DADS.labdad.roots : []) if (word.includes(r) && word.length > r.length + 1) return note;
+    return "";
+  }
+  function record(k) { const r = (stats().record || {})[k]; return r || { w: 0, l: 0, t: 0, last: "" }; }
+
+  // Bookworm Dad, the boss, opens after you beat a Tier 3 dad or higher. Robo-Grandpa lives in the Secret Vault.
+  function isLocked(k) {
+    const t = T.TIERS[k];
+    if (t.secret) return store.get(UNLOCK_KEY) !== "1";
+    if (t.unlockTier) {
+      const wins = stats().wins || {};
+      return !Object.keys(wins).some((d) => T.TIERS[d] && T.TIERS[d].tier >= t.unlockTier && wins[d] > 0);
+    }
+    return false;
+  }
+
+  // Badges: remember which were earned when the page opened, and cheer for new ones.
+  const BADGES = window.ROBO_TILE_BADGES || [];
+  const earnedNow = () => new Set(BADGES.filter((b) => b[5](stats())).map((b) => b[0]));
+  let earned = earnedNow();
+  function checkBadges() {
+    const now = earnedNow();
+    const fresh = BADGES.filter((b) => now.has(b[0]) && !earned.has(b[0]));
+    earned = now;
+    if (fresh.length) toast(`Badge unlocked: ${fresh.map((b) => b[1]).join(", ")}! See it in your badge collection.`);
+  }
+  let toastTimer = null;
+  function toast(text) {
+    let el = document.querySelector(".toast");
+    if (!el) { el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+    el.textContent = text; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 5000);
+  }
+
+  // ---------------------------------------------------------------- saving
+  function save() {
+    if (!s) return;
+    if (s.over) { store.del(GAME_KEY); return; }
+    store.set(GAME_KEY, JSON.stringify({ s, tierKey, hintsLeft, lastDad, plays, lastBonus, pers }));
+  }
+  function load() {
+    try {
+      const g = JSON.parse(store.get(GAME_KEY) || "null");
+      if (!g || !g.s || !Array.isArray(g.s.board) || g.s.board.length !== N * N || g.s.over) return false;
+      if (g.tierKey === "grandpa" && store.get(UNLOCK_KEY) !== "1") return false;
+      if (T.TIERS[g.tierKey] && isLocked(g.tierKey)) return false;
+      s = g.s; tierKey = T.TIERS[g.tierKey] ? g.tierKey : "gamer"; hintsLeft = g.hintsLeft ?? 3; lastDad = g.lastDad || [];
+      plays = g.plays || 0; lastBonus = g.lastBonus || ""; pers = g.pers || newPers();
+      return true;
+    } catch { return false; }
+  }
+
+  // Progress kept for badges: games, wins per dad, best word, Full Houses, and the words you've played.
+  function stats() { try { return JSON.parse(store.get(STATS_KEY) || "{}") || {}; } catch { return {}; } }
+  function bumpStats(fn) { const st = stats(); fn(st); store.set(STATS_KEY, JSON.stringify(st)); }
+  function noteWords(ev) {
+    bumpStats((st) => {
+      st.bank = st.bank || {};
+      for (const w of ev.words) st.bank[w.word] = (st.bank[w.word] || 0) + 1;
+      const keys = Object.keys(st.bank);
+      if (keys.length > 600) for (const k of keys.slice(0, keys.length - 600)) delete st.bank[k];
+      if (!st.best || ev.score > st.best.score) st.best = { word: ev.main, score: ev.score };
+      if (ev.fullHouse) st.fullHouses = (st.fullHouses || 0) + 1;
+    });
+    checkBadges();
+  }
+  function countStat(key, by = 1) { bumpStats((st) => { st[key] = (st[key] || 0) + by; }); checkBadges(); }
+
+  // ---------------------------------------------------------------- drawing
+  function avatarSVG(key, size) {
+    const a = AV && AV.AVATARS[key];
+    return a ? `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${a.svg}</svg>` : "";
+  }
+  const dadName = () => T.TIERS[tierKey].name;
+
+  function renderPicker() {
+    $("tierGrid").innerHTML = ORDER.map((k) => {
+      const t = T.TIERS[k];
+      const locked = isLocked(k);
+      const label = t.boss ? (locked ? "Boss · beat a Tier 3 dad to unlock" : "Boss")
+        : locked ? "Locked. Find him in the Secret Vault." : `Tier ${t.tier}`;
+      const art = t.secret && locked ? "" : avatarSVG(k, 36);
+      return `<button class="tier${t.boss ? " boss" : ""}" type="button" role="radio" data-k="${k}" aria-checked="${k === tierKey}" ${locked ? "disabled" : ""}>
+        ${art}<span>${t.name}<small>${label}</small></span></button>`;
+    }).join("");
+  }
+
+  function setOpponent() {
+    $("oppArt").innerHTML = avatarSVG(tierKey, 52);
+    $("oppArt").className = "bot";
+    $("oppName").textContent = dadName();
+    $("oppTier").textContent = (T.TIERS[tierKey].boss ? "The boss" : `Tier ${T.TIERS[tierKey].tier}`) + (DAD().era ? ` · ${DAD().era}` : "");
+    const rec = record(tierKey);
+    $("oppRecord").textContent = rec.w + rec.l + rec.t ? `Record vs you: ${rec.l}–${rec.w}${rec.t ? `–${rec.t}` : ""} (Dad–you)` : "";
+    $("oppLesson").textContent = DAD().lesson ? `Teaches: ${DAD().lesson}` : "";
+    applyTheme();
+    renderPicker();
+  }
+
+  function tileHTML(ch, blank, cls) {
+    return `<span class="tile${blank ? " blank" : ""}${cls ? " " + cls : ""}">${ch}${blank ? "" : `<i>${T.VALUES[ch]}</i>`}</span>`;
+  }
+
+  function renderBoard() {
+    const pend = new Map(pending.map((p) => [p.r * N + p.c, p]));
+    const last = new Set(lastDad);
+    let html = "";
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const k = r * N + c, prem = T.PREMIUM[k], t = s.board[k], p = pend.get(k);
+      const star = r === T.CENTER && c === T.CENTER;
+      const cls = ["cell"]; if (prem) cls.push(prem); if (star) cls.push("star");
+      if (!t && !p && sel >= 0) cls.push("drop");
+      let inner = "", label = `${COLS[c]}${r + 1}`;
+      if (t) { inner = tileHTML(t.ch, t.blank, last.has(k) ? "last" : ""); label += `, ${up(t.ch)}${t.blank ? " (blank)" : ""}`; }
+      else if (p) { inner = tileHTML(p.ch || "?", p.blank, "pending" + (hintKeys.has(k) ? " hint" : "")); label += `, your ${p.ch ? up(p.ch) : "blank"}, tap to take back`; }
+      else { inner = `<span class="lbl">${star ? "★" : (PREM_LABEL[prem] || "")}</span>`; label += prem ? `, ${PREM_NAME[prem]}` : ", empty"; }
+      html += `<button class="${cls.join(" ")}" type="button" data-k="${k}" aria-label="${label}">${inner}</button>`;
+    }
+    $("board").innerHTML = html;
+  }
+
+  function rackLeft() {
+    const used = new Set(pending.map((p) => p.idx));
+    return s.racks[0].map((ch, i) => ({ ch, i })).filter((x) => !used.has(x.i));
+  }
+
+  function renderRack() {
+    $("rack").innerHTML = rackLeft().map(({ ch, i }) => {
+      const cls = ["rtile"]; if (i === sel) cls.push("sel"); if (swapMode && swapSel.has(i)) cls.push("swap");
+      const name = ch === "?" ? "blank tile" : `${up(ch)}, ${T.VALUES[ch]} point${T.VALUES[ch] === 1 ? "" : "s"}`;
+      return `<button class="${cls.join(" ")}" type="button" data-i="${i}" aria-label="${name}" aria-pressed="${i === sel || swapSel.has(i)}">${ch === "?" ? "&nbsp;" : ch}${ch === "?" ? "" : `<i>${T.VALUES[ch]}</i>`}</button>`;
+    }).join("");
+  }
+
+  function renderScore() {
+    const yourTurn = !s.over && s.turn === 0 && !busy;
+    $("youScore").innerHTML = `You <b>${s.scores[0]}</b>`;
+    $("youScore").className = yourTurn ? "turn" : "";
+    $("dadScore").innerHTML = `${dadName()} <b>${s.scores[1]}</b>`;
+    $("dadScore").className = !s.over && !yourTurn ? "turn" : "";
+    $("bagLeft").innerHTML = `Tiles left <b>${s.bag.length}</b>`;
+  }
+
+  function renderLog() {
+    const items = s.log.slice().reverse().map((e) => {
+      const who = e.p === 0 ? "You" : dadName();
+      const wb = (w) => `<button class="wbtn" type="button" data-word="${w}" aria-label="What does ${up(w)} mean?">${up(w)}</button>`;
+      if (e.type === "play") {
+        const extra = e.words.length > 1 ? ` <span class="dad">+ ${e.words.slice(1).map((w) => wb(w.word)).join(", ")}</span>` : "";
+        return `<li><span class="${e.p ? "dad" : ""}">${who}:</span> <span class="w">${wb(e.words[0].word)}</span>${extra} <span class="pts">${e.score}</span>${e.fullHouse ? " Full House!" : ""}</li>`;
+      }
+      if (e.type === "bonus") return `<li class="bon">${esc(e.label)} <span class="pts">+${e.score}</span></li>`;
+      if (e.type === "swap") return `<li class="dad">${who} swapped ${e.count} tile${e.count === 1 ? "" : "s"}.</li>`;
+      return `<li class="dad">${who} passed.</li>`;
+    });
+    $("log").innerHTML = items.join("") || `<li class="dad">No words yet.</li>`;
+  }
+
+  function renderButtons() {
+    const mine = !!s && !s.over && s.turn === 0 && !busy && !!dict;
+    $("playBtn").disabled = !mine || swapMode || !pending.length || !!askBlank;
+    $("recallBtn").disabled = !mine || !pending.length;
+    $("shuffleBtn").disabled = !mine || swapMode;
+    $("hintBtn").disabled = !mine || swapMode || hintsLeft <= 0;
+    $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
+    $("swapBtn").disabled = !mine || (s && s.bag.length < T.RACK);
+    $("swapBtn").textContent = swapMode ? (swapSel.size ? `Swap ${swapSel.size} tile${swapSel.size === 1 ? "" : "s"}` : "Cancel swap") : "Swap tiles";
+    $("passBtn").disabled = !mine || swapMode;
+    $("passBtn").textContent = confirmPass ? "Tap again to pass" : "Pass";
+    $("newBtn").textContent = confirmNew ? "Tap again to start over" : "New game";
+  }
+
+  function renderAll() { renderBoard(); renderRack(); renderScore(); renderLog(); renderButtons(); }
+  function setStatus(html) { $("status").innerHTML = html; }
+
+  function yourMoveStatus() {
+    if (s.over) return;
+    if (!s.log.length) setStatus("You go first. Make a word that covers the <strong>★</strong> in the middle.");
+    else setStatus("<strong>Your move.</strong> Tap a tile, then tap a square.");
+  }
+
+  // ---------------------------------------------------------------- your turn
+  function onCell(k) {
+    if (!dict || busy || s.over || s.turn !== 0 || swapMode) return;
+    const r = Math.floor(k / N), c = k % N;
+    const pi = pending.findIndex((p) => p.r === r && p.c === c);
+    if (pi >= 0) {                                    // take it back
+      const [p] = pending.splice(pi, 1);
+      hintKeys.delete(k);
+      if (askBlank === p) { askBlank = null; yourMoveStatus(); }
+      renderAll(); return;
+    }
+    if (s.board[k] || sel < 0) return;
+    const ch = s.racks[0][sel];
+    const tile = { r, c, ch: ch === "?" ? "" : ch, blank: ch === "?", idx: sel };
+    pending.push(tile);
+    sel = -1;
+    if (tile.blank) { askBlank = tile; showLetterPicker(); }
+    renderAll();
+  }
+
+  function showLetterPicker() {
+    setStatus(`<strong>Blank tile:</strong> which letter should it be? It scores 0.<div class="letters">${
+      "abcdefghijklmnopqrstuvwxyz".split("").map((l) => `<button type="button" data-letter="${l}" aria-label="${up(l)}">${l}</button>`).join("")}</div>`);
+  }
+
+  function onRack(i) {
+    if (!dict || busy || s.over || s.turn !== 0) return;
+    if (swapMode) { swapSel.has(i) ? swapSel.delete(i) : swapSel.add(i); renderRack(); renderButtons(); return; }
+    sel = sel === i ? -1 : i;
+    renderBoard(); renderRack();
+  }
+
+  function recall() { pending = []; askBlank = null; sel = -1; hintKeys.clear(); yourMoveStatus(); renderAll(); }
+
+  function play() {
+    if (!pending.length || askBlank || busy || s.turn !== 0) return;
+    const tiles = pending.map(({ r, c, ch, blank }) => ({ r, c, ch, blank }));
+    const ev = T.evaluatePlay(s.board, tiles, dict);
+    if (!ev.ok) {
+      if (ev.error === "notword") {
+        setStatus(`<strong>Not in the dictionary:</strong> ${ev.bad.map(up).join(", ")}. Move your tiles and try again.`);
+        talk("notWord");
+      } else setStatus(`<strong>Not quite.</strong> ${ev.error}`);
+      return;
+    }
+    pending = []; sel = -1; hintKeys.clear(); confirmPass = false;
+    T.applyPlay(s, tiles, ev);
+    noteWords(ev);
+    lastDad = [];
+    plays++;
+    if (tierKey === "grandpa") sayDad("praise");          // Grandpa doesn't trash talk. He spoils you.
+    else talk(ev.fullHouse ? "playerFull" : ev.score >= 25 ? "playerBig" : "playerSmall");
+    let msg = `<strong>${up(ev.main)}</strong> scores ${ev.score}${ev.fullHouse ? " with the Full House bonus" : ""}.`;
+    const yourFav = ev.words.map((w) => favNote(tierKey, w.word)).find(Boolean);
+    if (yourFav) msg += ` ${dadName()} loves that one: ${esc(yourFav)}`;
+    if (tierKey === "eighties" && tiles.some((t) => T.PREMIUM[t.r * N + t.c] === "tw")) { sayDad("oneUp"); celebrate("oneup"); }
+
+    // Vocabulary bonuses: the day's Power Word doubles the play; each Glow-Up word adds 10.
+    const formed = [...new Set(ev.words.map((w) => w.word))];
+    if (POWER && formed.includes(POWER.fancy)) {
+      addBonus(ev.score, `Power Word ${up(POWER.fancy)}: double points`);
+      msg += ` <strong>Power Word!</strong> Double points: +${ev.score}.`;
+      talk("power");
+    }
+    const glow = formed.filter((w) => FANCY.has(w));
+    if (glow.length) {
+      addBonus(GLOW_POINTS * glow.length, `Glow-Up: ${glow.map(up).join(", ")}`);
+      countStat("glowups", glow.length);
+      msg += " " + glow.map((w) => `<strong>Glow-Up +${GLOW_POINTS}:</strong> ${up(w)} means ${esc(FANCY.get(w).means)}${FANCY.get(w).plain ? ` (a classier "${esc(FANCY.get(w).plain)}")` : ""}.`).join(" ");
+      if (!formed.includes(POWER && POWER.fancy)) talk("glowup");
+    }
+    setStatus(msg);
+
+    // Grammar bonus round: a Simile Square beats a Tense Twist beats a Sentence Bonus.
+    let round = null;
+    if (!s.over) {
+      const verb = formed.find((w) => VERBS.has(w));
+      if (tiles.some((t) => T.PREMIUM[t.r * N + t.c] === "sim")) round = { kind: "simile", word: ev.main };
+      else if (verb && lastBonus !== "tense") round = { kind: "tense", word: verb };
+      else if (plays % 3 === 2 && ev.main.length >= 3) round = { kind: "sentence", word: ev.main };
+    }
+    lastBonus = round ? round.kind : "";
+    if (round) { save(); renderAll(); openBonus(round); }
+    else afterTurn();
+  }
+
+  // Bonus points go to you, straight onto the scoreboard and into the list.
+  function addBonus(points, label) {
+    if (!points) return;
+    s.scores[0] += points;
+    s.log.push({ p: 0, type: "bonus", label, score: points });
+    if (s.over) s.over.winner = s.scores[0] === s.scores[1] ? -1 : (s.scores[0] > s.scores[1] ? 0 : 1);
+  }
+
+  // ---------------------------------------------------------------- bonus rounds
+  function shuffled(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+
+  function openBonus(round) {
+    const box = $("bonus");
+    box.hidden = false;
+    setTimeout(() => box.scrollIntoView({ block: "nearest", behavior: "smooth" }), 50);
+    $("say").textContent = talkOn ? "Bonus round! Dad's quizzing you." : "";
+    const done = () => { box.hidden = true; box.innerHTML = ""; afterTurn(); };
+    const finishRow = (html) => `${html}<div class="row"><button class="btn primary" type="button" data-bx="go">Continue</button></div>`;
+    box.onclick = (e) => { const b = e.target.closest("[data-bx]"); if (b && b.dataset.bx === "go") done(); };
+    const W = up(round.word);
+
+    if (round.kind === "tense") {
+      const [base, past, ing, wrong] = VERBS.get(round.word);
+      const which = wrong && Math.random() < 0.6 ? "past" : pick(["past", "present", "future"]);
+      const Q = {
+        past:    { label: "past", frame: "Yesterday I ___.", right: past },
+        present: { label: "present (happening right now)", frame: "Right now I am ___.", right: ing },
+        future:  { label: "future", frame: "Tomorrow I ___.", right: `will ${base}` },
+      }[which];
+      const pool = [Q.right, past, ing, `will ${base}`, wrong || `${base}s`];
+      const opts = shuffled([...new Set(pool)].filter((x) => x !== Q.right).slice(0, 3).concat(Q.right));
+      box.innerHTML = `<h2>Tense Twist +${TENSE_POINTS}</h2><p>You played <strong>${W}</strong>. Which one is the <strong>${Q.label}</strong>? <em>${Q.frame}</em></p>
+        <div class="row">${opts.map((o) => `<button class="btn opt" type="button" data-opt="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+        <div class="row"><button class="btn" type="button" data-bx="go">Skip</button></div>`;
+      box.querySelectorAll("[data-opt]").forEach((b) => b.addEventListener("click", () => {
+        const right = b.dataset.opt === Q.right;
+        if (right) { addBonus(TENSE_POINTS, `Tense Twist: ${W} → ${Q.right.toUpperCase()}`); countStat("tenses"); }
+        const why = which === "past" && wrong ? ` People often say "${wrong}", but ${base} is irregular: it's <strong>${past}</strong>.`
+          : which === "future" ? " For the future, put <strong>will</strong> before the verb." : which === "present" ? " Happening right now? Use <strong>am/is/are</strong> + <strong>-ing</strong>." : "";
+        box.innerHTML = finishRow(`<h2>Tense Twist</h2><p class="${right ? "good" : "bad"}"><strong>${right ? `Yes! +${TENSE_POINTS}` : "Not quite."}</strong> ${Q.frame.replace("___", `<strong>${esc(Q.right)}</strong>`)}${why}</p>`);
+        renderAll(); box.querySelector("[data-bx]").focus();
+      }));
+      return;
+    }
+
+    const simile = round.kind === "simile";
+    const pts = simile ? SIMILE_POINTS : SENTENCE_POINTS;
+    box.innerHTML = `<h2>${simile ? "Simile Square" : "Sentence Bonus"} +${pts}</h2>
+      <p>${simile
+        ? `You landed on a ✦ Simile Square. Use <strong>${W}</strong> in a simile (compare with <em>like</em> or <em>as</em>: "as fast as a cheetah") or a metaphor (say one thing <em>is</em> another: "my room is a jungle").`
+        : `Use <strong>${W}</strong> in a sentence. Dad checks the grammar.`}</p>
+      <input id="bxText" type="text" maxlength="200" autocomplete="off" aria-label="Your sentence" placeholder="Type your sentence">
+      <div class="row"><button class="btn primary" type="button" data-bx="check">Check it</button><button class="btn" type="button" data-bx="go">Skip</button></div>`;
+    const input = $("bxText"); input.focus();
+    const check = async () => {
+      const text = input.value.trim();
+      if (text.split(/\s+/).length < 3) { input.focus(); return; }
+      box.querySelector('[data-bx="check"]').disabled = true;
+      box.insertAdjacentHTML("beforeend", `<p class="reply">Dad is reading<span class="dots" aria-hidden="true"></span></p>`);
+      let res = null;
+      try {
+        const r = await fetch("/api/tiles/coach", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind: round.kind, word: round.word, text }) });
+        if (r.ok) res = await r.json();
+      } catch {}
+      if (!res || res.offline) res = localCheck(round, text);
+      if (res.safety) { box.innerHTML = finishRow(`<p class="reply">${esc(res.reply)}</p>`); return; }
+      if (res.ok) { addBonus(pts, `${simile ? "Simile Square" : "Sentence Bonus"}: ${W}`); countStat("sentences"); }
+      box.innerHTML = finishRow(`<h2>${simile ? "Simile Square" : "Sentence Bonus"}</h2><p>“${esc(text)}”</p>
+        <p class="${res.ok ? "good" : "bad"}"><strong>${res.ok ? `Nice! +${pts}` : "Not this time."}</strong> ${esc(res.reply || "")}</p>`);
+      renderAll(); box.querySelector("[data-bx]").focus();
+    };
+    box.querySelector('[data-bx="check"]').addEventListener("click", check);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); check(); } });
+  }
+
+  // When the AI isn't available: check the basics in the browser.
+  function localCheck(round, text) {
+    const lower = text.toLowerCase(), root = round.word.slice(0, Math.max(3, round.word.length - 2));
+    const uses = lower.split(/[^a-z']+/).some((t) => t === round.word || t.startsWith(root));
+    if (!uses) return { ok: false, reply: `I don't see ${up(round.word)} in there. Give it another go next time.` };
+    if (round.kind === "simile") {
+      const sim = /\blike\b/.test(lower) || /\bas\s+\w+\s+as\b/.test(lower);
+      return sim ? { ok: true, reply: "That's a simile: you compared two things with like or as. (Dad's grammar brain is offline, so I checked the basics.)" }
+        : { ok: false, reply: "Dad's grammar brain is offline, so I can only spot similes right now: try comparing with like or as." };
+    }
+    return text.split(/\s+/).length >= 4
+      ? { ok: true, reply: "You used it in a full sentence. (Dad's grammar brain is offline, so I checked the basics.)" }
+      : { ok: false, reply: "Make it a full sentence, at least four words." };
+  }
+
+  // ---------------------------------------------------------------- Dad explains words
+  const defCache = new Map();
+  async function explainWord(word, counted = true) {
+    const box = $("explain"), W = up(word);
+    box.hidden = false;
+    if (counted) {
+      bumpStats((st) => { st.looked = st.looked || []; if (!st.looked.includes(word)) { st.looked.push(word); if (st.looked.length > 300) st.looked.shift(); } });
+      checkBadges();
+    }
+    const f = FANCY.get(word), wd = WOTD.get(word);
+    let local = "";
+    if (wd) local = `<p><strong>Means:</strong> ${esc(wd.means)}</p><p><strong>Example:</strong> “${esc(wd.ex)}”</p><p><strong>Dad's tip:</strong> ${esc(wd.use)}</p>`;
+    else if (f) local = `<p><strong>Means:</strong> ${esc(f.means)}.${f.plain ? ` A Glow-Up for “${esc(f.plain)}”.` : ""}</p>`;
+    const head = `<h2>Word Origins with Dad</h2><div class="w">${W}</div>`;
+    const foot = `<div class="row"><button class="btn" type="button" data-close-ex>Close</button></div>`;
+    const show = (d) => {
+      let h = head + local;
+      if (d && !d.offline) {
+        if (!local) h += `<p><strong>Means:</strong> ${esc(d.means)}</p>`;
+        if (d.origin) h += `<p><strong>Where it comes from:</strong> ${esc(d.origin)}</p>`;
+        if (d.example && !wd) h += `<p><strong>Try it:</strong> “${esc(d.example)}”</p>`;
+      } else if (!local) h += `<p>Dad's word brain is offline right now. It's a real word though: it's in the dictionary. Ask again in a bit.</p>`;
+      box.innerHTML = h + foot;
+    };
+    if (defCache.has(word)) { show(defCache.get(word)); return; }
+    box.innerHTML = head + local + `<p>Dad is thinking<span class="dots" aria-hidden="true"></span></p>` + foot;
+    let d = null;
+    try {
+      const r = await fetch("/api/tiles/coach", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "define", word }) });
+      if (r.ok) d = await r.json();
+    } catch {}
+    if (d && !d.offline) defCache.set(word, d);
+    show(d);
+  }
+
+  function shuffle() {
+    pending = []; askBlank = null; sel = -1; hintKeys.clear();
+    const r = s.racks[0];
+    for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+    yourMoveStatus(); renderAll(); save();
+  }
+
+  function hint() {
+    if (hintsLeft <= 0 || busy || s.turn !== 0) return;
+    pending = []; askBlank = null; sel = -1; hintKeys.clear();
+    const best = T.bestMove(s.board, s.racks[0], dict, common);
+    if (!best) { setStatus("Dad can't find a word with these tiles either. Try swapping them."); renderAll(); return; }
+    hintsLeft--;
+    const used = new Set();
+    for (const t of best.tiles) {
+      const want = t.blank ? "?" : t.ch;
+      const idx = s.racks[0].findIndex((ch, i) => ch === want && !used.has(i));
+      used.add(idx);
+      pending.push({ r: t.r, c: t.c, ch: t.ch, blank: t.blank, idx });
+      hintKeys.add(t.r * N + t.c);
+    }
+    if (tierKey === "grandpa") { if (talkOn) $("say").textContent = "Grandpa's Wisdom: don't tell your dad I helped."; } else talk("hint");
+    setStatus(`Dad's idea: <strong>${up(best.main)}</strong> for ${best.score}. Tap <strong>Play word</strong>, or move the tiles to try your own.`);
+    renderAll(); save();
+  }
+
+  function swapToggle() {
+    if (busy || s.turn !== 0) return;
+    if (!swapMode) {
+      recall(); swapMode = true; swapSel.clear();
+      setStatus("Tap the tiles you want to throw back, then tap <strong>Swap</strong>. Swapping uses your turn.");
+      renderAll(); return;
+    }
+    if (!swapSel.size) { swapMode = false; yourMoveStatus(); renderAll(); return; }
+    const letters = [...swapSel].map((i) => s.racks[0][i]);
+    swapMode = false; swapSel.clear(); lastDad = [];
+    T.applySwap(s, letters);
+    talk("swap");
+    setStatus(`You swapped ${letters.length} tile${letters.length === 1 ? "" : "s"}.`);
+    afterTurn();
+  }
+
+  function pass() {
+    if (busy || s.turn !== 0) return;
+    if (!confirmPass) { confirmPass = true; renderButtons(); setTimeout(() => { confirmPass = false; renderButtons(); }, 3000); return; }
+    confirmPass = false; recall(); lastDad = [];
+    T.applyPass(s);
+    setStatus("You passed.");
+    afterTurn();
+  }
+
+  // ---------------------------------------------------------------- Dad's turn
+  function afterTurn() {
+    save(); renderAll();
+    if (s.over) { endGame(); return; }
+    if (s.turn === 1) dadTurn();
+  }
+
+  function dadTurn() {
+    busy = true; renderAll();
+    const lines = DAD().lines.thinking || LINES.thinking[tierKey] || LINES.thinking.gamer;
+    if (talkOn) $("say").textContent = pick(lines);
+    const prev = $("status").innerHTML;
+    setStatus(`${prev} <br><strong>${dadName()}</strong> is thinking<span class="dots" aria-hidden="true"></span>`);
+    setTimeout(() => {
+      pers.dadTurns = (pers.dadTurns || 0) + 1;
+      const d = DAD();
+      // Bookworm Dad's plot twist: you're ahead at halfway, so he turns the page.
+      let twist = "";
+      if (tierKey === "bookworm" && !pers.phase2 && s.bag.length <= 43 && s.scores[0] > s.scores[1]) {
+        pers.phase2 = true; twist = "<strong>Chapter Two:</strong> Bookworm Dad turns the page. From now on he plays his very best. ";
+        sayDad("phase2"); celebrate("book");
+      }
+      const opts = {
+        favs: new Set(Object.keys(d.favs || {})), favBonus: d.favBonus || 0,
+        nap: tierKey === "grandpa" && (pers.naps || []).includes(pers.dadTurns),
+        gamble: tierKey === "labdad" && !pers.gambled && pers.dadTurns >= (pers.gambleTurn || 99),
+        phase2: !!pers.phase2,
+      };
+      const mv = T.chooseMove(s, tierKey, dict, common, Math.random, opts);
+      busy = false;
+      if (mv.type === "play") {
+        const ev = T.evaluatePlay(s.board, mv.move.tiles, dict);
+        T.applyPlay(s, mv.move.tiles, ev);
+        lastDad = mv.move.tiles.map((t) => t.r * N + t.c);
+        const big = ev.fullHouse || ev.score >= 25;
+        if (ev.fullHouse) talk("dadFull");
+        else if (big) { sayDad("big"); celebrate(d.move); }
+        else if (talkOn) $("say").textContent = pick([`${up(ev.main)}. Your turn.`, `There: ${up(ev.main)}.`, `${up(ev.main)} for ${ev.score}. Beat that.`]);
+        // Signature moves
+        let sig = "";
+        if (mv.nap) { sayDad("nap"); celebrate("nap"); sig = `<strong>Robo-Grandpa nodded off</strong> and only managed ${up(ev.main)}. Quick, make the most of it! `; }
+        if (mv.gamble) { pers.gambled = true; sayDad("gamble"); celebrate("poof"); sig = "<strong>The Experiment:</strong> Lab Dad gambled on a risky letter. "; }
+        pers.combo = ev.score >= 20 ? (pers.combo || 0) + 1 : 0;
+        if (tierKey === "gamer" && pers.combo === 2) { sayDad("combo"); celebrate("gg"); sig = "<strong>COMBO x2!</strong> Two big turns in a row. "; }
+        if (tierKey === "eighties" && mv.move.tiles.some((t) => T.PREMIUM[t.r * N + t.c] === "tw")) { sayDad("oneUp"); celebrate("oneup"); }
+        if (tierKey === "modern" && !big && talkOn && d.jokes && Math.random() < 0.3) { $("say").textContent = pick(d.jokes); celebrate("wink"); }
+        // What he teaches with this word
+        const note = ev.words.map((w) => favNote(tierKey, w.word)).find(Boolean);
+        let teach = "";
+        if (note) {
+          teach = ` <em>${esc(d.tag || d.lesson)}:</em> ${esc(note)}`;
+          if (tierKey === "grandpa") bumpStats((st) => { st.capsule = st.capsule || []; for (const w of ev.words) if (d.favs[w.word] && !st.capsule.includes(w.word)) st.capsule.push(w.word); });
+        } else if (tierKey === "labdad" && rootNote(ev.main)) teach = ` <em>Word root:</em> ${esc(rootNote(ev.main))}`;
+        else if (tierKey === "professor" && affixNote(ev.main)) teach = ` <em>Word parts:</em> ${esc(affixNote(ev.main))}`;
+        else if (FANCY.get(ev.main)) teach = ` That's a Glow-Up word: it means ${esc(FANCY.get(ev.main).means)}.`;
+        else if (!common.has(ev.main)) teach = tierKey === "bookworm" ? " Bookworm Dad explains where it comes from below." : " Never heard of it? Tap it under Words played and Dad explains.";
+        setStatus(`${twist}${sig}<strong>${dadName()}</strong> played <strong>${up(ev.main)}</strong> for ${ev.score}${ev.fullHouse ? ", Full House!" : "."}${teach} <span class="sr">Your move.</span>`);
+        if (tierKey === "bookworm" && !note && !common.has(ev.main)) explainWord(ev.main, false);
+        if (tierKey === "grandpa") checkBadges();
+        save(); renderAll();
+        if (s.over) { endGame(); return; }
+        if (tierKey === "professor") popQuiz(ev.main);
+        coachHalftime();
+        return;
+      } else if (mv.type === "swap") {
+        T.applySwap(s, mv.letters); lastDad = [];
+        talk("dadSwap");
+        setStatus(`<strong>${dadName()}</strong> swapped ${mv.letters.length} tile${mv.letters.length === 1 ? "" : "s"}. Your move.`);
+      } else {
+        T.applyPass(s); lastDad = [];
+        talk("dadPass");
+        setStatus(`<strong>${dadName()}</strong> passed. Your move.`);
+      }
+      pers.combo = 0;
+      save(); renderAll();
+      if (s.over) endGame(); else coachHalftime();
+    }, 650 + Math.random() * 500);
+  }
+
+  // Professor Dad's pop quiz: what does the word he just played mean?
+  function popQuiz(word) {
+    const meaning = (DADS.professor.favs[word]) || (FANCY.get(word) || {}).means;
+    if (!meaning || pers.quizzed === word) return;
+    pers.quizzed = word;
+    const others = [...Object.values(DADS.professor.favs), ...[...FANCY.values()].map((f) => f.means)].filter((m) => m !== meaning);
+    const opts = shuffled([meaning, ...shuffled(others).slice(0, 2)]);
+    const box = $("bonus"); box.hidden = false; busy = true; renderButtons();
+    sayDad("quiz"); celebrate("idea");
+    box.innerHTML = `<h2>Pop quiz! +${QUIZ_POINTS}</h2><p>Professor Dad played <strong>${up(word)}</strong>. What does it mean?</p>
+      <div class="row">${opts.map((o, i) => `<button class="btn opt" type="button" data-q="${i}">${esc(o)}</button>`).join("")}</div>`;
+    box.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => {
+      const right = opts[+b.dataset.q] === meaning;
+      if (right) { addBonus(QUIZ_POINTS, `Pop quiz: ${up(word)}`); bumpStats((st) => { st.quizzes = (st.quizzes || 0) + 1; }); }
+      box.innerHTML = `<h2>Pop quiz</h2><p class="${right ? "good" : "bad"}"><strong>${right ? `Correct! +${QUIZ_POINTS}` : "Not quite."}</strong> ${up(word)} means ${esc(meaning)}.</p>
+        <div class="row"><button class="btn primary" type="button" data-done>Back to the game</button></div>`;
+      box.querySelector("[data-done]").addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; busy = false; renderAll(); yourMoveStatus(); });
+      renderAll(); box.querySelector("[data-done]").focus();
+    }));
+  }
+
+  // Coach Dad's halftime team talk, once, when half the tiles are gone.
+  function coachHalftime() {
+    if (tierKey !== "coach" || pers.halftime || s.bag.length > 43 || s.over) return;
+    pers.halftime = true; save();
+    const tips = DADS.coach.halftime, rack = s.racks[0];
+    const vowels = rack.filter((c) => "aeiou".includes(c)).length;
+    const tip = vowels >= 5 ? tips[2] : rack.some((c) => "xz".includes(c)) ? tips[4] : rack.includes("s") ? tips[0] : pick([tips[1], tips[3]]);
+    const box = $("bonus"); box.hidden = false;
+    celebrate("whistle");
+    box.innerHTML = `<h2>📣 Halftime</h2><p>${esc(tip.replace(/^Halftime! /, ""))}</p><div class="row"><button class="btn primary" type="button" data-done>Back in the game</button></div>`;
+    box.querySelector("[data-done]").addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; });
+  }
+
+  function endGame() {
+    const o = s.over;
+    const you = s.scores[0], dad = s.scores[1];
+    const headline = o.winner === 0 ? "You win!" : o.winner === 1 ? `${dadName()} wins.` : "It's a tie!";
+    const how = o.wentOut === 0 ? "You used your last tile, so you get Dad's leftover points." :
+      o.wentOut === 1 ? `${dadName()} used his last tile and gets your leftover points.` :
+      "Nobody could score for six turns in a row, so the game stopped.";
+    const theEnd = T.TIERS[tierKey].boss ? "<strong>THE END.</strong> " : "";
+    setStatus(`${theEnd}<strong>${headline}</strong> ${you} to ${dad}. ${how} Tap <strong>New game</strong> for a rematch.`);
+    if (o.winner === 0) sayDad("lose"); else if (o.winner === 1) sayDad("win"); else talk("draw");
+    celebrate(o.winner === 1 ? DAD().move : (tierKey === "grandpa" ? "kids" : null));
+    const bossWasLocked = isLocked("bookworm");
+    bumpStats((st) => {
+      st.games = (st.games || 0) + 1;
+      if (o.winner === 0) { st.wins = st.wins || {}; st.wins[tierKey] = (st.wins[tierKey] || 0) + 1; }
+      st.record = st.record || {};
+      const r = st.record[tierKey] || { w: 0, l: 0, t: 0 };
+      if (o.winner === 0) { r.w++; r.last = "w"; } else if (o.winner === 1) { r.l++; r.last = "l"; } else { r.t++; r.last = "t"; }
+      st.record[tierKey] = r;
+    });
+    if (tierKey === "eighties") highScores(you);
+    store.del(GAME_KEY);
+    checkBadges();
+    if (bossWasLocked && !isLocked("bookworm")) toast("Boss unlocked: Bookworm Dad is waiting at the top of the list.");
+    setOpponent();
+    renderAll();
+  }
+
+  // Arcade Dad's high score table: your best games against him, with your initials.
+  function highScores(score) {
+    const st = stats(), list = (st.hiscores || []).slice();
+    const box = $("bonus"); box.hidden = false;
+    const table = (rows, mine) => `<ol class="hiscore">${rows.map((r, i) => `<li class="${i === mine ? "me" : ""}">${esc(r.i)} ${String(r.s).padStart(4, " ")}</li>`).join("")}</ol>`;
+    const qualifies = list.length < 5 || score > list[list.length - 1].s;
+    const done = `<div class="row"><button class="btn" type="button" data-done>Close</button></div>`;
+    const wire = () => { const b = box.querySelector("[data-done]"); if (b) b.addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; }); };
+    if (!qualifies) { box.innerHTML = `<h2>HIGH SCORES</h2>${table(list, -1)}<p>Your ${score} didn't make the board. Insert coin and try again!</p>${done}`; wire(); return; }
+    box.innerHTML = `<h2>NEW HIGH SCORE!</h2><p>${score} points. Enter your initials:</p>
+      <input id="hsInit" maxlength="3" autocomplete="off" aria-label="Your initials, three letters" style="text-transform:uppercase; max-width:7em; font-family:ui-monospace,monospace; letter-spacing:.3em">
+      <div class="row"><button class="btn primary" type="button" data-save>Save</button></div>`;
+    const input = $("hsInit"); input.focus();
+    const saveIt = () => {
+      const ini = input.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3) || "YOU";
+      const row = { i: ini, s: score, d: new Date().toLocaleDateString("en-CA") };
+      list.push(row); list.sort((a, b) => b.s - a.s); list.length = Math.min(list.length, 5);
+      bumpStats((x) => { x.hiscores = list; });
+      box.innerHTML = `<h2>HIGH SCORES</h2>${table(list, list.indexOf(row))}${done}`; wire();
+    };
+    box.querySelector("[data-save]").addEventListener("click", saveIt);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") saveIt(); });
+  }
+
+  // ---------------------------------------------------------------- new game
+  function startGame() {
+    s = T.newGame();
+    pending = []; sel = -1; swapMode = false; swapSel.clear(); hintsLeft = tierKey === "grandpa" ? 4 : 3; busy = false; lastDad = []; askBlank = null; hintKeys.clear();
+    confirmNew = false; confirmPass = false; plays = 0; lastBonus = ""; pers = newPers();
+    $("bonus").hidden = true; $("explain").hidden = true;
+    store.set(TIER_KEY, tierKey);
+    setOpponent(); renderAll(); yourMoveStatus();
+    const rec = record(tierKey);
+    if (rec.last && DAD().lines[rec.last === "w" ? "returnWin" : "returnLose"]) sayDad(rec.last === "w" ? "returnWin" : "returnLose");
+    else sayDad("start");
+    if (tierKey === "grandpa") setStatus("You go first. Grandpa gives you an extra hint today: <strong>Grandpa's Wisdom</strong>. Cover the <strong>★</strong> to start.");
+    if (T.TIERS[tierKey].boss) bossCard();
+    save();
+  }
+
+  // Bookworm Dad's entrance.
+  function bossCard() {
+    const wrap = document.createElement("div");
+    wrap.className = "boss-wrap";
+    wrap.innerHTML = `<div class="boss-card bot" role="dialog" aria-modal="true" aria-labelledby="bossT">${avatarSVG("bookworm", 96)}
+      <h2 id="bossT">BOSS FIGHT</h2><p><strong>Bookworm Dad</strong> has read every word in the dictionary. Twice.</p>
+      <p><em>Chapter One.</em> Get ahead of him by halfway and he'll turn the page and play his very best.</p>
+      <button class="btn primary" type="button" data-begin>Begin</button></div>`;
+    document.body.appendChild(wrap);
+    const card = wrap.firstElementChild;
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) card.classList.add("do-book");
+    const btn = wrap.querySelector("[data-begin]"); btn.focus();
+    btn.addEventListener("click", () => { wrap.remove(); $("board").focus?.(); });
+  }
+  const inProgress = () => s && !s.over && s.log.length > 0;
+
+  // ---------------------------------------------------------------- wiring
+  $("board").addEventListener("click", (e) => { const b = e.target.closest(".cell"); if (b) onCell(+b.dataset.k); });
+  $("rack").addEventListener("click", (e) => { const b = e.target.closest(".rtile"); if (b) onRack(+b.dataset.i); });
+  $("status").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-letter]");
+    if (!b || !askBlank) return;
+    askBlank.ch = b.dataset.letter; askBlank = null;
+    setStatus(`Blank is now <strong>${up(b.dataset.letter)}</strong>. Tap it to take it back if you change your mind.`);
+    renderAll();
+  });
+  $("log").addEventListener("click", (e) => { const b = e.target.closest("[data-word]"); if (b) explainWord(b.dataset.word); });
+  $("explain").addEventListener("click", (e) => { if (e.target.closest("[data-close-ex]")) $("explain").hidden = true; });
+  if (POWER) {
+    $("power").hidden = false;
+    $("power").innerHTML = `⚡ Today's Power Word: <b>${up(POWER.fancy)}</b> (${esc(POWER.means)}). Play it for double points.`;
+  }
+  $("playBtn").addEventListener("click", play);
+  $("recallBtn").addEventListener("click", recall);
+  $("shuffleBtn").addEventListener("click", shuffle);
+  $("hintBtn").addEventListener("click", hint);
+  $("swapBtn").addEventListener("click", swapToggle);
+  $("passBtn").addEventListener("click", pass);
+  $("newBtn").addEventListener("click", () => {
+    if (busy) return;
+    if (inProgress() && !confirmNew) { confirmNew = true; renderButtons(); setTimeout(() => { confirmNew = false; renderButtons(); }, 3000); return; }
+    startGame();
+  });
+  $("tierGrid").addEventListener("click", (e) => {
+    const b = e.target.closest(".tier");
+    if (!b || b.disabled || busy) return;
+    if (b.dataset.k === tierKey && inProgress()) return;
+    if (inProgress() && confirmTier !== b.dataset.k) {
+      confirmTier = b.dataset.k;
+      setStatus(`Tap <strong>${T.TIERS[b.dataset.k].name}</strong> again to end this game and start a new one against him.`);
+      setTimeout(() => { if (confirmTier === b.dataset.k) confirmTier = null; }, 4000);
+      return;
+    }
+    confirmTier = null;
+    tierKey = b.dataset.k;
+    startGame();
+  });
+  $("talkBtn").addEventListener("click", () => {
+    talkOn = !talkOn;
+    store.set(TALK_KEY, talkOn ? "1" : "0");
+    $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
+    $("talkBtn").setAttribute("aria-pressed", String(talkOn));
+    if (!talkOn) $("say").textContent = "";
+  });
+  $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
+  $("talkBtn").setAttribute("aria-pressed", String(talkOn));
+
+  // ---------------------------------------------------------------- start
+  if (!T.TIERS[tierKey] || isLocked(tierKey)) tierKey = "gamer";
+  const resumed = load();
+  if (!resumed) s = T.newGame();
+  setOpponent(); renderAll();
+  Promise.all([fetch("/static/tiles-words.txt").then((r) => { if (!r.ok) throw 0; return r.text(); }),
+               fetch("/static/tiles-common.txt").then((r) => { if (!r.ok) throw 0; return r.text(); })])
+    .then(([all, everyday]) => {
+      dict = T.buildDict(all);
+      common = new Set(everyday.split("\n").filter(Boolean));
+      if (resumed) {
+        setStatus("Welcome back. Your game is right where you left it.");
+        if (s.turn === 1) dadTurn();
+      } else startGame();
+      renderAll();
+    })
+    .catch(() => setStatus("Couldn't load the dictionary. Check your connection and reload the page."));
+})();
+</script>
+</body>
+</html>

@@ -24,18 +24,108 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 .opp .name{font-weight:900; font-size:1.05rem}
 .opp .tier{color:var(--muted); font-size:.9rem}
 .bubble{margin-left:auto; max-width:46%; background:var(--ink); color:#1B1530; border-radius:12px; padding:8px 10px; font-size:.95rem; min-height:2.4em}
-.board{position:relative; width:min(92vw, 480px); aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border:4px solid var(--edge); border-radius:8px; overflow:hidden}
-.sq{position:relative; border:0; padding:0; margin:0; display:flex; align-items:center; justify-content:center; font-size:clamp(26px,8vw,46px); line-height:1; cursor:pointer; background:var(--sq-dark); color:inherit}
-.sq.light{background:var(--sq-light)}
+.board{position:relative; width:min(92vw, 480px); aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border:4px solid var(--frame); border-radius:8px; overflow:hidden; box-shadow:var(--frame-glow)}
+/* Board skin variables. Each dad's skin below only changes these, so selection,
+   check and legal-move highlights keep working the same on every board. */
+.board{--frame:var(--edge); --frame-glow:none; --tex-light:none; --tex-dark:none;
+  --pw:#FFFFFF; --pw-edge:#000; --pb:#111018; --pb-edge:#FFF8;
+  --check-fill:rgba(255,77,109,.55); --hint:#38B6FF; --dot:rgba(20,16,30,.35);
+  --coord-light:var(--sq-dark); --coord-dark:var(--sq-light); --coord-font:"Nunito", ui-rounded, system-ui, sans-serif}
+.sq{position:relative; border:0; padding:0; margin:0; display:flex; align-items:center; justify-content:center; font-size:clamp(26px,8vw,46px); line-height:1; cursor:pointer; background:var(--tex-dark), var(--sq-dark); color:inherit}
+.sq.light{background:var(--tex-light), var(--sq-light)}
 .sq .p{transition:transform .08s}
-.sq.w-piece{color:#FFFFFF; text-shadow:0 0 2px #000,0 0 2px #000}
-.sq.b-piece{color:#111018; text-shadow:0 0 1px #FFF8}
+.sq.w-piece{color:var(--pw); text-shadow:0 0 2px var(--pw-edge),0 0 2px var(--pw-edge)}
+.sq.b-piece{color:var(--pb); text-shadow:0 0 1px var(--pb-edge),0 0 1px var(--pb-edge)}
 .sq.last{box-shadow:inset 0 0 0 999px var(--last)}
 .sq.sel{box-shadow:inset 0 0 0 4px var(--sel)}
-.sq.check{box-shadow:inset 0 0 0 999px rgba(255,77,109,.55)}
-.sq.hint{box-shadow:inset 0 0 0 4px #38B6FF}
-.sq.legal::after{content:""; position:absolute; width:28%; height:28%; border-radius:50%; background:rgba(20,16,30,.35)}
-.sq.legal.cap::after{width:88%; height:88%; background:transparent; border:5px solid rgba(20,16,30,.35)}
+.sq.check{box-shadow:inset 0 0 0 999px var(--check-fill)}
+.sq.hint{box-shadow:inset 0 0 0 4px var(--hint)}
+.sq.legal::after{content:""; position:absolute; width:28%; height:28%; border-radius:50%; background:var(--dot)}
+.sq.legal.cap::after{width:88%; height:88%; background:transparent; border:5px solid var(--dot)}
+.co{position:absolute; font:800 clamp(8px,2.2vw,11px)/1 var(--coord-font); color:var(--coord-dark); pointer-events:none; opacity:.9}
+.sq.light .co{color:var(--coord-light)}
+.co.f{right:3px; bottom:2px}
+.co.r{left:3px; top:3px}
+
+/* Modern Dad: clean slate and white. */
+.board[data-skin="modern"]{--sq-light:#E6EBEF; --sq-dark:#7B8A97; --frame:#46535F;
+  --pw:#FFFFFF; --pw-edge:#1E2830; --pb:#141A20; --pb-edge:#FFFFFF80;
+  --sel:#38B6FF; --last:rgba(56,182,255,.38); --hint:#F5C518; --coord-font:system-ui, sans-serif}
+/* Skater Dad: grip tape and concrete, sticker-outlined pieces, spray-paint pink. */
+.board[data-skin="skater"]{--sq-light:#C9C5BD; --sq-dark:#4A4A50; --frame:#111; --frame-glow:0 0 0 3px #F2C230;
+  --tex-light:radial-gradient(rgba(0,0,0,.10) 1px, transparent 1.6px) 0 0/7px 7px;
+  --tex-dark:radial-gradient(rgba(255,255,255,.09) 1px, transparent 1.6px) 0 0/5px 5px;
+  --pw:#FFFFFF; --pw-edge:#000; --pb:#0B0B0B; --pb-edge:#F2C230;
+  --sel:#FF3EA5; --last:rgba(255,62,165,.42); --dot:rgba(255,62,165,.6); --coord-dark:#F2C230; --coord-light:#111}
+.board[data-skin="skater"] .sq.w-piece{text-shadow:2px 0 #000,-2px 0 #000,0 2px #000,0 -2px #000}
+.board[data-skin="skater"] .sq.b-piece{text-shadow:2px 0 #F2C230,-2px 0 #F2C230,0 2px #F2C230,0 -2px #F2C230}
+/* Arcade Dad: neon grid, glowing pieces, CRT scanlines. */
+.board[data-skin="eighties"]{--sq-light:#2B2070; --sq-dark:#0B0820; --frame:#FF3EA5; --frame-glow:0 0 14px #FF3EA5aa;
+  --tex-light:linear-gradient(to right, transparent calc(100% - 1px), rgba(45,226,230,.45) 0), linear-gradient(to bottom, transparent calc(100% - 1px), rgba(45,226,230,.45) 0);
+  --tex-dark:var(--tex-light);
+  --pw:#2DE2E6; --pw-edge:#2DE2E6; --pb:#FF3EA5; --pb-edge:#FF3EA5;
+  --sel:#FFE14D; --last:rgba(45,226,230,.28); --hint:#FFE14D; --dot:rgba(255,225,77,.7);
+  --coord-light:#2DE2E6; --coord-dark:#2DE2E6; --coord-font:ui-monospace, "Courier New", monospace}
+.board[data-skin="eighties"] .sq.w-piece{text-shadow:0 0 6px #2DE2E6, 0 0 1px #fff}
+.board[data-skin="eighties"] .sq.b-piece{text-shadow:0 0 6px #FF3EA5, 0 0 1px #fff}
+.board[data-skin="eighties"]::after{content:""; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(transparent 0 2px, rgba(0,0,0,.22) 2px 3px)}
+/* Gamer Dad: carbon fibre with an RGB frame that cycles slowly. */
+.board[data-skin="gamer"]{--sq-light:#566074; --sq-dark:#2A303C; --frame:#39FF88;
+  --tex-light:repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 3px, transparent 3px 6px);
+  --tex-dark:repeating-linear-gradient(-45deg, rgba(255,255,255,.05) 0 3px, transparent 3px 6px);
+  --pw:#F4F7FF; --pw-edge:#000; --pb:#05070A; --pb-edge:#39FF88;
+  --sel:#39FF88; --last:rgba(57,255,136,.25); --hint:#FF3EA5; --dot:rgba(57,255,136,.6);
+  --coord-light:#39FF88; --coord-dark:#39FF88; --coord-font:ui-monospace, monospace;
+  animation:rgb 6s linear infinite}
+@keyframes rgb{0%{border-color:#39FF88; box-shadow:0 0 12px #39FF8899}33%{border-color:#38B6FF; box-shadow:0 0 12px #38B6FF99}66%{border-color:#FF3EA5; box-shadow:0 0 12px #FF3EA599}100%{border-color:#39FF88; box-shadow:0 0 12px #39FF8899}}
+/* Coach Dad: turf with chalk lines and a whistle-yellow highlight. */
+.board[data-skin="coach"]{--sq-light:#63B25A; --sq-dark:#3E873C; --frame:#F4F4F0;
+  --tex-light:linear-gradient(to right, transparent calc(100% - 1px), rgba(255,255,255,.4) 0), linear-gradient(to bottom, transparent calc(100% - 1px), rgba(255,255,255,.4) 0);
+  --tex-dark:var(--tex-light);
+  --pw:#FFFFFF; --pw-edge:#0D2A0D; --pb:#0F1512; --pb-edge:#FFFFFF99;
+  --sel:#FFE14D; --last:rgba(255,225,77,.42); --dot:rgba(255,255,255,.65);
+  --coord-light:#FFFFFF; --coord-dark:#FFFFFF}
+/* Bookworm Dad: parchment and leather in a library-wood frame. */
+.board[data-skin="bookworm"]{--sq-light:#F0E3C4; --sq-dark:#86532F; --frame:#4A2C17; --frame-glow:0 0 0 2px #C9A227;
+  --pw:#FFF8E7; --pw-edge:#3A2412; --pb:#2A1A10; --pb-edge:#F5E6C4AA;
+  --sel:#C9A227; --last:rgba(201,162,39,.45); --dot:rgba(58,36,18,.4);
+  --coord-font:Georgia, "Times New Roman", serif}
+/* Lab Dad: blueprint paper with glassy, glowing pieces. */
+.board[data-skin="labdad"]{--sq-light:#3577C2; --sq-dark:#1E4E8A; --frame:#CFE8FF;
+  --tex-light:linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px) 0 0/25% 25%, linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px) 0 0/25% 25%;
+  --tex-dark:var(--tex-light);
+  --pw:#FFFFFF; --pw-edge:#0A2A55; --pb:#06162E; --pb-edge:#9FD8FF;
+  --sel:#FFD84D; --last:rgba(255,216,77,.38); --hint:#FF7A59; --dot:rgba(255,255,255,.55);
+  --coord-light:#E6F3FF; --coord-dark:#E6F3FF; --coord-font:ui-monospace, monospace}
+.board[data-skin="gamer"] .sq.b-piece{text-shadow:0 0 2px #39FF88, 0 0 2px #39FF88, 0 0 4px #39FF8899}
+.board[data-skin="labdad"] .sq.b-piece{text-shadow:0 0 4px #9FD8FF, 0 0 1px #9FD8FF}
+/* Professor Dad: a classic mahogany tournament board. */
+.board[data-skin="professor"]{--sq-light:#EBCB9B; --sq-dark:#8A4B2A; --frame:#3E1F10; --frame-glow:0 0 0 2px #B8892E;
+  --tex-light:repeating-linear-gradient(100deg, rgba(0,0,0,.04) 0 2px, transparent 2px 8px);
+  --tex-dark:repeating-linear-gradient(100deg, rgba(0,0,0,.08) 0 2px, transparent 2px 7px);
+  --pw:#FFFDF5; --pw-edge:#2B1408; --pb:#1A0E07; --pb-edge:#FFF3D9AA;
+  --sel:#B8892E; --last:rgba(205,170,60,.48); --dot:rgba(43,20,8,.38);
+  --coord-font:Georgia, "Times New Roman", serif}
+/* Robo-Grandpa: circuit board, chrome against phosphor green, and a glitch on his moves. */
+.board[data-skin="grandpa"]{--sq-light:#2F4D3E; --sq-dark:#0E1712; --frame:#9AA6AE; --frame-glow:0 0 12px #39FF8866;
+  --tex-light:radial-gradient(circle at 30% 70%, rgba(57,255,136,.4) 0 2px, transparent 3px), linear-gradient(90deg, transparent 29%, rgba(57,255,136,.16) 29% 31%, transparent 31%), linear-gradient(transparent 69%, rgba(57,255,136,.16) 69% 71%, transparent 71%);
+  --tex-dark:var(--tex-light);
+  --pw:#E3ECE7; --pw-edge:#000; --pb:#39FF88; --pb-edge:#39FF88;
+  --sel:#F5C518; --last:rgba(57,255,136,.25); --hint:#F5C518; --dot:rgba(57,255,136,.6);
+  --coord-light:#39FF88; --coord-dark:#39FF88; --coord-font:ui-monospace, monospace}
+.board[data-skin="grandpa"] .sq.b-piece{text-shadow:0 0 6px #39FF88}
+.board[data-skin="grandpa"] .sq.fresh .p{display:inline-block; animation:glitch .45s steps(2,end) 1}
+@keyframes glitch{0%{transform:translate(-3px,1px) skewX(12deg); filter:hue-rotate(90deg)}40%{transform:translate(3px,-1px) skewX(-10deg)}80%{transform:translate(-1px,0)}100%{transform:none; filter:none}}
+@media (prefers-reduced-motion: reduce){
+  .board[data-skin="gamer"]{animation:none; box-shadow:0 0 12px #39FF8899}
+  .board[data-skin="grandpa"] .sq.fresh .p{animation:none}
+}
+.sq .px{width:72%; height:72%; display:block; shape-rendering:crispEdges}
+.board[data-skin="eighties"] .sq.w-piece .px{filter:drop-shadow(0 0 3px #2DE2E6)}
+.board[data-skin="eighties"] .sq.b-piece .px{filter:drop-shadow(0 0 3px #FF3EA5)}
+.skin-row{width:100%; max-width:640px; display:flex; align-items:center; gap:8px; color:var(--muted); font-size:14px}
+.skin-row select{background:var(--panel); color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 8px; font:inherit; font-size:14px}
+.skin-row select:focus-visible{outline:3px solid var(--gold); outline-offset:1px}
 .sq:focus-visible{outline:3px solid var(--gold); outline-offset:-3px; z-index:1}
 .status{width:100%; max-width:640px; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px; min-height:3.2em; font-size:.98rem}
 .status strong{color:var(--gold)}
@@ -82,6 +172,13 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
 <div class="board" id="board" role="group" aria-label="Chess board"></div>
 
+<div class="skin-row">
+  <label for="skinSel">Board</label>
+  <select id="skinSel"></select>
+  <span id="skinNote"></span>
+  <button class="btn" id="soundBtn" type="button" aria-pressed="true" style="margin-left:auto">Sound: on</button>
+</div>
+
 <div class="status" id="status" aria-live="polite">You play white. Your move.</div>
 
 <div class="controls">
@@ -119,6 +216,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   const ORDER = ["modern", "skater", "eighties", "gamer", "coach", "bookworm", "labdad", "professor", "grandpa"];
   const TALK_KEY = "robodad.chess.talk";
   const UNLOCK_KEY = "robodad.grandpa";
+  const SKIN_KEY = "robodad.chess.skin";      // "auto" (match the dad), "classic", or a dad's key
+  const BOARDS_KEY = "robodad.chess.boards";  // dads whose board you've won by beating them
+  const SOUND_KEY = "robodad.chess.sound";
 
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -185,6 +285,190 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   function cur() { return states[states.length - 1]; }
 
+  // ---- board skins ----
+  // Playing a dad shows his board. Beat him and his board is yours to use against anyone.
+  const getBoards = () => { try { const a = JSON.parse(store.get(BOARDS_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch { return []; } };
+  let skinChoice = store.get(SKIN_KEY) || "auto";
+  if (skinChoice !== "auto" && skinChoice !== "classic" && !getBoards().includes(skinChoice)) skinChoice = "auto";
+
+  const activeSkin = () => (skinChoice === "auto" ? tierKey : skinChoice);
+
+  function applySkin() {
+    const skin = activeSkin();
+    const board = $("board");
+    if (skin === "classic") board.removeAttribute("data-skin");
+    else board.dataset.skin = skin;
+    if (states.length) renderBoard();     // Arcade Dad's board swaps in pixel pieces
+  }
+
+  // ---- Arcade Dad's 8-bit pieces: original 10x10 pixel sprites, drawn in the piece colour ----
+  const SPRITES = {
+    p: ["..........", "....##....", "...####...", "...####...", "....##....", "...####...", "....##....", "...####...", "..######..", "..######.."],
+    r: [".##.##.##.", ".########.", ".########.", "..######..", "...####...", "...####...", "...####...", "..######..", ".########.", ".########."],
+    n: ["...##.#...", "..######..", ".##.#####.", "#########.", "####..###.", ".....####.", "....#####.", "...######.", "..#######.", ".########."],
+    b: ["....##....", "...####...", "..###.##..", "..##.###..", "..######..", "...####...", "....##....", "...####...", "..######..", ".########."],
+    q: ["#...##...#", "##..##..##", ".########.", ".########.", "..######..", "...####...", "...####...", "..######..", ".########.", ".########."],
+    k: ["....##....", "..######..", "....##....", "..######..", ".########.", ".##.##.##.", "..######..", "...####...", "..######..", ".########."],
+  };
+  const spriteCache = {};
+  function pixelPiece(t) {
+    if (!spriteCache[t]) {
+      let rects = "";
+      SPRITES[t].forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "#") rects += `<rect x="${x}" y="${y}" width="1.04" height="1.04"/>`; }));
+      spriteCache[t] = `<svg class="px" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">${rects}</svg>`;
+    }
+    return spriteCache[t];
+  }
+
+  // ---- sounds: made in the browser with Web Audio, so there are no files to download ----
+  let soundOn = store.get(SOUND_KEY) !== "0";
+  let actx = null;
+  function audio() {
+    if (!soundOn) return null;
+    if (!actx) {
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return null;
+      try { actx = new A(); } catch { return null; }
+    }
+    if (actx.state === "suspended") actx.resume().catch(() => {});
+    return actx;
+  }
+  // One note. o: { type, vol, at (seconds from now), to (slide to frequency), vib (vibrato Hz) }
+  function tone(f, dur, o = {}) {
+    const a = audio(); if (!a) return;
+    const t0 = a.currentTime + (o.at || 0);
+    const osc = a.createOscillator(), g = a.createGain();
+    osc.type = o.type || "sine";
+    osc.frequency.setValueAtTime(f, t0);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+    if (o.vib) {
+      const lfo = a.createOscillator(), lg = a.createGain();
+      lfo.frequency.value = o.vib; lg.gain.value = f * 0.03;
+      lfo.connect(lg).connect(osc.frequency); lfo.start(t0); lfo.stop(t0 + dur);
+    }
+    const v = (o.vol || 0.2) * 0.6;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(v, t0 + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(a.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
+  // A burst of filtered noise: clacks, taps, swooshes. o: { freq, q, vol, at, to }
+  function noise(dur, o = {}) {
+    const a = audio(); if (!a) return;
+    const t0 = a.currentTime + (o.at || 0);
+    const len = Math.max(1, Math.floor(a.sampleRate * dur));
+    const buf = a.createBuffer(1, len, a.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf;
+    bp.type = "bandpass"; bp.Q.value = o.q || 1;
+    bp.frequency.setValueAtTime(o.freq || 1500, t0);
+    if (o.to) bp.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+    const v = (o.vol || 0.3) * 0.6;
+    g.gain.setValueAtTime(v, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(bp).connect(g).connect(a.destination);
+    src.start(t0); src.stop(t0 + dur + 0.02);
+  }
+  const jingle = (notes, type, step, vol) => notes.forEach((f, i) => tone(f, step * 1.6, { type, at: i * step, vol }));
+  const WIN = [523, 659, 784, 1047], LOSE = [392, 330, 262, 196], DRAW = [440, 440];
+
+  // Each board sounds like its dad. Kinds: move, capture, check, win, lose, draw.
+  const SOUNDS = {
+    classic: {
+      move: () => noise(0.05, { freq: 1800, q: 2, vol: 0.35 }),
+      capture: () => { noise(0.07, { freq: 1200, q: 1.5, vol: 0.45 }); noise(0.05, { freq: 2200, q: 2, vol: 0.25, at: 0.04 }); },
+      check: () => tone(880, 0.18, { type: "triangle", vol: 0.2 }),
+      win: () => jingle(WIN, "triangle", 0.11, 0.2), lose: () => jingle(LOSE, "triangle", 0.13, 0.18), draw: () => jingle(DRAW, "triangle", 0.15, 0.18),
+    },
+    modern: {
+      move: () => tone(660, 0.06, { type: "sine", vol: 0.25 }),
+      capture: () => { tone(660, 0.06, { vol: 0.25 }); tone(990, 0.08, { vol: 0.22, at: 0.05 }); },
+      check: () => { tone(880, 0.1, { vol: 0.22 }); tone(1175, 0.14, { vol: 0.22, at: 0.1 }); },
+      win: () => jingle(WIN, "sine", 0.1, 0.22), lose: () => jingle(LOSE, "sine", 0.12, 0.2), draw: () => jingle(DRAW, "sine", 0.14, 0.2),
+    },
+    skater: {   // board clacks and a grind on captures
+      move: () => noise(0.06, { freq: 2400, q: 3, vol: 0.45 }),
+      capture: () => { noise(0.05, { freq: 2400, q: 3, vol: 0.45 }); noise(0.28, { freq: 600, to: 2600, q: 0.8, vol: 0.3, at: 0.05 }); },
+      check: () => { noise(0.05, { freq: 2600, q: 3, vol: 0.45 }); noise(0.05, { freq: 2600, q: 3, vol: 0.45, at: 0.12 }); },
+      win: () => jingle(WIN, "sawtooth", 0.09, 0.1), lose: () => noise(0.5, { freq: 2000, to: 300, q: 0.7, vol: 0.3 }), draw: () => jingle(DRAW, "sawtooth", 0.14, 0.1),
+    },
+    eighties: { // chiptune blips
+      move: () => tone(523, 0.07, { type: "square", vol: 0.12 }),
+      capture: () => [784, 659, 523, 392].forEach((f, i) => tone(f, 0.06, { type: "square", vol: 0.12, at: i * 0.045 })),
+      check: () => { tone(988, 0.08, { type: "square", vol: 0.12 }); tone(988, 0.08, { type: "square", vol: 0.12, at: 0.12 }); },
+      win: () => jingle([523, 659, 784, 1047, 784, 1047], "square", 0.08, 0.1), lose: () => tone(440, 0.6, { type: "square", to: 110, vol: 0.12 }), draw: () => jingle(DRAW, "square", 0.14, 0.1),
+    },
+    gamer: {    // UI pews and a coin on captures
+      move: () => tone(400, 0.08, { type: "square", to: 900, vol: 0.1 }),
+      capture: () => { tone(988, 0.07, { type: "square", vol: 0.1 }); tone(1319, 0.18, { type: "square", vol: 0.1, at: 0.07 }); },
+      check: () => tone(300, 0.25, { type: "sawtooth", to: 1200, vol: 0.1 }),
+      win: () => jingle([659, 784, 988, 1319], "square", 0.08, 0.1), lose: () => tone(600, 0.5, { type: "sawtooth", to: 80, vol: 0.12 }), draw: () => jingle(DRAW, "square", 0.14, 0.1),
+    },
+    coach: {    // thuds and a whistle on check
+      move: () => tone(140, 0.12, { type: "sine", to: 70, vol: 0.4 }),
+      capture: () => { tone(160, 0.14, { to: 60, vol: 0.45 }); noise(0.08, { freq: 900, q: 1, vol: 0.25 }); },
+      check: () => tone(2800, 0.35, { type: "sine", vib: 28, vol: 0.18 }),
+      win: () => { tone(2800, 0.2, { vib: 28, vol: 0.16 }); tone(2800, 0.5, { vib: 28, vol: 0.16, at: 0.25 }); },
+      lose: () => jingle(LOSE, "triangle", 0.13, 0.18), draw: () => tone(2800, 0.3, { vib: 28, vol: 0.15 }),
+    },
+    bookworm: { // page turns
+      move: () => noise(0.12, { freq: 3500, to: 1500, q: 0.6, vol: 0.22 }),
+      capture: () => { noise(0.18, { freq: 4000, to: 1200, q: 0.6, vol: 0.28 }); tone(330, 0.12, { type: "triangle", vol: 0.15, at: 0.08 }); },
+      check: () => { tone(1568, 0.25, { type: "sine", vol: 0.12 }); tone(2093, 0.3, { type: "sine", vol: 0.1, at: 0.06 }); },
+      win: () => jingle(WIN, "triangle", 0.12, 0.18), lose: () => jingle(LOSE, "triangle", 0.15, 0.16), draw: () => jingle(DRAW, "triangle", 0.15, 0.16),
+    },
+    labdad: {   // bubbles and zaps
+      move: () => tone(300, 0.07, { type: "sine", to: 900, vol: 0.25 }),
+      capture: () => { tone(1800, 0.15, { type: "sawtooth", to: 200, vol: 0.1 }); tone(400, 0.07, { to: 1200, vol: 0.2, at: 0.1 }); },
+      check: () => [0, 0.07, 0.14].forEach((at) => tone(400, 0.06, { to: 1100, vol: 0.2, at })),
+      win: () => [0, 0.06, 0.12, 0.18, 0.24].forEach((at, i) => tone(300 + i * 120, 0.06, { to: 1200, vol: 0.18, at })),
+      lose: () => tone(800, 0.5, { type: "sine", to: 150, vol: 0.2 }), draw: () => jingle(DRAW, "sine", 0.14, 0.18),
+    },
+    professor: { // wooden taps on a tournament board
+      move: () => { noise(0.04, { freq: 1100, q: 4, vol: 0.5 }); tone(220, 0.08, { type: "triangle", vol: 0.2 }); },
+      capture: () => { noise(0.05, { freq: 900, q: 4, vol: 0.55 }); tone(196, 0.12, { type: "triangle", vol: 0.25 }); },
+      check: () => tone(1320, 0.4, { type: "sine", vol: 0.15 }),
+      win: () => jingle(WIN, "triangle", 0.13, 0.18), lose: () => jingle(LOSE, "triangle", 0.15, 0.16), draw: () => jingle(DRAW, "triangle", 0.15, 0.16),
+    },
+    grandpa: {  // robot bleeps, and a glitch when he moves
+      move: (byDad) => byDad
+        ? [0, 0.03, 0.06, 0.09].forEach((at) => tone(200 + Math.random() * 1400, 0.03, { type: "square", vol: 0.1, at }))
+        : tone(440, 0.07, { type: "square", vol: 0.1 }),
+      capture: () => { tone(220, 0.2, { type: "square", to: 55, vol: 0.12 }); noise(0.1, { freq: 3000, q: 0.5, vol: 0.2 }); },
+      check: () => { tone(660, 0.1, { type: "square", vol: 0.1 }); tone(440, 0.15, { type: "square", vol: 0.1, at: 0.1 }); },
+      win: () => jingle([262, 330, 392, 523], "square", 0.12, 0.1), lose: () => jingle([523, 392, 330, 262, 131], "square", 0.12, 0.1), draw: () => jingle(DRAW, "square", 0.15, 0.1),
+    },
+  };
+  function sfx(kind, byDad) {
+    if (!soundOn) return;
+    const set = SOUNDS[activeSkin()] || SOUNDS.classic;
+    try { (set[kind] || SOUNDS.classic[kind])(byDad); } catch {}
+  }
+  // The kind of sound for a move just played onto `next`.
+  const moveKind = (next, captured) => (C.inCheck(next, next.turn) ? "check" : captured ? "capture" : "move");
+
+  function renderSkinPicker() {
+    const won = getBoards();
+    const opts = [["auto", "Match the dad"], ["classic", "Classic"]]
+      .concat(ORDER.filter((k) => won.includes(k)).map((k) => [k, `${C.TIERS[k].name}'s board`]));
+    $("skinSel").innerHTML = opts.map(([v, label]) =>
+      `<option value="${v}"${v === skinChoice ? " selected" : ""}>${label}</option>`).join("");
+    $("skinNote").textContent = won.length ? "" : "Beat a dad to win his board.";
+  }
+
+  // Returns true the first time this dad's board is won.
+  function winBoard(key) {
+    const won = getBoards();
+    if (won.includes(key)) return false;
+    won.push(key);
+    store.set(BOARDS_KEY, JSON.stringify(won));
+    renderSkinPicker();
+    return true;
+  }
+
   // True if the side to move can capture a piece worth a minor or more that nothing defends.
   // It only looks one capture deep, so it won't catch forks or mates.
   function hangsPiece(state, mover) {
@@ -222,6 +506,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     $("oppName").textContent = t.name;
     $("oppTier").textContent = t.server ? `Tier ${t.tier} · needs a connection` : `Tier ${t.tier}`;
     renderPicker();
+    applySkin();
   }
 
   function renderBoard() {
@@ -231,6 +516,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const last = lastPair ? [lastPair.from, lastPair.to] : [];
     let html = "";
     const flip = human === "b";
+    const pixel = activeSkin() === "eighties";
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
         const row = flip ? r : 7 - r, f = flip ? 7 - c : c;
@@ -245,11 +531,17 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
         if (i === hintSq) cls.push("hint");
         if (targets.includes(i)) cls.push(s.board[i] || (s.ep === i) ? "legal cap" : "legal");
         if (p) cls.push(p === p.toUpperCase() ? "w-piece" : "b-piece");
+        if (freshBot && lastPair && i === lastPair.to) cls.push("fresh");
+        const files = "abcdefgh";
+        let co = "";
+        if (r === 7) co += `<span class="co f" aria-hidden="true">${files[f]}</span>`;
+        if (c === 0) co += `<span class="co r" aria-hidden="true">${row + 1}</span>`;
         const name = `${C.sqName(i)}${p ? ", " + (p === p.toUpperCase() ? "white" : "black") + " " + pieceName(p) : ", empty"}`;
-        html += `<button class="${cls.join(" ")}" data-i="${i}" aria-label="${name}"><span class="p">${p ? GLYPH[p.toLowerCase()] : ""}</span></button>`;
+        html += `<button class="${cls.join(" ")}" data-i="${i}" aria-label="${name}"><span class="p">${p ? (pixel ? pixelPiece(p.toLowerCase()) : GLYPH[p.toLowerCase()]) : ""}</span>${co}</button>`;
       }
     }
     board.innerHTML = html;
+    freshBot = false;                     // the glitch plays once, on the render right after the dad's move
     $("undoBtn").textContent = `Take back a move (${undoLeft} left)`;
     $("undoBtn").disabled = !!daily || !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
     $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
@@ -262,6 +554,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   }
 
   let lastPair = null;
+  let freshBot = false;
 
   function renderMoves() {
     let out = "";
@@ -291,12 +584,15 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (st.reason === "checkmate") {
       const humanWon = st.result === "1-0";
       headline = humanWon ? "Checkmate. You win!" : "Checkmate. Dad wins.";
+      if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
       line = humanWon ? "playerWins" : "botWins";
     } else {
       headline = `Draw (${st.reason}).`;
       line = "draw";
     }
     setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
+    const end = st.reason !== "checkmate" ? "draw" : st.result === "1-0" ? "win" : "lose";
+    setTimeout(() => sfx(end), 300);
     talk(line);
     renderBoard();
   }
@@ -372,6 +668,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (result && result.ok) {
       const letters = getLetters(); letters[daily.index] = result.letter; store.set(LETTER_KEY, JSON.stringify(letters));
       over = { over: true }; daily.solved = true;
+      sfx("win");
       setStatus(`<strong>Solved!</strong> You found the letter <strong>${result.letter}</strong>. Come back tomorrow for the next board.`);
       renderLetters();
     } else {
@@ -420,6 +717,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     sanLog.push(san);
     lastPair = { from: m.from, to: m.to };
     selected = -1; targets = []; hintSq = null;
+    sfx(moveKind(next, captured), false);
     if (hangsPiece(next, next.turn)) talk("hungPlayer");
     else if (captured) talk("capture");
     else if (C.inCheck(next, next.turn)) talk("check");
@@ -461,10 +759,13 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (!m) { busy = false; renderBoard(); refreshStatus(); return; }
     const before = cur();
     const san = C.moveToSAN(before, m);
+    const captured = before.board[m.to] !== "" || m.ep;
     const next = C.applyMove(before, m);
     states.push(next);
     sanLog.push(san);
     lastPair = { from: m.from, to: m.to };
+    freshBot = true;
+    sfx(moveKind(next, captured), true);
     busy = false;
     const waiting = $("say").textContent;
     if (hangsPiece(next, human)) talk("botBlunder");
@@ -522,6 +823,22 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const m = C.legalMoves(cur()).find((x) => x.from === from && x.to === to && x.promo === b.dataset.promo);
     if (m) playHuman(m);
   });
+  $("skinSel").addEventListener("change", (e) => {
+    skinChoice = e.target.value;
+    store.set(SKIN_KEY, skinChoice);
+    applySkin();
+  });
+  const showSound = () => {
+    $("soundBtn").textContent = `Sound: ${soundOn ? "on" : "off"}`;
+    $("soundBtn").setAttribute("aria-pressed", String(soundOn));
+  };
+  $("soundBtn").addEventListener("click", () => {
+    soundOn = !soundOn;
+    store.set(SOUND_KEY, soundOn ? "1" : "0");
+    showSound();
+    if (soundOn) sfx("move");
+  });
+  showSound();
   $("newBtn").addEventListener("click", () => { if (daily) startDaily(); else startGame(); });
   $("dailyBtn").addEventListener("click", startDaily);
   $("undoBtn").addEventListener("click", undo);
@@ -536,6 +853,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
   $("talkBtn").setAttribute("aria-pressed", String(talkOn));
+  renderSkinPicker();
   startGame();
 })();
 </script>
