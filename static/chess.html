@@ -55,6 +55,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .moves{width:100%; max-width:640px; color:var(--muted); font-size:.9rem; min-height:1.6em; word-spacing:4px}
 .foot{color:var(--muted); font-size:13px; text-align:center; max-width:640px}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+.daily{width:100%; max-width:640px; background:var(--panel); border:2px solid var(--gold); border-radius:14px; padding:10px 12px}
+.daily p{margin:4px 0}
+.daily .letters{font-size:1.6rem; font-weight:900; letter-spacing:.35em; color:var(--gold)}
 .promo-note{color:var(--muted); font-size:12px}
 </style>
 </head>
@@ -82,7 +85,14 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <button class="btn primary" id="newBtn" type="button">New game</button>
   <button class="btn" id="undoBtn" type="button">Take back a move (1 left)</button>
   <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
+  <button class="btn" id="dailyBtn" type="button">Daily Board</button>
 </div>
+
+<section class="daily" id="dailyBox" hidden aria-live="polite">
+  <p id="dailyStory"></p>
+  <p class="letters" id="dailyLetters" aria-label="Letters collected"></p>
+  <p id="dailyNote"></p>
+</section>
 
 <div class="moves" id="moves" aria-label="Move list"></div>
 
@@ -95,6 +105,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
 <script src="/static/avatars.js"></script>
 <script src="/static/chess-engine.js"></script>
+<script src="/static/chess-puzzles.js"></script>
 <script>
 (() => {
   "use strict";
@@ -134,7 +145,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   let states = [], sanLog = [], selected = -1, targets = [], hintSq = null, pendingPromo = null;
   let tierKey = "modern", busy = false, over = null, undoLeft = 1, hintsLeft = 3;
-  const human = "w";
+  let human = "w";
+  let daily = null;                       // { index, solved } while the Daily Board is open
+  const LETTER_KEY = "robodad.chess.letters";
+  const getLetters = () => { try { return JSON.parse(store.get(LETTER_KEY) || "{}") || {}; } catch { return {}; } };
 
   function cur() { return states[states.length - 1]; }
 
@@ -183,8 +197,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const kingIdx = s.board.indexOf(s.turn === "w" ? "K" : "k");
     const last = lastPair ? [lastPair.from, lastPair.to] : [];
     let html = "";
-    for (let row = 7; row >= 0; row--) {
-      for (let f = 0; f < 8; f++) {
+    const flip = human === "b";
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const row = flip ? r : 7 - r, f = flip ? 7 - c : c;
         const i = row * 8 + f;
         const p = s.board[i];
         const light = (row + f) % 2 === 1;
@@ -202,9 +218,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     }
     board.innerHTML = html;
     $("undoBtn").textContent = `Take back a move (${undoLeft} left)`;
-    $("undoBtn").disabled = !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
+    $("undoBtn").disabled = !!daily || !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
     $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
-    $("hintBtn").disabled = !!busy || hintsLeft <= 0 || cur().turn !== human || !!over;
+    $("hintBtn").disabled = !!daily || !!busy || hintsLeft <= 0 || cur().turn !== human || !!over;
     renderMoves();
   }
 
@@ -259,6 +275,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   }
 
   function startGame() {
+    daily = null; human = "w"; $("dailyBox").hidden = true;
     const start = C.fromFEN(C.START);
     states = [start];
     sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null;
@@ -301,7 +318,65 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     renderBoard();
   }
 
+  async function playDaily(m) {
+    const before = cur();
+    const uci = C.uci(m);
+    states.push(C.applyMove(before, m));
+    lastPair = { from: m.from, to: m.to };
+    selected = -1; targets = [];
+    busy = true; renderBoard();
+    setStatus("Checking…");
+    let result = null;
+    try {
+      const res = await fetch("/api/chess/daily", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index: daily.index, move: uci }) });
+      if (res.ok) result = await res.json();
+      else if (res.status === 400) { setStatus("That's not today's board. Reload the page for a fresh one."); }
+      else if (res.status === 429) { setStatus("Lots of guesses. Take a short break."); }
+    } catch { setStatus("Couldn't reach RoboDad. Check your connection."); }
+    busy = false;
+    if (result && result.ok) {
+      const letters = getLetters(); letters[daily.index] = result.letter; store.set(LETTER_KEY, JSON.stringify(letters));
+      over = { over: true }; daily.solved = true;
+      setStatus(`<strong>Solved!</strong> You found the letter <strong>${result.letter}</strong>. Come back tomorrow for the next board.`);
+      renderLetters();
+    } else {
+      states.pop(); lastPair = null;
+      if (result) setStatus("Not quite. Look for a move that ends the game right now. Try again.");
+    }
+    renderBoard();
+  }
+
+  function renderLetters() {
+    const got = getLetters();
+    const slots = [0, 1, 2, 3, 4].map((i) => got[i] || "_");
+    $("dailyLetters").textContent = slots.join(" ");
+    const all = slots.every((x) => x !== "_");
+    $("dailyNote").textContent = all
+      ? `All five letters: ${slots.join("")}. Type it into the secret code box on the main page to open the next chapter of The Lost Cartridge early.`
+      : "Solve a board each day to collect the letters. Five letters make a code for The Lost Cartridge.";
+  }
+
+  async function startDaily() {
+    let info;
+    try { info = await (await fetch("/api/chess/daily")).json(); } catch { setStatus("Couldn't reach RoboDad. Check your connection."); return; }
+    const p = window.DAILY_PUZZLES && window.DAILY_PUZZLES[info.index];
+    if (!p) { setStatus("No board today. Check back soon."); return; }
+    const st = C.fromFEN(p.fen);
+    states = [st]; sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null;
+    over = null; busy = false; pendingPromo = null;
+    human = st.turn;
+    const already = !!getLetters()[info.index];
+    daily = { index: info.index, solved: already };
+    $("dailyBox").hidden = false;
+    $("dailyStory").innerHTML = `<strong>${p.title}.</strong> ${p.story}`;
+    $("say").textContent = "";
+    renderLetters(); renderBoard();
+    setStatus(already ? "You already solved today's board. Have another look, or come back tomorrow." : (human === "w" ? "White to move." : "Black to move."));
+  }
+
   function playHuman(m) {
+    if (daily) { playDaily(m); return; }
     const before = cur();
     const san = C.moveToSAN(before, m);
     const captured = before.board[m.to] !== "" || m.ep;
@@ -410,7 +485,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const m = C.legalMoves(cur()).find((x) => x.from === from && x.to === to && x.promo === b.dataset.promo);
     if (m) playHuman(m);
   });
-  $("newBtn").addEventListener("click", startGame);
+  $("newBtn").addEventListener("click", () => { if (daily) startDaily(); else startGame(); });
+  $("dailyBtn").addEventListener("click", startDaily);
   $("undoBtn").addEventListener("click", undo);
   $("hintBtn").addEventListener("click", hint);
   $("talkBtn").addEventListener("click", () => {
