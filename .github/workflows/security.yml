@@ -20,3 +20,9 @@ jobs:
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
       - name: Crisis safety rules
         run: pip install -r requirements.txt && python scripts/test_safety.py
+      - name: Chess rules and server tests
+        run: |
+          pip install -r requirements.txt
+          sudo apt-get update && sudo apt-get install -y stockfish
+          node scripts/test_chess_rules.js
+          STOCKFISH_PATH=/usr/games/stockfish python scripts/test_chess_api.py

@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beat Dad · RoboDad Chess</title>
+<meta name="description" content="Chess against RoboDad's dads. Pick a dad, make your move, and try to beat him.">
+<meta name="theme-color" content="#0B0B14">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#0B0B14; --panel:#16142A; --ink:#FFF6D6; --muted:#9A93B8; --gold:#F5C518; --edge:#2A2650;
+  --sq-light:#E9DCC0; --sq-dark:#8C6B4A; --sel:#F5C518; --last:rgba(245,197,24,.45); --check:#FF4D6D;
+  --metal:#C9D3DC; --hair:#3A2A1E; --jacket:#3D7CB8; --jacket2:#1B2A3A; --lens:#38B6FF}
+*{box-sizing:border-box}
+html,body{margin:0; background:var(--bg); color:var(--ink); font:600 16px/1.4 "Nunito", ui-rounded, system-ui, sans-serif}
+body{min-height:100dvh; padding:14px 12px 28px; display:flex; flex-direction:column; align-items:center; gap:12px}
+h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
+.top{width:100%; max-width:640px; display:flex; justify-content:space-between; align-items:center; gap:8px}
+.top a{color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 12px; text-decoration:none; font-size:14px}
+.top a:hover{border-color:var(--gold)}
+.opp{width:100%; max-width:640px; display:flex; gap:12px; align-items:center; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px}
+.opp svg{width:56px; height:56px; flex:none; overflow:visible}
+.opp .name{font-weight:900; font-size:1.05rem}
+.opp .tier{color:var(--muted); font-size:.9rem}
+.bubble{margin-left:auto; max-width:46%; background:var(--ink); color:#1B1530; border-radius:12px; padding:8px 10px; font-size:.95rem; min-height:2.4em}
+.board{position:relative; width:min(92vw, 480px); aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border:4px solid var(--edge); border-radius:8px; overflow:hidden}
+.sq{position:relative; border:0; padding:0; margin:0; display:flex; align-items:center; justify-content:center; font-size:clamp(26px,8vw,46px); line-height:1; cursor:pointer; background:var(--sq-dark); color:inherit}
+.sq.light{background:var(--sq-light)}
+.sq .p{transition:transform .08s}
+.sq.w-piece{color:#FFFFFF; text-shadow:0 0 2px #000,0 0 2px #000}
+.sq.b-piece{color:#111018; text-shadow:0 0 1px #FFF8}
+.sq.last{box-shadow:inset 0 0 0 999px var(--last)}
+.sq.sel{box-shadow:inset 0 0 0 4px var(--sel)}
+.sq.check{box-shadow:inset 0 0 0 999px rgba(255,77,109,.55)}
+.sq.hint{box-shadow:inset 0 0 0 4px #38B6FF}
+.sq.legal::after{content:""; position:absolute; width:28%; height:28%; border-radius:50%; background:rgba(20,16,30,.35)}
+.sq.legal.cap::after{width:88%; height:88%; background:transparent; border:5px solid rgba(20,16,30,.35)}
+.sq:focus-visible{outline:3px solid var(--gold); outline-offset:-3px; z-index:1}
+.status{width:100%; max-width:640px; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px; min-height:3.2em; font-size:.98rem}
+.status strong{color:var(--gold)}
+.controls{width:100%; max-width:640px; display:flex; flex-wrap:wrap; gap:8px}
+button.btn{background:transparent; color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:8px 12px; font:inherit; font-size:14px; cursor:pointer}
+button.btn:hover:not(:disabled){border-color:var(--gold)}
+button.btn:disabled{opacity:.45; cursor:default}
+button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gold); font-weight:900}
+.tiers{width:100%; max-width:640px}
+.tiers h2{font-size:1rem; margin:4px 0 8px; color:var(--muted); font-weight:800}
+.tier-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:8px}
+.tier{display:flex; gap:8px; align-items:center; text-align:left; background:var(--panel); color:var(--ink); border:2px solid var(--edge); border-radius:12px; padding:6px 8px; font:inherit; font-size:14px; cursor:pointer}
+.tier svg{width:36px; height:36px; flex:none}
+.tier[aria-checked="true"]{border-color:var(--gold)}
+.tier small{display:block; color:var(--muted); font-size:12px; font-weight:700}
+.tier[disabled]{opacity:.5; cursor:default}
+.moves{width:100%; max-width:640px; color:var(--muted); font-size:.9rem; min-height:1.6em; word-spacing:4px}
+.foot{color:var(--muted); font-size:13px; text-align:center; max-width:640px}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+.promo-note{color:var(--muted); font-size:12px}
+</style>
+</head>
+<body>
+<div class="top">
+  <a href="/">← RoboDad</a>
+  <h1>Beat Dad</h1>
+  <button class="btn" id="talkBtn" type="button" aria-pressed="true">Trash talk: on</button>
+</div>
+
+<section class="opp" aria-label="Your opponent">
+  <div id="oppArt"></div>
+  <div>
+    <div class="name" id="oppName">Modern Dad</div>
+    <div class="tier" id="oppTier">Tier 1</div>
+  </div>
+  <div class="bubble" id="say" role="status" aria-live="polite"></div>
+</section>
+
+<div class="board" id="board" role="group" aria-label="Chess board"></div>
+
+<div class="status" id="status" aria-live="polite">You play white. Your move.</div>
+
+<div class="controls">
+  <button class="btn primary" id="newBtn" type="button">New game</button>
+  <button class="btn" id="undoBtn" type="button">Take back a move (1 left)</button>
+  <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
+</div>
+
+<div class="moves" id="moves" aria-label="Move list"></div>
+
+<section class="tiers" aria-labelledby="pickTitle">
+  <h2 id="pickTitle">Pick your dad</h2>
+  <div class="tier-grid" id="tierGrid" role="radiogroup" aria-label="Opponent"></div>
+</section>
+
+<p class="foot">Tap a piece, then tap where it goes. Pawns promote to queens. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
+
+<script src="/static/avatars.js"></script>
+<script src="/static/chess-engine.js"></script>
+<script>
+(() => {
+  "use strict";
+  const C = window.RoboChess;
+  const AV = window.RoboAvatars;
+  const $ = (id) => document.getElementById(id);
+  const GLYPH = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" };
+  const ORDER = ["modern", "skater", "eighties", "gamer", "coach", "bookworm", "labdad", "professor", "grandpa"];
+  const TALK_KEY = "robodad.chess.talk";
+  const UNLOCK_KEY = "robodad.grandpa";
+
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  };
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+  // Trash talk: playful, aimed at the moves, never at the player. Shown in the bubble.
+  const LINES = {
+    start: ["Ready to lose? Kidding. Mostly.", "Let's see what you've got.", "Good luck. You'll need it, kiddo."],
+    capture: ["Okay, that one stung. Don't get used to it."],
+    check: ["Check. Nice one, don't get comfortable."],
+    hint: ["Dad doesn't usually hand these out, but here's one."],
+    playerWins: ["Fine. You earned that one. Rematch?"],
+    botWins: ["Good game. Want to go over where it slipped?"],
+    hungPlayer: ["Oh, you just hung your piece. Bold strategy."],
+    botBlunder: ["That was a test. Obviously."],
+    draw: ["A draw. Not bad. Want to go again?"],
+    backup: ["The big engine's napping, so I'm playing from here. Same board, same rules."],
+  };
+  let talkOn = store.get(TALK_KEY) !== "0";
+  const talk = (kind, force) => {
+    const text = pick(LINES[kind]);
+    if (talkOn || force) $("say").textContent = text;
+    else $("say").textContent = "";
+  };
+
+  let states = [], sanLog = [], selected = -1, targets = [], hintSq = null, pendingPromo = null;
+  let tierKey = "modern", busy = false, over = null, undoLeft = 1, hintsLeft = 3;
+  const human = "w";
+
+  function cur() { return states[states.length - 1]; }
+
+  // True if the side to move can capture a piece worth a minor or more that nothing defends.
+  // It only looks one capture deep, so it won't catch forks or mates.
+  function hangsPiece(state, mover) {
+    const defender = mover === "w" ? "b" : "w";
+    for (const m of C.legalMoves(state)) {
+      const victim = state.board[m.to];
+      if (!victim || C.VAL[victim.toLowerCase()] < 300) continue;
+      const after = C.applyMove(state, m);
+      if (!C.attackedBy(after.board, m.to, defender)) return true;
+    }
+    return false;
+  }
+  function history() { return states.map((s) => C.toFEN(s)); }
+
+  function avatarSVG(key, size) {
+    const a = AV && AV.AVATARS[key];
+    if (!a) return "";
+    return `<svg viewBox="0 0 64 64" width="${size}" height="${size}" aria-hidden="true">${a.svg}</svg>`;
+  }
+
+  function renderPicker() {
+    const grid = $("tierGrid");
+    grid.innerHTML = ORDER.map((k) => {
+      const t = C.TIERS[k];
+      const locked = t.secret && store.get(UNLOCK_KEY) !== "1";
+      const label = locked ? "Locked. Find him in the Secret Vault." : (t.server ? `Tier ${t.tier} · online` : `Tier ${t.tier}`);
+      return `<button class="tier" type="button" role="radio" data-k="${k}" aria-checked="${k === tierKey}" ${locked ? "disabled" : ""}>
+        ${locked ? "" : avatarSVG(k, 36)}<span>${t.name}<small>${label}</small></span></button>`;
+    }).join("");
+  }
+
+  function setOpponent() {
+    const t = C.TIERS[tierKey];
+    $("oppArt").innerHTML = avatarSVG(tierKey, 56);
+    $("oppName").textContent = t.name;
+    $("oppTier").textContent = t.server ? `Tier ${t.tier} · needs a connection` : `Tier ${t.tier}`;
+    renderPicker();
+  }
+
+  function renderBoard() {
+    const s = cur();
+    const board = $("board");
+    const kingIdx = s.board.indexOf(s.turn === "w" ? "K" : "k");
+    const last = lastPair ? [lastPair.from, lastPair.to] : [];
+    let html = "";
+    for (let row = 7; row >= 0; row--) {
+      for (let f = 0; f < 8; f++) {
+        const i = row * 8 + f;
+        const p = s.board[i];
+        const light = (row + f) % 2 === 1;
+        const cls = ["sq"];
+        if (light) cls.push("light");
+        if (i === selected) cls.push("sel");
+        if (last.includes(i)) cls.push("last");
+        if (i === kingIdx && C.inCheck(s, s.turn)) cls.push("check");
+        if (i === hintSq) cls.push("hint");
+        if (targets.includes(i)) cls.push(s.board[i] || (s.ep === i) ? "legal cap" : "legal");
+        if (p) cls.push(p === p.toUpperCase() ? "w-piece" : "b-piece");
+        const name = `${C.sqName(i)}${p ? ", " + (p === p.toUpperCase() ? "white" : "black") + " " + pieceName(p) : ", empty"}`;
+        html += `<button class="${cls.join(" ")}" data-i="${i}" aria-label="${name}"><span class="p">${p ? GLYPH[p.toLowerCase()] : ""}</span></button>`;
+      }
+    }
+    board.innerHTML = html;
+    $("undoBtn").textContent = `Take back a move (${undoLeft} left)`;
+    $("undoBtn").disabled = !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
+    $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
+    $("hintBtn").disabled = !!busy || hintsLeft <= 0 || cur().turn !== human || !!over;
+    renderMoves();
+  }
+
+  function pieceName(p) {
+    return { k: "king", q: "queen", r: "rook", b: "bishop", n: "knight", p: "pawn" }[p.toLowerCase()];
+  }
+
+  let lastPair = null;
+
+  function renderMoves() {
+    let out = "";
+    for (let i = 0; i < sanLog.length; i += 2) {
+      out += `${i / 2 + 1}. ${sanLog[i]}${sanLog[i + 1] ? " " + sanLog[i + 1] : ""}  `;
+    }
+    $("moves").textContent = out || "No moves yet.";
+  }
+
+  function setStatus(html) { $("status").innerHTML = html; }
+
+  function refreshStatus() {
+    const s = cur();
+    if (over) return;
+    if (busy) { setStatus(`<strong>${C.TIERS[tierKey].name}</strong> is thinking…`); return; }
+    const st = C.status(s, history().slice(0, -1));
+    if (st.over) return;
+    setStatus(s.turn === human
+      ? (st.check ? "<strong>Check.</strong> Your move." : "Your move.")
+      : `<strong>${C.TIERS[tierKey].name}</strong> to move.`);
+  }
+
+  function endGame(st) {
+    over = st;
+    busy = false;
+    let headline, line;
+    if (st.reason === "checkmate") {
+      const humanWon = st.result === "1-0";
+      headline = humanWon ? "Checkmate. You win!" : "Checkmate. Dad wins.";
+      line = humanWon ? "playerWins" : "botWins";
+    } else {
+      headline = `Draw (${st.reason}).`;
+      line = "draw";
+    }
+    setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
+    talk(line);
+    renderBoard();
+  }
+
+  function afterPosition() {
+    const st = C.status(cur(), history().slice(0, -1));
+    if (st.over) { endGame(st); return true; }
+    return false;
+  }
+
+  function startGame() {
+    const start = C.fromFEN(C.START);
+    states = [start];
+    sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null;
+    over = null; busy = false; undoLeft = 1; hintsLeft = 3;
+    setOpponent();
+    renderBoard();
+    refreshStatus();
+    talk("start");
+  }
+
+  // ---- human moves ----
+  function legalFrom(i) {
+    return C.legalMoves(cur()).filter((m) => m.from === i);
+  }
+
+  function askPromotion(from, to) {
+    pendingPromo = { from, to };
+    const names = [["q", "♕", "Queen"], ["r", "♖", "Rook"], ["b", "♗", "Bishop"], ["n", "♘", "Knight"]];
+    setStatus(`<strong>Promote to:</strong> ` + names.map(([k, g, n]) =>
+      `<button class="btn" type="button" data-promo="${k}" aria-label="Promote to ${n}">${g} ${n}</button>`).join(" "));
+  }
+
+  function onSquare(i) {
+    if (busy || over || cur().turn !== human) return;
+    const s = cur();
+    if (pendingPromo) { pendingPromo = null; refreshStatus(); }
+    if (selected >= 0 && targets.includes(i)) {
+      const options = C.legalMoves(s).filter((x) => x.from === selected && x.to === i);
+      if (options.length > 1) { askPromotion(selected, i); return; }
+      if (options.length === 1) { playHuman(options[0]); return; }
+    }
+    const p = s.board[i];
+    if (p && C.legalMoves(s).some((m) => m.from === i)) {
+      selected = i;
+      targets = legalFrom(i).map((m) => m.to);
+    } else {
+      selected = -1; targets = [];
+    }
+    hintSq = null;
+    renderBoard();
+  }
+
+  function playHuman(m) {
+    const before = cur();
+    const san = C.moveToSAN(before, m);
+    const captured = before.board[m.to] !== "" || m.ep;
+    const next = C.applyMove(before, m);
+    states.push(next);
+    sanLog.push(san);
+    lastPair = { from: m.from, to: m.to };
+    selected = -1; targets = []; hintSq = null;
+    if (hangsPiece(next, next.turn)) talk("hungPlayer");
+    else if (captured) talk("capture");
+    else if (C.inCheck(next, next.turn)) talk("check");
+    renderBoard();
+    if (afterPosition()) return;
+    refreshStatus();
+    botMove();
+  }
+
+  // ---- the dad's move ----
+  async function botMove() {
+    const cfg = C.TIERS[tierKey];
+    busy = true;
+    renderBoard();
+    refreshStatus();
+    let m = null;
+    if (cfg.server) {
+      try {
+        const res = await fetch("/api/chess/move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fen: C.toFEN(cur()), level: tierKey }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          m = C.legalMoves(cur()).find((x) => C.uci(x) === data.move) || null;
+        } else {
+          throw new Error("server " + res.status);
+        }
+      } catch {
+        // Backup: the same board, played by the browser engine at this dad's local depth.
+        talk("backup", true);
+        m = C.chooseMove(cur(), tierKey);
+      }
+    } else {
+      await new Promise((r) => setTimeout(r, 350));
+      m = C.chooseMove(cur(), tierKey);
+    }
+    if (!m) { busy = false; renderBoard(); return; }
+    const before = cur();
+    const san = C.moveToSAN(before, m);
+    const next = C.applyMove(before, m);
+    states.push(next);
+    sanLog.push(san);
+    lastPair = { from: m.from, to: m.to };
+    busy = false;
+    if (hangsPiece(next, human)) talk("botBlunder");
+    renderBoard();
+    if (afterPosition()) return;
+    refreshStatus();
+  }
+
+  // ---- buttons ----
+  function undo() {
+    if (busy || over || undoLeft <= 0 || states.length < 3 || cur().turn !== human) return;
+    states.pop(); states.pop();
+    sanLog.pop(); sanLog.pop();
+    lastPair = null; selected = -1; targets = []; hintSq = null;
+    undoLeft--;
+    renderBoard();
+    refreshStatus();
+  }
+
+  function hint() {
+    if (busy || over || hintsLeft <= 0 || cur().turn !== human) return;
+    const best = C.rankMoves(cur(), 3, {})[0];
+    if (!best) return;
+    hintsLeft--;
+    hintSq = best.move.from;
+    selected = -1; targets = [];
+    talk("hint");
+    renderBoard();
+    setTimeout(() => { if (hintSq === best.move.from) { hintSq = null; renderBoard(); } }, 6000);
+  }
+
+  // ---- wiring ----
+  $("board").addEventListener("click", (e) => {
+    const btn = e.target.closest(".sq");
+    if (btn) onSquare(+btn.dataset.i);
+  });
+  $("board").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      const btn = e.target.closest(".sq");
+      if (btn) { e.preventDefault(); onSquare(+btn.dataset.i); }
+    }
+  });
+  $("tierGrid").addEventListener("click", (e) => {
+    const b = e.target.closest(".tier");
+    if (!b || b.disabled) return;
+    tierKey = b.dataset.k;
+    startGame();
+  });
+  $("status").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-promo]");
+    if (!b || !pendingPromo) return;
+    const { from, to } = pendingPromo;
+    pendingPromo = null;
+    const m = C.legalMoves(cur()).find((x) => x.from === from && x.to === to && x.promo === b.dataset.promo);
+    if (m) playHuman(m);
+  });
+  $("newBtn").addEventListener("click", startGame);
+  $("undoBtn").addEventListener("click", undo);
+  $("hintBtn").addEventListener("click", hint);
+  $("talkBtn").addEventListener("click", () => {
+    talkOn = !talkOn;
+    store.set(TALK_KEY, talkOn ? "1" : "0");
+    $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
+    $("talkBtn").setAttribute("aria-pressed", String(talkOn));
+    if (!talkOn) $("say").textContent = "";
+  });
+
+  $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
+  $("talkBtn").setAttribute("aria-pressed", String(talkOn));
+  startGame();
+})();
+</script>
+</body>
+</html>
