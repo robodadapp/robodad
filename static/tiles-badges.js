@@ -25,7 +25,7 @@
       (st) => n(st.fullHouses) >= 1, (st) => `${n(st.fullHouses)} Full House${st.fullHouses === 1 ? "" : "s"}`],
     ["ttglow", "Fancy Pants", "Play 10 Glow-Up words", "Played ten Glow-Up words. Très classy.", "rare",
       (st) => n(st.glowups) >= 10, (st) => `${n(st.glowups)} of 10 Glow-Up words`],
-    ["tttense", "Time Traveller", "Get 15 Tense Twists right", "Fifteen Tense Twists right: past, present and future sorted.", "rare",
+    ["tttense", "Tense Twister", "Get 15 Tense Twists right", "Fifteen Tense Twists right: past, present and future sorted.", "rare",
       (st) => n(st.tenses) >= 15, (st) => `${n(st.tenses)} of 15 Tense Twists`],
     ["ttorig", "Word Archaeologist", "Look up 25 words with Dad", "Dug up the meaning of 25 words.", "rare",
       (st) => (st.looked || []).length >= 25, (st) => `${(st.looked || []).length} of 25 words looked up`],

@@ -155,7 +155,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{height:100%}
+html,body{height:100%; overflow-x:hidden}
 body{
   margin:0; background:var(--sky); color:var(--ink);
   font-family:"Nunito", ui-rounded, system-ui, sans-serif; font-size:17px; line-height:1.5;
@@ -713,14 +713,6 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 .vault-list .vs-done{flex:0 0 auto; font-size:.8rem; font-weight:800; color:#C9A227}
 .tcta{display:block; max-width:46ch; padding:10px 14px; border:2px dashed currentColor; border-radius:14px; color:inherit; font-weight:800; font-size:.92rem; line-height:1.35; text-decoration:none; opacity:.9}
 .tcta:hover,.tcta:focus-visible{opacity:1; text-decoration:underline}
-/* Starter chips: one row that drifts sideways like a broadcast ticker, swipeable, pauses when touched */
-.ticker{max-width:720px; margin:0 auto 8px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; overscroll-behavior-x:contain;
-  -webkit-mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent)}
-.ticker::-webkit-scrollbar{display:none}
-.ticker[hidden]{display:none}
-.ticker-track{display:flex; gap:8px; width:max-content; padding:2px 24px}
-.ticker .chip{white-space:nowrap; flex:none; background:var(--surface); color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
-.ticker .chip:hover{background:var(--denim)}
 .chip{
   border:1.5px solid var(--denim); color:var(--denim); background:transparent;
   border-radius:999px; padding:7px 14px; font-weight:700; font-size:.95rem; cursor:pointer;
@@ -1069,8 +1061,6 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
   .side.open{display:flex; flex-direction:column; gap:12px; position:fixed; inset:0; z-index:25; overflow:auto;
     padding:16px; padding-top:max(16px, env(safe-area-inset-top)); background:var(--sky)}
 }
-#learnBtn{padding:8px 14px}
-.mind-btn{border-color:var(--denim); color:var(--denim)}
 .mind-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0}
 .card a.mind-tile,.card a.mind-tile b{color:inherit; text-decoration:none}
 .mind-tile{display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; padding:8px 10px; border:1.5px solid var(--line); border-radius:14px; background:transparent; color:inherit; font:inherit; text-decoration:none; cursor:pointer}
@@ -1091,6 +1081,47 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .learn-menu{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0}
 .learn-fact{margin:12px 0; padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line)}
 .learn-fact p{margin:6px 0 0; font-weight:700}
+.lang-tabs.vocab-tabs{display:grid; grid-template-columns:repeat(4, 1fr)} .lang-tabs.vocab-tabs button{font-size:.9rem; padding:8px 6px}
+@media (max-width:520px){ .lang-tabs.vocab-tabs{grid-template-columns:1fr 1fr} }
+.lang-tabs.vocab-tabs.g-tabs{grid-template-columns:1fr 1fr}
+.g-reels{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px}
+.g-reels span{padding:10px 6px; border-radius:12px; background:var(--surface); border:2px solid var(--denim); text-align:center; font-weight:900; font-size:.9rem; line-height:1.2}
+.g-reels.spinning span{animation:greel .35s ease-out} @keyframes greel{from{transform:translateY(-8px); opacity:.2} to{transform:none; opacity:1}}
+.vocab-body mark{background:color-mix(in srgb, var(--mustard) 45%, transparent); color:inherit; border-radius:4px; padding:0 3px; font-weight:900}
+.g-tenses{display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:.88rem} .g-tenses div{padding:6px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--line)}
+.g-head{font-weight:800; color:var(--muted)}
+.g-guide summary{cursor:pointer}
+.g-badges{font-size:.85rem; padding:8px 12px; border-radius:12px; background:color-mix(in srgb, var(--mustard) 16%, transparent); border:1px dashed color-mix(in srgb, var(--mustard) 60%, transparent)}
+.v-opts.g-wide{grid-template-columns:1fr}
+.vocab-body .small{font-size:.85rem; color:var(--muted)}
+@media (max-width:480px){ .g-tenses{grid-template-columns:1fr} }
+.vocab-body{display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:62vh; overflow:auto}
+.vocab-body p{margin:0}
+.vocab-body textarea{width:100%; min-height:84px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font:inherit; background:var(--surface); color:var(--ink); resize:vertical}
+.v-card{padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line); display:flex; flex-direction:column; gap:6px}
+.v-card .v-k{font-size:.75rem; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+.v-before{text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--alert, #c33) 70%, transparent); opacity:.8}
+.v-after{font-weight:800}
+.v-line{font-weight:800; font-size:1.05rem}
+.v-src{font-size:.8rem; color:var(--muted); font-style:italic}
+.v-rules{margin:0; padding-left:1.2em; font-size:.9rem} .v-rules li{margin-bottom:2px}
+.v-chips{display:flex; flex-wrap:wrap; gap:6px}
+.v-chips .chipbtn[aria-pressed="true"]{background:var(--denim); border-color:var(--denim); color:var(--denim-ink)}
+.v-word{font-size:1.6rem; font-weight:900; line-height:1.1}
+.v-myth{display:inline-block; font-size:.72rem; font-weight:900; text-transform:uppercase; letter-spacing:.06em; background:var(--mustard, #F2B533); color:#2A1E00; border-radius:999px; padding:2px 9px}
+.v-ladder{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px}
+.v-level{display:flex; gap:8px; align-items:center; text-align:left; padding:6px 8px; border:2px solid var(--line); border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:.85rem; font-weight:800; cursor:pointer}
+.v-level svg{width:38px; height:38px; flex:none}
+.v-level small{display:block; color:var(--muted); font-size:.75rem; font-weight:700}
+.v-level[disabled]{opacity:.5; cursor:default}
+.v-level.beaten{border-color:var(--denim)}
+.v-stats{display:flex; justify-content:space-between; gap:8px; font-weight:800; font-size:.9rem}
+.v-timer{height:6px; border-radius:6px; background:var(--line); overflow:hidden} .v-timer i{display:block; height:100%; background:var(--denim); transition:width .1s linear}
+.v-opts{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.v-opts button{text-align:left; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:inherit; font-weight:700; cursor:pointer}
+.v-opts button.ok{border-color:#2E8B57; background:color-mix(in srgb, #2E8B57 18%, var(--surface))}
+.v-opts button.bad{border-color:#C0392B; background:color-mix(in srgb, #C0392B 14%, var(--surface))}
+@media (max-width:480px){ .v-opts{grid-template-columns:1fr} }
 .brain-q{font-weight:800; font-size:1.1rem}
 .brain-hint{color:var(--muted)}
 .brain-msg{font-weight:700}
@@ -1232,7 +1263,7 @@ textarea::placeholder{color:var(--muted)}
 }
 .send:disabled{opacity:1; cursor:default; background:color-mix(in srgb, var(--mustard) 22%, var(--surface))!important; color:color-mix(in srgb, var(--ink) 70%, var(--surface)); box-shadow:none!important}
 /* voice + music bubbles beside the header avatar */
-.avwrap{position:relative; flex:none; display:block; width:80px; height:46px}
+.avwrap{position:relative; flex:none; display:block; width:88px; height:46px}
 .avwrap .avatar{position:absolute; left:0; top:1px}
 .avwrap .bw-music{position:absolute; left:47px; top:-5px}
 .avwrap .bw-voice{position:absolute; left:48px; top:26px}
@@ -1281,7 +1312,6 @@ textarea::placeholder{color:var(--muted)}
 .challenge:not(.folded) .ch-chev{rotate:90deg}
 .challenge.folded .ch-text{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:.95rem}
 .challenge.folded .ch-row{display:none}
-.tcta-mini{font-size:.85rem; font-weight:800; color:var(--muted); text-decoration:underline; text-underline-offset:3px}
 .ch-tag{font-size:.72rem; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
 .ch-text{margin:0!important; font-weight:800; color:var(--ink)!important; font-size:1.02rem; line-height:1.35}
 .ch-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
@@ -1327,8 +1357,67 @@ textarea::placeholder{color:var(--muted)}
 @media (max-width:380px){ .composer .fine{font-size:.66rem; letter-spacing:-.01em} }
 @media (max-width:340px){ .composer .fine{white-space:normal; overflow:visible} }   /* never cut off a link on the smallest phones */
 
+
+/* ---------- tab bar: Chat · Play · Learn · Chill · Me ---------- */
+.tabbar{flex:none; display:flex; justify-content:center; align-items:stretch; gap:2px;
+  padding:5px 6px max(5px, env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--surface); position:relative; z-index:6}
+.tab{flex:1; max-width:128px; min-height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; position:relative;
+  border:0; background:transparent; border-radius:14px; cursor:pointer; color:var(--muted); font-weight:800; font-size:.74rem; line-height:1.1; -webkit-tap-highlight-color:transparent}
+.tab .ti{display:grid; place-items:center; width:54px; height:28px; border-radius:999px; transition:background .15s ease}
+.tab svg{width:23px; height:23px}
+.tab:hover .ti{background:var(--sky)}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"] .ti{background:var(--mustard); color:var(--mustard-ink)}
+.tab.dot .ti::after{content:""; position:absolute; top:4px; left:calc(50% + 12px); width:9px; height:9px; border-radius:50%; background:var(--alert); border:2px solid var(--surface)}
+.only-wide{display:none}
+@media (max-height:480px) and (max-width:1179px){ .tabbar{display:none} }   /* keyboard up: the chat box gets the room */
+@media (min-width:1180px){
+  .tabbar{position:fixed; left:0; top:var(--header-h, 69px); bottom:0; width:88px; flex-direction:column; justify-content:flex-start; gap:6px;
+    padding:14px 8px; border-top:0; border-right:1px solid var(--line); z-index:5}
+  .tab{flex:none; max-width:none; min-height:62px; font-size:.8rem}
+  main,.composer,.wake{margin-left:88px}
+  .overlay.sheet{left:88px; top:var(--header-h, 69px)}
+  .only-wide{display:inline}
+}
+/* sheets that open from the tab bar: they slide up and leave the tabs in reach */
+.sheet-head{display:flex; align-items:center; justify-content:space-between; gap:10px}
+.tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.tile{display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; min-height:92px; padding:12px; border:1.5px solid var(--line); border-radius:16px;
+  background:color-mix(in srgb, var(--sky) 55%, var(--surface)); color:var(--ink); font:inherit; text-decoration:none; cursor:pointer; -webkit-tap-highlight-color:transparent}
+.tile[hidden]{display:none}
+.card a.tile,.card a.tile b{color:var(--ink); text-decoration:none}
+.tile:hover,.tile:focus-visible{border-color:var(--denim)}
+.tile:active{transform:scale(.97)}
+.tile .t-ico{font-size:1.6rem; line-height:1.1}
+.tile b{font-weight:900; font-size:1rem; line-height:1.2}
+.tile small{color:var(--muted); font-weight:700; font-size:.8rem; line-height:1.25}
+.tile.soon{border-style:dashed; opacity:.75}
+.sheet-ch{border:1.5px dashed var(--line); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px}
+.sheet-ch .ch-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.me-help{border:1.5px solid color-mix(in srgb, var(--alert) 45%, var(--line)); border-radius:16px; padding:12px}
+.me-help p{margin:4px 0 0; color:var(--ink)}
+.me-links{display:flex; flex-wrap:wrap; gap:6px 16px; font-size:.9rem}
+.mind-grid.three{grid-template-columns:repeat(3, 1fr)} .mind-grid.three .mind-tile{align-items:center; text-align:center}
+@keyframes sheetup{from{transform:translateY(28px); opacity:0} to{transform:none; opacity:1}}
+@media (max-width:1179px){
+  .overlay.sheet{place-items:end center; padding:0; bottom:var(--tab-h, 60px)}
+  .overlay.sheet .card{width:min(600px, 100%); border-radius:24px 24px 0 0; padding:18px 16px 20px; max-height:calc(100vh - var(--tab-h, 60px) - 56px); animation:sheetup .22s ease-out}
+  .side.open{bottom:var(--tab-h, 60px)}
+}
+/* header badge counter */
+.belt-pill{display:inline-flex; align-items:center; gap:6px; flex:none; padding:6px 12px; font-weight:900}
+.belt-pill svg{width:18px; height:18px; color:var(--mustard)}
+/* welcome-screen starters */
+.starters{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:520px}
+.starters .chip{display:flex; align-items:center; gap:8px; text-align:left; border-radius:16px; padding:10px 12px; min-height:52px; line-height:1.2; font-weight:800; background:var(--surface);
+  color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
+.starters .chip:hover{background:var(--denim); color:var(--denim-ink)}
+.starters .chip span{font-size:1.25rem; flex:none}
+
 @media (max-width:520px){
   body{font-size:16px}
+  .hello{padding-top:18px; gap:12px}
+  .log{padding-top:16px}
   .top{gap:8px}
   .robo .bot-mini{display:none}
   .bubble,.robo .stack{max-width:92%}
@@ -1385,6 +1474,9 @@ textarea::placeholder{color:var(--muted)}
   <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4.5" width="4.2" height="15" rx="1" fill="currentColor"/><rect x="13.8" y="4.5" width="4.2" height="15" rx="1" fill="currentColor"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></g></symbol>
+  <symbol id="i-play2" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 7h9a5 5 0 0 1 4.9 4l.9 4.6a2.6 2.6 0 0 1-4.6 2L16 15.5H8l-1.7 2.1a2.6 2.6 0 0 1-4.6-2l.9-4.6A5 5 0 0 1 7.5 7z"/><path d="M8 10v3M6.5 11.5h3M15.5 10.2h.01M17.5 12.6h.01"/></g></symbol>
+  <symbol id="i-learn" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5v13"/></g></symbol>
+  <symbol id="i-chill" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4.5" height="7" rx="2"/><rect x="16.5" y="13" width="4.5" height="7" rx="2"/></g></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
   <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
   <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
@@ -1418,19 +1510,9 @@ textarea::placeholder{color:var(--muted)}
     <h1>RoboDad</h1>
     <p class="status waking" id="status"><span class="dot"></span>Warming up…</p>
   </div>
-  <button class="icon-btn mind-btn" id="mindBtn" type="button" title="Brain Boost: chess, Tile Talk, word of the day and more" aria-haspopup="dialog">
-    <svg aria-hidden="true"><use href="#i-brain"/></svg><span class="sr">Brain Boost: chess, Tile Talk, word of the day and more</span>
+  <button class="ghost belt-pill" id="beltBtn" type="button" title="Badges" aria-haspopup="dialog">
+    <svg aria-hidden="true"><use href="#i-belt"/></svg><span id="beltCount" aria-hidden="true">0</span><span class="sr">Badges</span>
   </button>
-  <button class="icon-btn" id="sideBtn" type="button" title="Dashboard: radio, timer and more">
-    <svg aria-hidden="true"><use href="#i-dash"/></svg><span class="sr">Dashboard: radio, timer and more</span>
-  </button>
-  <button class="icon-btn hide-narrow" id="beltBtn" type="button" title="Badges">
-    <svg aria-hidden="true"><use href="#i-belt"/></svg><span class="sr">Badges</span>
-  </button>
-  <button class="icon-btn" id="menuBtn" type="button" title="Settings">
-    <svg aria-hidden="true"><use href="#i-menu"/></svg><span class="sr">Settings</span>
-  </button>
-  <button class="ghost" id="learnBtn" type="button" aria-haspopup="dialog">Learning</button>
 </header>
 
 <div class="wake" id="wake" role="status" hidden>
@@ -1470,7 +1552,13 @@ textarea::placeholder{color:var(--muted)}
           <span class="chest-label">Secrets</span>
         </button>
       </div>
-      <p>Real advice for real life: school stress, money, cooking, friends, first jobs, or a dad joke you'll pretend not to like.</p>
+      <p>Real advice for real life. Ask me anything, or tap one to start.</p>
+      <div class="starters" role="group" aria-label="Things to ask RoboDad">
+        <button class="chip" type="button" data-say="I'm stressed about exams"><span aria-hidden="true">😮‍💨</span>Stressed about exams</button>
+        <button class="chip" type="button" data-say="How do I make a budget?"><span aria-hidden="true">💸</span>Make a budget</button>
+        <button class="chip" type="button" data-say="Help me prep for a job interview"><span aria-hidden="true">💼</span>Job interview prep</button>
+        <button class="chip" type="button" data-say="Tell me a dad joke"><span aria-hidden="true">😂</span>Tell me a dad joke</button>
+      </div>
       <button class="sleepcard" id="sleepCard" type="button" hidden>
         <span class="sc-moon"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="mglowA" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFE9A8" stop-opacity=".55"/><stop offset="1" stop-color="#FFE9A8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="31" fill="url(#mglowA)"/><path d="M40 14a19 19 0 1 0 10 32A16 16 0 0 1 40 14z" fill="#FFE9A8" stroke="#1E1E24" stroke-width="2"/><circle cx="31" cy="38" r="2.4" fill="#E9CF86"/><circle cx="25" cy="29" r="1.6" fill="#E9CF86"/><path d="M12 12l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z M52 50l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#FFF3B0"/></svg></span>
         <span class="sc-tx"><span class="sc-tag">Can't sleep?</span><span class="sc-line">Rain, waves, brown noise and more, on a sleep timer.</span></span>
@@ -1480,7 +1568,6 @@ textarea::placeholder{color:var(--muted)}
         <button class="ch-head" type="button" aria-expanded="false"><span class="ch-tag">Daily Dad Challenge</span><span class="ch-text"></span><span class="ch-chev" aria-hidden="true">›</span></button>
         <div class="ch-row"><button class="primary ch-done" type="button">Done it!</button><small class="ch-count"></small></div>
       </section>
-      <a class="tcta-mini" href="/testers">📱 Know an adult with an Android phone? Help RoboDad test →</a>
       <div class="diner-art" aria-hidden="true"><svg viewBox="0 0 330 80" role="presentation">
   <!-- tail-finned cruiser -->
   <g transform="translate(0,6)">
@@ -1534,17 +1621,6 @@ textarea::placeholder{color:var(--muted)}
     </div>
     <div class="pb-hints" id="pbHintList" hidden></div>
   </div>
-  <div class="ticker" id="ticker" role="group" aria-label="Things to ask RoboDad">
-    <div class="ticker-track" id="tickerTrack">
-      <button class="chip" type="button">How do I make a budget?</button>
-      <button class="chip" type="button">I'm stressed about exams</button>
-      <button class="chip" type="button">Help me prep for a job interview</button>
-      <button class="chip" type="button">Tell me a dad joke</button>
-      <button class="chip lang-chip" type="button" data-open-lang="">Practice French, Spanish or Hindi</button>
-      <button class="chip lang-chip" type="button" data-open-math="">Maths help, Grades 7–10</button>
-      <button class="chip lang-chip" type="button" data-open-study="">Study Hall focus timer</button>
-    </div>
-  </div>
   <form id="form" autocomplete="off">
     <label for="input" class="sr">Message RoboDad</label>
     <textarea id="input" rows="1" maxlength="1000" placeholder="Talk to RoboDad…"></textarea>
@@ -1556,8 +1632,16 @@ textarea::placeholder{color:var(--muted)}
   <p class="fine">AI, not a real parent · 13+ · Emergency: 911 · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></p>
 </div>
 
+<nav class="tabbar" id="tabbar" aria-label="RoboDad sections">
+  <button class="tab" type="button" data-tab="chat" id="chatTab" aria-current="page"><span class="ti"><svg aria-hidden="true"><use href="#i-chat"/></svg></span>Chat</button>
+  <button class="tab" type="button" data-tab="play" id="playTab" aria-haspopup="dialog"><span class="ti"><svg aria-hidden="true"><use href="#i-play2"/></svg></span>Play</button>
+  <button class="tab" type="button" data-tab="learn" id="learnBtn" aria-haspopup="dialog"><span class="ti"><svg aria-hidden="true"><use href="#i-learn"/></svg></span>Learn</button>
+  <button class="tab" type="button" data-tab="chill" id="sideBtn"><span class="ti"><svg aria-hidden="true"><use href="#i-chill"/></svg></span>Chill</button>
+  <button class="tab" type="button" data-tab="me" id="meBtn" aria-haspopup="dialog"><span class="ti"><svg aria-hidden="true"><use href="#i-user"/></svg></span>Me</button>
+</nav>
+
 <aside class="side" id="side" aria-label="RoboDad dashboard">
-  <div class="side-head"><h2>Dashboard</h2><button class="ghost only-mobile" id="sideClose" type="button">Close</button></div>
+  <div class="side-head"><h2><span class="only-wide">Dashboard</span><span class="only-mobile">Chill</span></h2><button class="ghost only-mobile" id="sideClose" type="button">Close</button></div>
 
   <section class="widget radio" id="radioW" aria-label="RoboDad Radio">
     <div class="radio-head">
@@ -1658,7 +1742,7 @@ textarea::placeholder{color:var(--muted)}
 <div class="overlay" id="menuDlg" role="dialog" aria-modal="true" aria-labelledby="menuTitle" hidden>
   <div class="card">
     <h2 id="menuTitle">Make it yours</h2>
-    <p id="menuHint">Pick a look. You can change it any time from the ☰ menu.</p>
+    <p id="menuHint">Change how RoboDad looks and works.</p>
     <div class="looks" role="radiogroup" aria-label="Look">
       <button class="look" type="button" role="radio" data-look="classic" aria-checked="true">
         <span class="pv classic"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-modern"/></svg></span>
@@ -1785,33 +1869,73 @@ textarea::placeholder{color:var(--muted)}
 
 <div class="overlay" id="mindDlg" role="dialog" aria-modal="true" aria-labelledby="mindTitle" hidden>
   <div class="card">
-    <h2 id="mindTitle">Brain Boost with Dad</h2>
-    <div class="mind-grid">
-      <a class="mind-tile" href="/chess"><span class="mt-ico" aria-hidden="true">♟</span><b>Beat Dad at chess</b><small>Nine dads to beat</small></a>
-      <a class="mind-tile" href="/tiles"><span class="mt-ico" aria-hidden="true">🔤</span><b>Tile Talk</b><small>Beat Dad at words</small></a>
-      <button class="mind-tile" type="button" data-mind="word"><span class="mt-ico" aria-hidden="true">📖</span><b>Word of the day</b><small>Learn it, use it</small></button>
-      <button class="mind-tile" type="button" data-mind="fact"><span class="mt-ico" aria-hidden="true">💡</span><b>Fact of the day</b><small>True and surprising</small></button>
-      <button class="mind-tile" type="button" data-mind="otd"><span class="mt-ico" aria-hidden="true">📜</span><b>On this day with Dad</b><small>Dad-and-kid history</small></button>
+    <h2 id="mindTitle">Daily Brain Boost</h2>
+    <div class="mind-grid three">
+      <button class="mind-tile" type="button" data-mind="word"><span class="mt-ico" aria-hidden="true">📖</span><b>Word of the day</b></button>
+      <button class="mind-tile" type="button" data-mind="fact"><span class="mt-ico" aria-hidden="true">💡</span><b>Fact of the day</b></button>
+      <button class="mind-tile" type="button" data-mind="otd"><span class="mt-ico" aria-hidden="true">📜</span><b>On this day</b></button>
     </div>
     <div id="mindBody" class="mind-body" role="status" aria-live="polite" hidden></div>
     <div class="row"><button class="ghost" id="mindClose" type="button">Close</button></div>
   </div>
 </div>
 
-<div class="overlay" id="learnDlg" role="dialog" aria-modal="true" aria-labelledby="learnTitle" hidden>
+<div class="overlay sheet" id="playDlg" role="dialog" aria-modal="true" aria-labelledby="playTitle" hidden>
   <div class="card">
-    <h2 id="learnTitle">Learning</h2>
-    <p>Pick what you want to work on.</p>
-    <div class="learn-menu">
-      <button class="chipbtn" type="button" data-open-lang="">Languages</button>
-      <button class="chipbtn" type="button" data-open-math="">Maths</button>
-      <button class="chipbtn" type="button" data-open-brain="">Brain teasers</button>
-      <button class="chipbtn" type="button" data-learn-soon="Grammar">Grammar</button>
-      <button class="chipbtn" type="button" data-learn-soon="Vocabulary enhancer">Vocabulary enhancer</button>
+    <div class="sheet-head"><h2 id="playTitle">Play</h2><button class="ghost" type="button" data-sheet-close>Close</button></div>
+    <div class="tiles">
+      <a class="tile" href="/chess"><span class="t-ico" aria-hidden="true">♟️</span><b>Beat Dad at chess</b><small>Nine dads to beat</small></a>
+      <a class="tile" href="/tiles"><span class="t-ico" aria-hidden="true">🔤</span><b>Tile Talk</b><small>Beat Dad at words</small></a>
+      <button class="tile" type="button" data-go="brain"><span class="t-ico" aria-hidden="true">🧩</span><b>Brain teasers</b><small>Puzzles and an escape room</small></button>
+      <button class="tile" type="button" data-go="vault"><span class="t-ico" aria-hidden="true">🗝️</span><b>Secret vault</b><small id="playVault">Find the hidden surprises</small></button>
+      <button class="tile" type="button" data-go="joke"><span class="t-ico" aria-hidden="true">😂</span><b>Dad joke</b><small>You'll pretend not to like it</small></button>
+      <button class="tile" type="button" data-go="hunt" id="playHunt" hidden><span class="t-ico" aria-hidden="true">📼</span><b>The Lost Cartridge</b><small>Pick up your chapter</small></button>
+      <a class="tile" href="/quest" id="playQuest" hidden><span class="t-ico" aria-hidden="true">🕹️</span><b>DAD QUEST</b><small>Your unlocked mini-game</small></a>
+    </div>
+    <section class="challenge sheet-ch" aria-label="Daily Dad Challenge">
+      <span class="ch-tag">Daily Dad Challenge</span>
+      <p class="ch-text"></p>
+      <div class="ch-row"><button class="primary ch-done" type="button">Done it!</button><small class="ch-count"></small></div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay sheet" id="learnDlg" role="dialog" aria-modal="true" aria-labelledby="learnTitle" hidden>
+  <div class="card">
+    <div class="sheet-head"><h2 id="learnTitle">Learn</h2><button class="ghost" id="learnClose" type="button">Close</button></div>
+    <div class="tiles">
+      <button class="tile" type="button" data-open-lang=""><span class="t-ico" aria-hidden="true">🗣️</span><b>Languages</b><small>French, Spanish, Hindi, Marathi, Bengali</small></button>
+      <button class="tile" type="button" data-open-math=""><span class="t-ico" aria-hidden="true">➗</span><b>Maths</b><small>Grades 7 to 10</small></button>
+      <button class="tile" type="button" data-go="word"><span class="t-ico" aria-hidden="true">📖</span><b>Word of the day</b><small>Learn it, use it</small></button>
+      <button class="tile" type="button" data-go="fact"><span class="t-ico" aria-hidden="true">💡</span><b>Fact of the day</b><small>True and surprising</small></button>
+      <button class="tile" type="button" data-go="otd"><span class="t-ico" aria-hidden="true">📜</span><b>On this day with Dad</b><small>Dad-and-kid history</small></button>
+      <button class="tile" type="button" data-open-study=""><span class="t-ico" aria-hidden="true">⏱️</span><b>Study Hall</b><small>25 minutes on, 5 off</small></button>
+      <button class="tile" type="button" data-go="brain"><span class="t-ico" aria-hidden="true">🧩</span><b>Brain teasers</b><small>Train your thinking</small></button>
+      <button class="tile" type="button" data-go="vocab"><span class="t-ico" aria-hidden="true">✨</span><b>Vocabulary with Dad</b><small>Glow-Up, Comebacks, Word Origins, Vocab Duel</small></button>
+      <a class="tile" href="/tiles"><span class="t-ico" aria-hidden="true">🔤</span><b>Tile Talk</b><small>Words, bonus squares and nine dads</small></a>
+      <button class="tile" type="button" data-go="grammar"><span class="t-ico" aria-hidden="true">✍️</span><b>Grammar with Dad</b><small>Similes, analogies and Tense Trouble</small></button>
     </div>
     <p id="learnSoon" role="status" hidden></p>
     <p><a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a></p>
-    <div class="row"><button class="ghost" id="learnClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay sheet" id="meDlg" role="dialog" aria-modal="true" aria-labelledby="meTitle" hidden>
+  <div class="card">
+    <div class="sheet-head"><h2 id="meTitle">Me</h2><button class="ghost" type="button" data-sheet-close>Close</button></div>
+    <div class="tiles">
+      <button class="tile" type="button" data-go="looks"><span class="t-ico" aria-hidden="true">🎨</span><b>Looks and dads</b><small>Themes, avatars, voice</small></button>
+      <button class="tile" type="button" data-go="badges"><span class="t-ico" aria-hidden="true">🏅</span><b>Badges</b><small id="meBadges">Do it for real, unlock them</small></button>
+      <button class="tile" type="button" data-go="name"><span class="t-ico" aria-hidden="true">👋</span><b>Nickname</b><small id="meName">What RoboDad calls you</small></button>
+      <button class="tile" type="button" data-go="code"><span class="t-ico" aria-hidden="true">🔑</span><b>Secret code</b><small>Got one? Enter it</small></button>
+    </div>
+    <div class="me-help">
+      <b>Need to talk to someone now?</b>
+      <p><a href="tel:18006686868">Kids Help Phone: 1-800-668-6868</a>, or text CONNECT to <a href="sms:686868?body=CONNECT">686868</a>. Free, any time. Emergency: <a href="tel:911">911</a>.</p>
+    </div>
+    <div class="me-links">
+      <a href="/changelog">What's new</a><a href="/parents">For parents</a><a href="/testers">Help test the Android app</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
+    </div>
   </div>
 </div>
 
@@ -1819,6 +1943,30 @@ textarea::placeholder{color:var(--muted)}
   <div class="card lang-card">
     <div class="lang-top"><div class="teach-h"><h2 id="brainTitle">Brain Teasers with Dad<small>Puzzles, streaks and an escape room</small></h2></div><button class="ghost" id="brainClose" type="button">Close</button></div>
     <div id="brainBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="grammarDlg" role="dialog" aria-modal="true" aria-labelledby="grammarTitle" hidden>
+  <div class="card lang-card">
+    <div class="lang-top"><div class="teach-h"><svg class="bot" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-professor"/></svg><h2 id="grammarTitle">Grammar with Dad<small>Silly sentences, serious skills</small></h2></div><button class="ghost" id="grammarClose" type="button">Close</button></div>
+    <div class="lang-tabs vocab-tabs g-tabs" role="tablist" aria-label="Grammar">
+      <button type="button" role="tab" data-gtab="compare" aria-selected="true">🎰 Simile, Metaphor, Analogy</button>
+      <button type="button" role="tab" data-gtab="tense" aria-selected="false">⏰ Tense Trouble</button>
+    </div>
+    <div id="grammarBody" class="vocab-body"></div>
+  </div>
+</div>
+
+<div class="overlay" id="vocabDlg" role="dialog" aria-modal="true" aria-labelledby="vocabTitle" hidden>
+  <div class="card lang-card">
+    <div class="lang-top"><div class="teach-h"><svg class="bot" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-bookworm"/></svg><h2 id="vocabTitle">Vocabulary with Dad<small>Sound sharp, never stiff</small></h2></div><button class="ghost" id="vocabClose" type="button">Close</button></div>
+    <div class="lang-tabs vocab-tabs" role="tablist" aria-label="Vocabulary">
+      <button type="button" role="tab" data-vtab="glow" aria-selected="true">✨ Glow-Up</button>
+      <button type="button" role="tab" data-vtab="comeback" aria-selected="false">🎩 Comebacks</button>
+      <button type="button" role="tab" data-vtab="origin" aria-selected="false">📜 Word Origins</button>
+      <button type="button" role="tab" data-vtab="duel" aria-selected="false">⚔️ Vocab Duel</button>
+    </div>
+    <div id="vocabBody" class="vocab-body"></div>
   </div>
 </div>
 
@@ -1976,11 +2124,13 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/brainteasers.js?v=2"></script>
 <script src="/static/brain.js?v=1"></script>
 <script src="/static/words.js?v=1"></script>
-<script src="/static/tiles-badges.js"></script>
+<script src="/static/vocab.js?v=1"></script>
+<script src="/static/grammar.js?v=1"></script>
+<script src="/static/tiles-badges.js?v=2"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=40"></script>
-<script src="/static/hunt.js?v=1"></script>
+<script src="/static/hunt.js?v=2"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -2203,10 +2353,10 @@ textarea::placeholder{color:var(--muted)}
   }
   function hideHello(){
     if (hello.hidden) return;
-    const r = $("avHero").getBoundingClientRect(); hello.hidden = true; $("ticker").hidden = true; setDock("head", r);
+    const r = $("avHero").getBoundingClientRect(); hello.hidden = true; setDock("head", r);
   }
   function showHello(){
-    const r = $("avHead").getBoundingClientRect(); hello.hidden = false; $("ticker").hidden = false; setDock("hero", r);
+    const r = $("avHead").getBoundingClientRect(); hello.hidden = false; setDock("hero", r);
   }
 
   function addUser(text){
@@ -2347,7 +2497,7 @@ textarea::placeholder{color:var(--muted)}
     statusEl.classList.toggle("classic", s.mode !== "llm");
     statusEl.innerHTML = `<span class="dot"></span>` + (s.mode === "llm"
       ? `Online`
-      : `Classic mode · ${s.intents} intents, ${s.examples} examples`);
+      : `Online · classic mode`);
   }
   async function connect(){
     const started = Date.now();
@@ -2458,7 +2608,7 @@ textarea::placeholder{color:var(--muted)}
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(input.value); }
   });
   form.addEventListener("submit", (e) => { e.preventDefault(); submit(input.value); });
-  document.querySelectorAll(".chip:not(.lang-chip)").forEach(c => c.addEventListener("click", () => submit(c.textContent)));
+  document.querySelectorAll(".chip:not(.lang-chip)").forEach(c => c.addEventListener("click", () => submit(c.dataset.say || c.textContent)));
   // ---------- Learning: languages, maths and more, from one button ----------
   // One fact per day: the same fact all day, the next one tomorrow. Each is well established.
   const FACTS = [
@@ -2485,22 +2635,16 @@ textarea::placeholder{color:var(--muted)}
   ];
   const learnDlg = $("learnDlg");
   const closeLearn = () => { learnDlg.hidden = true; $("learnBtn").focus(); };
-  $("learnBtn").addEventListener("click", () => { learnDlg.hidden = false; setTimeout(() => learnDlg.querySelector("button")?.focus(), 30); });
   $("learnClose").addEventListener("click", closeLearn);
   learnDlg.addEventListener("click", (e) => {
-    if (e.target === learnDlg) closeLearn();
-    else if (e.target.closest("[data-open-lang],[data-open-math]")) learnDlg.hidden = true;   // the lesson dialog opens on top
-    else if (e.target.closest("[data-open-brain]")) { learnDlg.hidden = true; openBrain(); }
-    else if (e.target.closest("[data-learn-soon]")) {
-      const soon = $("learnSoon"); soon.textContent = e.target.closest("[data-learn-soon]").dataset.learnSoon + " is coming soon."; soon.hidden = false;
-    }
+    const soonBtn = e.target.closest("[data-learn-soon]");
+    if (soonBtn) { const soon = $("learnSoon"); soon.textContent = soonBtn.dataset.learnSoon + " games are on the way. Check What's new."; soon.hidden = false; }
   });
-  learnDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLearn(); });
 
   // ---------- Brain Boost: chess, word of the day, fact of the day, on this day with Dad ----------
   const mindDlg = $("mindDlg"), mindBody = $("mindBody");
   const dayNumber = () => { const n = new Date(); return Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 86400000); };
-  const closeMind = () => { mindDlg.hidden = true; $("mindBtn").focus(); };
+  const closeMind = () => { mindDlg.hidden = true; $("learnBtn").focus(); };
   const askDad = (text) => {                   // put a question in the chat box, ready to send
     closeMind();
     const box = $("input");
@@ -2543,11 +2687,12 @@ textarea::placeholder{color:var(--muted)}
       });
     }
   }
-  $("mindBtn").addEventListener("click", () => {
+  function openMind(kind){
     mindDlg.hidden = false; mindBody.hidden = true;
     mindDlg.querySelectorAll("[data-mind]").forEach(b => b.setAttribute("aria-pressed", "false"));
-    setTimeout(() => mindDlg.querySelector(".mind-tile")?.focus(), 30);
-  });
+    if (kind) showMind(kind);
+    setTimeout(() => (mindDlg.querySelector('.mind-tile[aria-pressed="true"]') || mindDlg.querySelector(".mind-tile"))?.focus(), 30);
+  }
   $("mindClose").addEventListener("click", closeMind);
   mindDlg.addEventListener("click", (e) => {
     if (e.target === mindDlg) { closeMind(); return; }
@@ -2566,10 +2711,178 @@ textarea::placeholder{color:var(--muted)}
     coach: (id) => { brainDlg.hidden = true; startPractice("brain", id); },
   };
   const openBrain = () => { brainDlg.hidden = false; if (window.BrainGame) window.BrainGame.open(brainBody, BRAIN_BRIDGE); else brainBody.textContent = "Brain teasers are still loading. Try again in a moment."; };
-  const closeBrain = () => { brainDlg.hidden = true; $("learnBtn").focus(); };
+  const closeBrain = () => { brainDlg.hidden = true; $("playTab").focus(); };
   $("brainClose").addEventListener("click", closeBrain);
   brainDlg.addEventListener("click", (e) => { if (e.target === brainDlg) closeBrain(); });
   brainDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBrain(); });
+
+
+  // ---------- Vocabulary with Dad (static/vocab.js): Glow-Up, Comebacks, Word Origins, Vocab Duel ----------
+  const vocabDlg = $("vocabDlg"), vocabBody = $("vocabBody"), V = window.VOCAB || {};
+  const VDUEL_KEY = "robodad.vocab.duel";
+  let vTab = "glow", vGlowCtx = (V.GLOW_CONTEXTS || [])[0] || "", vGlowEx = 0, vCbCat = 0, vOrigin = null, vDuel = null, vTimer = null;
+  const vShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const loadDuel = () => { try { const d = JSON.parse(localStorage.getItem(VDUEL_KEY) || "{}"); return { xp: d.xp || 0, beaten: d.beaten || [], best: d.best || {}, bestStreak: d.bestStreak || 0 }; } catch { return { xp: 0, beaten: [], best: {}, bestStreak: 0 }; } };
+  const saveDuel = (d) => { try { localStorage.setItem(VDUEL_KEY, JSON.stringify(d)); } catch {} };
+  const levelOpen = (i, d) => i === 0 || d.beaten.includes(V.DUEL[i - 1].id);
+  const vbump = (fn) => { fn(prog("vocab")); saveLp(); checkLangBadges(); };   // badge progress (Learning badges)
+  function vocabAskDad(text){                  // close the dialog and put a question in the chat box
+    stopDuelTimer(); vocabDlg.hidden = true;
+    input.value = text.slice(0, 300); autosize(); input.focus();
+  }
+  async function shareLine(text, onShared){
+    const full = `${text}\n\nfrom RoboDad · robodad.app`;
+    try { if (navigator.share) { await navigator.share({ text: full }); onShared?.(); return; } } catch (e) { if (e?.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(full); toast("Copied. Go be classy."); onShared?.(); } catch { toast("Couldn't copy that one. Try selecting the text instead."); }
+  }
+  function renderVocab(){
+    vocabDlg.querySelectorAll("[data-vtab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.vtab === vTab)));
+    if (vTab !== "duel") stopDuelTimer();
+    if (vTab === "glow") {
+      const ex = V.GLOWUPS[vGlowEx % V.GLOWUPS.length];
+      vocabBody.innerHTML = `${badgeLine("vocab")}<p>Paste a real sentence: an email to a teacher, an essay line, a message to a coach. Dad polishes it and shows you the one or two changes that made the difference.</p>
+        <p class="v-k" style="font-size:.8rem;font-weight:900;color:var(--muted)">WHO'S IT FOR?</p>
+        <div class="v-chips">${V.GLOW_CONTEXTS.map(c => `<button class="chipbtn" type="button" data-vglow-ctx="${esc(c)}" aria-pressed="${c === vGlowCtx}">${esc(c)}</button>`).join("")}</div>
+        <label class="sr" for="vGlowText">Your sentence</label>
+        <textarea id="vGlowText" maxlength="400" placeholder="e.g. hey can u tell me what the hw is i wasnt here"></textarea>
+        <div class="row"><button class="primary" type="button" data-vact="glow">✨ Glow it up with Dad</button></div>
+        <div class="v-card"><span class="v-k">Example ${vGlowEx % V.GLOWUPS.length + 1} of ${V.GLOWUPS.length} · ${esc(ex.ctx)}</span>
+          <p class="v-before">${esc(ex.before)}</p><p class="v-after">${esc(ex.after)}</p><p><b>What changed:</b> ${esc(ex.why)}</p>
+          <div class="row"><button class="ghost" type="button" data-vact="glow-next">Another example</button></div></div>`;
+    } else if (vTab === "comeback") {
+      const cat = V.COMEBACKS[vCbCat];
+      vocabBody.innerHTML = `${badgeLine("vocab")}<div class="v-card"><span class="v-k">Dad's comeback code</span><ol class="v-rules">${V.COMEBACK_RULES.map(r => `<li>${esc(r)}</li>`).join("")}</ol></div>
+        <div class="v-chips">${V.COMEBACKS.map((c, i) => `<button class="chipbtn" type="button" data-vcb="${i}" aria-pressed="${i === vCbCat}">${esc(c.cat)}</button>`).join("")}</div>
+        ${cat.items.map((it, i) => `<div class="v-card"><p class="v-line">“${esc(it.line)}”</p>${it.src ? `<p class="v-src">${esc(it.src)}</p>` : ""}
+          <p><b>Use it when:</b> ${esc(it.when)}</p><div class="row"><button class="ghost" type="button" data-vshare="${i}">Share</button></div></div>`).join("")}`;
+    } else if (vTab === "origin") {
+      const list = V.ORIGINS; if (vOrigin === null) vOrigin = dayNumber() % list.length;
+      const o = list[vOrigin];
+      if (!(prog("vocab").seen || []).includes(o.w)) vbump(p => (p.seen ||= []).push(o.w));
+      vocabBody.innerHTML = `<div class="v-card"><span class="v-k">${vOrigin === dayNumber() % list.length ? "Today's word story" : "Word story"} · from ${esc(o.from)}</span>
+          <div class="v-word">${esc(o.w)}</div>${o.myth ? `<span class="v-myth">Myth buster</span>` : ""}
+          <p>${esc(o.story)}</p><p><b>Dad says:</b> ${esc(o.dad)}</p></div>
+        <div class="row"><button class="primary" type="button" data-vact="origin-next">Next story</button>
+          <button class="ghost" type="button" data-vact="origin-ask">Ask Dad about this word</button>
+          <button class="ghost" type="button" data-vact="origin-share">Share</button></div>`;
+    } else renderDuelLadder();
+  }
+  function avSvg(av, locked){ return locked ? `<svg viewBox="0 0 64 64" aria-hidden="true"><text x="32" y="42" text-anchor="middle" font-size="30">🔒</text></svg>` : `<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#av-${av}"/></svg>`; }
+  function renderDuelLadder(msg){
+    const d = loadDuel();
+    vocabBody.innerHTML = `<p>Eight fast questions per duel: match the word to its meaning, or pick the best upgrade. Get 6 right to beat that dad and unlock the next one.</p>
+      <div class="v-stats"><span>⭐ ${d.xp} XP</span><span>🔥 Best streak ${d.bestStreak}</span><span>🏆 ${d.beaten.length} of ${V.DUEL.length} beaten</span></div>
+      ${badgeLine("vocab")}
+      ${msg ? `<div class="v-card">${msg}</div>` : ""}
+      <div class="v-ladder">${V.DUEL.map((L, i) => {
+        const open = levelOpen(i, d), hide = L.secret && !open, beat = d.beaten.includes(L.id);
+        return `<button class="v-level${beat ? " beaten" : ""}" type="button" data-vlevel="${i}" ${open ? "" : "disabled"}>${avSvg(L.av, !open)}
+          <span>${esc(hide ? "???" : L.name)}<small>${hide ? "Secret. Beat Professor Dad." : open ? `Tier ${L.tier}${beat ? " · beaten ✓" : ""}${d.best[L.id] != null ? ` · best ${d.best[L.id]}/8` : ""}` : `Tier ${L.tier} · locked`}</small></span></button>`;
+      }).join("")}</div>`;
+  }
+  function startDuel(i){
+    const L = V.DUEL[i];
+    const qm = vShuffle(L.m).slice(0, 5).map(([w, m]) => ({ kind: "m", prompt: `What does “${w}” mean?`, ok: m,
+      opts: vShuffle([m, ...vShuffle(L.m.filter(x => x[0] !== w)).slice(0, 3).map(x => x[1])]), why: `“${w}” means ${m}.` }));
+    const qu = vShuffle(L.u).slice(0, 3).map(u => ({ kind: "u", prompt: `Upgrade “${u.plain}”: ${u.ctx}`, ok: u.ok, opts: vShuffle([u.ok, ...u.no]), why: u.why }));
+    vDuel = { i, qs: vShuffle([...qm, ...qu]), n: 0, score: 0, streak: 0, top: 0, xp: 0, answered: false };
+    duelQuestion();
+  }
+  function stopDuelTimer(){ if (vTimer) { clearInterval(vTimer); vTimer = null; } }
+  function duelQuestion(){
+    const D = vDuel, q = D.qs[D.n], L = V.DUEL[D.i]; D.answered = false; D.t0 = Date.now();
+    vocabBody.innerHTML = `<div class="lang-top"><div class="teach-h">${avSvg(L.av)}<b>${esc(L.name)}</b></div><button class="ghost" type="button" data-vact="duel-quit">Quit duel</button></div>
+      <div class="v-stats"><span>Question ${D.n + 1} of ${D.qs.length}</span><span>✅ ${D.score}</span><span>🔥 ${D.streak}</span><span>⭐ +${D.xp}</span></div>
+      <div class="v-timer" aria-hidden="true"><i id="vTimeBar" style="width:100%"></i></div>
+      <p class="brain-q">${esc(q.prompt)}</p>
+      <div class="v-opts">${q.opts.map((o, k) => `<button type="button" data-vpick="${k}">${esc(o)}</button>`).join("")}</div>
+      <p id="vDuelMsg" class="brain-msg" role="status" aria-live="polite"></p><div class="row" id="vDuelNext"></div>`;
+    vocabBody.querySelector("[data-vpick]")?.focus();
+    const LIMIT = 12000; stopDuelTimer();
+    vTimer = setInterval(() => {
+      const left = Math.max(0, LIMIT - (Date.now() - D.t0)), bar = $("vTimeBar");
+      if (bar) bar.style.width = (left / LIMIT * 100) + "%";
+      if (!left) duelAnswer(-1);
+    }, 100);
+  }
+  function duelAnswer(k){
+    const D = vDuel; if (!D || D.answered) return; D.answered = true; stopDuelTimer();
+    const q = D.qs[D.n], right = k >= 0 && q.opts[k] === q.ok, fast = Date.now() - D.t0 < 5000;
+    vocabBody.querySelectorAll("[data-vpick]").forEach((b, idx) => { b.disabled = true; if (q.opts[idx] === q.ok) b.classList.add("ok"); else if (idx === k) b.classList.add("bad"); });
+    if (right) { D.score++; D.streak++; D.top = Math.max(D.top, D.streak); D.xp += 10 + Math.min(D.streak - 1, 5) * 2 + (fast ? 5 : 0); }
+    else D.streak = 0;
+    $("vDuelMsg").textContent = (right ? (fast ? "Lightning fast! " : "Right! ") : k < 0 ? "Time's up. " : "Not quite. ") + q.why;
+    const last = D.n + 1 >= D.qs.length;
+    $("vDuelNext").innerHTML = `<button class="primary" type="button" data-vact="duel-next">${last ? "See results" : "Next"}</button>`;
+    $("vDuelNext").querySelector("button").focus();
+  }
+  function duelFinish(){
+    const D = vDuel, L = V.DUEL[D.i], d = loadDuel(), won = D.score >= 6, first = won && !d.beaten.includes(L.id);
+    d.xp += D.xp + (won ? 25 : 0); d.bestStreak = Math.max(d.bestStreak, D.top);
+    d.best[L.id] = Math.max(d.best[L.id] || 0, D.score);
+    if (won && !d.beaten.includes(L.id)) d.beaten.push(L.id);
+    saveDuel(d); vDuel = null;
+    vbump(p => { p.beaten = d.beaten.slice(); if (D.score === 8) p.perfect = true; });
+    const next = V.DUEL[D.i + 1];
+    let msg = `<p class="brain-q">${won ? `You beat ${esc(L.name)}! ${D.score}/8` : `${esc(L.name)} wins this one. ${D.score}/8`}</p>
+      <p>+${D.xp + (won ? 25 : 0)} XP${won ? " (including a 25 XP win bonus)" : ""} · best streak this duel: ${D.top}</p>`;
+    if (!won) msg += `<p>You need 6 to win. Rematch? The words get easier the second time.</p>`;
+    else if (first && next) msg += `<p>${next.secret ? "Something's stirring in the ladder… a secret challenger has appeared." : `${esc(next.name)} is unlocked.`}</p>`;
+    if (won && L.id === "grandpa") msg += `<p><b>Robo-Grandpa says:</b> ${esc(V.GRANDPA_SECRET)}</p>`;
+    msg += `<div class="row"><button class="primary" type="button" data-vlevel="${D.i}">Rematch</button>${won && next ? `<button class="ghost" type="button" data-vlevel="${D.i + 1}">Take on ${esc(next.secret && first ? "the challenger" : next.name)}</button>` : ""}</div>`;
+    renderDuelLadder(msg);
+  }
+  vocabBody.addEventListener("click", (e) => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.vglowCtx) { vGlowCtx = t.dataset.vglowCtx; vocabBody.querySelectorAll("[data-vglow-ctx]").forEach(b => b.setAttribute("aria-pressed", String(b === t))); return; }
+    if (t.dataset.vcb !== undefined) { vCbCat = +t.dataset.vcb; renderVocab(); return; }
+    if (t.dataset.vshare !== undefined) { const it = V.COMEBACKS[vCbCat].items[+t.dataset.vshare]; shareLine(`“${it.line}”${it.src ? ` (${it.src})` : ""}`, () => vbump(p => p.shares = (p.shares || 0) + 1)); return; }
+    if (t.dataset.vlevel !== undefined) { startDuel(+t.dataset.vlevel); return; }
+    if (t.dataset.vpick !== undefined) { duelAnswer(+t.dataset.vpick); return; }
+    const act = t.dataset.vact;
+    if (act === "glow") {
+      const text = ($("vGlowText")?.value || "").trim();
+      if (!text) { toast("Paste a sentence first, then Dad will glow it up."); $("vGlowText")?.focus(); return; }
+      if (busy) { toast("Dad's still answering. Try again in a second."); return; }
+      vbump(p => p.glow = (p.glow || 0) + 1);
+      vocabDlg.hidden = true; startPractice("vocab", "glowup");
+      submit(`Who it's for: ${vGlowCtx}.\nMy sentence: ${text}`);
+    }
+    else if (act === "glow-next") { vGlowEx++; renderVocab(); }
+    else if (act === "origin-next") { vOrigin = (vOrigin + 1) % V.ORIGINS.length; renderVocab(); }
+    else if (act === "origin-ask") vocabAskDad(`Tell me more about where the word "${V.ORIGINS[vOrigin].w}" comes from.`);
+    else if (act === "origin-share") { const o = V.ORIGINS[vOrigin]; shareLine(`Word story: ${o.w}\n${o.story}`); }
+    else if (act === "duel-next") { vDuel.n++; vDuel.n >= vDuel.qs.length ? duelFinish() : duelQuestion(); }
+    else if (act === "duel-quit") { stopDuelTimer(); vDuel = null; renderDuelLadder(); }
+  });
+  vocabDlg.querySelector(".vocab-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-vtab]"); if (!b) return;
+    vTab = b.dataset.vtab; vDuel = null; renderVocab();
+  });
+  const openVocab = () => { vocabDlg.hidden = false; renderVocab(); setTimeout(() => vocabDlg.querySelector('[aria-selected="true"]')?.focus(), 30); };
+  const closeVocab = () => { stopDuelTimer(); vDuel = null; vocabDlg.hidden = true; $("learnBtn").focus(); };
+  $("vocabClose").addEventListener("click", closeVocab);
+  vocabDlg.addEventListener("click", (e) => { if (e.target === vocabDlg) closeVocab(); });
+  vocabDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVocab(); });
+
+  // ---------- Grammar with Dad: the games live in /static/grammar.js ----------
+  const grammarDlg = $("grammarDlg"), grammarBody = $("grammarBody");
+  const GRAMMAR_BRIDGE = {
+    ask: (text) => { grammarDlg.hidden = true; input.value = text.slice(0, 300); autosize(); input.focus(); },
+    record: (ev, kind, score) => {                   // badge progress (Learning badges)
+      const p = prog("gram");
+      if (ev === "spin") p.spins = (p.spins || 0) + 1;
+      if (ev === "round") { p.rounds = (p.rounds || 0) + 1; p.best ||= {}; p.best[kind] = Math.max(p.best[kind] || 0, score); }
+      saveLp(); checkLangBadges();
+    },
+    badges: () => badgeLine("gram"),
+  };
+  const openGrammar = () => { grammarDlg.hidden = false; if (window.GrammarGame) window.GrammarGame.open(grammarBody, GRAMMAR_BRIDGE); else grammarBody.textContent = "Grammar is still loading. Try again in a moment."; setTimeout(() => grammarDlg.querySelector('[aria-selected="true"]')?.focus(), 30); };
+  const closeGrammar = () => { grammarDlg.hidden = true; $("learnBtn").focus(); };
+  grammarDlg.querySelector(".g-tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-gtab]"); if (b && window.GrammarGame) window.GrammarGame.tab(b.dataset.gtab); });
+  $("grammarClose").addEventListener("click", closeGrammar);
+  grammarDlg.addEventListener("click", (e) => { if (e.target === grammarDlg) closeGrammar(); });
+  grammarDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeGrammar(); });
 
   // ---------- install as an app ----------
   let installEvt = null;
@@ -2706,11 +3019,11 @@ const PLAYERS = {
   // ---------- seasons: looks that switch on by themselves for a holiday ----------
   // "MM-DD" ranges repeat every year; "YYYY-MM-DD" ranges are for holidays that move (update those yearly)
   const SEASONS = {
-    halloween: { ranges:[["10-15", "11-02"]], hello:"🎃 Happy Halloween! I dressed up. Change the look any time in ☰" },
-    diwali: { ranges:[["2026-11-05", "2026-11-12"]], hello:"🪔 Happy Diwali! I lit the diyas. Change the look any time in ☰" },        // Diwali: Nov 8, 2026
-    winter: { ranges:[["12-15", "01-02"]], hello:"❄️ Happy holidays! I bundled up. Change the look any time in ☰" },
-    lunar: { ranges:[["2027-02-02", "2027-02-14"]], hello:"🏮 Happy Lunar New Year! Change the look any time in ☰" },                    // Lunar New Year: Feb 6, 2027
-    eid: { ranges:[["2027-03-07", "2027-03-13"], ["2027-05-14", "2027-05-19"]], hello:"🌙 Eid Mubarak! Change the look any time in ☰" },  // Eid al-Fitr ~Mar 9 and Eid al-Adha ~May 16, 2027
+    halloween: { ranges:[["10-15", "11-02"]], hello:"🎃 Happy Halloween! I dressed up. Change the look any time in the Me tab" },
+    diwali: { ranges:[["2026-11-05", "2026-11-12"]], hello:"🪔 Happy Diwali! I lit the diyas. Change the look any time in the Me tab" },        // Diwali: Nov 8, 2026
+    winter: { ranges:[["12-15", "01-02"]], hello:"❄️ Happy holidays! I bundled up. Change the look any time in the Me tab" },
+    lunar: { ranges:[["2027-02-02", "2027-02-14"]], hello:"🏮 Happy Lunar New Year! Change the look any time in the Me tab" },                    // Lunar New Year: Feb 6, 2027
+    eid: { ranges:[["2027-03-07", "2027-03-13"], ["2027-05-14", "2027-05-19"]], hello:"🌙 Eid Mubarak! Change the look any time in the Me tab" },  // Eid al-Fitr ~Mar 9 and Eid al-Adha ~May 16, 2027
   };
   function seasonRange(name){                  // which run of the holiday we're in (used to switch it on once per run)
     const d = new Date(), ymd = d.toLocaleDateString("en-CA"), md = ymd.slice(5);
@@ -2839,12 +3152,11 @@ const PLAYERS = {
     next.focus(); applyLook(next.dataset.look); lookStation(next.dataset.look);
   });
   function openMenu(firstRun){
-    $("menuHint").textContent = firstRun ? "Pick a look. You can change it any time from the ☰ menu." : "Change how RoboDad looks and works.";
+    $("menuHint").textContent = firstRun ? "Pick a look. You can change it any time from the Me tab." : "Change how RoboDad looks and works.";
     $("menuTitle").textContent = firstRun ? "Make it yours" : "Look and settings";
     menuDlg.hidden = false; (menuDlg.querySelector('.look[aria-checked="true"]') || menuDlg.querySelector(".look")).focus();
   }
-  function closeMenu(){ menuDlg.hidden = true; $("menuBtn").focus(); }
-  $("menuBtn").addEventListener("click", () => openMenu(false));
+  function closeMenu(){ menuDlg.hidden = true; $("meBtn").focus(); }
   $("menuDone").addEventListener("click", () => { closeMenu(); input.focus(); });
   menuDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   applyLook(getPref(LOOK_KEY) || "classic");
@@ -2972,6 +3284,19 @@ const PLAYERS = {
     ["brhands", "Hands-On Hero", "brain", "Solve all four hands-on puzzles", "Lights Out, Code Lock, River Run and Slide Tiles, all done.", "rare", "?!", (p) => (p.handsDone || []).length >= 4],
     ["bresc", "Garage Escape Artist", "brain", "Escape Dad's Garage", "Cracked all four rooms and got Dad out of the garage.", "epic", "?!", (p) => !!p.escaped],
     ["br30", "Big Brain Energy", "brain", "Solve 30 different brain teasers", "Thirty different brain teasers solved. Big brain energy.", "epic", "?!", (p) => p.done.length >= 30],
+    ["vglow", "Glow Getter", "vocab", "Glow up your first sentence with Dad", "Glowed up a first sentence. Somewhere, an English teacher smiled and didn't know why.", "common", "Aa", (p) => (p.glow || 0) >= 1],
+    ["vmic", "Mic Drop", "vocab", "Share 3 Classy Comebacks", "Three classy comebacks shared. Aimed at the idea, delivered with style.", "rare", "Aa", (p) => (p.shares || 0) >= 3],
+    ["vnerd", "Word Nerd", "vocab", "Read 10 Word Origin stories", "Ten word stories read. You know 'muscle' means little mouse. Use this power wisely.", "rare", "Aa", (p) => (p.seen || []).length >= 10],
+    ["vflaw", "Flawless Victory", "vocab", "Win a Vocab Duel 8 out of 8", "A perfect Vocab Duel. Not a single word out of place.", "rare", "Aa", (p) => !!p.perfect],
+    ["vprof", "Top of the Class", "vocab", "Beat Professor Dad in Vocab Duel", "Out-worded Professor Dad. He's polishing his glasses in disbelief.", "epic", "Aa", (p) => (p.beaten || []).includes("professor")],
+    ["vgramps", "Grandpa's Secret", "vocab", "Beat the secret challenger in Vocab Duel", "Beat Robo-Grandpa at his own game. He says he let you win. He didn't.", "legendary", "Aa", (p) => (p.beaten || []).includes("grandpa")],
+    ["gcool", "Cool as a Cucumber", "gram", "Finish your first grammar round", "Finished a first grammar round. Cool as a cucumber. (That's a simile.)", "common", "¶", (p) => (p.rounds || 0) >= 1],
+    ["gspin", "Reel Talk", "gram", "Spin the Comparison Machine 10 times", "Ten spins. The cafeteria has been an igloo, a zoo and a rocket.", "common", "¶", (p) => (p.spins || 0) >= 10],
+    ["ghawk", "Eagle Eye", "gram", "Score 7 or more in Simile, metaphor or analogy?", "Spotted similes, metaphors and analogies like a hawk. (Simile. You knew that.)", "rare", "¶", (p) => ((p.best || {}).spot || 0) >= 7],
+    ["gana", "Analogy Ace", "gram", "Score 7 or more in Finish the analogy", "Puzzle is to brain as you are to… winning.", "rare", "¶", (p) => ((p.best || {}).finish || 0) >= 7],
+    ["gcake", "Cake Detective", "gram", "Score 7 or more in Tense Trouble", "You can tell a confession from a threat. The cake is safe with you.", "rare", "¶", (p) => ((p.best || {}).pairs || 0) >= 7],
+    ["gtime", "Time Traveller", "gram", "Score 7 or more in the Silly Sentence Time Machine", "Sent silly sentences through time without breaking history. Great Scott!", "rare", "¶", (p) => ((p.best || {}).tm || 0) >= 7],
+    ["gguru", "Grammar Guru", "gram", "Score 8 out of 8 in all four grammar games", "Perfect rounds in all four grammar games. Your English teacher wants a poster of you.", "epic", "¶", (p) => ["spot", "finish", "pairs", "tm"].every(k => ((p.best || {})[k] || 0) >= 8)],
     ["globe", "Globe Trotter", "", "Finish every lesson in two languages", "Two whole courses finished. Très bien, ¡muy bien! and bahut badhiya!", "legendary", "", () => ["fr", "es", "hi", "mr", "bn"].filter(l => prog(l).done.length >= 8).length >= 2],
   ];
   // Tile Talk badges: defined in tiles-badges.js, progress kept by the game page.
@@ -2983,6 +3308,12 @@ const PLAYERS = {
   LANG_BADGES.forEach(([id, name, lang, todo, did, rar, glyph, test]) =>
     BADGES[id] = { id, name, lang, todo, did, rar, glyph, check: () => lang === "tiles" ? test() : test(prog(lang || "fr")) });
   const LANG_IDS = LANG_BADGES.map(([id]) => id);
+  // "🏅 2 of 6 badges" line for the Vocabulary and Grammar dialogs, with the next one to aim for
+  function badgeLine(lang){
+    const ids = LANG_BADGES.filter(b => b[2] === lang).map(([id]) => id), got = ids.filter(id => isEarned(BADGES[id]));
+    const next = ids.find(id => !isEarned(BADGES[id]));
+    return `<p class="g-badges">🏅 <b>${got.length} of ${ids.length} badges</b>${next ? ` · next up: <b>${esc(BADGES[next].name)}</b>, ${esc(BADGES[next].todo.charAt(0).toLowerCase() + BADGES[next].todo.slice(1))}` : " · all collected. Legend!"}</p>`;
+  }
   BADGES.cartridge = { id:"cartridge", name:"Cartridge Found", did:"Solved The Lost Cartridge and found DAD QUEST.", rar:"legendary", secret:true, check: () => !!getPref("robodad.hunt.done") };
   ICONS.cartridge = '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8v6H8zM8 17h2M14 17h2"/>';
   const BONUS = [...SETS.map(([id]) => id), "challenge", "cartridge"];
@@ -3062,6 +3393,8 @@ const PLAYERS = {
   function updateBeltMini(){
     const all = Object.values(BADGES), got = all.filter(isEarned);
     $("beltMiniText").textContent = `${got.length}/${all.length} badges · ${rank(belt.size)}`;
+    $("beltCount").textContent = got.length; $("meBadges").textContent = `${got.length} of ${all.length} · ${rank(belt.size)}`;
+    $("beltBtn").title = `Badges: ${got.length} of ${all.length}`;
     $("beltMiniBar").style.width = `${Math.round(got.length / all.length * 100)}%`;
     const recent = got.sort((a, b) => (dates[b.id] || "").localeCompare(dates[a.id] || "")).slice(0, 6);
     $("beltMiniBadges").innerHTML = recent.map(b => `<span>${badgeSVG(b, false, { still:true })}</span>`).join("");
@@ -3133,7 +3466,7 @@ const PLAYERS = {
     if (act === "close") closeBadge();
     else if (act === "share") shareBadge(id);
     else if (act === "unlock") { $("badgeDlg").hidden = true; earn(id); }
-    else if (act === "practice") { $("badgeDlg").hidden = true; $("beltDlg").hidden = true; BADGES[id].lang === "tiles" ? (location.href = "/tiles") : BADGES[id].lang === "math" ? openMath() : BADGES[id].lang === "study" ? openStudy() : openLang(BADGES[id].lang || ""); }
+    else if (act === "practice") { $("badgeDlg").hidden = true; $("beltDlg").hidden = true; BADGES[id].lang === "tiles" ? (location.href = "/tiles") : BADGES[id].lang === "vocab" ? openVocab() : BADGES[id].lang === "gram" ? openGrammar() : BADGES[id].lang === "math" ? openMath() : BADGES[id].lang === "study" ? openStudy() : openLang(BADGES[id].lang || ""); }
     else if (act === "remove") { belt.delete(id); delete dates[id]; saveBelt(); renderBelt(); updateBeltMini(); closeBadge(); }
   });
   $("badgeDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); closeBadge(); } });
@@ -3270,7 +3603,8 @@ const PLAYERS = {
     revealQ.push(id, ...unlockedSets); if ($("reveal").hidden) showReveal();
     return true;
   }
-  $("beltBtn").addEventListener("click", () => { renderBelt(pendingShine); pendingShine = null; $("beltDlg").hidden = false; $("beltDone").focus(); });
+  function openBelt(){ renderBelt(pendingShine); pendingShine = null; $("beltDlg").hidden = false; $("beltDone").focus(); }
+  $("beltBtn").addEventListener("click", openBelt);
   const closeBelt = () => { $("beltDlg").hidden = true; $("beltBtn").focus(); };
   $("beltDone").addEventListener("click", closeBelt);
   $("beltDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeBelt(); });
@@ -3716,11 +4050,11 @@ const PLAYERS = {
     const bar = $("practiceBar");
     if (!practice) { bar.hidden = true; input.placeholder = "Talk to RoboDad…"; return; }
     const C = L[practice.lang], sc = C.scenes.find(x => x.id === practice.scene) || C.scenes[0];
-    $("pbTag").innerHTML = C.coach ? `${practice.lang === "brain" ? "Brain teaser coach" : "Maths coach"} · ${esc(sc.title)}<small>Hints first, then you try the next step</small>`
+    $("pbTag").innerHTML = C.coach ? `${C.coachTag ? esc(C.coachTag) : practice.lang === "brain" ? "Brain teaser coach" : "Maths coach"} · ${esc(sc.title)}<small>${esc(C.coachSub || "Hints first, then you try the next step")}</small>`
       : `${esc(C.name)} practice · ${esc(sc.title)}<small>${esc(sc.who)} · English is fine if you're stuck</small>`;
     $("pbHintList").innerHTML = sc.hints.map(h => `<button type="button">${esc(h)}</button>`).join("");
     $("pbHintList").hidden = true; $("pbHints").setAttribute("aria-expanded", "false");
-    input.placeholder = C.coach ? (practice.lang === "brain" ? "Your answer or question…" : "Your maths question…") : `Try it in ${C.name}…`;
+    input.placeholder = C.coach ? (C.placeholder || (practice.lang === "brain" ? "Your answer or question…" : "Your maths question…")) : `Try it in ${C.name}…`;
     bar.hidden = false;
   }
   $("pbExit").addEventListener("click", exitPractice);
@@ -3826,13 +4160,66 @@ const PLAYERS = {
 
   // ---------- dashboard ----------
   const side = $("side");
-  const setHeaderH = () => document.documentElement.style.setProperty("--header-h", document.querySelector(".top").offsetHeight + "px");
+  const setHeaderH = () => {
+    document.documentElement.style.setProperty("--header-h", document.querySelector(".top").offsetHeight + "px");
+    const tb = $("tabbar"), wide = matchMedia("(min-width:1180px)").matches;
+    document.documentElement.style.setProperty("--tab-h", (wide ? 0 : tb.offsetHeight) + "px");
+  };
   setHeaderH(); window.addEventListener("resize", setHeaderH);
-  $("sideBtn").addEventListener("click", () => { side.classList.add("open"); $("sideClose").focus(); });
   const closeSide = () => { side.classList.remove("open"); $("sideBtn").focus(); };
   $("sideClose").addEventListener("click", closeSide);
   side.addEventListener("keydown", (e) => { if (e.key === "Escape" && side.classList.contains("open")) closeSide(); });
-  $("beltMiniOpen").addEventListener("click", () => { side.classList.remove("open"); $("beltBtn").click(); });
+  $("beltMiniOpen").addEventListener("click", () => { side.classList.remove("open"); openBelt(); });
+
+  // ---------- tab bar: Chat · Play · Learn · Chill · Me ----------
+  const playDlg = $("playDlg"), meDlg = $("meDlg"), SHEETS = { play: playDlg, learn: learnDlg, me: meDlg };
+  const tabNow = () => !playDlg.hidden ? "play" : !learnDlg.hidden ? "learn" : !meDlg.hidden ? "me" : side.classList.contains("open") ? "chill" : "chat";
+  function syncTabs(){
+    const on = tabNow();
+    document.querySelectorAll(".tab").forEach(t => { if (t.dataset.tab === on) t.setAttribute("aria-current", "page"); else t.removeAttribute("aria-current"); });
+  }
+  function refreshSheets(){
+    $("playHunt").hidden = $("huntRow").hidden; $("playQuest").hidden = $("questRow").hidden;
+    $("playVault").textContent = `${$("chestCount").textContent} secrets found`;
+    $("meName").textContent = nickname ? `RoboDad calls you ${nickname}` : "What RoboDad calls you";
+  }
+  function goTab(name){
+    const was = tabNow();
+    playDlg.hidden = learnDlg.hidden = meDlg.hidden = true; side.classList.remove("open");
+    if (name !== "chat" && name !== was) {
+      refreshSheets();
+      if (name === "chill") { side.classList.add("open"); side.scrollTop = 0; }
+      else {
+        SHEETS[name].hidden = false; $("learnSoon").hidden = true;
+        SHEETS[name].querySelector(".card").scrollTop = 0;
+        if (name === "me") { setPref("robodad.meSeen", "1"); $("meBtn").classList.remove("dot"); }
+      }
+    }
+    syncTabs();
+  }
+  document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => goTab(t.dataset.tab)));
+  const GO = {
+    brain: () => openBrain(), vault: () => openVault(), joke: () => submit("Tell me a dad joke"),
+    vocab: () => openVocab(), grammar: () => openGrammar(),
+    word: () => openMind("word"), fact: () => openMind("fact"), otd: () => openMind("otd"),
+    looks: () => openMenu(false), badges: () => openBelt(), name: () => $("nameBtn").click(), code: () => $("codeBtn").click(),
+    hunt: () => $("huntBtn").click(),
+  };
+  Object.values(SHEETS).forEach((dlg) => {
+    dlg.addEventListener("click", (e) => {
+      if (e.target === dlg || e.target.closest("[data-sheet-close]")) { dlg.hidden = true; return; }
+      const go = e.target.closest("[data-go]");
+      if (go) { dlg.hidden = true; GO[go.dataset.go]?.(); return; }
+      if (e.target.closest("[data-open-lang],[data-open-math],[data-open-study]")) dlg.hidden = true;   // the lesson opens on top
+    });
+  });
+  document.addEventListener("keydown", (e) => {          // Escape closes the open sheet, wherever the focus is
+    const now = tabNow(); if (e.key !== "Escape" || !SHEETS[now]) return;
+    SHEETS[now].hidden = true; document.querySelector(`.tab[data-tab="${now}"]`).focus();
+  });
+  const tabWatch = new MutationObserver(syncTabs);
+  [playDlg, learnDlg, meDlg, side].forEach(el => tabWatch.observe(el, { attributes:true, attributeFilter:["hidden", "class"] }));
+  if (!getPref("robodad.meSeen")) $("meBtn").classList.add("dot");
   updateBeltMini();
 
   // ---------- voice + music bubbles next to the header avatar ----------
@@ -3979,7 +4366,7 @@ const PLAYERS = {
     setTimeout(shuffleHintLater, 6000);   // the corner prop's "tap me" comes after, not at the same time
   }
   setTimeout(bubbleHint, 2000);
-  $("ticker").hidden = hello.hidden; setDock(hello.hidden ? "head" : "hero"); setTimeout(() => { dockReady = true; }, 0);
+  setDock(hello.hidden ? "head" : "hero"); setTimeout(() => { dockReady = true; }, 0);
 
   // RoboDad Radio
   const RADIO_KEY = "robodad.radio";
@@ -4065,30 +4452,6 @@ const PLAYERS = {
   if (getPref("robodad.bubHint")) setTimeout(shuffleHintLater, 3000);
   $("shuffleSpot").addEventListener("click", shuffleTap);
   $("shuffleMenu").addEventListener("click", () => { closeMenu(); shuffleTap(); });
-
-  // Starter-chip ticker: a copy of the chips follows the originals so the row loops forever.
-  // It drifts on its own, stops while you touch or hover it, and you can swipe it either way.
-  const ticker = $("ticker"), track = $("tickerTrack");
-  const originals = [...track.children];
-  originals.forEach((c, i) => { const k = c.cloneNode(true); k.dataset.clone = i; k.tabIndex = -1; k.setAttribute("aria-hidden", "true"); track.appendChild(k); });
-  track.addEventListener("click", (e) => { const k = e.target.closest("[data-clone]"); if (k) originals[+k.dataset.clone].click(); });
-  let tkHold = 0, tkLast = 0, tkPos = 0;
-  const tkPause = (ms) => { tkHold = performance.now() + ms; };
-  ["pointerdown", "wheel", "focusin"].forEach(ev => ticker.addEventListener(ev, () => tkPause(4000), { passive:true }));
-  ticker.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") tkPause(1e9); });
-  ticker.addEventListener("pointerleave", () => tkPause(1200));
-  ticker.addEventListener("scroll", () => { if (performance.now() < tkHold) tkPos = ticker.scrollLeft; }, { passive:true });
-  function tkStep(t){
-    const dt = tkLast ? Math.min(t - tkLast, 64) : 0; tkLast = t;
-    const loop = track.scrollWidth / 2;
-    if (!ticker.hidden && !calm() && t > tkHold && loop > ticker.clientWidth / 2) {
-      tkPos += dt * 0.03;                      // about 30px a second: readable, never rushed
-      if (tkPos >= loop) tkPos -= loop;
-      ticker.scrollLeft = tkPos;
-    } else if (ticker.scrollLeft >= loop) { tkPos = ticker.scrollLeft - loop; ticker.scrollLeft = tkPos; }
-    requestAnimationFrame(tkStep);
-  }
-  requestAnimationFrame(tkStep);
 
   // Focus timer
   let tMinutes = 25, tRemaining = 25 * 60, tEnd = 0, tTick = null;
@@ -4499,7 +4862,7 @@ const PLAYERS = {
   function showUnder(){ $("gateCard").hidden = true; $("gateNo").hidden = false; gate.hidden = false; }
   gateGo.addEventListener("click", () => {
     const age = thisYear - Number(birthYear.value);
-    if (age >= 13) { setPref(AGE_KEY, "ok"); gate.hidden = true; openMenu(true); }
+    if (age >= 13) { setPref(AGE_KEY, "ok"); gate.hidden = true; }
     else { setPref(AGE_KEY, "under"); showUnder(); }
   });
   const ageState = getPref(AGE_KEY);
