@@ -136,7 +136,7 @@
   };
   let box = null, bridge = null, tab = "compare", spin = null, round = null;
 
-  function stats(){ const d = load(); return `<div class="v-stats"><span>⭐ ${d.xp} XP</span><span>🔥 Best streak ${d.bestStreak}</span></div>`; }
+  function stats(){ const d = load(); return `<div class="v-stats"><span>⭐ ${d.xp} XP</span><span>🔥 Best streak ${d.bestStreak}</span></div>${bridge?.badges ? bridge.badges() : ""}`; }
 
   function render(){
     box.parentElement.querySelectorAll("[data-gtab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.gtab === tab)));
@@ -211,6 +211,7 @@
   function finish(){
     const R = round, d = load();
     d.xp += R.xp; d.bestStreak = Math.max(d.bestStreak, R.top); d.best[R.kind] = Math.max(d.best[R.kind] || 0, R.score); save(d);
+    bridge.record?.("round", R.kind, R.score);
     const verdict = R.score === 8 ? "Perfect round! Your English teacher would frame this." : R.score >= 6 ? "Strong round. Dad's impressed." : R.score >= 4 ? "Not bad. One more round and it'll click." : "Tricky one. Read the time map, then try again.";
     box.innerHTML = `${stats()}<div class="v-card"><p class="brain-q">${R.score}/8 · +${R.xp} XP</p><p>${verdict}</p><p>Best streak this round: ${R.top} · your best here: ${d.best[R.kind]}/8</p></div>
       <div class="row"><button class="primary" type="button" data-gact="again">Play again</button><button class="ghost" type="button" data-gact="quit">Back</button></div>`;
@@ -221,7 +222,7 @@
     const t = e.target.closest("button"); if (!t || !box.contains(t)) return;
     if (t.dataset.gpick !== undefined) return answer(+t.dataset.gpick);
     const a = t.dataset.gact;
-    if (a === "spin") { newSpin(); renderCompare(); box.querySelector(".g-reels")?.classList.add("spinning"); }
+    if (a === "spin") { bridge.record?.("spin"); newSpin(); renderCompare(); box.querySelector(".g-reels")?.classList.add("spinning"); }
     else if (a === "mine") bridge.ask("Is this a simile, a metaphor or an analogy? Check mine and tell me how to make it better: ");
     else if (a?.startsWith("play-")) startRound(a.slice(5));
     else if (a === "next") { round.n++; round.n >= round.qs.length ? finish() : ask(); }
