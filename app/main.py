@@ -578,6 +578,7 @@ TRACK_SOURCES = {
     "ig": "instagram", "instagram": "instagram", "tiktok": "tiktok", "tt": "tiktok", "yt": "youtube",
     "youtube": "youtube", "threads": "threads", "x": "x", "twitter": "x", "reddit": "reddit",
     "fb": "facebook", "facebook": "facebook", "linkedin": "linkedin", "li": "linkedin", "qr": "qr", "email": "email",
+    "share": "share",   # links on pictures and messages people share from inside the app
 }
 INTEREST_TOPICS = {
     "math", "science", "coding", "lang:pa", "lang:tl", "lang:zh", "lang:ta", "lang:ur", "lang:ar", "lang:mr",

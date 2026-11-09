@@ -2516,9 +2516,11 @@ textarea::placeholder{color:var(--muted)}
         <p><b>Means:</b> ${esc(w.means)}</p>
         <p><b>Example:</b> “${esc(w.ex)}”</p>
         <p><b>How to use it:</b> ${esc(w.use)}</p>
-        <button class="ghost" type="button" data-ask="Help me practise using the word '${esc(w.w)}' in a sentence. Give me a scenario and check my sentence.">Practise it with Dad</button>`;
+        <button class="ghost" type="button" data-ask="Help me practise using the word '${esc(w.w)}' in a sentence. Give me a scenario and check my sentence.">Practise it with Dad</button>
+        <button class="ghost" type="button" data-card="word">Share this word</button>`;
     } else if (kind === "fact") {
-      mindBody.innerHTML = `<b>Fact of the day</b><p>${esc(FACTS[dayNumber() % FACTS.length])}</p>`;
+      mindBody.innerHTML = `<b>Fact of the day</b><p>${esc(FACTS[dayNumber() % FACTS.length])}</p>
+        <button class="ghost" type="button" data-card="fact">Share this fact</button>`;
     } else if (kind === "otd") {
       const n = new Date(), m = n.getMonth() + 1, d = n.getDate();
       const label = n.toLocaleDateString(undefined, { month: "long", day: "numeric" });
@@ -2552,7 +2554,14 @@ textarea::placeholder{color:var(--muted)}
     const tile = e.target.closest("[data-mind]");
     if (tile) { showMind(tile.dataset.mind); return; }
     const ask = e.target.closest("[data-ask]");
-    if (ask) askDad(ask.dataset.ask);
+    if (ask) { askDad(ask.dataset.ask); return; }
+    const card = e.target.closest("[data-card]")?.dataset.card;
+    if (card === "fact") {
+      shareJoke(FACTS[dayNumber() % FACTS.length], "Fact of the day", { tag:"Did you know? 🤯", file:"robodad-fact.png", title:"RoboDad's fact of the day", text:"Fact of the day from RoboDad:", bg:["#D6ECFF", "#7DB8F2"] });
+    } else if (card === "word") {
+      const list = window.ROBO_WORDS || [], w = list[dayNumber() % list.length];
+      if (w) shareJoke(`${w.w} (${w.pos}): ${w.means}`, "Word of the day", { tag:"Use it today 😎", file:"robodad-word.png", title:"RoboDad's word of the day", text:`Word of the day from RoboDad: ${w.w}.`, bg:["#EADCFF", "#B08AF0"] });
+    }
   });
   mindDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMind(); });
 
@@ -2562,6 +2571,8 @@ textarea::placeholder{color:var(--muted)}
     state: () => prog("brain"),
     save: () => { saveLp(); checkLangBadges(); },
     coach: (id) => { brainDlg.hidden = true; startPractice("brain", id); },
+    // a picture of the question only (never the answer), to send to a friend
+    share: (q) => shareJoke(q, "Brain teaser from RoboDad", { tag:"Can you crack it? 🧠", file:"robodad-brain-teaser.png", title:"A RoboDad brain teaser", text:"Can you crack this brain teaser? Try it with RoboDad:", bg:["#D9F7E6", "#63CFA0"] }),
   };
   const openBrain = () => { brainDlg.hidden = false; if (window.BrainGame) window.BrainGame.open(brainBody, BRAIN_BRIDGE); else brainBody.textContent = "Brain teasers are still loading. Try again in a moment."; };
   const closeBrain = () => { brainDlg.hidden = true; $("learnBtn").focus(); };
@@ -3161,6 +3172,8 @@ const PLAYERS = {
   });
   $("reveal").addEventListener("keydown", (e) => { if (e.key === "Escape") { revealQ.length = 0; showReveal(); } });
 
+  // Shared pictures and messages point here; /go/share counts the visit (anonymously) and opens the app.
+  const SHARE_LINK = "https://robodad.app/go/share";
   // share a badge as an image (phone share sheet, or download on desktop)
   async function shareBadge(id){
     const b = BADGES[id], r = RARITY[b.rar];
@@ -3187,7 +3200,7 @@ const PLAYERS = {
       const blob = await new Promise(res => c.toBlob(res, "image/png"));
       const file = new File([blob], `robodad-${id}-badge.png`, { type:"image/png" });
       if (navigator.canShare && navigator.canShare({ files:[file] })) {
-        await navigator.share({ files:[file], title:`${b.name} badge`, text:`I unlocked the ${b.name} badge on RoboDad! robodad.onrender.com` });
+        await navigator.share({ files:[file], title:`${b.name} badge`, text:`I unlocked the ${b.name} badge on RoboDad! ${SHARE_LINK}` });
       } else {
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name;
         document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
@@ -3196,7 +3209,7 @@ const PLAYERS = {
     } catch (e) { if (e?.name !== "AbortError") toast("Couldn't make the badge image. Try again."); }
   }
 
-  // ---------- shareable picture cards (dad jokes) ----------
+  // ---------- shareable picture cards (dad jokes, facts, words, brain teasers) ----------
   const CARD_PALETTE = { ink:"#1B2A3A", metal:"#B9C7D4", jacket:"#2B211C", jacket2:"#3D2F27", hair:"#1B2A3A", lens:"#1B2A3A", muted:"#5A6B7E" };
   function avatarImage(px){                     // the current RoboDad as a picture, in fixed daytime colours
     const markup = (AV ? AV.AVATARS[avKind].svg : document.getElementById("robodad").innerHTML)
@@ -3215,11 +3228,12 @@ const PLAYERS = {
       toast("Picture saved. Post it anywhere!");
     }
   }
-  async function shareJoke(joke, kicker = "RoboDad's dad joke"){
+  // o: { tag, file, title, text, bg:[top, bottom] } change the card from the dad-joke default
+  async function shareJoke(joke, kicker = "RoboDad's dad joke", o = {}){
     joke = plain(joke).replace(/\s+/g, " ").trim(); if (!joke) return;
     try {
       const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d");
-      const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#FFE9A8"); bg.addColorStop(1, "#F2B533"); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+      const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, o.bg?.[0] || "#FFE9A8"); bg.addColorStop(1, o.bg?.[1] || "#F2B533"); x.fillStyle = bg; x.fillRect(0, 0, W, H);
       x.fillStyle = "rgba(255,255,255,.18)"; for (let i = 0; i < 14; i++) { x.beginPath(); x.arc(80 + i * 75, 120 + (i % 2) * 40, 18, 0, Math.PI * 2); x.fill(); }
       try { await document.fonts.load("900 64px Nunito"); } catch {}
       const F = (w, px) => `${w} ${px}px Nunito, ui-rounded, system-ui, sans-serif`;
@@ -3242,10 +3256,10 @@ const PLAYERS = {
       const top = by + (bh - lines.length * size * 1.3) / 2 + size;
       lines.forEach((l, i) => x.fillText(l, bx + 60, top + i * size * 1.3));
       x.drawImage(await avatarImage(360), 70, H - 400, 360, 360);
-      x.textAlign = "right"; x.font = F(900, 52); x.fillText("😩 or 😂?", W - 80, H - 230);
-      x.font = F(800, 34); x.globalAlpha = .75; x.fillText("RoboDad · robodad.onrender.com", W - 80, H - 90);
-      await deliverImage(c, "robodad-dad-joke.png", "A RoboDad dad joke", "Groan-worthy dad joke from RoboDad: robodad.onrender.com");
-    } catch (e) { if (e?.name !== "AbortError") toast("Couldn't make the joke picture. Try again."); }
+      x.textAlign = "right"; x.font = F(900, 52); x.fillText(o.tag || "😩 or 😂?", W - 80, H - 230);
+      x.font = F(800, 34); x.globalAlpha = .75; x.fillText("RoboDad · robodad.app", W - 80, H - 90);
+      await deliverImage(c, o.file || "robodad-dad-joke.png", o.title || "A RoboDad dad joke", `${o.text || "Groan-worthy dad joke from RoboDad:"} ${SHARE_LINK}`);
+    } catch (e) { if (e?.name !== "AbortError") toast("Couldn't make the picture. Try again."); }
   }
 
   let pendingShine = null;
