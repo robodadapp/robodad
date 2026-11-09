@@ -274,11 +274,11 @@
     skater:    { name: "Skater Dad",    tier: 1, pool: "common", maxLen: 5,  topFrac: 0.6, leave: 0,   style: { long: 2 } },
     eighties:  { name: "Arcade Dad",    tier: 2, pool: "common", maxLen: 8,  topFrac: 0.3, leave: 0,   style: { bonus: 4 } },
     coach:     { name: "Coach Dad",     tier: 2, pool: "common", maxLen: 8,  topFrac: 0.3, leave: 0.5, style: {} },
-    modern:    { name: "Modern Dad",    tier: 3, pool: "all",    maxLen: 15, topN: 5,      leave: 0.5, style: {} },
-    labdad:    { name: "Lab Dad",       tier: 3, pool: "all",    maxLen: 15, topN: 5,      leave: 0.3, style: { heavy: 1 } },
-    professor: { name: "Professor Dad", tier: 4, pool: "all",    maxLen: 15, topN: 2,      leave: 0.8, style: { long: 1 } },
-    grandpa:   { name: "Robo-Grandpa",  tier: 4, pool: "all",    maxLen: 15, topN: 2,      leave: 0.8, style: { bonus: 2 }, secret: true },
-    bookworm:  { name: "Bookworm Dad",  tier: 5, pool: "all",    maxLen: 15, topN: 1,      leave: 1.4, style: {}, smartSwap: true, boss: true, unlockTier: 3 },
+    modern:    { name: "Modern Dad",    tier: 3, pool: "all",    maxLen: 15, topFrac: 0.12, leave: 0.5, style: {} },
+    labdad:    { name: "Lab Dad",       tier: 3, pool: "all",    maxLen: 15, topFrac: 0.12, leave: 0.3, style: { heavy: 1 } },
+    professor: { name: "Professor Dad", tier: 4, pool: "all",    maxLen: 15, topN: 5,      leave: 0.8, style: { long: 1 } },
+    grandpa:   { name: "Robo-Grandpa",  tier: 4, pool: "all",    maxLen: 15, topN: 4,      leave: 0.8, style: {}, secret: true },
+    bookworm:  { name: "Bookworm Dad",  tier: 5, pool: "all",    maxLen: 15, topN: 1,      leave: 1.0, style: {}, smartSwap: true, boss: true, unlockTier: 3 },
   };
   function styleBonus(m, style) {
     let b = 0;
@@ -295,18 +295,34 @@
   }
 
   // What the dad does on his turn: { type: "play", move } | { type: "swap", letters } | { type: "pass" }.
-  function chooseMove(state, tierKey, dict, common, rnd = Math.random) {
-    const cfg = TIERS[tierKey] || TIERS.modern;
+  // opts (all optional), for each dad's personality:
+  //   favs, favBonus  his era's words, and how much he prefers them over a better score
+  //   nap             Grandpa nods off: he plays a short word this turn
+  //   gamble          Lab Dad's experiment: try a play with J, Q, X or Z if there is one
+  //   phase2          Bookworm Dad has turned the page: no more mercy
+  function chooseMove(state, tierKey, dict, common, rnd = Math.random, opts = {}) {
+    let cfg = TIERS[tierKey] || TIERS.gamer;
+    if (opts.phase2) cfg = Object.assign({}, cfg, { topN: 1, topFrac: 0, leave: Math.max(cfg.leave, 1.4), smartSwap: true });
     const rack = state.racks[state.turn];
     let moves = generateMoves(state.board, rack, dict);
-    if (cfg.pool === "common" && common) moves = moves.filter((m) => common.has(m.main) && m.main.length <= cfg.maxLen);
+    if (cfg.pool === "common" && common) moves = moves.filter((m) => (common.has(m.main) || (opts.favs && opts.favs.has(m.main))) && m.main.length <= cfg.maxLen);
     const late = state.bag.length === 0;
     for (const m of moves) {
-      m.value = m.score + styleBonus(m, cfg.style) + (late ? 0 : cfg.leave * leaveValue(leaveAfter(rack, m.tiles)));
+      m.fav = !!(opts.favs && m.words.some((w) => opts.favs.has(w.word)));
+      m.value = m.score + styleBonus(m, cfg.style) + (late ? 0 : cfg.leave * leaveValue(leaveAfter(rack, m.tiles))) + (m.fav ? (opts.favBonus || 0) : 0);
     }
     moves.sort((a, b) => b.value - a.value);
     const canSwap = state.bag.length >= RACK;
     if (!moves.length) return canSwap ? { type: "swap", letters: swapPick(rack) } : { type: "pass" };
+    if (opts.nap) {
+      const short = moves.filter((m) => m.main.length <= 3);
+      const pool = (short.length ? short : moves).slice().sort((a, b) => a.score - b.score).slice(0, 3);
+      return { type: "play", move: pool[Math.floor(rnd() * pool.length)], nap: true };
+    }
+    if (opts.gamble) {
+      const risky = moves.filter((m) => m.tiles.some((t) => !t.blank && "jqxz".includes(t.ch)));
+      if (risky.length) return { type: "play", move: risky.sort((a, b) => b.score - a.score)[0], gamble: true };
+    }
     if (cfg.smartSwap && canSwap && moves[0].score < 10 && leaveValue(rack) < -6) return { type: "swap", letters: swapPick(rack) };
     let pick;
     if (cfg.topFrac) {

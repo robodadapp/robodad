@@ -119,5 +119,46 @@ check("four Simile Squares", T.PREMIUM.filter((p) => p === "sim").length === 4);
   check("a Simile Square has no multiplier: S+CAT = SCAT scores 1+3+1+1 = 6", ev.ok && ev.score === 6, JSON.stringify(ev));
 }
 
+// Personalities: favourite words, Grandpa's nap, Lab Dad's gamble, and Grandpa staying below the boss.
+global.window = global.window || {};
+require("../static/tiles-dads.js");
+const DADS = window.TILE_DADS;
+check("every dad has a personality", Object.keys(T.TIERS).every((k) => DADS[k] && DADS[k].lines && DADS[k].lines.win));
+check("every favourite word is playable", Object.values(DADS).every((d) => Object.keys(d.favs).every((w) => dict.has(w))));
+{
+  const favs = new Set(Object.keys(DADS.grandpa.favs));
+  const fb = empty.slice();
+  for (const t of row(7, 5, "ice")) fb[t.r * 15 + t.c] = { ch: t.ch, blank: false };
+  const st = { board: fb, bag: new Array(50).fill("e"), racks: [["b", "o", "x", "u", "u", "i", "i"], []], turn: 0 };
+  const mv = T.chooseMove(st, "grandpa", dict, common, () => 0, { favs, favBonus: 40 });
+  check("Grandpa reaches for an old word when he can (ICEBOX)", mv.move && mv.move.words.some((w) => w.word === "icebox"), mv.move && mv.move.main);
+  const nap = T.chooseMove(st, "grandpa", dict, common, () => 0, { nap: true });
+  check("a napping Grandpa plays a short word", nap.nap && nap.move.main.length <= 3, nap.move.main);
+  const st2 = { board: fb, bag: new Array(50).fill("e"), racks: [["z", "a", "p", "e", "r", "s", "t"], []], turn: 0 };
+  const g = T.chooseMove(st2, "labdad", dict, common, () => 0, { gamble: true });
+  check("Lab Dad's experiment uses a risky letter", g.gamble && g.move.tiles.some((t) => "jqxz".includes(t.ch)), g.move && g.move.main);
+}
+{
+  const r2 = T.mulberry(99);
+  const gfavs = new Set(Object.keys(DADS.grandpa.favs));
+  let bossWins = 0;
+  for (let i = 0; i < 10; i++) {
+    const st = T.newGame(r2);
+    const who = i % 2 ? ["grandpa", "bookworm"] : ["bookworm", "grandpa"];
+    let turns = 0;
+    while (!st.over && turns < 200) {
+      const k = who[st.turn];
+      const mv = k === "grandpa" ? T.chooseMove(st, k, dict, common, r2, { favs: gfavs, favBonus: 15, nap: turns === 9 || turns === 21 })
+        : T.chooseMove(st, k, dict, common, r2, { phase2: st.bag.length <= 43 });
+      if (mv.type === "play") T.applyPlay(st, mv.move.tiles, T.evaluatePlay(st.board, mv.move.tiles, dict));
+      else if (mv.type === "swap") T.applySwap(st, mv.letters, r2); else T.applyPass(st);
+      turns++;
+    }
+    const bi = who.indexOf("bookworm");
+    if (st.scores[bi] > st.scores[1 - bi]) bossWins++;
+  }
+  check("Bookworm Dad beats Robo-Grandpa most of the time", bossWins >= 6, `${bossWins} of 10`);
+}
+
 console.log(failed ? `\n${failed} failed` : "\nall passed");
 process.exit(failed ? 1 : 0);

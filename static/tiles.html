@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0B0B14">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/avatar-moves.css">
 <style>
 :root{--bg:#0B0B14; --panel:#16142A; --ink:#FFF6D6; --muted:#9A93B8; --gold:#F5C518; --edge:#2A2650;
   --cellbg:#221F3D; --tile:#F3E6C4; --tile-ink:#1B1530; --pending:#FFD84D; --last:#9BE7C4;
@@ -96,6 +97,16 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .explain .w{font-size:1.2rem; font-weight:900; letter-spacing:.05em; text-transform:uppercase}
 .toast{position:fixed; left:50%; bottom:18px; transform:translateX(-50%); background:var(--gold); color:#1B1530; font-weight:900; padding:10px 16px; border-radius:12px; box-shadow:0 6px 20px #0008; z-index:9; max-width:92vw; text-align:center}
 .tier.boss{border-style:double; border-width:4px}
+.opp{flex-wrap:wrap}
+.opp .lesson{flex-basis:100%; font-size:.82rem; color:var(--gold); border-top:1px solid var(--edge); padding-top:4px}
+.opp .lesson:empty{display:none}
+.hiscore{font-family:ui-monospace, "Courier New", monospace; color:#A5F3FC; letter-spacing:.08em; margin:6px 0; padding-left:1.6em}
+.hiscore .me{color:var(--gold)}
+.boss-wrap{position:fixed; inset:0; background:#0009; display:flex; align-items:center; justify-content:center; padding:16px; z-index:8}
+.boss-card{max-width:420px; text-align:center; border:3px solid #C084FC; border-radius:18px; background:linear-gradient(#2A1D45, #16142A); padding:18px 16px; box-shadow:0 10px 40px #000a}
+.boss-card h2{margin:6px 0; font-size:1.6rem; font-weight:900; color:#E9D5FF; letter-spacing:.08em}
+.boss-card svg{width:96px; height:96px}
+.opp .bubble{flex:1 1 140px; max-width:none}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -107,12 +118,14 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 </div>
 
 <section class="opp" aria-label="Your opponent">
-  <div id="oppArt"></div>
+  <div id="oppArt" class="bot"></div>
   <div>
-    <div class="name" id="oppName">Modern Dad</div>
+    <div class="name" id="oppName">Gamer Dad</div>
     <div class="tierlbl" id="oppTier">Tier 1</div>
+    <div class="tierlbl" id="oppRecord"></div>
   </div>
   <div class="bubble" id="say" role="status" aria-live="polite"></div>
+  <div class="lesson" id="oppLesson"></div>
 </section>
 
 <div class="score" aria-live="polite">
@@ -165,6 +178,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 <script src="/static/glowup.js"></script>
 <script src="/static/tenses.js"></script>
 <script src="/static/tiles-badges.js"></script>
+<script src="/static/tiles-dads.js"></script>
 <script src="/static/tiles-engine.js"></script>
 <script>
 (() => {
@@ -246,7 +260,49 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     return pool.length ? pool[dayNumber() % pool.length] : null;
   })();
   const VERBS = new Map((window.ROBO_VERBS || []).map((v) => [v[0], v]));
-  const GLOW_POINTS = 10, TENSE_POINTS = 5, SENTENCE_POINTS = 5, SIMILE_POINTS = 10;
+  const GLOW_POINTS = 10, TENSE_POINTS = 5, SENTENCE_POINTS = 5, SIMILE_POINTS = 10, QUIZ_POINTS = 5;
+
+  // ---------------------------------------------------------------- the dads' personalities (tiles-dads.js)
+  const DADS = window.TILE_DADS || {};
+  const DAD = () => DADS[tierKey] || { favs: {}, lines: {} };
+  let pers = {};                      // this game's personality state: naps, experiment, halftime, phase two, combo
+  function newPers() {
+    const p = { dadTurns: 0, combo: 0 };
+    if (tierKey === "grandpa") { const a = 3 + Math.floor(Math.random() * 5); p.naps = [a, a + 5 + Math.floor(Math.random() * 5)]; }
+    if (tierKey === "labdad") p.gambleTurn = 3 + Math.floor(Math.random() * 6);
+    return p;
+  }
+  const sayDad = (kind) => { const l = DAD().lines[kind]; if (talkOn && l && l.length) $("say").textContent = pick(l); };
+  function celebrate(move) {
+    const el = $("oppArt");
+    if (!move || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
+    void el.getBoundingClientRect(); el.classList.add("do-" + move);
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + move), 3300);
+  }
+  function applyTheme() {
+    const t = DAD().theme || {}, st = document.documentElement.style;
+    st.setProperty("--tile", t.tile || "#F3E6C4"); st.setProperty("--tile-ink", t.ink || "#1B1530"); st.setProperty("--cellbg", t.cell || "#221F3D");
+  }
+  // The teaching note for one of a dad's favourite words, or "" if it isn't one.
+  function favNote(dadKey, word) {
+    const d = DADS[dadKey]; if (!d || !d.favs[word]) return "";
+    return dadKey === "professor" ? `${up(word)} means ${d.favs[word]}.` : d.favs[word];
+  }
+  // Professor Dad's affix lesson: only when the word really is base + affix (REDO = RE + DO).
+  function affixNote(word) {
+    for (const [a, note] of DADS.professor ? DADS.professor.affixes : []) {
+      const pre = !["ness", "less", "ful", "able", "ment", "est", "ly", "ing", "er"].includes(a);
+      const base = pre ? word.slice(a.length) : word.slice(0, -a.length);
+      if ((pre ? word.startsWith(a) : word.endsWith(a)) && base.length >= 3 && dict.has(base)) return note;
+    }
+    return "";
+  }
+  function rootNote(word) {
+    for (const [r, note] of DADS.labdad ? DADS.labdad.roots : []) if (word.includes(r) && word.length > r.length + 1) return note;
+    return "";
+  }
+  function record(k) { const r = (stats().record || {})[k]; return r || { w: 0, l: 0, t: 0, last: "" }; }
 
   // Bookworm Dad, the boss, opens after you beat a Tier 3 dad or higher. Robo-Grandpa lives in the Secret Vault.
   function isLocked(k) {
@@ -281,7 +337,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   function save() {
     if (!s) return;
     if (s.over) { store.del(GAME_KEY); return; }
-    store.set(GAME_KEY, JSON.stringify({ s, tierKey, hintsLeft, lastDad, plays, lastBonus }));
+    store.set(GAME_KEY, JSON.stringify({ s, tierKey, hintsLeft, lastDad, plays, lastBonus, pers }));
   }
   function load() {
     try {
@@ -290,7 +346,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       if (g.tierKey === "grandpa" && store.get(UNLOCK_KEY) !== "1") return false;
       if (T.TIERS[g.tierKey] && isLocked(g.tierKey)) return false;
       s = g.s; tierKey = T.TIERS[g.tierKey] ? g.tierKey : "gamer"; hintsLeft = g.hintsLeft ?? 3; lastDad = g.lastDad || [];
-      plays = g.plays || 0; lastBonus = g.lastBonus || "";
+      plays = g.plays || 0; lastBonus = g.lastBonus || ""; pers = g.pers || newPers();
       return true;
     } catch { return false; }
   }
@@ -332,8 +388,13 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   function setOpponent() {
     $("oppArt").innerHTML = avatarSVG(tierKey, 52);
+    $("oppArt").className = "bot";
     $("oppName").textContent = dadName();
-    $("oppTier").textContent = T.TIERS[tierKey].boss ? "The boss" : `Tier ${T.TIERS[tierKey].tier}`;
+    $("oppTier").textContent = (T.TIERS[tierKey].boss ? "The boss" : `Tier ${T.TIERS[tierKey].tier}`) + (DAD().era ? ` · ${DAD().era}` : "");
+    const rec = record(tierKey);
+    $("oppRecord").textContent = rec.w + rec.l + rec.t ? `Record vs you: ${rec.l}–${rec.w}${rec.t ? `–${rec.t}` : ""} (Dad–you)` : "";
+    $("oppLesson").textContent = DAD().lesson ? `Teaches: ${DAD().lesson}` : "";
+    applyTheme();
     renderPicker();
   }
 
@@ -469,8 +530,12 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     noteWords(ev);
     lastDad = [];
     plays++;
-    talk(ev.fullHouse ? "playerFull" : ev.score >= 25 ? "playerBig" : "playerSmall");
+    if (tierKey === "grandpa") sayDad("praise");          // Grandpa doesn't trash talk. He spoils you.
+    else talk(ev.fullHouse ? "playerFull" : ev.score >= 25 ? "playerBig" : "playerSmall");
     let msg = `<strong>${up(ev.main)}</strong> scores ${ev.score}${ev.fullHouse ? " with the Full House bonus" : ""}.`;
+    const yourFav = ev.words.map((w) => favNote(tierKey, w.word)).find(Boolean);
+    if (yourFav) msg += ` ${dadName()} loves that one: ${esc(yourFav)}`;
+    if (tierKey === "eighties" && tiles.some((t) => T.PREMIUM[t.r * N + t.c] === "tw")) { sayDad("oneUp"); celebrate("oneup"); }
 
     // Vocabulary bonuses: the day's Power Word doubles the play; each Glow-Up word adds 10.
     const formed = [...new Set(ev.words.map((w) => w.word))];
@@ -594,11 +659,13 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   // ---------------------------------------------------------------- Dad explains words
   const defCache = new Map();
-  async function explainWord(word) {
+  async function explainWord(word, counted = true) {
     const box = $("explain"), W = up(word);
     box.hidden = false;
-    bumpStats((st) => { st.looked = st.looked || []; if (!st.looked.includes(word)) { st.looked.push(word); if (st.looked.length > 300) st.looked.shift(); } });
-    checkBadges();
+    if (counted) {
+      bumpStats((st) => { st.looked = st.looked || []; if (!st.looked.includes(word)) { st.looked.push(word); if (st.looked.length > 300) st.looked.shift(); } });
+      checkBadges();
+    }
     const f = FANCY.get(word), wd = WOTD.get(word);
     let local = "";
     if (wd) local = `<p><strong>Means:</strong> ${esc(wd.means)}</p><p><strong>Example:</strong> “${esc(wd.ex)}”</p><p><strong>Dad's tip:</strong> ${esc(wd.use)}</p>`;
@@ -646,7 +713,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       pending.push({ r: t.r, c: t.c, ch: t.ch, blank: t.blank, idx });
       hintKeys.add(t.r * N + t.c);
     }
-    talk("hint");
+    if (tierKey === "grandpa") { if (talkOn) $("say").textContent = "Grandpa's Wisdom: don't tell your dad I helped."; } else talk("hint");
     setStatus(`Dad's idea: <strong>${up(best.main)}</strong> for ${best.score}. Tap <strong>Play word</strong>, or move the tiles to try your own.`);
     renderAll(); save();
   }
@@ -685,22 +752,61 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   function dadTurn() {
     busy = true; renderAll();
-    const lines = LINES.thinking[tierKey] || LINES.thinking.gamer;
-    if (talkOn) $("say").textContent = lines[0];
+    const lines = DAD().lines.thinking || LINES.thinking[tierKey] || LINES.thinking.gamer;
+    if (talkOn) $("say").textContent = pick(lines);
     const prev = $("status").innerHTML;
     setStatus(`${prev} <br><strong>${dadName()}</strong> is thinking<span class="dots" aria-hidden="true"></span>`);
     setTimeout(() => {
-      const mv = T.chooseMove(s, tierKey, dict, common);
+      pers.dadTurns = (pers.dadTurns || 0) + 1;
+      const d = DAD();
+      // Bookworm Dad's plot twist: you're ahead at halfway, so he turns the page.
+      let twist = "";
+      if (tierKey === "bookworm" && !pers.phase2 && s.bag.length <= 43 && s.scores[0] > s.scores[1]) {
+        pers.phase2 = true; twist = "<strong>Chapter Two:</strong> Bookworm Dad turns the page. From now on he plays his very best. ";
+        sayDad("phase2"); celebrate("book");
+      }
+      const opts = {
+        favs: new Set(Object.keys(d.favs || {})), favBonus: d.favBonus || 0,
+        nap: tierKey === "grandpa" && (pers.naps || []).includes(pers.dadTurns),
+        gamble: tierKey === "labdad" && !pers.gambled && pers.dadTurns >= (pers.gambleTurn || 99),
+        phase2: !!pers.phase2,
+      };
+      const mv = T.chooseMove(s, tierKey, dict, common, Math.random, opts);
       busy = false;
       if (mv.type === "play") {
         const ev = T.evaluatePlay(s.board, mv.move.tiles, dict);
         T.applyPlay(s, mv.move.tiles, ev);
         lastDad = mv.move.tiles.map((t) => t.r * N + t.c);
-        talk(ev.fullHouse ? "dadFull" : ev.score >= 25 ? "dadBig" : "start");
-        if (!ev.fullHouse && ev.score < 25) $("say").textContent = talkOn ? pick([`${up(ev.main)}. Your turn.`, `There: ${up(ev.main)}.`, `${up(ev.main)} for ${ev.score}. Beat that.`]) : "";
-        const f = FANCY.get(ev.main);
-        const teach = f ? ` That's a Glow-Up word: it means ${esc(f.means)}.` : !common.has(ev.main) ? " Never heard of it? Tap it under Words played and Dad explains." : "";
-        setStatus(`<strong>${dadName()}</strong> played <strong>${up(ev.main)}</strong> for ${ev.score}${ev.fullHouse ? ", Full House!" : "."}${teach} <span class="sr">Your move.</span>`);
+        const big = ev.fullHouse || ev.score >= 25;
+        if (ev.fullHouse) talk("dadFull");
+        else if (big) { sayDad("big"); celebrate(d.move); }
+        else if (talkOn) $("say").textContent = pick([`${up(ev.main)}. Your turn.`, `There: ${up(ev.main)}.`, `${up(ev.main)} for ${ev.score}. Beat that.`]);
+        // Signature moves
+        let sig = "";
+        if (mv.nap) { sayDad("nap"); celebrate("nap"); sig = `<strong>Robo-Grandpa nodded off</strong> and only managed ${up(ev.main)}. Quick, make the most of it! `; }
+        if (mv.gamble) { pers.gambled = true; sayDad("gamble"); celebrate("poof"); sig = "<strong>The Experiment:</strong> Lab Dad gambled on a risky letter. "; }
+        pers.combo = ev.score >= 20 ? (pers.combo || 0) + 1 : 0;
+        if (tierKey === "gamer" && pers.combo === 2) { sayDad("combo"); celebrate("gg"); sig = "<strong>COMBO x2!</strong> Two big turns in a row. "; }
+        if (tierKey === "eighties" && mv.move.tiles.some((t) => T.PREMIUM[t.r * N + t.c] === "tw")) { sayDad("oneUp"); celebrate("oneup"); }
+        if (tierKey === "modern" && !big && talkOn && d.jokes && Math.random() < 0.3) { $("say").textContent = pick(d.jokes); celebrate("wink"); }
+        // What he teaches with this word
+        const note = ev.words.map((w) => favNote(tierKey, w.word)).find(Boolean);
+        let teach = "";
+        if (note) {
+          teach = ` <em>${esc(d.tag || d.lesson)}:</em> ${esc(note)}`;
+          if (tierKey === "grandpa") bumpStats((st) => { st.capsule = st.capsule || []; for (const w of ev.words) if (d.favs[w.word] && !st.capsule.includes(w.word)) st.capsule.push(w.word); });
+        } else if (tierKey === "labdad" && rootNote(ev.main)) teach = ` <em>Word root:</em> ${esc(rootNote(ev.main))}`;
+        else if (tierKey === "professor" && affixNote(ev.main)) teach = ` <em>Word parts:</em> ${esc(affixNote(ev.main))}`;
+        else if (FANCY.get(ev.main)) teach = ` That's a Glow-Up word: it means ${esc(FANCY.get(ev.main).means)}.`;
+        else if (!common.has(ev.main)) teach = tierKey === "bookworm" ? " Bookworm Dad explains where it comes from below." : " Never heard of it? Tap it under Words played and Dad explains.";
+        setStatus(`${twist}${sig}<strong>${dadName()}</strong> played <strong>${up(ev.main)}</strong> for ${ev.score}${ev.fullHouse ? ", Full House!" : "."}${teach} <span class="sr">Your move.</span>`);
+        if (tierKey === "bookworm" && !note && !common.has(ev.main)) explainWord(ev.main, false);
+        if (tierKey === "grandpa") checkBadges();
+        save(); renderAll();
+        if (s.over) { endGame(); return; }
+        if (tierKey === "professor") popQuiz(ev.main);
+        coachHalftime();
+        return;
       } else if (mv.type === "swap") {
         T.applySwap(s, mv.letters); lastDad = [];
         talk("dadSwap");
@@ -710,9 +816,44 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
         talk("dadPass");
         setStatus(`<strong>${dadName()}</strong> passed. Your move.`);
       }
+      pers.combo = 0;
       save(); renderAll();
-      if (s.over) endGame();
+      if (s.over) endGame(); else coachHalftime();
     }, 650 + Math.random() * 500);
+  }
+
+  // Professor Dad's pop quiz: what does the word he just played mean?
+  function popQuiz(word) {
+    const meaning = (DADS.professor.favs[word]) || (FANCY.get(word) || {}).means;
+    if (!meaning || pers.quizzed === word) return;
+    pers.quizzed = word;
+    const others = [...Object.values(DADS.professor.favs), ...[...FANCY.values()].map((f) => f.means)].filter((m) => m !== meaning);
+    const opts = shuffled([meaning, ...shuffled(others).slice(0, 2)]);
+    const box = $("bonus"); box.hidden = false; busy = true; renderButtons();
+    sayDad("quiz"); celebrate("idea");
+    box.innerHTML = `<h2>Pop quiz! +${QUIZ_POINTS}</h2><p>Professor Dad played <strong>${up(word)}</strong>. What does it mean?</p>
+      <div class="row">${opts.map((o, i) => `<button class="btn opt" type="button" data-q="${i}">${esc(o)}</button>`).join("")}</div>`;
+    box.querySelectorAll("[data-q]").forEach((b) => b.addEventListener("click", () => {
+      const right = opts[+b.dataset.q] === meaning;
+      if (right) { addBonus(QUIZ_POINTS, `Pop quiz: ${up(word)}`); bumpStats((st) => { st.quizzes = (st.quizzes || 0) + 1; }); }
+      box.innerHTML = `<h2>Pop quiz</h2><p class="${right ? "good" : "bad"}"><strong>${right ? `Correct! +${QUIZ_POINTS}` : "Not quite."}</strong> ${up(word)} means ${esc(meaning)}.</p>
+        <div class="row"><button class="btn primary" type="button" data-done>Back to the game</button></div>`;
+      box.querySelector("[data-done]").addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; busy = false; renderAll(); yourMoveStatus(); });
+      renderAll(); box.querySelector("[data-done]").focus();
+    }));
+  }
+
+  // Coach Dad's halftime team talk, once, when half the tiles are gone.
+  function coachHalftime() {
+    if (tierKey !== "coach" || pers.halftime || s.bag.length > 43 || s.over) return;
+    pers.halftime = true; save();
+    const tips = DADS.coach.halftime, rack = s.racks[0];
+    const vowels = rack.filter((c) => "aeiou".includes(c)).length;
+    const tip = vowels >= 5 ? tips[2] : rack.some((c) => "xz".includes(c)) ? tips[4] : rack.includes("s") ? tips[0] : pick([tips[1], tips[3]]);
+    const box = $("bonus"); box.hidden = false;
+    celebrate("whistle");
+    box.innerHTML = `<h2>📣 Halftime</h2><p>${esc(tip.replace(/^Halftime! /, ""))}</p><div class="row"><button class="btn primary" type="button" data-done>Back in the game</button></div>`;
+    box.querySelector("[data-done]").addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; });
   }
 
   function endGame() {
@@ -722,28 +863,80 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const how = o.wentOut === 0 ? "You used your last tile, so you get Dad's leftover points." :
       o.wentOut === 1 ? `${dadName()} used his last tile and gets your leftover points.` :
       "Nobody could score for six turns in a row, so the game stopped.";
-    setStatus(`<strong>${headline}</strong> ${you} to ${dad}. ${how} Tap <strong>New game</strong> for a rematch.`);
-    talk(o.winner === 0 ? (T.TIERS[tierKey].boss ? "bossLoses" : "playerWins") : o.winner === 1 ? "dadWins" : "draw");
+    const theEnd = T.TIERS[tierKey].boss ? "<strong>THE END.</strong> " : "";
+    setStatus(`${theEnd}<strong>${headline}</strong> ${you} to ${dad}. ${how} Tap <strong>New game</strong> for a rematch.`);
+    if (o.winner === 0) sayDad("lose"); else if (o.winner === 1) sayDad("win"); else talk("draw");
+    celebrate(o.winner === 1 ? DAD().move : (tierKey === "grandpa" ? "kids" : null));
     const bossWasLocked = isLocked("bookworm");
     bumpStats((st) => {
       st.games = (st.games || 0) + 1;
       if (o.winner === 0) { st.wins = st.wins || {}; st.wins[tierKey] = (st.wins[tierKey] || 0) + 1; }
+      st.record = st.record || {};
+      const r = st.record[tierKey] || { w: 0, l: 0, t: 0 };
+      if (o.winner === 0) { r.w++; r.last = "w"; } else if (o.winner === 1) { r.l++; r.last = "l"; } else { r.t++; r.last = "t"; }
+      st.record[tierKey] = r;
     });
+    if (tierKey === "eighties") highScores(you);
     store.del(GAME_KEY);
     checkBadges();
     if (bossWasLocked && !isLocked("bookworm")) toast("Boss unlocked: Bookworm Dad is waiting at the top of the list.");
-    renderPicker();
+    setOpponent();
     renderAll();
+  }
+
+  // Arcade Dad's high score table: your best games against him, with your initials.
+  function highScores(score) {
+    const st = stats(), list = (st.hiscores || []).slice();
+    const box = $("bonus"); box.hidden = false;
+    const table = (rows, mine) => `<ol class="hiscore">${rows.map((r, i) => `<li class="${i === mine ? "me" : ""}">${esc(r.i)} ${String(r.s).padStart(4, " ")}</li>`).join("")}</ol>`;
+    const qualifies = list.length < 5 || score > list[list.length - 1].s;
+    const done = `<div class="row"><button class="btn" type="button" data-done>Close</button></div>`;
+    const wire = () => { const b = box.querySelector("[data-done]"); if (b) b.addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; }); };
+    if (!qualifies) { box.innerHTML = `<h2>HIGH SCORES</h2>${table(list, -1)}<p>Your ${score} didn't make the board. Insert coin and try again!</p>${done}`; wire(); return; }
+    box.innerHTML = `<h2>NEW HIGH SCORE!</h2><p>${score} points. Enter your initials:</p>
+      <input id="hsInit" maxlength="3" autocomplete="off" aria-label="Your initials, three letters" style="text-transform:uppercase; max-width:7em; font-family:ui-monospace,monospace; letter-spacing:.3em">
+      <div class="row"><button class="btn primary" type="button" data-save>Save</button></div>`;
+    const input = $("hsInit"); input.focus();
+    const saveIt = () => {
+      const ini = input.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3) || "YOU";
+      const row = { i: ini, s: score, d: new Date().toLocaleDateString("en-CA") };
+      list.push(row); list.sort((a, b) => b.s - a.s); list.length = Math.min(list.length, 5);
+      bumpStats((x) => { x.hiscores = list; });
+      box.innerHTML = `<h2>HIGH SCORES</h2>${table(list, list.indexOf(row))}${done}`; wire();
+    };
+    box.querySelector("[data-save]").addEventListener("click", saveIt);
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") saveIt(); });
   }
 
   // ---------------------------------------------------------------- new game
   function startGame() {
     s = T.newGame();
-    pending = []; sel = -1; swapMode = false; swapSel.clear(); hintsLeft = 3; busy = false; lastDad = []; askBlank = null; hintKeys.clear();
-    confirmNew = false; confirmPass = false; plays = 0; lastBonus = "";
+    pending = []; sel = -1; swapMode = false; swapSel.clear(); hintsLeft = tierKey === "grandpa" ? 4 : 3; busy = false; lastDad = []; askBlank = null; hintKeys.clear();
+    confirmNew = false; confirmPass = false; plays = 0; lastBonus = ""; pers = newPers();
     $("bonus").hidden = true; $("explain").hidden = true;
     store.set(TIER_KEY, tierKey);
-    setOpponent(); renderAll(); yourMoveStatus(); talk(T.TIERS[tierKey].boss ? "bossStart" : "start"); save();
+    setOpponent(); renderAll(); yourMoveStatus();
+    const rec = record(tierKey);
+    if (rec.last && DAD().lines[rec.last === "w" ? "returnWin" : "returnLose"]) sayDad(rec.last === "w" ? "returnWin" : "returnLose");
+    else sayDad("start");
+    if (tierKey === "grandpa") setStatus("You go first. Grandpa gives you an extra hint today: <strong>Grandpa's Wisdom</strong>. Cover the <strong>★</strong> to start.");
+    if (T.TIERS[tierKey].boss) bossCard();
+    save();
+  }
+
+  // Bookworm Dad's entrance.
+  function bossCard() {
+    const wrap = document.createElement("div");
+    wrap.className = "boss-wrap";
+    wrap.innerHTML = `<div class="boss-card bot" role="dialog" aria-modal="true" aria-labelledby="bossT">${avatarSVG("bookworm", 96)}
+      <h2 id="bossT">BOSS FIGHT</h2><p><strong>Bookworm Dad</strong> has read every word in the dictionary. Twice.</p>
+      <p><em>Chapter One.</em> Get ahead of him by halfway and he'll turn the page and play his very best.</p>
+      <button class="btn primary" type="button" data-begin>Begin</button></div>`;
+    document.body.appendChild(wrap);
+    const card = wrap.firstElementChild;
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) card.classList.add("do-book");
+    const btn = wrap.querySelector("[data-begin]"); btn.focus();
+    btn.addEventListener("click", () => { wrap.remove(); $("board").focus?.(); });
   }
   const inProgress = () => s && !s.over && s.log.length > 0;
 
@@ -811,7 +1004,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       if (resumed) {
         setStatus("Welcome back. Your game is right where you left it.");
         if (s.turn === 1) dadTurn();
-      } else { yourMoveStatus(); talk("start"); save(); }
+      } else startGame();
       renderAll();
     })
     .catch(() => setStatus("Couldn't load the dictionary. Check your connection and reload the page."));

@@ -6,6 +6,18 @@
   "use strict";
   const n = (x) => x || 0;
   const bank = (st) => Object.keys(st.bank || {}).length;
+  // [dad, badge id, name, mission, what you did, rarity]
+  const BEAT = [
+    ["gamer", "ttgamer", "GG, Gamer Dad", "Beat Gamer Dad", "Beat Gamer Dad. Good game, well played.", "common"],
+    ["skater", "ttskater", "Kickflipped", "Beat Skater Dad", "Out-tricked Skater Dad. Rad.", "common"],
+    ["eighties", "ttarcade", "Insert Coin", "Beat Arcade Dad", "Knocked Arcade Dad off the high score table.", "rare"],
+    ["coach", "ttcoach", "Final Whistle", "Beat Coach Dad", "Beat Coach Dad. Hustle paid off.", "rare"],
+    ["modern", "ttmodern", "Dad Joke Survivor", "Beat Modern Dad", "Beat Modern Dad and survived the puns.", "rare"],
+    ["labdad", "ttlab", "Experiment Complete", "Beat Lab Dad", "Beat Lab Dad. Hypothesis confirmed.", "rare"],
+    ["professor", "ttprof", "Class Dismissed", "Beat Professor Dad", "Beat Professor Dad. Top marks.", "epic"],
+    ["grandpa", "ttgrandpa", "Respect Your Elders", "Beat Robo-Grandpa", "Beat Robo-Grandpa. He told everyone at bingo.", "epic"],
+    ["bookworm", "ttboss", "Bookworm Beater", "Beat Bookworm Dad, the Tile Talk boss", "Beat Bookworm Dad at his own game. THE END.", "legendary"],
+  ];
   window.ROBO_TILE_BADGES = [
     ["tt1", "First Word", "Finish a game of Tile Talk", "Finished a first game of Tile Talk.", "common",
       (st) => n(st.games) >= 1, (st) => `${n(st.games)} game${st.games === 1 ? "" : "s"} finished`],
@@ -21,8 +33,14 @@
       (st) => n(st.sentences) >= 10, (st) => `${n(st.sentences)} of 10 bonus sentences`],
     ["ttbank", "Word Hoarder", "Play 100 different words", "A hundred different words played. That's a word bank.", "epic",
       (st) => bank(st) >= 100, (st) => `${bank(st)} of 100 different words`],
-    ["ttboss", "Bookworm Beater", "Beat Bookworm Dad, the Tile Talk boss", "Beat Bookworm Dad at his own game.", "legendary",
-      (st) => n((st.wins || {}).bookworm) >= 1, (st) => (n((st.wins || {}).bookworm) ? "Beaten!" : "Not beaten yet")],
+    ["ttcapsule", "Time Capsule", "Collect 10 old-time words from Robo-Grandpa", "Ten words from Grandpa's day, saved in the Time Capsule.", "epic",
+      (st) => (st.capsule || []).length >= 10, (st) => `${(st.capsule || []).length} of 10 old-time words collected`],
+    // One badge for beating each dad, then the set.
+    ...BEAT.map(([dad, id, name, todo, did, rar]) => [id, name, todo, did, rar,
+      (st) => n((st.wins || {})[dad]) >= 1, (st) => (n((st.wins || {})[dad]) ? "Beaten!" : "Not beaten yet")]),
+    ["ttall", "Beat Every Dad", "Beat all nine dads in Tile Talk", "Beat every dad on the ladder, from Gamer Dad to Bookworm Dad. Undisputed.", "legendary",
+      (st) => BEAT.every(([dad]) => n((st.wins || {})[dad]) >= 1),
+      (st) => `${BEAT.filter(([dad]) => n((st.wins || {})[dad]) >= 1).length} of 9 dads beaten`],
   ];
   window.robodadTileStats = () => {
     try { return JSON.parse(localStorage.getItem("robodad.tiles.stats") || "{}") || {}; } catch { return {}; }
