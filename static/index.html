@@ -1042,6 +1042,7 @@ a.primary.hunt-link{display:inline-flex; text-decoration:none}
 :root[data-look="arcade"] .widget > b,:root[data-look="arcade"] .widget .w-title,:root[data-look="vhs"] .widget > b,:root[data-look="vhs"] .widget .w-title{font-weight:400}
 .widget p{margin:0} .widget small{color:var(--muted); font-size:.78rem; line-height:1.35}
 .widget .row{display:flex; gap:6px; flex-wrap:wrap}
+a.chipbtn{color:inherit; text-decoration:none; display:inline-block}
 .chipbtn{border:1px solid var(--line); background:transparent; border-radius:999px; padding:5px 11px; font-weight:800; font-size:.85rem; cursor:pointer}
 .chipbtn:hover{background:var(--sky)}
 .chipbtn[aria-checked="true"],.chipbtn[aria-pressed="true"]{background:var(--denim); border-color:var(--denim); color:var(--denim-ink)}
@@ -1728,6 +1729,7 @@ textarea::placeholder{color:var(--muted)}
         <select id="voiceSel" style="font:inherit; font-weight:700; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:12px; padding:7px 10px; max-width:58%"></select></div>
       <div class="setting"><span>What RoboDad calls you</span>
         <button class="ghost" id="nameBtn" type="button">Set a nickname</button></div>
+      <div class="setting"><span>Beat Dad at chess</span><a class="ghost" href="/chess" style="text-decoration:none">Play</a></div>
       <div class="setting" id="questRow" hidden><span>DAD QUEST</span><a class="ghost" href="/quest" style="text-decoration:none">Play</a></div>
       <div class="setting" id="huntRow" hidden><span>The Lost Cartridge</span>
         <button class="ghost" id="huntBtn" type="button">Open chapter</button></div>
@@ -1769,6 +1771,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="chipbtn" type="button" data-open-lang="">Languages</button>
       <button class="chipbtn" type="button" data-open-math="">Maths</button>
       <button class="chipbtn" type="button" data-open-brain="">Brain teasers</button>
+      <a class="chipbtn" href="/chess">♟ Beat Dad at chess</a>
       <button class="chipbtn" type="button" data-learn-soon="Grammar">Grammar</button>
       <button class="chipbtn" type="button" data-learn-soon="Vocabulary enhancer">Vocabulary enhancer</button>
       <button class="chipbtn" type="button" data-learn-fact="">Fact of the day</button>
