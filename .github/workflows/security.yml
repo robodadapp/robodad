@@ -24,6 +24,8 @@ jobs:
           node scripts/test_chess_rules.js
           STOCKFISH_PATH=/usr/games/stockfish python scripts/test_chess_api.py
           python scripts/test_chess_daily.py
+      - name: On this day with Dad tests
+        run: python scripts/test_onthisday.py
       # The gitleaks CLI is MIT-licensed and free for organisation repos. The
       # gitleaks-action wrapper is not: since v2 it needs a paid licence key for
       # org-owned repos, which is why this job failed after the move to the

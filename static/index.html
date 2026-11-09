@@ -1070,6 +1070,24 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
     padding:16px; padding-top:max(16px, env(safe-area-inset-top)); background:var(--sky)}
 }
 #learnBtn{padding:8px 14px}
+.mind-btn{border-color:var(--denim); color:var(--denim)}
+.mind-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0}
+.card a.mind-tile,.card a.mind-tile b{color:inherit; text-decoration:none}
+.mind-tile{display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; padding:8px 10px; border:1.5px solid var(--line); border-radius:14px; background:transparent; color:inherit; font:inherit; text-decoration:none; cursor:pointer}
+.mind-tile:hover,.mind-tile[aria-pressed="true"]{border-color:var(--denim); background:var(--sky)}
+.mind-tile .mt-ico{font-size:1.2rem; line-height:1}
+.mind-tile b{font-size:.95rem; line-height:1.2}
+.mind-tile b{font-weight:900}
+.mind-tile small{opacity:.75; font-weight:700; font-size:.8rem}
+.mind-body{margin:4px 0 12px; padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line); max-height:46vh; overflow:auto}
+.mind-body p{margin:6px 0 0}
+.mind-body .w{font-size:1.4rem; font-weight:900}
+.mind-body .meta{opacity:.75; font-weight:700; font-size:.85rem}
+.mind-body .otd{padding:8px 0; border-top:1px solid var(--line)}
+.mind-body .otd:first-of-type{border-top:0}
+.mind-body .yr{font-weight:900; color:var(--denim)}
+.mind-body .src{font-size:.8rem; opacity:.75; margin-top:8px}
+.mind-body button{margin-top:8px}
 .learn-menu{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0}
 .learn-fact{margin:12px 0; padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line)}
 .learn-fact p{margin:6px 0 0; font-weight:700}
@@ -1360,6 +1378,7 @@ textarea::placeholder{color:var(--muted)}
     <path d="M5 11 A12 12 0 0 1 11 4.5" fill="none" stroke="#fff" stroke-width="1.4" opacity=".35" stroke-linecap="round"/>
   </symbol>
   <symbol id="i-belt" viewBox="0 0 24 24"><path d="M7.5 2.5l3.2 6.2M16.5 2.5l-3.2 6.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="15" r="6.8" fill="currentColor"/><path d="M12 11.3l1.15 2.3 2.5.35-1.8 1.75.43 2.5L12 17l-2.28 1.2.43-2.5-1.8-1.75 2.5-.35z" fill="var(--surface)"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path id="i-brain-half" d="M12 5.2A3 3 0 0 0 6.7 4.6 3 3 0 0 0 4.1 8.3a3.2 3.2 0 0 0 .3 5.4A3.1 3.1 0 0 0 7.2 19a3 3 0 0 0 4.8.9z"/><use href="#i-brain-half" transform="matrix(-1 0 0 1 24 0)"/><path d="M12 5.2v15.7M8.2 9.2a2 2 0 0 1 2 2M15.8 9.2a2 2 0 0 0-2 2M7.6 14.6a2.2 2.2 0 0 0 2.4-.6M16.4 14.6a2.2 2.2 0 0 1-2.4-.6"/></g></symbol>
   <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="3" width="8" height="5" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13" y="10" width="8" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="13" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6.5" cy="18" r="2.8" fill="currentColor"/><circle cx="17.5" cy="16" r="2.8" fill="currentColor"/></symbol>
   <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></symbol>
@@ -1399,6 +1418,9 @@ textarea::placeholder{color:var(--muted)}
     <h1>RoboDad</h1>
     <p class="status waking" id="status"><span class="dot"></span>Warming up…</p>
   </div>
+  <button class="icon-btn mind-btn" id="mindBtn" type="button" title="Brain Boost: chess, word of the day and more" aria-haspopup="dialog">
+    <svg aria-hidden="true"><use href="#i-brain"/></svg><span class="sr">Brain Boost: chess, word of the day and more</span>
+  </button>
   <button class="icon-btn" id="sideBtn" type="button" title="Dashboard: radio, timer and more">
     <svg aria-hidden="true"><use href="#i-dash"/></svg><span class="sr">Dashboard: radio, timer and more</span>
   </button>
@@ -1761,6 +1783,20 @@ textarea::placeholder{color:var(--muted)}
   </div>
 </div>
 
+<div class="overlay" id="mindDlg" role="dialog" aria-modal="true" aria-labelledby="mindTitle" hidden>
+  <div class="card">
+    <h2 id="mindTitle">Brain Boost with Dad</h2>
+    <div class="mind-grid">
+      <a class="mind-tile" href="/chess"><span class="mt-ico" aria-hidden="true">♟</span><b>Beat Dad at chess</b><small>Nine dads to beat</small></a>
+      <button class="mind-tile" type="button" data-mind="word"><span class="mt-ico" aria-hidden="true">📖</span><b>Word of the day</b><small>Learn it, use it</small></button>
+      <button class="mind-tile" type="button" data-mind="fact"><span class="mt-ico" aria-hidden="true">💡</span><b>Fact of the day</b><small>True and surprising</small></button>
+      <button class="mind-tile" type="button" data-mind="otd"><span class="mt-ico" aria-hidden="true">📜</span><b>On this day with Dad</b><small>Dad-and-kid history</small></button>
+    </div>
+    <div id="mindBody" class="mind-body" role="status" aria-live="polite" hidden></div>
+    <div class="row"><button class="ghost" id="mindClose" type="button">Close</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="learnDlg" role="dialog" aria-modal="true" aria-labelledby="learnTitle" hidden>
   <div class="card">
     <h2 id="learnTitle">Learning</h2>
@@ -1771,10 +1807,8 @@ textarea::placeholder{color:var(--muted)}
       <button class="chipbtn" type="button" data-open-brain="">Brain teasers</button>
       <button class="chipbtn" type="button" data-learn-soon="Grammar">Grammar</button>
       <button class="chipbtn" type="button" data-learn-soon="Vocabulary enhancer">Vocabulary enhancer</button>
-      <button class="chipbtn" type="button" data-learn-fact="">Fact of the day</button>
     </div>
     <p id="learnSoon" role="status" hidden></p>
-    <div id="learnFact" class="learn-fact" role="status" hidden></div>
     <p><a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a></p>
     <div class="row"><button class="ghost" id="learnClose" type="button">Close</button></div>
   </div>
@@ -1939,6 +1973,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=1"></script>
+<script src="/static/words.js?v=1"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=40"></script>
@@ -2453,17 +2488,72 @@ textarea::placeholder{color:var(--muted)}
     if (e.target === learnDlg) closeLearn();
     else if (e.target.closest("[data-open-lang],[data-open-math]")) learnDlg.hidden = true;   // the lesson dialog opens on top
     else if (e.target.closest("[data-open-brain]")) { learnDlg.hidden = true; openBrain(); }
-    else if (e.target.closest("[data-learn-fact]")) {
-      const box = $("learnFact"); box.replaceChildren();
-      const head = document.createElement("b"); head.textContent = "Fact of the day";
-      const line = document.createElement("p"); line.textContent = FACTS[Math.floor(Date.now() / 86400000) % FACTS.length];
-      box.append(head, line); box.hidden = false;
-    }
     else if (e.target.closest("[data-learn-soon]")) {
       const soon = $("learnSoon"); soon.textContent = e.target.closest("[data-learn-soon]").dataset.learnSoon + " is coming soon."; soon.hidden = false;
     }
   });
   learnDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLearn(); });
+
+  // ---------- Brain Boost: chess, word of the day, fact of the day, on this day with Dad ----------
+  const mindDlg = $("mindDlg"), mindBody = $("mindBody");
+  const dayNumber = () => { const n = new Date(); return Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 86400000); };
+  const closeMind = () => { mindDlg.hidden = true; $("mindBtn").focus(); };
+  const askDad = (text) => {                   // put a question in the chat box, ready to send
+    closeMind();
+    const box = $("input");
+    if (box) { box.value = text.slice(0, 300); box.dispatchEvent(new Event("input", { bubbles: true })); box.focus(); }
+  };
+  function showMind(kind) {
+    mindDlg.querySelectorAll("[data-mind]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mind === kind)));
+    mindBody.hidden = false;
+    if (kind === "word") {
+      const list = window.ROBO_WORDS || [];
+      if (!list.length) { mindBody.textContent = "Today's word didn't load. Try again in a bit."; return; }
+      const w = list[dayNumber() % list.length];
+      mindBody.innerHTML = `<b>Word of the day</b><div class="w">${esc(w.w)}</div>
+        <div class="meta">${esc(w.pos)} · say it: ${esc(w.say)}</div>
+        <p><b>Means:</b> ${esc(w.means)}</p>
+        <p><b>Example:</b> “${esc(w.ex)}”</p>
+        <p><b>How to use it:</b> ${esc(w.use)}</p>
+        <button class="ghost" type="button" data-ask="Help me practise using the word '${esc(w.w)}' in a sentence. Give me a scenario and check my sentence.">Practise it with Dad</button>`;
+    } else if (kind === "fact") {
+      mindBody.innerHTML = `<b>Fact of the day</b><p>${esc(FACTS[dayNumber() % FACTS.length])}</p>`;
+    } else if (kind === "otd") {
+      const n = new Date(), m = n.getMonth() + 1, d = n.getDate();
+      const label = n.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+      mindBody.innerHTML = `<b>On this day with Dad · ${esc(label)}</b><p>Looking through history…</p>`;
+      fetch(`/api/onthisday?m=${m}&d=${d}`).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(data => {
+        if (mindBody.hidden || !mindDlg.querySelector('[data-mind="otd"][aria-pressed="true"]')) return;
+        const items = data.items || [];
+        if (!items.length) {
+          mindBody.innerHTML = `<b>On this day with Dad · ${esc(label)}</b><p>No dad-and-kid story turned up in Wikipedia's list for today. Check back tomorrow.</p>`;
+          return;
+        }
+        mindBody.innerHTML = `<b>On this day with Dad · ${esc(label)}</b>` + items.map(it => `<div class="otd">
+          <p>${it.year ? `<span class="yr">${esc(it.year)}</span> · ` : ""}${it.kind === "birth" ? "Born: " : ""}${esc(it.text)}</p>
+          ${it.dad_line ? `<p class="meta">Dad link: ${esc(it.dad_line)}</p>` : ""}
+          <p class="meta"><a href="${esc(it.link)}" target="_blank" rel="noopener">Read about ${esc(it.title)} on Wikipedia</a></p>
+          <button class="ghost" type="button" data-ask="${esc(`Tell me more about this from history: ${it.year ? it.year + ", " : ""}${it.text}`)}">Ask Dad about it</button></div>`).join("")
+          + `<p class="src">Stories from Wikipedia, CC BY-SA.</p>`;
+      }).catch(() => {
+        if (!mindBody.hidden) mindBody.innerHTML = `<b>On this day with Dad</b><p>Couldn't reach the history books right now. Try again in a bit.</p>`;
+      });
+    }
+  }
+  $("mindBtn").addEventListener("click", () => {
+    mindDlg.hidden = false; mindBody.hidden = true;
+    mindDlg.querySelectorAll("[data-mind]").forEach(b => b.setAttribute("aria-pressed", "false"));
+    setTimeout(() => mindDlg.querySelector(".mind-tile")?.focus(), 30);
+  });
+  $("mindClose").addEventListener("click", closeMind);
+  mindDlg.addEventListener("click", (e) => {
+    if (e.target === mindDlg) { closeMind(); return; }
+    const tile = e.target.closest("[data-mind]");
+    if (tile) { showMind(tile.dataset.mind); return; }
+    const ask = e.target.closest("[data-ask]");
+    if (ask) askDad(ask.dataset.ask);
+  });
+  mindDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMind(); });
 
   // ---------- Brain Teasers with Dad: hints one at a time, the answer last ----------
   const brainDlg = $("brainDlg"), brainBody = $("brainBody");
