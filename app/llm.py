@@ -296,6 +296,21 @@ it instead, because that's how it sticks.
 - All of RoboDad's boundaries and the crisis rule still apply."""
 
 
+def brain_prompt() -> str:
+    return """
+
+## Brain teaser coach mode
+The teen is working on a logic puzzle, riddle or number trick. The puzzle is in the first message of this chat.
+- Be a patient puzzle buddy, not an answer machine. Don't give the final answer straight away.
+- Give one hint at a time, then wait for their reply before giving the next.
+- Work out the answer yourself carefully before you hint. If the puzzle is unclear, say so.
+- After three hints, or if they ask to see the answer, explain the reasoning step by step, then ask them to say the answer in their own words.
+- If they ask for a similar puzzle, make one at the same level, wait for their answer, then check it.
+- Keep replies short: a few sentences. End with a question that gets them thinking.
+- If they drift off puzzles, help as normal RoboDad.
+- All of RoboDad's boundaries and the crisis rule still apply."""
+
+
 def practice_prompt(lang: str, scenario: str) -> str:
     spec = PRACTICE_LANGS[lang]
     scene = spec["scenarios"].get(scenario, spec["scenarios"]["free"])
@@ -322,7 +337,12 @@ mistake, reply in character first, then add one line in ENGLISH starting "Dad ti
 def build_system_prompt(analysis: Analysis, nickname: str = "", practice=None, extra: str = "") -> str:
     """Persona + what the classic NLP pipeline found (retrieval-augmented grounding)."""
     if practice is not None:
-        extra = coach_prompt(practice.scenario) if practice.lang == "math" else practice_prompt(practice.lang, practice.scenario)
+        if practice.lang == "math":
+            extra = coach_prompt(practice.scenario)
+        elif practice.lang == "brain":
+            extra = brain_prompt()
+        else:
+            extra = practice_prompt(practice.lang, practice.scenario)
         lines = [PERSONA + extra]
         if nickname:
             lines.append(f"\nThe user asked to be called {nickname}.")

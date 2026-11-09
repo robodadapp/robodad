@@ -1069,9 +1069,13 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
   .side.open{display:flex; flex-direction:column; gap:12px; position:fixed; inset:0; z-index:25; overflow:auto;
     padding:16px; padding-top:max(16px, env(safe-area-inset-top)); background:var(--sky)}
 }
-.newchat-label{display:inline}
-#newChat .nc-icon{display:none}
-@media (max-width:520px){ .newchat-label{display:none} #newChat{padding:9px 11px} #newChat .nc-icon{display:block} }
+#learnBtn{padding:8px 14px}
+.learn-menu{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0}
+.learn-fact{margin:12px 0; padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line)}
+.learn-fact p{margin:6px 0 0; font-weight:700}
+.brain-q{font-weight:800; font-size:1.1rem}
+.brain-hint{color:var(--muted)}
+.brain-msg{font-weight:700}
 .toast{position:fixed; left:50%; top:calc(14px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:40;
   background:var(--ink); color:var(--sky); font-weight:800; padding:10px 18px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); width:max-content; max-width:min(440px, calc(100vw - 32px)); text-align:center; line-height:1.35}
 .report-btn{border:0; background:transparent; cursor:pointer; padding:3px 6px; border-radius:8px; color:var(--muted); font-size:.85rem; font-weight:700; display:inline-flex; gap:4px; align-items:center}
@@ -1404,7 +1408,7 @@ textarea::placeholder{color:var(--muted)}
   <button class="icon-btn" id="menuBtn" type="button" title="Settings">
     <svg aria-hidden="true"><use href="#i-menu"/></svg><span class="sr">Settings</span>
   </button>
-  <button class="ghost" id="newChat" type="button" title="New chat"><span class="newchat-label">New chat</span><svg class="nc-icon" width="16" height="16" aria-hidden="true"><use href="#i-plus"/></svg></button>
+  <button class="ghost" id="learnBtn" type="button" aria-haspopup="dialog">Learning</button>
 </header>
 
 <div class="wake" id="wake" role="status" hidden>
@@ -1596,23 +1600,10 @@ textarea::placeholder{color:var(--muted)}
         <div class="ch-row"><button class="primary ch-done" type="button">Done it!</button><small class="ch-count"></small></div>
       </section>
 
-  <section class="widget" aria-label="Practice French, Spanish, Hindi, Marathi and Bengali">
-    <b>Practice with Dad</b>
-    <p id="langMini">Beginner French, Spanish, Hindi, Marathi and Bengali: 5 phrases a lesson, a quick quiz, then try them in a role-play.</p>
-    <div class="row"><button class="chipbtn" type="button" data-open-lang="fr">Français</button><button class="chipbtn" type="button" data-open-lang="es">Español</button><button class="chipbtn" type="button" data-open-lang="hi" lang="hi">हिन्दी Hindi</button><button class="chipbtn" type="button" data-open-lang="mr" lang="mr">मराठी Marathi</button><button class="chipbtn" type="button" data-open-lang="bn" lang="bn">বাংলা Bengali</button></div>
-    <a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a>
-  </section>
-
   <section class="widget" aria-label="Study Hall">
     <b>Study Hall</b>
     <p id="studyMini">Focus for 25 minutes, then a 5-minute break. Lo-fi on, phone down, Professor Dad keeps time.</p>
     <div class="row"><button class="chipbtn" type="button" data-open-study="">Open Study Hall</button></div>
-  </section>
-
-  <section class="widget" aria-label="Maths with Dad">
-    <b>Maths with Dad</b>
-    <p id="mathMini">Grades 7–10: a quick explainer, a worked example and a 5-question quiz per topic. Stuck on homework? Dad coaches with hints.</p>
-    <div class="row"><button class="chipbtn" type="button" data-open-math="">Open maths</button></div>
   </section>
 
   <section class="widget" aria-label="Dad joke of the day">
@@ -1770,6 +1761,32 @@ textarea::placeholder{color:var(--muted)}
   </div>
 </div>
 
+<div class="overlay" id="learnDlg" role="dialog" aria-modal="true" aria-labelledby="learnTitle" hidden>
+  <div class="card">
+    <h2 id="learnTitle">Learning</h2>
+    <p>Pick what you want to work on.</p>
+    <div class="learn-menu">
+      <button class="chipbtn" type="button" data-open-lang="">Languages</button>
+      <button class="chipbtn" type="button" data-open-math="">Maths</button>
+      <button class="chipbtn" type="button" data-open-brain="">Brain teasers</button>
+      <button class="chipbtn" type="button" data-learn-soon="Grammar">Grammar</button>
+      <button class="chipbtn" type="button" data-learn-soon="Vocabulary enhancer">Vocabulary enhancer</button>
+      <button class="chipbtn" type="button" data-learn-fact="">Fact of the day</button>
+    </div>
+    <p id="learnSoon" role="status" hidden></p>
+    <div id="learnFact" class="learn-fact" role="status" hidden></div>
+    <p><a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a></p>
+    <div class="row"><button class="ghost" id="learnClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="brainDlg" role="dialog" aria-modal="true" aria-labelledby="brainTitle" hidden>
+  <div class="card lang-card">
+    <div class="lang-top"><div class="teach-h"><h2 id="brainTitle">Brain Teasers with Dad<small>Hints first, answer last</small></h2></div><button class="ghost" id="brainClose" type="button">Close</button></div>
+    <div id="brainBody"></div>
+  </div>
+</div>
+
 <div class="overlay" id="langDlg" role="dialog" aria-modal="true" aria-labelledby="langTitle" hidden>
   <div class="card lang-card">
     <div class="lang-top"><div class="teach-h"><svg class="bot" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-bookworm"/></svg><h2 id="langTitle">Practice with Dad<small>Your teacher: Bookworm Dad</small></h2></div><button class="ghost" id="langClose" type="button">Close</button></div>
@@ -1921,6 +1938,7 @@ textarea::placeholder{color:var(--muted)}
 
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
+<script src="/static/brainteasers.js?v=1"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=40"></script>
@@ -2403,13 +2421,98 @@ textarea::placeholder{color:var(--muted)}
   });
   form.addEventListener("submit", (e) => { e.preventDefault(); submit(input.value); });
   document.querySelectorAll(".chip:not(.lang-chip)").forEach(c => c.addEventListener("click", () => submit(c.textContent)));
-  $("newChat").addEventListener("click", () => {
-    if (practice) return startPractice(practice.lang, practice.scene);   // in a role-play: start the scene over
-    history = []; save();
-    if (canSpeak) stopSpeaking();
-    log.querySelectorAll(".msg").forEach(n => n.remove());
-    showHello(); input.focus();
+  // ---------- Learning: languages, maths and more, from one button ----------
+  // One fact per day: the same fact all day, the next one tomorrow. Each is well established.
+  const FACTS = [
+    "Octopuses have three hearts, and their blood is blue.",
+    "A group of flamingos is called a flamboyance.",
+    "Honey does not spoil. Edible honey has been found in ancient Egyptian tombs.",
+    "Bananas are berries, but strawberries are not.",
+    "Sea otters hold hands while they sleep so they don't drift apart.",
+    "Hummingbirds are the only birds that can fly backwards.",
+    "Your body has roughly 37 trillion cells.",
+    "Oxford University is older than the Aztec Empire.",
+    "The first computer 'bug' was a real moth, found stuck in a Harvard computer in 1947.",
+    "A day on Venus is longer than its year.",
+    "Koalas have fingerprints that are very hard to tell apart from human ones.",
+    "The Pacific Ocean is bigger than all of Earth's land put together.",
+    "Canada has more than 2 million lakes.",
+    "Penguins sometimes give their partners a pebble as a gift.",
+    "Dolphins give each other names: each one has its own signature whistle.",
+    "Scotland's national animal is the unicorn.",
+    "Cows can have best friends, and they get stressed when they are separated.",
+    "The shortest war in history lasted under an hour, between Britain and Zanzibar in 1896.",
+    "Your heart beats roughly 100,000 times a day.",
+    "Lightning is about five times hotter than the surface of the sun."
+  ];
+  const learnDlg = $("learnDlg");
+  const closeLearn = () => { learnDlg.hidden = true; $("learnBtn").focus(); };
+  $("learnBtn").addEventListener("click", () => { learnDlg.hidden = false; setTimeout(() => learnDlg.querySelector("button")?.focus(), 30); });
+  $("learnClose").addEventListener("click", closeLearn);
+  learnDlg.addEventListener("click", (e) => {
+    if (e.target === learnDlg) closeLearn();
+    else if (e.target.closest("[data-open-lang],[data-open-math]")) learnDlg.hidden = true;   // the lesson dialog opens on top
+    else if (e.target.closest("[data-open-brain]")) { learnDlg.hidden = true; openBrain(); }
+    else if (e.target.closest("[data-learn-fact]")) {
+      const box = $("learnFact"); box.replaceChildren();
+      const head = document.createElement("b"); head.textContent = "Fact of the day";
+      const line = document.createElement("p"); line.textContent = FACTS[Math.floor(Date.now() / 86400000) % FACTS.length];
+      box.append(head, line); box.hidden = false;
+    }
+    else if (e.target.closest("[data-learn-soon]")) {
+      const soon = $("learnSoon"); soon.textContent = e.target.closest("[data-learn-soon]").dataset.learnSoon + " is coming soon."; soon.hidden = false;
+    }
   });
+  learnDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLearn(); });
+
+  // ---------- Brain Teasers with Dad: hints one at a time, the answer last ----------
+  const brainDlg = $("brainDlg"), brainBody = $("brainBody");
+  let brainLast = null, brainCur = null, brainHints = 0, brainDone = false, brainMsg = "";
+  const brainShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const brainEl = (tag, text, cls) => { const el = document.createElement(tag); el.textContent = text; if (cls) el.className = cls; return el; };
+  const brainButton = (text, cls, attr, value) => { const b = brainEl("button", text, cls); b.type = "button"; b.dataset[attr] = value; return b; };
+  function brainNext(){
+    const list = window.BRAINTEASERS?.puzzles || [];
+    if (!list.length) { brainBody.replaceChildren(brainEl("p", "No puzzles are loaded yet.")); return; }
+    let pick; do { pick = list[Math.floor(Math.random() * list.length)]; } while (list.length > 1 && pick === brainLast);
+    brainLast = pick; brainCur = { p: pick, options: brainShuffle([pick.ok, ...pick.no]) };
+    brainHints = 0; brainDone = false; brainMsg = "";
+    renderBrain();
+  }
+  function renderBrain(){
+    const { p, options } = brainCur;
+    const nodes = [brainEl("p", p.q, "brain-q")];
+    p.hints.slice(0, brainHints).forEach((h, i) => nodes.push(brainEl("p", "Hint " + (i + 1) + ": " + h, "brain-hint")));
+    if (brainMsg) nodes.push(brainEl("p", brainMsg, "brain-msg"));
+    const row = document.createElement("div"); row.className = "row";
+    if (brainDone) row.append(brainButton("Next puzzle", "primary", "brainAct", "next"));
+    else {
+      options.forEach(o => row.append(brainButton(o, "chipbtn", "brainPick", o)));
+      if (brainHints < p.hints.length) row.append(brainButton("Give me a hint", "ghost", "brainAct", "hint"));
+      row.append(brainButton("Show the answer", "ghost", "brainAct", "reveal"));
+    }
+    row.append(brainButton("Ask Dad", "ghost", "brainAct", "coach"));
+    nodes.push(row);
+    brainBody.replaceChildren(...nodes);
+    brainBody.querySelector("button")?.focus();
+  }
+  brainBody.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-brain-pick],[data-brain-act]"); if (!t || !brainCur) return;
+    const p = brainCur.p;
+    if (t.dataset.brainAct === "next") return brainNext();
+    if (t.dataset.brainAct === "coach") { brainDlg.hidden = true; startPractice("brain", p.id); return; }
+    if (t.dataset.brainPick !== undefined) {
+      if (t.dataset.brainPick === p.ok) { brainDone = true; brainMsg = "Right! " + p.why; }
+      else brainMsg = "Not quite. Try again, or ask for a hint.";
+    } else if (t.dataset.brainAct === "hint") { brainHints++; brainMsg = ""; }
+    else if (t.dataset.brainAct === "reveal") { brainDone = true; brainMsg = "The answer is " + p.ok + ". " + p.why; }
+    renderBrain();
+  });
+  const openBrain = () => { brainDlg.hidden = false; brainNext(); };
+  const closeBrain = () => { brainDlg.hidden = true; $("learnBtn").focus(); };
+  $("brainClose").addEventListener("click", closeBrain);
+  brainDlg.addEventListener("click", (e) => { if (e.target === brainDlg) closeBrain(); });
+  brainDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBrain(); });
 
   // ---------- install as an app ----------
   let installEvt = null;
@@ -3540,11 +3643,11 @@ const PLAYERS = {
     const bar = $("practiceBar");
     if (!practice) { bar.hidden = true; input.placeholder = "Talk to RoboDad…"; return; }
     const C = L[practice.lang], sc = C.scenes.find(x => x.id === practice.scene) || C.scenes[0];
-    $("pbTag").innerHTML = C.coach ? `Maths coach · ${esc(sc.title)}<small>Hints first, then you try the next step</small>`
+    $("pbTag").innerHTML = C.coach ? `${practice.lang === "brain" ? "Brain teaser coach" : "Maths coach"} · ${esc(sc.title)}<small>Hints first, then you try the next step</small>`
       : `${esc(C.name)} practice · ${esc(sc.title)}<small>${esc(sc.who)} · English is fine if you're stuck</small>`;
     $("pbHintList").innerHTML = sc.hints.map(h => `<button type="button">${esc(h)}</button>`).join("");
     $("pbHintList").hidden = true; $("pbHints").setAttribute("aria-expanded", "false");
-    input.placeholder = C.coach ? "Your maths question…" : `Try it in ${C.name}…`;
+    input.placeholder = C.coach ? (practice.lang === "brain" ? "Your answer or question…" : "Your maths question…") : `Try it in ${C.name}…`;
     bar.hidden = false;
   }
   $("pbExit").addEventListener("click", exitPractice);
