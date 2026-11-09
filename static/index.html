@@ -1093,6 +1093,17 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .learn-fact p{margin:6px 0 0; font-weight:700}
 .lang-tabs.vocab-tabs{display:grid; grid-template-columns:repeat(4, 1fr)} .lang-tabs.vocab-tabs button{font-size:.9rem; padding:8px 6px}
 @media (max-width:520px){ .lang-tabs.vocab-tabs{grid-template-columns:1fr 1fr} }
+.lang-tabs.vocab-tabs.g-tabs{grid-template-columns:1fr 1fr}
+.g-reels{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px}
+.g-reels span{padding:10px 6px; border-radius:12px; background:var(--surface); border:2px solid var(--denim); text-align:center; font-weight:900; font-size:.9rem; line-height:1.2}
+.g-reels.spinning span{animation:greel .35s ease-out} @keyframes greel{from{transform:translateY(-8px); opacity:.2} to{transform:none; opacity:1}}
+.vocab-body mark{background:color-mix(in srgb, var(--mustard) 45%, transparent); color:inherit; border-radius:4px; padding:0 3px; font-weight:900}
+.g-tenses{display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:.88rem} .g-tenses div{padding:6px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--line)}
+.g-head{font-weight:800; color:var(--muted)}
+.g-guide summary{cursor:pointer}
+.v-opts.g-wide{grid-template-columns:1fr}
+.vocab-body .small{font-size:.85rem; color:var(--muted)}
+@media (max-width:480px){ .g-tenses{grid-template-columns:1fr} }
 .vocab-body{display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:62vh; overflow:auto}
 .vocab-body p{margin:0}
 .vocab-body textarea{width:100%; min-height:84px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font:inherit; background:var(--surface); color:var(--ink); resize:vertical}
@@ -1834,7 +1845,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="chipbtn" type="button" data-open-lang="">Languages</button>
       <button class="chipbtn" type="button" data-open-math="">Maths</button>
       <button class="chipbtn" type="button" data-open-brain="">Brain teasers</button>
-      <button class="chipbtn" type="button" data-learn-soon="Grammar">Grammar</button>
+      <button class="chipbtn" type="button" data-open-grammar="">Grammar with Dad</button>
       <button class="chipbtn" type="button" data-open-vocab="">Vocabulary with Dad</button>
     </div>
     <p id="learnSoon" role="status" hidden></p>
@@ -1847,6 +1858,17 @@ textarea::placeholder{color:var(--muted)}
   <div class="card lang-card">
     <div class="lang-top"><div class="teach-h"><h2 id="brainTitle">Brain Teasers with Dad<small>Puzzles, streaks and an escape room</small></h2></div><button class="ghost" id="brainClose" type="button">Close</button></div>
     <div id="brainBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="grammarDlg" role="dialog" aria-modal="true" aria-labelledby="grammarTitle" hidden>
+  <div class="card lang-card">
+    <div class="lang-top"><div class="teach-h"><svg class="bot" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-professor"/></svg><h2 id="grammarTitle">Grammar with Dad<small>Silly sentences, serious skills</small></h2></div><button class="ghost" id="grammarClose" type="button">Close</button></div>
+    <div class="lang-tabs vocab-tabs g-tabs" role="tablist" aria-label="Grammar">
+      <button type="button" role="tab" data-gtab="compare" aria-selected="true">🎰 Simile, Metaphor, Analogy</button>
+      <button type="button" role="tab" data-gtab="tense" aria-selected="false">⏰ Tense Trouble</button>
+    </div>
+    <div id="grammarBody" class="vocab-body"></div>
   </div>
 </div>
 
@@ -2018,6 +2040,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/brain.js?v=1"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
+<script src="/static/grammar.js?v=1"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=40"></script>
@@ -2533,6 +2556,7 @@ textarea::placeholder{color:var(--muted)}
     else if (e.target.closest("[data-open-lang],[data-open-math]")) learnDlg.hidden = true;   // the lesson dialog opens on top
     else if (e.target.closest("[data-open-brain]")) { learnDlg.hidden = true; openBrain(); }
     else if (e.target.closest("[data-open-vocab]")) { learnDlg.hidden = true; openVocab(); }
+    else if (e.target.closest("[data-open-grammar]")) { learnDlg.hidden = true; openGrammar(); }
     else if (e.target.closest("[data-learn-soon]")) {
       const soon = $("learnSoon"); soon.textContent = e.target.closest("[data-learn-soon]").dataset.learnSoon + " is coming soon."; soon.hidden = false;
     }
@@ -2756,6 +2780,18 @@ textarea::placeholder{color:var(--muted)}
   $("vocabClose").addEventListener("click", closeVocab);
   vocabDlg.addEventListener("click", (e) => { if (e.target === vocabDlg) closeVocab(); });
   vocabDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVocab(); });
+
+  // ---------- Grammar with Dad: the games live in /static/grammar.js ----------
+  const grammarDlg = $("grammarDlg"), grammarBody = $("grammarBody");
+  const GRAMMAR_BRIDGE = {
+    ask: (text) => { grammarDlg.hidden = true; input.value = text.slice(0, 300); autosize(); input.focus(); },
+  };
+  const openGrammar = () => { grammarDlg.hidden = false; if (window.GrammarGame) window.GrammarGame.open(grammarBody, GRAMMAR_BRIDGE); else grammarBody.textContent = "Grammar is still loading. Try again in a moment."; setTimeout(() => grammarDlg.querySelector('[aria-selected="true"]')?.focus(), 30); };
+  const closeGrammar = () => { grammarDlg.hidden = true; $("learnBtn").focus(); };
+  grammarDlg.querySelector(".g-tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-gtab]"); if (b && window.GrammarGame) window.GrammarGame.tab(b.dataset.gtab); });
+  $("grammarClose").addEventListener("click", closeGrammar);
+  grammarDlg.addEventListener("click", (e) => { if (e.target === grammarDlg) closeGrammar(); });
+  grammarDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeGrammar(); });
 
   // ---------- install as an app ----------
   let installEvt = null;
