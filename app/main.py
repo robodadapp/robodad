@@ -478,6 +478,11 @@ async def chess_page():
     return FileResponse(os.path.join(STATIC_DIR, "chess.html"), headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/tiles")
+async def tiles_page():
+    return FileResponse(os.path.join(STATIC_DIR, "tiles.html"), headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/attic")
 async def attic_page():
     return FileResponse(os.path.join(STATIC_DIR, "attic.html"), headers={"Cache-Control": "no-cache"})
