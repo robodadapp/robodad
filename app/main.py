@@ -52,6 +52,7 @@ from .llm import (  # noqa: E402
     FALLBACK_LINE, REWRITE_NOTE, build_system_prompt, clean_secret, detect_provider, is_bare_refusal,
     stream_with_failover, strip_stock_opener,
 )
+from . import chess_daily  # noqa: E402
 from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noqa: E402
 from .nlp import RoboDadNLP  # noqa: E402
 from .safety import CRISIS_TOKEN, check_crisis, clean_nickname, clean_user_text, crisis_message  # noqa: E402
@@ -305,6 +306,7 @@ class ChatRequest(BaseModel):
 class CodeRequest(BaseModel):
     code: str = Field(min_length=1, max_length=60)
     family: str = Field(default="", max_length=64)          # lets the family preview the hunt early
+    hunt: int = Field(default=0, ge=0, le=6)                # the chapter this device has reached
 
 
 # ---------------------------------------------------------------- secret codes
@@ -325,6 +327,8 @@ EGGS = {"cheat"}
 HUNT_HASHES = {hashlib.sha256(w.encode()).hexdigest(): n for w, n in (
     ("pressstart", 1), ("joypad", 2), ("attic", 3), ("badge", 4), ("392", 5), ("39200", 5), ("dadquest", 6))}
 ARG_START = os.getenv("ARG_START", "").strip()
+# RETRO (the five Daily Board letters) opens the next chapter early. Stored as a hash like the rest.
+HUNT_EARLY_HASH = hashlib.sha256(b"retro").hexdigest()
 
 
 def _hunt_opens(chapter: int):
@@ -858,6 +862,38 @@ async def chess_move(req: ChessMoveRequest, request: Request):
     return {"move": move}
 
 
+# ---------------------------------------------------------------- the Daily Board
+_daily_hits: dict[str, deque] = defaultdict(deque)
+
+
+class DailyAnswer(BaseModel):
+    index: int = Field(ge=0, le=99)
+    move: str = Field(min_length=4, max_length=5)          # long algebra, e.g. "a1a8"
+
+
+@app.get("/api/chess/daily")
+async def chess_daily_today():
+    day, index = chess_daily.today_index(_toronto_today(), ARG_START)
+    return {"day": day, "index": index}
+
+
+@app.post("/api/chess/daily")
+async def chess_daily_answer(a: DailyAnswer, request: Request):
+    now = time.monotonic()
+    _prune(_daily_hits, 600, now)
+    q = _daily_hits[_client_ip(request)]
+    while q and now - q[0] > 600:
+        q.popleft()
+    if len(q) >= 30:
+        return JSONResponse({"error": "Lots of guesses. Take a short break."}, status_code=429)
+    q.append(now)
+    _, index = chess_daily.today_index(_toronto_today(), ARG_START)
+    if a.index != index:                                    # only today's puzzle can be answered
+        return JSONResponse({"error": "That's not today's board. Refresh and try again."}, status_code=400)
+    letter = chess_daily.check(a.index, a.move)
+    return {"ok": True, "letter": letter} if letter else {"ok": False}
+
+
 @app.get("/health")
 async def health():
     return {"ok": True}
@@ -883,6 +919,11 @@ async def secret_code(c: CodeRequest, request: Request):
     if egg:
         log.info("SECRET CODE: egg %s unlocked", egg)
         return {"kind": "egg", "egg": egg}
+    if digest == HUNT_EARLY_HASH:
+        if 1 <= c.hunt <= 4:                       # chapter 5 leads to the finale, which stays on the calendar
+            log.info("HUNT: chapter %s opened early with the Daily Board code", c.hunt + 1)
+            return {"kind": "hunt", "chapter": c.hunt + 1}
+        return JSONResponse({"error": "Nice work on the Daily Board. That code has nothing to open yet."}, status_code=404)
     chapter = HUNT_HASHES.get(digest)
     if chapter:
         opens = _hunt_opens(chapter)

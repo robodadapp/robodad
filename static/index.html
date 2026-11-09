@@ -4118,7 +4118,7 @@ const PLAYERS = {
     const code = codeInput.value.trim(); if (!code) return;
     $("codeGo").disabled = true;
     try {
-      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code, family: getPref("robodad.family") || "" }) });
+      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code, family: getPref("robodad.family") || "", hunt: huntProgress() }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { codeMsg.textContent = j.error || "Hmm, that didn't work. Try again."; codeMsg.hidden = false; return; }
       if (j.kind === "hunt_wait") { codeMsg.textContent = huntWaitText(j.opens); codeMsg.hidden = false; return; }
@@ -4187,7 +4187,7 @@ const PLAYERS = {
   async function huntSubmit(code){
     $("huntGo").disabled = true;
     try {
-      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code, family: getPref("robodad.family") || "" }) });
+      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code, family: getPref("robodad.family") || "", hunt: huntProgress() }) });
       const j = await r.json().catch(() => ({}));
       const msg = (t) => { $("huntMsg").textContent = t; $("huntMsg").hidden = false; };
       if (j.kind === "hunt" && j.chapter > huntCh) return huntUnlock(j.chapter, j.solver);
