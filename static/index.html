@@ -1081,6 +1081,35 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .learn-menu{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0}
 .learn-fact{margin:12px 0; padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line)}
 .learn-fact p{margin:6px 0 0; font-weight:700}
+.lang-tabs.vocab-tabs{display:grid; grid-template-columns:repeat(4, 1fr)} .lang-tabs.vocab-tabs button{font-size:.9rem; padding:8px 6px}
+@media (max-width:520px){ .lang-tabs.vocab-tabs{grid-template-columns:1fr 1fr} }
+.vocab-body{display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:62vh; overflow:auto}
+.vocab-body p{margin:0}
+.vocab-body textarea{width:100%; min-height:84px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font:inherit; background:var(--surface); color:var(--ink); resize:vertical}
+.v-card{padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line); display:flex; flex-direction:column; gap:6px}
+.v-card .v-k{font-size:.75rem; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+.v-before{text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--alert, #c33) 70%, transparent); opacity:.8}
+.v-after{font-weight:800}
+.v-line{font-weight:800; font-size:1.05rem}
+.v-src{font-size:.8rem; color:var(--muted); font-style:italic}
+.v-rules{margin:0; padding-left:1.2em; font-size:.9rem} .v-rules li{margin-bottom:2px}
+.v-chips{display:flex; flex-wrap:wrap; gap:6px}
+.v-chips .chipbtn[aria-pressed="true"]{background:var(--denim); border-color:var(--denim); color:var(--denim-ink)}
+.v-word{font-size:1.6rem; font-weight:900; line-height:1.1}
+.v-myth{display:inline-block; font-size:.72rem; font-weight:900; text-transform:uppercase; letter-spacing:.06em; background:var(--mustard, #F2B533); color:#2A1E00; border-radius:999px; padding:2px 9px}
+.v-ladder{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px}
+.v-level{display:flex; gap:8px; align-items:center; text-align:left; padding:6px 8px; border:2px solid var(--line); border-radius:12px; background:transparent; color:inherit; font:inherit; font-size:.85rem; font-weight:800; cursor:pointer}
+.v-level svg{width:38px; height:38px; flex:none}
+.v-level small{display:block; color:var(--muted); font-size:.75rem; font-weight:700}
+.v-level[disabled]{opacity:.5; cursor:default}
+.v-level.beaten{border-color:var(--denim)}
+.v-stats{display:flex; justify-content:space-between; gap:8px; font-weight:800; font-size:.9rem}
+.v-timer{height:6px; border-radius:6px; background:var(--line); overflow:hidden} .v-timer i{display:block; height:100%; background:var(--denim); transition:width .1s linear}
+.v-opts{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.v-opts button{text-align:left; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:var(--surface); color:var(--ink); font:inherit; font-weight:700; cursor:pointer}
+.v-opts button.ok{border-color:#2E8B57; background:color-mix(in srgb, #2E8B57 18%, var(--surface))}
+.v-opts button.bad{border-color:#C0392B; background:color-mix(in srgb, #C0392B 14%, var(--surface))}
+@media (max-width:480px){ .v-opts{grid-template-columns:1fr} }
 .brain-q{font-weight:800; font-size:1.1rem}
 .brain-hint{color:var(--muted)}
 .brain-msg{font-weight:700}
@@ -1869,7 +1898,8 @@ textarea::placeholder{color:var(--muted)}
       <button class="tile" type="button" data-go="otd"><span class="t-ico" aria-hidden="true">📜</span><b>On this day with Dad</b><small>Dad-and-kid history</small></button>
       <button class="tile" type="button" data-open-study=""><span class="t-ico" aria-hidden="true">⏱️</span><b>Study Hall</b><small>25 minutes on, 5 off</small></button>
       <button class="tile" type="button" data-go="brain"><span class="t-ico" aria-hidden="true">🧩</span><b>Brain teasers</b><small>Train your thinking</small></button>
-      <button class="tile soon" type="button" data-learn-soon="Grammar and Vocabulary"><span class="t-ico" aria-hidden="true">✍️</span><b>Grammar and Vocabulary</b><small>Coming soon</small></button>
+      <button class="tile" type="button" data-go="vocab"><span class="t-ico" aria-hidden="true">✨</span><b>Vocabulary with Dad</b><small>Glow-Up, Comebacks, Word Origins, Vocab Duel</small></button>
+      <button class="tile soon" type="button" data-learn-soon="Grammar"><span class="t-ico" aria-hidden="true">✍️</span><b>Grammar</b><small>Coming soon</small></button>
     </div>
     <p id="learnSoon" role="status" hidden></p>
     <p><a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a></p>
@@ -1899,6 +1929,19 @@ textarea::placeholder{color:var(--muted)}
   <div class="card lang-card">
     <div class="lang-top"><div class="teach-h"><h2 id="brainTitle">Brain Teasers with Dad<small>Puzzles, streaks and an escape room</small></h2></div><button class="ghost" id="brainClose" type="button">Close</button></div>
     <div id="brainBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="vocabDlg" role="dialog" aria-modal="true" aria-labelledby="vocabTitle" hidden>
+  <div class="card lang-card">
+    <div class="lang-top"><div class="teach-h"><svg class="bot" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-bookworm"/></svg><h2 id="vocabTitle">Vocabulary with Dad<small>Sound sharp, never stiff</small></h2></div><button class="ghost" id="vocabClose" type="button">Close</button></div>
+    <div class="lang-tabs vocab-tabs" role="tablist" aria-label="Vocabulary">
+      <button type="button" role="tab" data-vtab="glow" aria-selected="true">✨ Glow-Up</button>
+      <button type="button" role="tab" data-vtab="comeback" aria-selected="false">🎩 Comebacks</button>
+      <button type="button" role="tab" data-vtab="origin" aria-selected="false">📜 Word Origins</button>
+      <button type="button" role="tab" data-vtab="duel" aria-selected="false">⚔️ Vocab Duel</button>
+    </div>
+    <div id="vocabBody" class="vocab-body"></div>
   </div>
 </div>
 
@@ -2056,10 +2099,11 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/brainteasers.js?v=2"></script>
 <script src="/static/brain.js?v=1"></script>
 <script src="/static/words.js?v=1"></script>
+<script src="/static/vocab.js?v=1"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=40"></script>
-<script src="/static/hunt.js?v=1"></script>
+<script src="/static/hunt.js?v=2"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -2644,6 +2688,150 @@ textarea::placeholder{color:var(--muted)}
   $("brainClose").addEventListener("click", closeBrain);
   brainDlg.addEventListener("click", (e) => { if (e.target === brainDlg) closeBrain(); });
   brainDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBrain(); });
+
+
+  // ---------- Vocabulary with Dad (static/vocab.js): Glow-Up, Comebacks, Word Origins, Vocab Duel ----------
+  const vocabDlg = $("vocabDlg"), vocabBody = $("vocabBody"), V = window.VOCAB || {};
+  const VDUEL_KEY = "robodad.vocab.duel";
+  let vTab = "glow", vGlowCtx = (V.GLOW_CONTEXTS || [])[0] || "", vGlowEx = 0, vCbCat = 0, vOrigin = null, vDuel = null, vTimer = null;
+  const vShuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const loadDuel = () => { try { const d = JSON.parse(localStorage.getItem(VDUEL_KEY) || "{}"); return { xp: d.xp || 0, beaten: d.beaten || [], best: d.best || {}, bestStreak: d.bestStreak || 0 }; } catch { return { xp: 0, beaten: [], best: {}, bestStreak: 0 }; } };
+  const saveDuel = (d) => { try { localStorage.setItem(VDUEL_KEY, JSON.stringify(d)); } catch {} };
+  const levelOpen = (i, d) => i === 0 || d.beaten.includes(V.DUEL[i - 1].id);
+  function vocabAskDad(text){                  // close the dialog and put a question in the chat box
+    stopDuelTimer(); vocabDlg.hidden = true;
+    input.value = text.slice(0, 300); autosize(); input.focus();
+  }
+  async function shareLine(text){
+    const full = `${text}\n\nfrom RoboDad · robodad.app`;
+    try { if (navigator.share) { await navigator.share({ text: full }); return; } } catch (e) { if (e?.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(full); toast("Copied. Go be classy."); } catch { toast("Couldn't copy that one. Try selecting the text instead."); }
+  }
+  function renderVocab(){
+    vocabDlg.querySelectorAll("[data-vtab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.vtab === vTab)));
+    if (vTab !== "duel") stopDuelTimer();
+    if (vTab === "glow") {
+      const ex = V.GLOWUPS[vGlowEx % V.GLOWUPS.length];
+      vocabBody.innerHTML = `<p>Paste a real sentence: an email to a teacher, an essay line, a message to a coach. Dad polishes it and shows you the one or two changes that made the difference.</p>
+        <p class="v-k" style="font-size:.8rem;font-weight:900;color:var(--muted)">WHO'S IT FOR?</p>
+        <div class="v-chips">${V.GLOW_CONTEXTS.map(c => `<button class="chipbtn" type="button" data-vglow-ctx="${esc(c)}" aria-pressed="${c === vGlowCtx}">${esc(c)}</button>`).join("")}</div>
+        <label class="sr" for="vGlowText">Your sentence</label>
+        <textarea id="vGlowText" maxlength="400" placeholder="e.g. hey can u tell me what the hw is i wasnt here"></textarea>
+        <div class="row"><button class="primary" type="button" data-vact="glow">✨ Glow it up with Dad</button></div>
+        <div class="v-card"><span class="v-k">Example ${vGlowEx % V.GLOWUPS.length + 1} of ${V.GLOWUPS.length} · ${esc(ex.ctx)}</span>
+          <p class="v-before">${esc(ex.before)}</p><p class="v-after">${esc(ex.after)}</p><p><b>What changed:</b> ${esc(ex.why)}</p>
+          <div class="row"><button class="ghost" type="button" data-vact="glow-next">Another example</button></div></div>`;
+    } else if (vTab === "comeback") {
+      const cat = V.COMEBACKS[vCbCat];
+      vocabBody.innerHTML = `<div class="v-card"><span class="v-k">Dad's comeback code</span><ol class="v-rules">${V.COMEBACK_RULES.map(r => `<li>${esc(r)}</li>`).join("")}</ol></div>
+        <div class="v-chips">${V.COMEBACKS.map((c, i) => `<button class="chipbtn" type="button" data-vcb="${i}" aria-pressed="${i === vCbCat}">${esc(c.cat)}</button>`).join("")}</div>
+        ${cat.items.map((it, i) => `<div class="v-card"><p class="v-line">“${esc(it.line)}”</p>${it.src ? `<p class="v-src">${esc(it.src)}</p>` : ""}
+          <p><b>Use it when:</b> ${esc(it.when)}</p><div class="row"><button class="ghost" type="button" data-vshare="${i}">Share</button></div></div>`).join("")}`;
+    } else if (vTab === "origin") {
+      const list = V.ORIGINS; if (vOrigin === null) vOrigin = dayNumber() % list.length;
+      const o = list[vOrigin];
+      vocabBody.innerHTML = `<div class="v-card"><span class="v-k">${vOrigin === dayNumber() % list.length ? "Today's word story" : "Word story"} · from ${esc(o.from)}</span>
+          <div class="v-word">${esc(o.w)}</div>${o.myth ? `<span class="v-myth">Myth buster</span>` : ""}
+          <p>${esc(o.story)}</p><p><b>Dad says:</b> ${esc(o.dad)}</p></div>
+        <div class="row"><button class="primary" type="button" data-vact="origin-next">Next story</button>
+          <button class="ghost" type="button" data-vact="origin-ask">Ask Dad about this word</button>
+          <button class="ghost" type="button" data-vact="origin-share">Share</button></div>`;
+    } else renderDuelLadder();
+  }
+  function avSvg(av, locked){ return locked ? `<svg viewBox="0 0 64 64" aria-hidden="true"><text x="32" y="42" text-anchor="middle" font-size="30">🔒</text></svg>` : `<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#av-${av}"/></svg>`; }
+  function renderDuelLadder(msg){
+    const d = loadDuel();
+    vocabBody.innerHTML = `<p>Eight fast questions per duel: match the word to its meaning, or pick the best upgrade. Get 6 right to beat that dad and unlock the next one.</p>
+      <div class="v-stats"><span>⭐ ${d.xp} XP</span><span>🔥 Best streak ${d.bestStreak}</span><span>🏆 ${d.beaten.length} of ${V.DUEL.length} beaten</span></div>
+      ${msg ? `<div class="v-card">${msg}</div>` : ""}
+      <div class="v-ladder">${V.DUEL.map((L, i) => {
+        const open = levelOpen(i, d), hide = L.secret && !open, beat = d.beaten.includes(L.id);
+        return `<button class="v-level${beat ? " beaten" : ""}" type="button" data-vlevel="${i}" ${open ? "" : "disabled"}>${avSvg(L.av, !open)}
+          <span>${esc(hide ? "???" : L.name)}<small>${hide ? "Secret. Beat Professor Dad." : open ? `Tier ${L.tier}${beat ? " · beaten ✓" : ""}${d.best[L.id] != null ? ` · best ${d.best[L.id]}/8` : ""}` : `Tier ${L.tier} · locked`}</small></span></button>`;
+      }).join("")}</div>`;
+  }
+  function startDuel(i){
+    const L = V.DUEL[i];
+    const qm = vShuffle(L.m).slice(0, 5).map(([w, m]) => ({ kind: "m", prompt: `What does “${w}” mean?`, ok: m,
+      opts: vShuffle([m, ...vShuffle(L.m.filter(x => x[0] !== w)).slice(0, 3).map(x => x[1])]), why: `“${w}” means ${m}.` }));
+    const qu = vShuffle(L.u).slice(0, 3).map(u => ({ kind: "u", prompt: `Upgrade “${u.plain}”: ${u.ctx}`, ok: u.ok, opts: vShuffle([u.ok, ...u.no]), why: u.why }));
+    vDuel = { i, qs: vShuffle([...qm, ...qu]), n: 0, score: 0, streak: 0, top: 0, xp: 0, answered: false };
+    duelQuestion();
+  }
+  function stopDuelTimer(){ if (vTimer) { clearInterval(vTimer); vTimer = null; } }
+  function duelQuestion(){
+    const D = vDuel, q = D.qs[D.n], L = V.DUEL[D.i]; D.answered = false; D.t0 = Date.now();
+    vocabBody.innerHTML = `<div class="lang-top"><div class="teach-h">${avSvg(L.av)}<b>${esc(L.name)}</b></div><button class="ghost" type="button" data-vact="duel-quit">Quit duel</button></div>
+      <div class="v-stats"><span>Question ${D.n + 1} of ${D.qs.length}</span><span>✅ ${D.score}</span><span>🔥 ${D.streak}</span><span>⭐ +${D.xp}</span></div>
+      <div class="v-timer" aria-hidden="true"><i id="vTimeBar" style="width:100%"></i></div>
+      <p class="brain-q">${esc(q.prompt)}</p>
+      <div class="v-opts">${q.opts.map((o, k) => `<button type="button" data-vpick="${k}">${esc(o)}</button>`).join("")}</div>
+      <p id="vDuelMsg" class="brain-msg" role="status" aria-live="polite"></p><div class="row" id="vDuelNext"></div>`;
+    vocabBody.querySelector("[data-vpick]")?.focus();
+    const LIMIT = 12000; stopDuelTimer();
+    vTimer = setInterval(() => {
+      const left = Math.max(0, LIMIT - (Date.now() - D.t0)), bar = $("vTimeBar");
+      if (bar) bar.style.width = (left / LIMIT * 100) + "%";
+      if (!left) duelAnswer(-1);
+    }, 100);
+  }
+  function duelAnswer(k){
+    const D = vDuel; if (!D || D.answered) return; D.answered = true; stopDuelTimer();
+    const q = D.qs[D.n], right = k >= 0 && q.opts[k] === q.ok, fast = Date.now() - D.t0 < 5000;
+    vocabBody.querySelectorAll("[data-vpick]").forEach((b, idx) => { b.disabled = true; if (q.opts[idx] === q.ok) b.classList.add("ok"); else if (idx === k) b.classList.add("bad"); });
+    if (right) { D.score++; D.streak++; D.top = Math.max(D.top, D.streak); D.xp += 10 + Math.min(D.streak - 1, 5) * 2 + (fast ? 5 : 0); }
+    else D.streak = 0;
+    $("vDuelMsg").textContent = (right ? (fast ? "Lightning fast! " : "Right! ") : k < 0 ? "Time's up. " : "Not quite. ") + q.why;
+    const last = D.n + 1 >= D.qs.length;
+    $("vDuelNext").innerHTML = `<button class="primary" type="button" data-vact="duel-next">${last ? "See results" : "Next"}</button>`;
+    $("vDuelNext").querySelector("button").focus();
+  }
+  function duelFinish(){
+    const D = vDuel, L = V.DUEL[D.i], d = loadDuel(), won = D.score >= 6, first = won && !d.beaten.includes(L.id);
+    d.xp += D.xp + (won ? 25 : 0); d.bestStreak = Math.max(d.bestStreak, D.top);
+    d.best[L.id] = Math.max(d.best[L.id] || 0, D.score);
+    if (won && !d.beaten.includes(L.id)) d.beaten.push(L.id);
+    saveDuel(d); vDuel = null;
+    const next = V.DUEL[D.i + 1];
+    let msg = `<p class="brain-q">${won ? `You beat ${esc(L.name)}! ${D.score}/8` : `${esc(L.name)} wins this one. ${D.score}/8`}</p>
+      <p>+${D.xp + (won ? 25 : 0)} XP${won ? " (including a 25 XP win bonus)" : ""} · best streak this duel: ${D.top}</p>`;
+    if (!won) msg += `<p>You need 6 to win. Rematch? The words get easier the second time.</p>`;
+    else if (first && next) msg += `<p>${next.secret ? "Something's stirring in the ladder… a secret challenger has appeared." : `${esc(next.name)} is unlocked.`}</p>`;
+    if (won && L.id === "grandpa") msg += `<p><b>Robo-Grandpa says:</b> ${esc(V.GRANDPA_SECRET)}</p>`;
+    msg += `<div class="row"><button class="primary" type="button" data-vlevel="${D.i}">Rematch</button>${won && next ? `<button class="ghost" type="button" data-vlevel="${D.i + 1}">Take on ${esc(next.secret && first ? "the challenger" : next.name)}</button>` : ""}</div>`;
+    renderDuelLadder(msg);
+  }
+  vocabBody.addEventListener("click", (e) => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.vglowCtx) { vGlowCtx = t.dataset.vglowCtx; vocabBody.querySelectorAll("[data-vglow-ctx]").forEach(b => b.setAttribute("aria-pressed", String(b === t))); return; }
+    if (t.dataset.vcb !== undefined) { vCbCat = +t.dataset.vcb; renderVocab(); return; }
+    if (t.dataset.vshare !== undefined) { const it = V.COMEBACKS[vCbCat].items[+t.dataset.vshare]; shareLine(`“${it.line}”${it.src ? ` (${it.src})` : ""}`); return; }
+    if (t.dataset.vlevel !== undefined) { startDuel(+t.dataset.vlevel); return; }
+    if (t.dataset.vpick !== undefined) { duelAnswer(+t.dataset.vpick); return; }
+    const act = t.dataset.vact;
+    if (act === "glow") {
+      const text = ($("vGlowText")?.value || "").trim();
+      if (!text) { toast("Paste a sentence first, then Dad will glow it up."); $("vGlowText")?.focus(); return; }
+      if (busy) { toast("Dad's still answering. Try again in a second."); return; }
+      vocabDlg.hidden = true; startPractice("vocab", "glowup");
+      submit(`Who it's for: ${vGlowCtx}.\nMy sentence: ${text}`);
+    }
+    else if (act === "glow-next") { vGlowEx++; renderVocab(); }
+    else if (act === "origin-next") { vOrigin = (vOrigin + 1) % V.ORIGINS.length; renderVocab(); }
+    else if (act === "origin-ask") vocabAskDad(`Tell me more about where the word "${V.ORIGINS[vOrigin].w}" comes from.`);
+    else if (act === "origin-share") { const o = V.ORIGINS[vOrigin]; shareLine(`Word story: ${o.w}\n${o.story}`); }
+    else if (act === "duel-next") { vDuel.n++; vDuel.n >= vDuel.qs.length ? duelFinish() : duelQuestion(); }
+    else if (act === "duel-quit") { stopDuelTimer(); vDuel = null; renderDuelLadder(); }
+  });
+  vocabDlg.querySelector(".vocab-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-vtab]"); if (!b) return;
+    vTab = b.dataset.vtab; vDuel = null; renderVocab();
+  });
+  const openVocab = () => { vocabDlg.hidden = false; renderVocab(); setTimeout(() => vocabDlg.querySelector('[aria-selected="true"]')?.focus(), 30); };
+  const closeVocab = () => { stopDuelTimer(); vDuel = null; vocabDlg.hidden = true; $("learnBtn").focus(); };
+  $("vocabClose").addEventListener("click", closeVocab);
+  vocabDlg.addEventListener("click", (e) => { if (e.target === vocabDlg) closeVocab(); });
+  vocabDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVocab(); });
 
   // ---------- install as an app ----------
   let installEvt = null;
@@ -3782,11 +3970,11 @@ const PLAYERS = {
     const bar = $("practiceBar");
     if (!practice) { bar.hidden = true; input.placeholder = "Talk to RoboDad…"; return; }
     const C = L[practice.lang], sc = C.scenes.find(x => x.id === practice.scene) || C.scenes[0];
-    $("pbTag").innerHTML = C.coach ? `${practice.lang === "brain" ? "Brain teaser coach" : "Maths coach"} · ${esc(sc.title)}<small>Hints first, then you try the next step</small>`
+    $("pbTag").innerHTML = C.coach ? `${C.coachTag ? esc(C.coachTag) : practice.lang === "brain" ? "Brain teaser coach" : "Maths coach"} · ${esc(sc.title)}<small>${esc(C.coachSub || "Hints first, then you try the next step")}</small>`
       : `${esc(C.name)} practice · ${esc(sc.title)}<small>${esc(sc.who)} · English is fine if you're stuck</small>`;
     $("pbHintList").innerHTML = sc.hints.map(h => `<button type="button">${esc(h)}</button>`).join("");
     $("pbHintList").hidden = true; $("pbHints").setAttribute("aria-expanded", "false");
-    input.placeholder = C.coach ? (practice.lang === "brain" ? "Your answer or question…" : "Your maths question…") : `Try it in ${C.name}…`;
+    input.placeholder = C.coach ? (C.placeholder || (practice.lang === "brain" ? "Your answer or question…" : "Your maths question…")) : `Try it in ${C.name}…`;
     bar.hidden = false;
   }
   $("pbExit").addEventListener("click", exitPractice);
@@ -3932,6 +4120,7 @@ const PLAYERS = {
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => goTab(t.dataset.tab)));
   const GO = {
     brain: () => openBrain(), vault: () => openVault(), joke: () => submit("Tell me a dad joke"),
+    vocab: () => openVocab(),
     word: () => openMind("word"), fact: () => openMind("fact"), otd: () => openMind("otd"),
     looks: () => openMenu(false), badges: () => openBelt(), name: () => $("nameBtn").click(), code: () => $("codeBtn").click(),
     hunt: () => $("huntBtn").click(),
