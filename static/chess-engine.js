@@ -350,16 +350,17 @@
   }
 
   // ---------- tiers (the avatars) ----------
-  // depth: search depth. blunder: chance of a random legal move. topN: pick among the best N moves.
+  // depth: search depth. blunder: chance of a random legal move. topN: pick among the best N moves,
+  // weighted by `weights` (default 1, 1/2, 1/3...). elo: rough target strength, from calibration.
   // style: tilts for rootBonus/evaluate. book: opening replies to 1.e4 (UCI), picked at random.
   const TIERS = {
-    modern:    { name: "Modern Dad",       tier: 1, depth: 1, blunder: 0.35, topN: 0, style: {}, book: [] },
-    skater:    { name: "Skater Dad",       tier: 2, depth: 2, blunder: 0.15, topN: 0, style: { checkBonus: 40, captureBonus: 10 }, book: ["e7e5", "c7c6"] },
-    eighties:  { name: "Arcade Dad",       tier: 2, depth: 2, blunder: 0.15, topN: 0, style: { developBonus: 12 }, book: ["c7c5"] },
-    gamer:     { name: "Gamer Dad",        tier: 3, depth: 3, blunder: 0.05, topN: 0, style: { captureBonus: 25 }, book: ["e7e5"] },
-    coach:     { name: "Coach Dad",        tier: 3, depth: 3, blunder: 0.05, topN: 0, style: { pawnStructure: 1, kingSafety: 0.5 }, book: ["e7e6", "c7c6"] },
-    bookworm:  { name: "Bookworm Dad",     tier: 4, depth: 3, blunder: 0.03, topN: 0, style: { pawnStructure: 1.5 }, book: ["d7d5", "c7c5"] },
-    labdad:    { name: "Lab Dad",          tier: 4, depth: 3, blunder: 0, topN: 3, style: {}, book: ["b7b6", "g8f6"] },
+    modern:    { name: "Modern Dad",       tier: 1, elo: 600,  depth: 1, blunder: 0.35, topN: 0, style: {}, book: [] },
+    skater:    { name: "Skater Dad",       tier: 2, elo: 900,  depth: 2, blunder: 0.15, topN: 0, style: { checkBonus: 40, captureBonus: 10 }, book: ["e7e5", "c7c6"] },
+    eighties:  { name: "Arcade Dad",       tier: 2, elo: 900,  depth: 2, blunder: 0.15, topN: 0, style: { developBonus: 12 }, book: ["c7c5"] },
+    gamer:     { name: "Gamer Dad",        tier: 3, elo: 1200, depth: 3, blunder: 0.05, topN: 0, style: { captureBonus: 25 }, book: ["e7e5"] },
+    coach:     { name: "Coach Dad",        tier: 3, elo: 1200, depth: 3, blunder: 0.05, topN: 0, style: { pawnStructure: 1, kingSafety: 0.5 }, book: ["e7e6", "c7c6"] },
+    bookworm:  { name: "Bookworm Dad",     tier: 4, elo: 1300, depth: 3, blunder: 0.03, topN: 0, style: { pawnStructure: 1.5 }, book: ["d7d5", "c7c5"] },
+    labdad:    { name: "Lab Dad",          tier: 4, elo: 1300, depth: 3, blunder: 0, topN: 2, weights: [1, 0.25], style: {}, book: ["b7b6", "g8f6"] },
     professor: { name: "Professor Dad",    tier: 5, depth: 3, blunder: 0, topN: 0, style: { pawnStructure: 1 }, book: [], server: { elo: 1800 } },
     grandpa:   { name: "Robo-Grandpa",     tier: 6, depth: 3, blunder: 0, topN: 0, style: { pawnStructure: 1 }, book: [], server: { elo: null }, secret: true },
   };
@@ -380,7 +381,7 @@
     const ranked = rankMoves(s, cfg.depth, cfg.style);
     if (cfg.topN > 1) {
       const pool = ranked.slice(0, cfg.topN);
-      const weights = pool.map((_, i) => 1 / (i + 1));
+      const weights = cfg.weights || pool.map((_, i) => 1 / (i + 1));
       let roll = rnd() * weights.reduce((a, b) => a + b, 0);
       for (let i = 0; i < pool.length; i++) { roll -= weights[i]; if (roll <= 0) return pool[i].move; }
       return pool[0].move;

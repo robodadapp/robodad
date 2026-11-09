@@ -75,9 +75,9 @@ async function playGame(dadKey, sf, dadIsWhite) {
 }
 
 (async () => {
-  const dads = Object.keys(C.TIERS).filter((k) => !C.TIERS[k].server);
-  // Design targets from the tier ladder (rough Elo for each dad).
-  const TARGET = { modern: 600, skater: 900, eighties: 900, gamer: 1200, coach: 1200, bookworm: 1500, labdad: 1500 };
+  // ONLY=labdad,bookworm limits the run to some dads. Targets come from the tier table in the engine.
+  const only = process.env.ONLY ? process.env.ONLY.split(",") : null;
+  const dads = Object.keys(C.TIERS).filter((k) => !C.TIERS[k].server && (!only || only.includes(k)));
   console.log(`Stockfish: ${SF} · ${perColor} games per colour · ${MOVETIME} ms per Stockfish move`);
   for (const elo of elos) {
     const sf = makeEngine(elo);
@@ -94,7 +94,7 @@ async function playGame(dadKey, sf, dadIsWhite) {
       const score = points / games;
       const diff = score <= 0 ? -Infinity : score >= 1 ? Infinity : -400 * Math.log10(1 / score - 1);
       const shown = Number.isFinite(diff) ? Math.round(elo + diff) : (diff > 0 ? "above" : "below") + " " + elo;
-      console.log(`  ${C.TIERS[dad].name.padEnd(16)} score ${points}/${games}  ≈ ${shown} Elo  (target ~${TARGET[dad]})`);
+      console.log(`  ${C.TIERS[dad].name.padEnd(16)} score ${points}/${games}  ≈ ${shown} Elo  (target ~${C.TIERS[dad].elo})`);
     }
     sf.quit();
   }
