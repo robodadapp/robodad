@@ -854,7 +854,7 @@ async def chess_move(req: ChessMoveRequest, request: Request):
     except ValueError:
         return JSONResponse({"error": "That position doesn't look right."}, status_code=400)
     except EngineUnavailable:
-        return JSONResponse({"error": "Robo-Grandpa is napping. Try a lower tier for now."}, status_code=503)
+        return JSONResponse({"error": "The big engine is napping. Try a lower dad for now."}, status_code=503)
     return {"move": move}
 
 
