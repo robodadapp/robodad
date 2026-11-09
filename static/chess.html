@@ -120,6 +120,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     hint: ["Dad doesn't usually hand these out, but here's one."],
     playerWins: ["Fine. You earned that one. Rematch?"],
     botWins: ["Good game. Want to go over where it slipped?"],
+    hungPlayer: ["Oh, you just hung your piece. Bold strategy."],
+    botBlunder: ["That was a test. Obviously."],
     draw: ["A draw. Not bad. Want to go again?"],
     backup: ["The big engine's napping, so I'm playing from here. Same board, same rules."],
   };
@@ -130,11 +132,24 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     else $("say").textContent = "";
   };
 
-  let states = [], sanLog = [], selected = -1, targets = [], hintSq = null;
+  let states = [], sanLog = [], selected = -1, targets = [], hintSq = null, pendingPromo = null;
   let tierKey = "modern", busy = false, over = null, undoLeft = 1, hintsLeft = 3;
   const human = "w";
 
   function cur() { return states[states.length - 1]; }
+
+  // True if the side to move can capture a piece worth a minor or more that nothing defends.
+  // It only looks one capture deep, so it won't catch forks or mates.
+  function hangsPiece(state, mover) {
+    const defender = mover === "w" ? "b" : "w";
+    for (const m of C.legalMoves(state)) {
+      const victim = state.board[m.to];
+      if (!victim || C.VAL[victim.toLowerCase()] < 300) continue;
+      const after = C.applyMove(state, m);
+      if (!C.attackedBy(after.board, m.to, defender)) return true;
+    }
+    return false;
+  }
   function history() { return states.map((s) => C.toFEN(s)); }
 
   function avatarSVG(key, size) {
@@ -259,12 +274,21 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     return C.legalMoves(cur()).filter((m) => m.from === i);
   }
 
+  function askPromotion(from, to) {
+    pendingPromo = { from, to };
+    const names = [["q", "♕", "Queen"], ["r", "♖", "Rook"], ["b", "♗", "Bishop"], ["n", "♘", "Knight"]];
+    setStatus(`<strong>Promote to:</strong> ` + names.map(([k, g, n]) =>
+      `<button class="btn" type="button" data-promo="${k}" aria-label="Promote to ${n}">${g} ${n}</button>`).join(" "));
+  }
+
   function onSquare(i) {
     if (busy || over || cur().turn !== human) return;
     const s = cur();
+    if (pendingPromo) { pendingPromo = null; refreshStatus(); }
     if (selected >= 0 && targets.includes(i)) {
-      const m = C.legalMoves(s).find((x) => x.from === selected && x.to === i && (!x.promo || x.promo === "q"));
-      if (m) { playHuman(m); return; }
+      const options = C.legalMoves(s).filter((x) => x.from === selected && x.to === i);
+      if (options.length > 1) { askPromotion(selected, i); return; }
+      if (options.length === 1) { playHuman(options[0]); return; }
     }
     const p = s.board[i];
     if (p && C.legalMoves(s).some((m) => m.from === i)) {
@@ -286,7 +310,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     sanLog.push(san);
     lastPair = { from: m.from, to: m.to };
     selected = -1; targets = []; hintSq = null;
-    if (captured) talk("capture");
+    if (hangsPiece(next, next.turn)) talk("hungPlayer");
+    else if (captured) talk("capture");
     else if (C.inCheck(next, next.turn)) talk("check");
     renderBoard();
     if (afterPosition()) return;
@@ -331,6 +356,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     sanLog.push(san);
     lastPair = { from: m.from, to: m.to };
     busy = false;
+    if (hangsPiece(next, human)) talk("botBlunder");
     renderBoard();
     if (afterPosition()) return;
     refreshStatus();
@@ -375,6 +401,14 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (!b || b.disabled) return;
     tierKey = b.dataset.k;
     startGame();
+  });
+  $("status").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-promo]");
+    if (!b || !pendingPromo) return;
+    const { from, to } = pendingPromo;
+    pendingPromo = null;
+    const m = C.legalMoves(cur()).find((x) => x.from === from && x.to === to && x.promo === b.dataset.promo);
+    if (m) playHuman(m);
   });
   $("newBtn").addEventListener("click", startGame);
   $("undoBtn").addEventListener("click", undo);
