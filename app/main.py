@@ -52,7 +52,7 @@ from .llm import (  # noqa: E402
     FALLBACK_LINE, REWRITE_NOTE, build_system_prompt, clean_secret, detect_provider, is_bare_refusal,
     stream_with_failover, strip_stock_opener,
 )
-from . import chess_daily  # noqa: E402
+from . import chess_daily, onthisday  # noqa: E402
 from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noqa: E402
 from .nlp import RoboDadNLP  # noqa: E402
 from .safety import CRISIS_TOKEN, check_crisis, clean_nickname, clean_user_text, crisis_message  # noqa: E402
@@ -841,6 +841,32 @@ _chess_hits: dict[str, deque] = defaultdict(deque)
 class ChessMoveRequest(BaseModel):
     fen: str = Field(min_length=10, max_length=100)
     level: str = Field(max_length=16)                     # "professor" or "grandpa"
+
+
+# ---------------------------------------------------------------- on this day with Dad
+_otd_hits: dict[str, deque] = defaultdict(deque)
+
+
+@app.get("/api/onthisday")
+async def on_this_day(m: int, d: int, request: Request):
+    """Dad-and-kid stories from Wikipedia's "On this day" list for a month and day."""
+    try:
+        date(2024, m, d)                                   # 2024 is a leap year, so 29 Feb is allowed
+    except ValueError:
+        return JSONResponse({"error": "That date doesn't look right."}, status_code=400)
+    now = time.monotonic()
+    _prune(_otd_hits, 60, now)
+    q = _otd_hits[_client_ip(request)]
+    while q and now - q[0] > 60:
+        q.popleft()
+    if len(q) >= 20:
+        return JSONResponse({"error": "Slow down. Give it a moment."}, status_code=429)
+    q.append(now)
+    try:
+        items = await onthisday.for_date(state["client"], m, d)
+    except (httpx.HTTPError, ValueError):
+        return JSONResponse({"error": "Couldn't reach Wikipedia right now. Try again in a bit."}, status_code=503)
+    return {"month": m, "day": d, "items": items, "source": "Wikipedia, CC BY-SA"}
 
 
 @app.post("/api/chess/move")
