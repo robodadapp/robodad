@@ -442,6 +442,24 @@ async def index():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"), headers={"Cache-Control": "no-cache"})
 
 
+# For search engines: what to index, and where the public pages are.
+# (/parents is left out of the sitemap because its home address is robodad.ca.)
+SITEMAP_PATHS = ("/", "/learn", "/changelog", "/privacy", "/terms")
+
+
+@app.get("/robots.txt")
+async def robots():
+    body = f"User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /go/\n\nSitemap: {APP_ORIGIN}/sitemap.xml\n"
+    return Response(body, media_type="text/plain", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    urls = "".join(f"<url><loc>{APP_ORIGIN}{path}</loc></url>" for path in SITEMAP_PATHS)
+    body = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
+    return Response(body, media_type="application/xml", headers={"Cache-Control": "public, max-age=3600"})
+
+
 # The phone-app files must be served from the site root to control the whole site.
 @app.get("/manifest.webmanifest")
 async def manifest():
