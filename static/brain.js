@@ -131,6 +131,8 @@
     renderPuzzle(); focusFirst(".bz-opt, .bz-input");
   }
   const backFor = () => ctx && ctx.mode === "escape" ? { label:"Room", fn: () => roomView(ctx.room) } : { fn: () => hub() };
+  // Sends the question (never the answer) to a friend as a picture. Not offered in the escape room, where puzzles guard clues.
+  const challengeBtn = (p) => bridge?.share && ctx.mode !== "escape" ? btn("Challenge a friend", "ghost", () => bridge.share(p.q)) : null;
   function renderPuzzle(){
     const c = ctx, p = c.p;
     const nodes = [topBar(c.mode === "daily" ? "Today's puzzle" : c.mode === "escape" ? D.escape.rooms[c.room].name : "Puzzle Run", backFor()), bubble(c.say)];
@@ -150,6 +152,7 @@
       nodes.push(h("div", { class:"bz-row" },
         left > 0 ? btn(`💡 Hint (${left} left)`, "ghost", () => { c.hints++; c.say = pick(SAY.hint); c.msg = ""; renderPuzzle(); }) : null,
         btn("Ask Dad", "ghost", () => bridge?.coach(p.id)),
+        challengeBtn(p),
         btn("Show the answer", "ghost", () => {
           c.done = true; const s = S(); s.streak = 0; if (c.mode === "daily") s.daily = today(); save();
           c.say = pick(SAY.reveal); c.msg = `The answer is ${p.kind === "type" ? p.answer : p.ok}. ${p.why}`;
@@ -161,6 +164,7 @@
         : c.mode === "daily" ? btn("Back to the menu", "primary bz-focus", () => hub())
         : btn("Next puzzle →", "primary bz-focus", startRun)));
       if (c.mode === "run") nodes[nodes.length - 1].append(btn("Menu", "ghost", () => hub()));
+      const ch = challengeBtn(p); if (ch) nodes[nodes.length - 1].append(ch);
     }
     paint(...nodes);
   }

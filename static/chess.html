@@ -186,6 +186,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <button class="btn" id="undoBtn" type="button">Take back a move (1 left)</button>
   <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
   <button class="btn" id="dailyBtn" type="button">Daily Board</button>
+  <button class="btn" id="shareBtn" type="button" hidden>Share your win</button>
 </div>
 
 <section class="daily" id="dailyBox" hidden aria-live="polite">
@@ -595,6 +596,50 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     setTimeout(() => sfx(end), 300);
     talk(line);
     renderBoard();
+    $("shareBtn").hidden = !(line === "playerWins" && !daily);
+  }
+
+  // A picture of the win to post or send (phone share sheet, or a download on a computer).
+  async function shareWin() {
+    const t = C.TIERS[tierKey], moves = Math.ceil(sanLog.length / 2);
+    try {
+      const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H;
+      const x = c.getContext("2d");
+      const bg = x.createRadialGradient(W / 2, 560, 40, W / 2, 560, 950); bg.addColorStop(0, "#2A2650"); bg.addColorStop(1, "#0B0B14");
+      x.fillStyle = bg; x.fillRect(0, 0, W, H);
+      x.save(); x.translate(W / 2, 560); x.fillStyle = "rgba(245,197,24,.06)";
+      for (let i = 0; i < 18; i++) { x.rotate(Math.PI * 2 / 18); x.beginPath(); x.moveTo(0, 0); x.lineTo(-70, -1100); x.lineTo(70, -1100); x.closePath(); x.fill(); }
+      x.restore();
+      const F = (w, px) => `${w} ${px}px Nunito, ui-rounded, system-ui, sans-serif`;
+      x.textAlign = "center";
+      x.fillStyle = "#F5C518"; x.font = F(900, 44); x.fillText("♚  CHECKMATE  ♚", W / 2, 170);
+      const a = AV && AV.AVATARS[tierKey];
+      if (a) {                                   // the avatar's colours come from the page; the picture uses fixed daytime ones
+        const PAL = { ink: "#1B2A3A", metal: "#B9C7D4", jacket: "#3D7CB8", jacket2: "#1B2A3A", hair: "#3A2A1E", lens: "#1B2A3A" };
+        const svg = a.svg.replace(/var\(--([a-z0-9-]+)\)/g, (m, k) => PAL[k] || "#8896A5");
+        const img = new Image();
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="480" height="480">${svg}</svg>`);
+        await img.decode();
+        x.fillStyle = "#FFF6D6"; x.beginPath(); x.arc(W / 2, 520, 280, 0, Math.PI * 2); x.fill();
+        x.strokeStyle = "#F5C518"; x.lineWidth = 12; x.stroke();
+        x.drawImage(img, W / 2 - 240, 280, 480, 480);
+      }
+      x.fillStyle = "#FFF6D6"; x.font = F(800, 56); x.fillText("I beat", W / 2, 905);
+      x.fillStyle = "#F5C518"; x.font = F(900, 110); x.fillText(t.name, W / 2, 1020);
+      x.fillStyle = "#FFF6D6"; x.globalAlpha = .85; x.font = F(700, 44);
+      x.fillText(`at chess in ${moves} move${moves === 1 ? "" : "s"} · Tier ${t.tier} of 6`, W / 2, 1100);
+      x.globalAlpha = 1; x.font = F(900, 50); x.fillText("Think you can?", W / 2, 1215);
+      x.globalAlpha = .7; x.font = F(800, 34); x.fillText("RoboDad · robodad.app", W / 2, 1285);
+      const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+      const file = new File([blob], "robodad-chess-win.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: `I beat ${t.name} at chess`, text: `I beat ${t.name} at chess on RoboDad. Think you can? https://robodad.app/go/share` });
+      } else {
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = file.name;
+        document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        setStatus("<strong>Picture saved.</strong> Post it anywhere!");
+      }
+    } catch (e) { if (!e || e.name !== "AbortError") setStatus("Couldn't make the picture. Try again."); }
   }
 
   function afterPosition() {
@@ -609,7 +654,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const start = C.fromFEN(C.START);
     states = [start];
     sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null;
-    over = null; busy = false; undoLeft = 1; hintsLeft = 3;
+    over = null; busy = false; undoLeft = 1; hintsLeft = 3; $("shareBtn").hidden = true;
     setOpponent();
     renderBoard();
     refreshStatus();
@@ -696,7 +741,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (!p) { setStatus("No board today. Check back soon."); return; }
     const st = C.fromFEN(p.fen);
     states = [st]; sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null;
-    over = null; busy = false; pendingPromo = null;
+    over = null; busy = false; pendingPromo = null; $("shareBtn").hidden = true;
     human = st.turn;
     const already = !!getLetters()[info.index];
     daily = { index: info.index, solved: already };
@@ -841,6 +886,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   showSound();
   $("newBtn").addEventListener("click", () => { if (daily) startDaily(); else startGame(); });
   $("dailyBtn").addEventListener("click", startDaily);
+  $("shareBtn").addEventListener("click", shareWin);
   $("undoBtn").addEventListener("click", undo);
   $("hintBtn").addEventListener("click", hint);
   $("talkBtn").addEventListener("click", () => {
