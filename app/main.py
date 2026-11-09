@@ -288,7 +288,7 @@ class FeedbackRequest(BaseModel):
 
 
 class PracticeSpec(BaseModel):
-    lang: str = Field(max_length=4)
+    lang: str = Field(max_length=8)   # 2-letter language codes, "math", "brain"
     scenario: str = Field(default="free", max_length=24)
 
 
