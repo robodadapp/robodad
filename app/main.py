@@ -52,6 +52,7 @@ from .llm import (  # noqa: E402
     FALLBACK_LINE, REWRITE_NOTE, build_system_prompt, clean_secret, detect_provider, is_bare_refusal,
     stream_with_failover, strip_stock_opener,
 )
+from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noqa: E402
 from .nlp import RoboDadNLP  # noqa: E402
 from .safety import CRISIS_TOKEN, check_crisis, clean_nickname, clean_user_text, crisis_message  # noqa: E402
 
@@ -468,6 +469,11 @@ async def quest_page():
     return FileResponse(os.path.join(STATIC_DIR, "quest.html"), headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/chess")
+async def chess_page():
+    return FileResponse(os.path.join(STATIC_DIR, "chess.html"), headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/attic")
 async def attic_page():
     return FileResponse(os.path.join(STATIC_DIR, "attic.html"), headers={"Cache-Control": "no-cache"})
@@ -821,6 +827,35 @@ async def tts(req: TTSRequest, request: Request):
         _tts["off_until"] = now + min(wait, 6 * 3600)
         return JSONResponse({"error": "Voice unavailable."}, status_code=503)
     return Response(r.content, media_type="audio/wav", headers={"Cache-Control": "no-store"})
+
+
+# ---------------------------------------------------------------- chess (top two tiers)
+# Professor Dad and Robo-Grandpa play on the server with Stockfish. Lower tiers run in the browser.
+_chess_hits: dict[str, deque] = defaultdict(deque)
+
+
+class ChessMoveRequest(BaseModel):
+    fen: str = Field(min_length=10, max_length=100)
+    level: str = Field(max_length=16)                     # "professor" or "grandpa"
+
+
+@app.post("/api/chess/move")
+async def chess_move(req: ChessMoveRequest, request: Request):
+    now = time.monotonic()
+    _prune(_chess_hits, 60, now)
+    q = _chess_hits[_client_ip(request)]
+    while q and now - q[0] > 60:
+        q.popleft()
+    if len(q) >= 40:                                      # 40 engine moves a minute per visitor
+        return JSONResponse({"error": "Slow down. Give it a moment."}, status_code=429)
+    q.append(now)
+    try:
+        move = await asyncio.to_thread(chess_best_move, req.fen.strip(), req.level)
+    except ValueError:
+        return JSONResponse({"error": "That position doesn't look right."}, status_code=400)
+    except EngineUnavailable:
+        return JSONResponse({"error": "Robo-Grandpa is napping. Try a lower tier for now."}, status_code=503)
+    return {"move": move}
 
 
 @app.get("/health")

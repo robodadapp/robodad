@@ -6,6 +6,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 RUN useradd -m -u 1000 robodad
 WORKDIR /home/robodad/app
 
+# Stockfish runs on the server for the two top chess tiers (never sent to phones)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends stockfish \
+    && rm -rf /var/lib/apt/lists/*
+ENV STOCKFISH_PATH=/usr/games/stockfish
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
