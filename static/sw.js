@@ -4,9 +4,9 @@
 // version shows up on the next open. If the network is slow (the free server
 // waking up) or missing, the saved copy is used instead. Chat requests always
 // go to the network.
-const CACHE = "robodad-v71";
-const SHELL = ["/", "/privacy", "/changelog", "/manifest.webmanifest", "/static/favicon.svg", "/static/radio.js", "/static/words.js", "/static/vocab.js", "/static/grammar.js", "/static/lessons.js", "/static/maths.js", "/static/avatars.js", "/static/hunt.js", "/static/brainteasers.js", "/static/brain.js", "/static/chess-engine.js", "/static/chess-puzzles.js", "/static/sleep.js", "/static/quest.js", "/static/icon-192.png", "/static/icon-512.png"];
-const PAGES = ["/", "/privacy", "/terms", "/testers", "/changelog", "/parents", "/learn", "/quest", "/attic", "/chess"];
+const CACHE = "robodad-v72";
+const SHELL = ["/", "/privacy", "/changelog", "/manifest.webmanifest", "/static/favicon.svg", "/static/radio.js", "/static/words.js", "/static/vocab.js", "/static/grammar.js", "/static/tiles-badges.js", "/static/glowup.js", "/static/tenses.js", "/static/lessons.js", "/static/maths.js", "/static/avatars.js", "/static/hunt.js", "/static/brainteasers.js", "/static/brain.js", "/static/chess-engine.js", "/static/chess-puzzles.js", "/static/sleep.js", "/static/quest.js", "/static/icon-192.png", "/static/icon-512.png"];
+const PAGES = ["/", "/privacy", "/terms", "/testers", "/changelog", "/parents", "/learn", "/quest", "/attic", "/chess", "/tiles"];
 const WAIT_MS = 3500;   // how long to wait for the network before using the saved copy
 
 self.addEventListener("install", (e) => {

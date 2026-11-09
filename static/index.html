@@ -1885,6 +1885,7 @@ textarea::placeholder{color:var(--muted)}
     <div class="sheet-head"><h2 id="playTitle">Play</h2><button class="ghost" type="button" data-sheet-close>Close</button></div>
     <div class="tiles">
       <a class="tile" href="/chess"><span class="t-ico" aria-hidden="true">♟️</span><b>Beat Dad at chess</b><small>Nine dads to beat</small></a>
+      <a class="tile" href="/tiles"><span class="t-ico" aria-hidden="true">🔤</span><b>Tile Talk</b><small>Beat Dad at words</small></a>
       <button class="tile" type="button" data-go="brain"><span class="t-ico" aria-hidden="true">🧩</span><b>Brain teasers</b><small>Puzzles and an escape room</small></button>
       <button class="tile" type="button" data-go="vault"><span class="t-ico" aria-hidden="true">🗝️</span><b>Secret vault</b><small id="playVault">Find the hidden surprises</small></button>
       <button class="tile" type="button" data-go="joke"><span class="t-ico" aria-hidden="true">😂</span><b>Dad joke</b><small>You'll pretend not to like it</small></button>
@@ -1911,6 +1912,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="tile" type="button" data-open-study=""><span class="t-ico" aria-hidden="true">⏱️</span><b>Study Hall</b><small>25 minutes on, 5 off</small></button>
       <button class="tile" type="button" data-go="brain"><span class="t-ico" aria-hidden="true">🧩</span><b>Brain teasers</b><small>Train your thinking</small></button>
       <button class="tile" type="button" data-go="vocab"><span class="t-ico" aria-hidden="true">✨</span><b>Vocabulary with Dad</b><small>Glow-Up, Comebacks, Word Origins, Vocab Duel</small></button>
+      <a class="tile" href="/tiles"><span class="t-ico" aria-hidden="true">🔤</span><b>Tile Talk</b><small>Words, bonus squares and nine dads</small></a>
       <button class="tile" type="button" data-go="grammar"><span class="t-ico" aria-hidden="true">✍️</span><b>Grammar with Dad</b><small>Similes, analogies and Tense Trouble</small></button>
     </div>
     <p id="learnSoon" role="status" hidden></p>
@@ -2124,6 +2126,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=1"></script>
+<script src="/static/tiles-badges.js?v=2"></script>
 <script src="/static/radio.js?v=40"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=40"></script>
@@ -3247,6 +3250,7 @@ const PLAYERS = {
   const prog = (lang) => (lp[lang] ||= { done:[], rp:0 });
   const saveLp = () => setPref(LP_KEY, JSON.stringify(lp));
   ICONS.globe = '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3.2 3.6 3.2 14.4 0 18M12 3c-3.2 3.6-3.2 14.4 0 18"/>';
+  const TILE_SOFAR = {};
   const LANG_BADGES = [
     ["fr1", "Bonjour Beginner", "fr", "Finish your first French lesson", "Finished a first French lesson.", "common", "Fr", (p) => p.done.length >= 1],
     ["fr4", "Petit Pro", "fr", "Finish 4 French lessons", "Four French lessons done. Très bien!", "rare", "Fr", (p) => p.done.length >= 4],
@@ -3295,8 +3299,14 @@ const PLAYERS = {
     ["gguru", "Grammar Guru", "gram", "Score 8 out of 8 in all four grammar games", "Perfect rounds in all four grammar games. Your English teacher wants a poster of you.", "epic", "¶", (p) => ["spot", "finish", "pairs", "tm"].every(k => ((p.best || {})[k] || 0) >= 8)],
     ["globe", "Globe Trotter", "", "Finish every lesson in two languages", "Two whole courses finished. Très bien, ¡muy bien! and bahut badhiya!", "legendary", "", () => ["fr", "es", "hi", "mr", "bn"].filter(l => prog(l).done.length >= 8).length >= 2],
   ];
+  // Tile Talk badges: defined in tiles-badges.js, progress kept by the game page.
+  const tileStats = () => (window.robodadTileStats ? window.robodadTileStats() : {});
+  for (const [id, name, todo, did, rar, test, sofar] of (window.ROBO_TILE_BADGES || [])) {
+    LANG_BADGES.push([id, name, "tiles", todo, did, rar, "Aa", () => test(tileStats())]);
+    TILE_SOFAR[id] = sofar;
+  }
   LANG_BADGES.forEach(([id, name, lang, todo, did, rar, glyph, test]) =>
-    BADGES[id] = { id, name, lang, todo, did, rar, glyph, check: () => test(prog(lang || "fr")) });
+    BADGES[id] = { id, name, lang, todo, did, rar, glyph, check: () => lang === "tiles" ? test() : test(prog(lang || "fr")) });
   const LANG_IDS = LANG_BADGES.map(([id]) => id);
   // "🏅 2 of 6 badges" line for the Vocabulary and Grammar dialogs, with the next one to aim for
   function badgeLine(lang){
@@ -3415,15 +3425,16 @@ const PLAYERS = {
       <h2 id="badgeTitle">${esc(secret ? "???" : b.name)}</h2>`;
     let btns = "";
     if (b.check) {
-      const p = prog(b.lang || "fr"), name = b.lang ? (window.LESSONS?.[b.lang]?.name || "") : "";
+      const p = b.lang === "tiles" ? {} : prog(b.lang || "fr"), name = b.lang ? (window.LESSONS?.[b.lang]?.name || "") : "";
       if (on) h += `<p>${esc(b.did)}</p><p>Unlocked ${dates[id] ? esc(fmtDate(dates[id])) : "earlier"}</p>`;
       else h += `<p><strong style="color:var(--ink)">Mission:</strong> ${esc(b.todo)}.</p><p>${b.lang
-        ? (b.lang === "study" ? `So far: ${p.sessions || 0} focus session${p.sessions === 1 ? "" : "s"} and ${p.minutes || 0} minutes of focus.`
+        ? (b.lang === "tiles" ? `So far: ${TILE_SOFAR[id] ? TILE_SOFAR[id](tileStats()) : ""} in Tile Talk.`
+          : b.lang === "study" ? `So far: ${p.sessions || 0} focus session${p.sessions === 1 ? "" : "s"} and ${p.minutes || 0} minutes of focus.`
           : b.lang === "brain" ? `So far: ${p.done.length} brain teasers solved, a best streak of ${p.best || 0}, and ${(p.handsDone || []).length} of 4 hands-on puzzles done.`
           : b.lang === "math" ? `So far: ${p.done.length} of ${window.MATHS?.topics.length || 12} maths topics, and your longest coach chat was ${p.rp} message${p.rp === 1 ? "" : "s"}.`
           : `So far: ${p.done.length} of 8 ${name} lessons, and your longest ${name} role-play was ${p.rp} message${p.rp === 1 ? "" : "s"}.`)
         : `So far: ${["fr", "es", "hi", "mr", "bn"].map(l => `${prog(l).done.length} of 8 ${window.LESSONS?.[l]?.name || l}`).join(", ")} lessons.`} It unlocks by itself as you practise.</p>`;
-      h += `<p style="font-size:.85rem">${b.lang === "math" || b.lang === "study" || b.lang === "brain" ? "Learning badges show you've been practising. They aren't a school grade." : "Practice badges show you've been practising. They aren't a fluency certificate."}</p>`;
+      h += `<p style="font-size:.85rem">${b.lang === "math" || b.lang === "study" || b.lang === "brain" || b.lang === "tiles" ? "Learning badges show you've been practising. They aren't a school grade." : "Practice badges show you've been practising. They aren't a fluency certificate."}</p>`;
       btns = on ? `<button class="primary" data-act="share">Share</button><button class="ghost" data-act="close">Close</button>`
                 : `<button class="primary" data-act="practice">Practise now</button><button class="ghost" data-act="close">Not yet</button>`;
     } else if (b.special) {
@@ -3455,7 +3466,7 @@ const PLAYERS = {
     if (act === "close") closeBadge();
     else if (act === "share") shareBadge(id);
     else if (act === "unlock") { $("badgeDlg").hidden = true; earn(id); }
-    else if (act === "practice") { $("badgeDlg").hidden = true; $("beltDlg").hidden = true; BADGES[id].lang === "math" ? openMath() : BADGES[id].lang === "study" ? openStudy() : openLang(BADGES[id].lang || ""); }
+    else if (act === "practice") { $("badgeDlg").hidden = true; $("beltDlg").hidden = true; BADGES[id].lang === "tiles" ? (location.href = "/tiles") : BADGES[id].lang === "vocab" ? openVocab() : BADGES[id].lang === "gram" ? openGrammar() : BADGES[id].lang === "math" ? openMath() : BADGES[id].lang === "study" ? openStudy() : openLang(BADGES[id].lang || ""); }
     else if (act === "remove") { belt.delete(id); delete dates[id]; saveBelt(); renderBelt(); updateBeltMini(); closeBadge(); }
   });
   $("badgeDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); closeBadge(); } });
@@ -3614,6 +3625,8 @@ const PLAYERS = {
     if ($("reveal").hidden) revealReturn = document.activeElement;
     revealQ.push(...fresh); if ($("reveal").hidden) showReveal();
   }
+  // Tile Talk badges are earned on their own page: show any new ones when you come back.
+  setTimeout(() => { try { checkLangBadges(); } catch {} }, 1500);
   // RoboDad is a dad, so male voices come first (names differ by phone and browser;
   // Android's Google voices are codes like hi-in-x-hid-local)
   const toldNoVoice = {};
