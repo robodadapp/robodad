@@ -280,6 +280,20 @@
     grandpa:   { name: "Robo-Grandpa",  tier: 4, pool: "all",    maxLen: 15, topN: 4,      leave: 0.8, style: {}, secret: true },
     bookworm:  { name: "Bookworm Dad",  tier: 5, pool: "all",    maxLen: 15, topN: 1,      leave: 1.0, style: {}, smartSwap: true, boss: true, unlockTier: 3 },
   };
+  // Two-letter words a kid would recognise. The dictionary also allows ones like
+  // OD, NE, ER and QI; the dads don't play those, even as a side word, because
+  // they look like nonsense. (You still can, if you know them.)
+  const TWO_OK = new Set(("ah am an as at be by do go ha he hi ho if in is it me my no of oh on or ox so to up us we yo " +
+    "aw ax ex hm ma pa pi uh um ow ya ye").split(" "));
+  // Every word a move makes, not just the main one, has to pass.
+  function dadCanPlay(m, cfg, common, favs) {
+    if (m.words.some((w) => w.word.length === 2 && !TWO_OK.has(w.word))) return false;
+    if (cfg.pool === "common" && common) {
+      if (m.main.length > cfg.maxLen) return false;
+      return m.words.every((w) => common.has(w.word) || (favs && favs.has(w.word)));
+    }
+    return true;
+  }
   function styleBonus(m, style) {
     let b = 0;
     if (style.long) b += style.long * Math.max(0, m.main.length - 4);
@@ -305,7 +319,7 @@
     if (opts.phase2) cfg = Object.assign({}, cfg, { topN: 1, topFrac: 0, leave: Math.max(cfg.leave, 1.4), smartSwap: true });
     const rack = state.racks[state.turn];
     let moves = generateMoves(state.board, rack, dict);
-    if (cfg.pool === "common" && common) moves = moves.filter((m) => (common.has(m.main) || (opts.favs && opts.favs.has(m.main))) && m.main.length <= cfg.maxLen);
+    moves = moves.filter((m) => dadCanPlay(m, cfg, common, opts.favs));
     const late = state.bag.length === 0;
     for (const m of moves) {
       m.fav = !!(opts.favs && m.words.some((w) => opts.favs.has(w.word)));
@@ -352,7 +366,7 @@
   function bestMove(board, rack, dict, common) {
     const moves = generateMoves(board, rack, dict);
     moves.sort((a, b) => b.score - a.score || a.tiles.length - b.tiles.length);
-    if (common) { const known = moves.find((m) => m.words.every((w) => common.has(w.word))); if (known) return known; }
+    if (common) { const known = moves.find((m) => m.words.every((w) => common.has(w.word) && (w.word.length > 2 || TWO_OK.has(w.word)))); if (known) return known; }
     return moves[0] || null;
   }
 
