@@ -31,7 +31,7 @@
 
   let ctx, master, comp, wet, dry, delay, delayFb, delayOut;
   let timer = null, current = null, bar = 0, nextBarTime = 0;
-  let volume = 0.35, ducked = false;
+  let volume = 0.35, ducked = false, tempoMul = 1, playToken = 0;
 
   function impulse(seconds, decay) {
     const len = ctx.sampleRate * seconds, buf = ctx.createBuffer(2, len, ctx.sampleRate);
@@ -555,9 +555,228 @@
     },
   };
 
+  // ---------- chess stations ----------
+  // One original loop per dad for the chess page ("Beat Dad"). They are hidden from the radio
+  // picker (hidden: true) and are played by key: RoboRadio.play("chess-skater"). Each is written
+  // to sound like the dad: his board, his sound effects and his trash talk.
+  function brass(notes, t, dur, level = 0.055) {            // short, bright section stab
+    notes.forEach((n) => {
+      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = "sawtooth"; o.frequency.value = mtof(n); o.detune.value = ((n % 3) - 1) * 5;
+      f.type = "lowpass"; f.frequency.setValueAtTime(700, t); f.frequency.linearRampToValueAtTime(2600, t + 0.06); f.frequency.exponentialRampToValueAtTime(1200, t + dur);
+      env(g, t, 0.02, level, 0.1, level * 0.6, 0.12, t + dur);
+      o.connect(f).connect(g); out(g); o.start(t); o.stop(t + dur + 0.2);
+    });
+  }
+  function clav(n, t, level = 0.06) {                       // plucky, funky electric clavinet
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = "sawtooth"; o.frequency.value = mtof(n);
+    f.type = "bandpass"; f.Q.value = 2.2; f.frequency.setValueAtTime(2800, t); f.frequency.exponentialRampToValueAtTime(900, t + 0.14);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(f).connect(g); out(g); o.start(t); o.stop(t + 0.22);
+  }
+  function blip(n, t, { type = "square", level = 0.03, dur = 0.07, to = 0, echo = true } = {}) {   // arcade-style beep
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(mtof(n), t); if (to) o.frequency.exponentialRampToValueAtTime(mtof(to), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); out(g, echo); o.start(t); o.stop(t + dur + 0.03);
+  }
+  const chess = (key, def) => { STATIONS["chess-" + key] = Object.assign({ hidden: true }, def); };
+
+  // Modern Dad: easy-going Saturday-afternoon dad rock/lo-fi in G (Gmaj7-Em7-Cmaj7-D6), warm keys and brushes
+  chess("modern", {
+    name: "Modern Dad", bpm: 88,
+    bars: [
+      { root: 43, chord: [59, 62, 66, 71] },   // Gmaj7
+      { root: 40, chord: [59, 62, 64, 67] },   // Em7
+      { root: 36, chord: [60, 64, 67, 71] },   // Cmaj7
+      { root: 38, chord: [62, 66, 69, 71] },   // D6
+    ],
+    scale: [79, 81, 83, 86, 88],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 4];
+      chord.forEach((n, k) => epiano(n, t + k * 0.02, 1.6 * b, 0.75));
+      chord.slice(1).forEach((n, k) => epiano(n, t + 2.5 * b + k * 0.02, 1.2 * b, 0.4));
+      bass(root, t, b * 1.8, { level: 0.11, cutoff: 320 }); bass(root + 7, t + 2.5 * b, b * 1.2, { level: 0.08, cutoff: 320 });
+      [0.5, 1.5, 3, 3.5].forEach((beat) => { if (rand() < (i % 8 >= 4 ? 0.7 : 0.4)) epiano(pickOne(this.scale), t + b * beat, b * 0.8, 0.45); });
+      softKick(t, 0.13); softKick(t + 2 * b, 0.1); brush(t + b, 0.045); brush(t + 3 * b, 0.05);
+    },
+  });
+
+  // Skater Dad: fast pop-punk in E (I-V-vi-IV), chugging power chords and a bratty lead
+  chess("skater", {
+    name: "Skater Dad", bpm: 150,
+    roots: [40, 47, 49, 45],                   // E B C# A
+    lead: [[80, 83, 85, 83], [83, 85, 88, 85], [85, 88, 90, 88], [80, 83, 85, 80]],
+    play(i, t, b) {
+      const r = this.roots[i % 4], chorus = i % 8 >= 4;
+      for (let e = 0; e < 8; e++) {
+        power(r, t + e * b / 2, b / 2 * 0.9, { muted: !chorus || e % 4 === 3, level: chorus ? 0.08 : 0.085 });
+        bass(r, t + e * b / 2, b * 0.42, { type: "sawtooth", level: 0.07, cutoff: 450 });
+        hat(t + e * b / 2, e % 2 ? 0.017 : 0.025, chorus && e === 0);
+      }
+      kick(t, 0.16); kick(t + 2 * b, 0.16); kick(t + 2.5 * b, 0.12);
+      snare(t + b, 0.055); snare(t + 3 * b, 0.055);
+      if (chorus) this.lead[i % 4].forEach((n, k) => pluck(n, t + k * b, { type: "square", level: 0.022, decay: 0.5, cutoff: 2200 }));
+    },
+  });
+
+  // Arcade Dad: 80s synthwave in A minor (Am-F-C-G), gated drums, pulsing bass and an echoing arpeggio
+  chess("eighties", {
+    name: "Arcade Dad", bpm: 116,
+    bars: [
+      { root: 45, arp: [69, 72, 76, 81] },   // Am
+      { root: 41, arp: [65, 69, 72, 77] },   // F
+      { root: 48, arp: [67, 72, 76, 79] },   // C
+      { root: 43, arp: [67, 71, 74, 79] },   // G
+    ],
+    play(i, t, b) {
+      const { root, arp } = this.bars[i % 4];
+      pad(arp.slice(0, 3).map((n) => n - 12), t, 4 * b, { type: "sawtooth", cutoff: 900, level: 0.03 });
+      for (let s = 0; s < 8; s++) bass(root + (s % 4 === 3 ? 12 : 0), t + s * b / 2, b * 0.42, { type: "sawtooth", level: 0.08, cutoff: 520 });
+      const order = [0, 1, 2, 3, 2, 1, 2, 3, 0, 2, 1, 3, 2, 3, 1, 2];
+      if (i % 8 >= 1) for (let s = 0; s < 16; s++) pluck(arp[order[s]], t + s * b / 4, { type: "sawtooth", level: 0.03, decay: 0.3, cutoff: 1900, echo: true });
+      for (let k = 0; k < 4; k++) { kick(t + k * b, 0.17); hat(t + (k + 0.5) * b, 0.022, k === 3); }
+      snare(t + b, 0.06, 210); snare(t + 3 * b, 0.06, 210);
+    },
+  });
+
+  // Gamer Dad: boss-fight electro in D minor (Dm-Bb-Gm-A), rolling 16th bass, square-wave arps, claps on 2 and 4
+  chess("gamer", {
+    name: "Gamer Dad", bpm: 140,
+    bars: [
+      { root: 38, arp: [62, 65, 69, 74] },   // Dm
+      { root: 46, arp: [58, 62, 65, 70] },   // Bb
+      { root: 43, arp: [55, 58, 62, 67] },   // Gm
+      { root: 45, arp: [57, 61, 64, 69] },   // A
+    ],
+    play(i, t, b) {
+      const { root, arp } = this.bars[i % 4], heavy = i % 8 >= 4;
+      for (let s = 0; s < 16; s++) bass(root + (s % 8 === 6 ? 12 : s % 4 === 3 ? 7 : 0), t + s * b / 4, b * 0.2, { type: "square", level: 0.075, cutoff: 360 });
+      for (let s = 0; s < 16; s++) if (heavy || s % 2 === 0) pluck(arp[(s * 5) % 4] + (s % 8 >= 4 ? 12 : 24), t + s * b / 4, { type: "square", level: 0.02, decay: 0.16, cutoff: 3000, echo: s % 4 === 0 });
+      for (let k = 0; k < 4; k++) { kick(t + k * b, 0.2); hat(t + (k + 0.5) * b, 0.026); }
+      snare(t + b, 0.07, 240); snare(t + 3 * b, 0.07, 240);
+      if (heavy) for (let s = 0; s < 8; s++) hat(t + s * b / 2 + b / 4, 0.014);
+      if (i % 4 === 3) pad(arp.map((n) => n - 12), t, 4 * b, { type: "square", cutoff: 700, level: 0.018 });
+    },
+  });
+
+  // Coach Dad: stadium march in C (C-F-G-C, then Am-F-G), brass stabs, snare cadence and a rally fanfare
+  chess("coach", {
+    name: "Coach Dad", bpm: 112,
+    bars: [
+      { root: 36, chord: [60, 64, 67, 72] },   // C
+      { root: 41, chord: [60, 65, 69, 72] },   // F
+      { root: 43, chord: [59, 62, 67, 71] },   // G
+      { root: 36, chord: [60, 64, 67, 72] },   // C
+      { root: 45, chord: [57, 60, 64, 69] },   // Am
+      { root: 41, chord: [60, 65, 69, 72] },   // F
+      { root: 43, chord: [59, 62, 67, 71] },   // G
+      { root: 43, chord: [62, 65, 67, 71] },   // G7 (turnaround)
+    ],
+    fanfare: [72, 72, 76, 79],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 8];
+      brass(chord, t, b * 0.7); brass(chord, t + 1.5 * b, b * 0.35); brass(chord, t + 2 * b, b * 0.7, 0.045); brass(chord, t + 3.5 * b, b * 0.35, 0.045);
+      bass(root, t, b * 0.8, { type: "sawtooth", level: 0.13, cutoff: 360 }); bass(root + 7, t + 2 * b, b * 0.8, { type: "sawtooth", level: 0.11, cutoff: 360 });
+      kick(t, 0.2); kick(t + 2 * b, 0.2);
+      [1, 3].forEach((k) => snare(t + k * b, 0.07, 200));
+      [0.5, 1.5, 2.5, 3.5].forEach((p) => snare(t + p * b, 0.025, 260));
+      if (i % 8 === 7) [0, 0.25, 0.5, 0.75].forEach((p, k) => snare(t + (3 + p) * b, 0.03 + k * 0.012, 260));      // roll into the loop
+      if (i % 8 === 3) this.fanfare.forEach((n, k) => brass([n], t + k * b, b * 0.8, 0.05));
+    },
+  });
+
+  // Bookworm Dad: quiet library harpsichord in D minor, broken-chord arpeggios over a soft cello and the odd page turn
+  chess("bookworm", {
+    name: "Bookworm Dad", bpm: 76,
+    bars: [
+      { root: 38, arp: [62, 65, 69, 74] },   // Dm
+      { root: 43, arp: [62, 67, 70, 74] },   // Gm
+      { root: 45, arp: [61, 64, 69, 73] },   // A
+      { root: 38, arp: [62, 65, 69, 74] },   // Dm
+      { root: 46, arp: [62, 65, 70, 74] },   // Bb
+      { root: 41, arp: [60, 65, 69, 72] },   // F
+      { root: 45, arp: [61, 64, 69, 73] },   // A
+      { root: 38, arp: [62, 65, 69, 74] },   // Dm
+    ],
+    shapes: [[0, 1, 2, 3, 2, 1, 2, 1], [0, 2, 1, 3, 2, 3, 1, 2], [3, 2, 1, 0, 1, 2, 3, 2]],
+    play(i, t, b) {
+      const { root, arp } = this.bars[i % 8], shape = this.shapes[Math.floor(i / 8) % 3];
+      bass(root, t, b * 3.6, { type: "sine", level: 0.09, cutoff: 500 });
+      pad(arp.slice(0, 3).map((n) => n - 12), t, 4 * b, { type: "triangle", cutoff: 800, level: 0.022 });
+      shape.forEach((s, k) => pluck(arp[s], t + k * b / 2, { type: "triangle", level: 0.07, decay: 1.1, cutoff: 3200, echo: k % 4 === 0 }));
+      if (i % 8 === 0) bell(arp[3] + 12, t, 0.025);
+      if (rand() < 0.22) brush(t + 3.5 * b, 0.03);                 // a page turns
+    },
+  });
+
+  // Lab Dad: bubbling sci-fi in C major pentatonic over a bouncy two-chord vamp, with the odd theremin swoop
+  chess("labdad", {
+    name: "Lab Dad", bpm: 104,
+    bars: [
+      { root: 36, chord: [60, 64, 67, 71] },   // Cmaj7
+      { root: 38, chord: [62, 66, 69, 73] },   // Dmaj7
+    ],
+    notes: [72, 74, 76, 79, 81, 84, 86, 88],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 2];
+      pad(chord, t, 4 * b, { type: "triangle", cutoff: 1500, level: 0.026 });
+      [0, 1.5, 2, 3.5].forEach((p) => bass(root + (p === 2 ? 12 : 0), t + p * b, b * 0.4, { type: "triangle", level: 0.11, cutoff: 420 }));
+      for (let s = 0; s < 16; s++) if (rand() < 0.42) pluck(pickOne(this.notes) + (i % 2 ? 2 : 0), t + s * b / 4, { type: "sine", level: 0.045, decay: 0.45, cutoff: 4000, echo: true });
+      softKick(t, 0.1); softKick(t + 2.5 * b, 0.07);
+      [1, 3].forEach((k) => hit(t + k * b, { type: "bandpass", freq: 2600, q: 2, level: 0.03, decay: 0.05 }));      // beaker clink
+      if (i % 4 === 3) theremin([79, 84, 81, 88], t + b, b * 0.9, 0.035);
+    },
+  });
+
+  // Professor Dad: stately organ and tournament-hall harpsichord in E minor, slow and grand
+  chess("professor", {
+    name: "Professor Dad", bpm: 62,
+    bars: [
+      { root: 40, chord: [59, 64, 67, 71] },   // Em
+      { root: 45, chord: [60, 64, 69, 72] },   // Am
+      { root: 47, chord: [59, 63, 66, 71] },   // B
+      { root: 40, chord: [59, 64, 67, 71] },   // Em
+      { root: 36, chord: [60, 64, 67, 72] },   // C
+      { root: 45, chord: [60, 64, 69, 72] },   // Am
+      { root: 47, chord: [59, 63, 66, 71] },   // B
+      { root: 40, chord: [59, 64, 67, 71] },   // Em
+    ],
+    lines: [[83, 84, 83, 81], [81, 83, 84, 81], [87, 83, 81, 83], [79, 81, 83, 79], [84, 83, 81, 79], [81, 84, 83, 81], [87, 86, 83, 78], [76, 79, 83, 79]],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 8];
+      harmonium([root + 12, root + 19], t, 4 * b, 0.02);
+      pad(chord, t, 4 * b, { type: "triangle", cutoff: 1100, level: 0.03 });
+      bass(root, t, b * 3.6, { type: "sine", level: 0.1, cutoff: 400 });
+      this.lines[i % 8].forEach((n, k) => pluck(n, t + k * b, { type: "triangle", level: 0.06, decay: 1.8, cutoff: 3500, echo: true }));
+      if (i % 2 === 0) drum(t, 70, 0.16, 0.5, 0.5);                // timpani
+      if (i % 8 === 0) gong(40, t, 0.035);
+    },
+  });
+
+  // Robo-Grandpa: a 1970s funk groove played by a robot, E minor pentatonic, clavinet and glitchy bleeps
+  chess("grandpa", {
+    name: "Robo-Grandpa", bpm: 100,
+    bass: [[0, 0, 12, 0, 0, 10, 0, 7, 0, 0, 12, 0, 15, 12, 10, 7], [0, 0, 12, 0, 0, 10, 0, 7, 0, 3, 0, 5, 7, 0, 10, 12]],
+    stabs: [[0, 3, 7, 10], [5, 8, 12, 15]],
+    play(i, t, b) {
+      const pat = this.bass[i % 2], chord = this.stabs[Math.floor(i / 2) % 2];
+      for (let s = 0; s < 16; s++) {
+        if (s % 4 !== 1 || s % 8 === 1) bass(40 + pat[s], t + s * b / 4, b * 0.2, { type: "sawtooth", level: 0.115, cutoff: 420 });
+        hat(t + s * b / 4, s % 2 ? 0.014 : 0.022, s === 14);
+      }
+      [2, 3, 6, 11, 14].forEach((s) => chord.forEach((n) => clav(64 + n, t + s * b / 4, 0.04)));
+      kick(t, 0.19); kick(t + 2.5 * b, 0.14); kick(t + 3 * b, 0.12);
+      snare(t + b, 0.065, 180); snare(t + 3 * b, 0.065, 180);
+      for (let k = 0; k < 3; k++) if (rand() < 0.5) blip(pickOne([76, 79, 81, 83, 88, 91]), t + Math.floor(rand() * 16) * b / 4, { level: 0.03, dur: 0.06, to: rand() < 0.4 ? 100 : 0 });   // robot chatter
+      if (i % 8 === 7) blip(60, t + 3 * b, { type: "sawtooth", level: 0.03, dur: 0.9, to: 96 });   // a rising "system update" sweep
+    },
+  });
+
   function tick() {
     const st = STATIONS[current]; if (!st) return;
-    const beat = 60 / st.bpm;
+    const beat = 60 / (st.bpm * tempoMul);
     while (nextBarTime < ctx.currentTime + 0.6) {
       st.play(bar, nextBarTime, beat);
       nextBarTime += 4 * beat; bar++;
@@ -567,18 +786,20 @@
   function targetGain() { return volume * 1.4 * (ducked ? 0.25 : 1); }
 
   const api = {
-    stations: Object.fromEntries(Object.entries(STATIONS).map(([k, v]) => [k, v.name])),
+    stations: Object.fromEntries(Object.entries(STATIONS).filter(([, v]) => !v.hidden).map(([k, v]) => [k, v.name])),
     get station() { return current; },
     get playing() { return !!timer; },
     onchange: null,
     async play(name) {
+      const mine = ++playToken;
       unlockMediaPlayback();
       setup();
       if (ctx.state === "suspended") await ctx.resume();
+      if (mine !== playToken) return;            // stopped, or another station was asked for, while the browser was still waiting for a tap
       if (timer && name === current) return;
       if (timer) { clearInterval(timer); timer = null; }
       current = STATIONS[name] ? name : "lounge";
-      delay.delayTime.value = (60 / STATIONS[current].bpm) * 0.75;
+      delay.delayTime.value = (60 / (STATIONS[current].bpm * tempoMul)) * 0.75;
       bar = 0; seed = 7; nextBarTime = ctx.currentTime + 0.15;
       master.gain.cancelScheduledValues(ctx.currentTime);
       master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
@@ -587,6 +808,7 @@
       api.onchange && api.onchange(api);
     },
     stop() {
+      playToken++;
       if (!ctx || !timer) return;
       clearInterval(timer); timer = null;
       master.gain.cancelScheduledValues(ctx.currentTime);
@@ -598,6 +820,11 @@
     setVolume(v) {
       volume = Math.min(1, Math.max(0, v));
       if (ctx && timer) master.gain.setTargetAtTime(targetGain(), ctx.currentTime, 0.1);
+    },
+    // Speeds the current station up (1 = normal, 1.12 = a touch faster). It takes effect from the next bar.
+    setTempo(mul) {
+      tempoMul = Math.min(1.5, Math.max(0.75, +mul || 1));
+      if (ctx && timer && STATIONS[current]) delay.delayTime.setTargetAtTime((60 / (STATIONS[current].bpm * tempoMul)) * 0.75, ctx.currentTime, 0.5);
     },
     duck(on) {
       ducked = !!on;
