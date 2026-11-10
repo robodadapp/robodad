@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DAD QUEST · RoboDad</title>
-<meta name="description" content="DAD QUEST: RoboDad's 8-bit game. Jump the LEGO, duck the laundry, find what dads always lose.">
+<meta name="description" content="DAD QUEST: RoboDad's 8-bit game. Jump the LEGO, slide under the laundry, stomp the Roomba, find what dads always lose.">
 <meta name="theme-color" content="#0B0B14">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
@@ -20,23 +20,39 @@ body{display:flex; flex-direction:column; align-items:center; justify-content:ce
 canvas{display:block; width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges}
 .help{max-width:960px; width:100%; color:var(--muted); font-size:13px; text-align:center}
 .rotate{display:none; margin:0; color:var(--gold); font-size:14px}
-@media (orientation:portrait) and (max-width:700px){ .rotate{display:block} }
-@media (orientation:landscape) and (max-height:500px){ .help{display:none} body{padding:6px 12px; gap:6px} }
+/* phone held upright: the game is drawn sideways and fills the screen, so it works even with rotation lock on */
+@media (orientation:portrait) and (max-width:700px){
+  .rotate{display:block; position:fixed; top:54px; left:0; right:0; text-align:center; font-size:12px; pointer-events:none; z-index:2}
+  .help{display:none}
+  body{justify-content:flex-start}
+  .wrap{position:fixed; top:calc(50% + 34px); left:50%; width:min(calc(100dvh - 92px), calc((100vw - 12px) * 16 / 9)); max-width:none; transform:translate(-50%,-50%) rotate(90deg); border-width:3px}
+}
+/* phone on its side: the game takes the full height, with the two buttons tucked into the edges */
+@media (orientation:landscape) and (max-height:500px){
+  .help{display:none}
+  body{flex-direction:row; align-items:center; padding:6px; gap:6px}
+  .bar{display:contents}
+  .bar a,.bar button{flex:none; align-self:flex-start; width:40px; height:40px; padding:0; display:flex; align-items:center; justify-content:center; font-size:0}
+  .bar a::before{content:"←"; font-size:18px}
+  .bar button::before{content:"🔊"; font-size:16px}
+  .bar button[aria-pressed="false"]::before{content:"🔇"}
+  .bar a{order:0} .wrap{order:1; border-width:3px; width:min(calc(100vw - 110px), calc((100dvh - 12px) * 16 / 9))} .bar button{order:2}
+}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
   <h1 class="sr">DAD QUEST</h1>
   <div class="bar">
-    <a href="/">← Back to RoboDad</a>
-    <button id="muteBtn" type="button" aria-pressed="true">Sound: off</button>
+    <a href="/" aria-label="Back to RoboDad">← Back to RoboDad</a>
+    <button id="muteBtn" type="button" aria-pressed="true">Sound: on</button>
   </div>
   <div class="wrap" id="wrap">
     <canvas id="game" width="320" height="180" aria-label="DAD QUEST game screen"></canvas>
     <p class="sr" id="live" aria-live="polite"></p>
   </div>
-  <p class="rotate">↻ Turn your phone sideways for a bigger screen</p>
-  <p class="help">Tap or press Space to jump (twice with coffee) · Swipe down or press ↓ to duck · ❚❚ or P to pause</p>
-  <script src="/static/quest.js?v=2"></script>
+  <p class="rotate">↻ Turn your phone sideways to play</p>
+  <p class="help">Tap the right side or press Space to jump (hold for a higher jump) · Hold the left side or press ↓ to sock-slide · Land on robots and bats to stomp them · ❚❚ or P to pause</p>
+  <script src="/static/quest.js?v=3"></script>
 </body>
 </html>
