@@ -77,6 +77,7 @@ check("every generated move passes the rule checker", all.every((m) => T.evaluat
 const rnd = T.mulberry(42);
 const results = [];
 let slowest = 0;
+const dadWords = [];   // [dad, word] for every word a dad makes, side words included
 for (let g = 0; g < 6; g++) {
   const s = T.newGame(rnd);
   const tiers = [["gamer", "bookworm"], ["skater", "professor"], ["coach", "labdad"]][g % 3];
@@ -88,6 +89,7 @@ for (let g = 0; g < 6; g++) {
     if (mv.type === "play") {
       const ev2 = T.evaluatePlay(s.board, mv.move.tiles, dict);
       if (!ev2.ok) { overlap = true; break; }
+      for (const w of ev2.words) dadWords.push([tiers[s.turn], w.word]);
       T.applyPlay(s, mv.move.tiles, ev2);
     } else if (mv.type === "swap") T.applySwap(s, mv.letters, rnd);
     else T.applyPass(s);
@@ -159,6 +161,14 @@ check("every favourite word is playable", Object.values(DADS).every((d) => Objec
   }
   check("Bookworm Dad beats Robo-Grandpa most of the time", bossWins >= 6, `${bossWins} of 10`);
 }
+
+// Dads only make words that make sense (OD, NE and ER were showing up as side words)
+const TWO_OK = new Set("ah am an as at be by do go ha he hi ho if in is it me my no of oh on or ox so to up us we yo aw ax ex hm ma pa pi uh um ow ya ye".split(" "));
+const oddTwos = dadWords.filter(([, w]) => w.length === 2 && !TWO_OK.has(w)).map(([d, w]) => `${d}:${w}`);
+check("no dad makes a nonsense two-letter word", oddTwos.length === 0, oddTwos.slice(0, 8).join(" ") || `${dadWords.length} words checked`);
+const lowTier = new Set(["gamer", "skater", "coach"]);
+const rare = dadWords.filter(([d, w]) => lowTier.has(d) && !common.has(w)).map(([d, w]) => `${d}:${w}`);
+check("Tier 1 and 2 dads only make everyday words, side words too", rare.length === 0, rare.slice(0, 8).join(" ") || "ok");
 
 console.log(failed ? `\n${failed} failed` : "\nall passed");
 process.exit(failed ? 1 : 0);
