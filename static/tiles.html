@@ -21,7 +21,7 @@ body{min-height:100dvh; padding:12px 8px 28px; display:flex; flex-direction:colu
 h1{margin:0; font-size:1.5rem; font-weight:900; letter-spacing:-.01em}
 .top,.opp,.score,.status,.controls,.log,.tiers,.foot{width:100%; max-width:600px}
 .top{display:flex; justify-content:space-between; align-items:center; gap:8px}
-.top a{color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 12px; text-decoration:none; font-size:14px}
+.top a{color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 12px; text-decoration:none; font-size:14px; font-weight:800}
 .top a:hover{border-color:var(--gold)}
 .opp{display:flex; gap:12px; align-items:center; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:8px 12px}
 .opp svg{width:52px; height:52px; flex:none; overflow:visible}
@@ -170,7 +170,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 </head>
 <body>
 <div class="top">
-  <a href="/">← RoboDad</a>
+  <a href="/" aria-label="Exit to RoboDad. Your game is saved" title="Your game is saved. Pick it up any time.">← Exit</a>
   <h1>Tile Talk</h1>
   <div style="display:flex; gap:6px">
     <button class="btn" id="musicBtn" type="button" aria-pressed="false" aria-label="Background music">♪ Off</button>
@@ -219,6 +219,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
   <button class="btn" id="swapBtn" type="button">Swap tiles</button>
   <button class="btn" id="passBtn" type="button">Pass</button>
+  <button class="btn" id="resignBtn" type="button">Resign</button>
   <button class="btn" id="newBtn" type="button">New game</button>
 </div>
 
@@ -318,7 +319,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   let swapMode = false, swapSel = new Set();
   let hintsLeft = 3, busy = false, lastDad = [], hintKeys = new Set();
   let askBlank = null;                // pending tile waiting for its letter
-  let confirmNew = false, confirmPass = false, confirmTier = null;
+  let confirmNew = false, confirmPass = false, confirmTier = null, confirmResign = false;
   let plays = 0, lastBonus = "";      // your plays this game, and the last bonus round you got
   let cursor = null;                  // { k, dir: "across" | "down" }: tap a square, then tap letters to type them in
   let cursorTips = 0;
@@ -588,6 +589,8 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     $("passBtn").disabled = !mine || swapMode;
     $("passBtn").textContent = confirmPass ? "Tap again to pass" : "Pass";
     $("newBtn").textContent = confirmNew ? "Tap again to start over" : "New game";
+    $("resignBtn").disabled = busy || !inProgress();
+    $("resignBtn").textContent = confirmResign ? "Tap again to resign" : "Resign";
   }
 
   function renderAll() { renderBoard(); renderRack(); renderScore(); renderLog(); renderButtons(); }
@@ -1046,7 +1049,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     const o = s.over;
     const you = s.scores[0], dad = s.scores[1];
     const headline = o.winner === 0 ? "You win!" : o.winner === 1 ? `${dadName()} wins.` : "It's a tie!";
-    const how = o.timeout ? "Your clock ran out, so the game stopped there. Leftover tiles came off both scores." : o.wentOut === 0 ? "You used your last tile, so you get Dad's leftover points." :
+    const how = o.resigned ? "You resigned, so Dad takes the win. Scores stay as they were." : o.timeout ? "Your clock ran out, so the game stopped there. Leftover tiles came off both scores." : o.wentOut === 0 ? "You used your last tile, so you get Dad's leftover points." :
       o.wentOut === 1 ? `${dadName()} used his last tile and gets your leftover points.` :
       "Nobody could score for six turns in a row, so the game stopped.";
     const theEnd = T.TIERS[tierKey].boss ? "<strong>THE END.</strong> " : "";
@@ -1153,6 +1156,20 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     renderClock();
   }, 250);
   setInterval(() => { if (clockLive()) save(); }, 5000);
+  // Ending a game early: Dad takes the win, the scores stand as they are, and it goes on the record as a loss.
+  function resign() {
+    if (busy || !inProgress()) return;
+    if (!confirmResign) {
+      confirmResign = true; renderButtons();
+      setStatus("Resigning ends this game and counts as a loss. Tap <strong>Tap again to resign</strong> to confirm.");
+      setTimeout(() => { confirmResign = false; renderButtons(); }, 3500);
+      return;
+    }
+    confirmResign = false;
+    pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear(); swapMode = false; swapSel.clear();
+    s.over = { winner: 1, wentOut: -1, left: [0, 0], resigned: true };
+    endGame();
+  }
   function timeUp() {
     if (!s || s.over) return;
     pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear(); swapMode = false; swapSel.clear();
@@ -1300,6 +1317,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   $("hintBtn").addEventListener("click", hint);
   $("swapBtn").addEventListener("click", swapToggle);
   $("passBtn").addEventListener("click", pass);
+  $("resignBtn").addEventListener("click", resign);
   $("newBtn").addEventListener("click", () => {
     if (busy) return;
     if (inProgress() && !confirmNew) { confirmNew = true; renderButtons(); setTimeout(() => { confirmNew = false; renderButtons(); }, 3000); return; }

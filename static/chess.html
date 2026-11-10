@@ -19,6 +19,8 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 .top{width:100%; max-width:640px; display:flex; justify-content:space-between; align-items:center; gap:8px}
 .top a{color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 12px; text-decoration:none; font-size:14px}
 .top a:hover{border-color:var(--gold)}
+.top a.exit{font-weight:800}
+.top a.exit.confirm{background:var(--gold); color:#1B1530; border-color:var(--gold)}
 .opp{width:100%; max-width:640px; display:flex; gap:12px; align-items:center; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px}
 .opp svg{width:56px; height:56px; flex:none; overflow:visible}
 .opp .name{font-weight:900; font-size:1.05rem}
@@ -198,7 +200,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 </head>
 <body>
 <div class="top">
-  <a href="/">← RoboDad</a>
+  <a href="/" class="exit" id="exitBtn" aria-label="Exit the game and go back to RoboDad">← Exit</a>
   <h1>Beat Dad</h1>
   <button class="btn" id="talkBtn" type="button" aria-pressed="true">Trash talk: on</button>
 </div>
@@ -233,6 +235,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 <div class="controls">
   <button class="btn primary" id="newBtn" type="button">New game</button>
   <button class="btn" id="undoBtn" type="button">Take back a move (1 left)</button>
+  <button class="btn" id="resignBtn" type="button">Resign</button>
   <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
   <button class="btn" id="clockBtn" type="button" aria-pressed="true">Clock: on</button>
   <button class="btn" id="dailyBtn" type="button">Daily Board</button>
@@ -319,6 +322,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     hungPlayer: ["Oh, you just hung your piece. Bold strategy."],
     botBlunder: ["That was a test. Obviously."],
     draw: ["A draw. Not bad. Want to go again?"],
+    resign: ["Knowing when to reset is a skill too. Rematch?", "Live to fight another board. Go again?", "Fair call, that position was getting spicy. New game?"],
     thinking: {
       modern:    ["Hang on, let me look at this properly.", "Right. Where were we?"],
       skater:    ["Hunting for something flashy.", "There's a sick line in here somewhere."],
@@ -370,6 +374,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   function cur() { return states[states.length - 1]; }
   let gameId = 0;                         // bumps on every new game, so a late reply from the engine can be told apart and dropped
+  // A real game is under way: at least one move made, not finished, not the Daily Board puzzle.
+  // Chess games aren't saved, so leaving, restarting or resigning asks for a second tap first.
+  const inProgress = () => !daily && !over && states.length > 1;
+  let confirmResign = false, confirmNew = false, confirmExit = false;
+  const confirmTimers = {};
   let anim = null, curAnim = null;        // the move to animate on the next draw; the one still playing if the board is redrawn mid-slide
   let hinting = false;
 
@@ -857,6 +866,30 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     $("undoBtn").disabled = !!daily || !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
     $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
     $("hintBtn").disabled = !!daily || !!busy || !!hinting || hintsLeft <= 0 || cur().turn !== human || !!over;
+    $("resignBtn").hidden = !!daily;
+    $("resignBtn").disabled = !!over || !inProgress();
+    $("resignBtn").textContent = confirmResign ? "Tap again to resign" : "Resign";
+    $("newBtn").textContent = confirmNew ? "Tap again to start over" : "New game";
+    $("exitBtn").textContent = confirmExit ? "Tap again to leave" : "← Exit";
+    $("exitBtn").classList.toggle("confirm", confirmExit);
+  }
+
+  function arm(which) {
+    if (which === "resign") confirmResign = true; else if (which === "new") confirmNew = true; else confirmExit = true;
+    clearTimeout(confirmTimers[which]);
+    confirmTimers[which] = setTimeout(() => {
+      if (which === "resign") confirmResign = false; else if (which === "new") confirmNew = false; else confirmExit = false;
+      syncControls();
+    }, 3500);
+    syncControls();
+  }
+  function disarm() { confirmResign = confirmNew = confirmExit = false; }
+
+  function resign() {
+    if (!inProgress()) return;
+    if (!confirmResign) { arm("resign"); setStatus("Resigning ends the game and counts as a loss. Tap <strong>Tap again to resign</strong> to confirm."); return; }
+    disarm();
+    endGame({ over: true, reason: "resign", result: human === "w" ? "0-1" : "1-0" });
   }
 
   function pieceName(p) {
@@ -902,6 +935,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       humanWon = st.result === "1-0";
       headline = humanWon ? `Time's up for ${C.TIERS[tierKey].name}. You win on time!` : "Time's up. Dad wins on the clock.";
       line = humanWon ? "timeBot" : "timePlayer";
+    } else if (st.reason === "resign") {
+      headline = `You resigned. ${C.TIERS[tierKey].name} takes this one.`;
+      line = "resign";
     } else if (st.reason === "time") {
       headline = "Time's up, but neither side could have mated. Draw.";
       line = "draw";
@@ -912,6 +948,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
     setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
     const end = humanWon ? "win" : line === "draw" ? "draw" : "lose";
+    disarm();
     if (window.RoboRadio) RoboRadio.stop();           // let the jingle be heard; the loop comes back with the next game
     setTimeout(() => sfx(end), 650);
     talk(line);
@@ -1271,7 +1308,18 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   });
   window.addEventListener("pagehide", () => { if (window.RoboRadio) RoboRadio.stop(); });
   setInterval(clockTick, 100);
-  $("newBtn").addEventListener("click", () => { if (daily) startDaily(); else startGame(); });
+  $("newBtn").addEventListener("click", () => {
+    if (inProgress() && !confirmNew) { arm("new"); setStatus("This game isn't saved. Tap <strong>Tap again to start over</strong> to begin a new one."); return; }
+    disarm();
+    if (daily) startDaily(); else startGame();
+  });
+  $("resignBtn").addEventListener("click", resign);
+  $("exitBtn").addEventListener("click", (e) => {
+    if (inProgress() && !confirmExit) {
+      e.preventDefault(); arm("exit");
+      setStatus("Leaving ends this game (chess games aren't saved). Tap <strong>Tap again to leave</strong>, or keep playing.");
+    }
+  });
   $("dailyBtn").addEventListener("click", startDaily);
   $("shareBtn").addEventListener("click", shareWin);
   $("undoBtn").addEventListener("click", undo);
