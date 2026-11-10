@@ -187,6 +187,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 .win-card .row .btn{flex:1 1 auto}
 .win-card .btn.primary{display:inline-flex; gap:6px; align-items:center; justify-content:center; font-size:15px; padding:10px 14px; flex-basis:100%}
 .win-card .btn.primary svg{width:28px; height:28px}
+.win-card.lose-card h2{color:#FF8FA3}
 .win-card input{font:inherit; padding:6px 10px; border-radius:10px; border:2px solid var(--edge); background:#0F0D1E; color:var(--ink); text-transform:uppercase; width:6.5em; font-family:ui-monospace,monospace; letter-spacing:.3em; text-align:center}
 .confetti{position:absolute; inset:0; pointer-events:none}
 .confetti i{position:absolute; top:-12px; width:8px; height:14px; border-radius:2px; opacity:0; animation:fall 2.8s cubic-bezier(.3,.5,.6,1) forwards}
@@ -1109,6 +1110,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     renderAll();
     if (won) victory(you, dad, fresh, bossOpened);
     else {
+      resultCard(o.winner === 1 ? "lose" : "draw", you, dad, how);
       if (tierKey === "eighties") highScores(you);
       if (bossOpened) toast("Boss unlocked: Bookworm Dad is waiting at the top of the list.");
     }
@@ -1194,6 +1196,37 @@ img,svg{-webkit-user-drag:none; user-drag:none}
       if (w === "next" && nxt) { tierKey = nxt; startGame(); window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" }); }
       else if (w === "again") startGame();
     });
+  }
+
+  // You lost, or it's a tie: a pop-up like the victory card, so every ending gets a result the dad reacts to.
+  // A loss gets his own winning line as a taunt and his wink; a tie gets no taunt.
+  function resultCard(kind, you, dad, how) {
+    const lose = kind === "lose";
+    const taunts = DAD().lines.win || [];
+    const quote = lose ? (taunts.length ? pick(taunts) : "Good game. Rematch?") : "A tie! Rematch to settle it?";
+    const wrap = document.createElement("div");
+    wrap.className = "win-wrap";
+    wrap.innerHTML = `<div class="win-card bot lose-card" role="dialog" aria-modal="true" aria-labelledby="resT">
+      ${avatarSVG(tierKey, 96).replace("<svg ", '<svg class="av" ')}
+      <h2 id="resT">${lose ? `${esc(dadName())} wins!` : "It's a tie!"}</h2>
+      <p class="sc">You ${you}, ${esc(dadName())} ${dad}. ${esc(how)}</p>
+      <p class="q">“${esc(quote)}”</p>
+      <div class="row">
+        <button class="btn primary" type="button" data-r="again">Rematch</button>
+        <button class="btn" type="button" data-r="close">Close</button>
+      </div></div>`;
+    document.body.appendChild(wrap);
+    const card = wrap.firstElementChild;
+    if (lose && !reduced()) { card.classList.add("do-wink"); setTimeout(() => card.classList.remove("do-wink"), 3300); }
+    const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    wrap.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-r]"); if (!b) return;
+      close();
+      if (b.dataset.r === "again") { startGame(); window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" }); }
+    });
+    wrap.querySelector('[data-r="again"]').focus();
   }
 
   // A picture of the win and the badge, to post or send (phone share sheet, or a download on a computer).

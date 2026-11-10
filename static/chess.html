@@ -196,6 +196,25 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .daily p{margin:4px 0}
 .daily .letters{font-size:1.6rem; font-weight:900; letter-spacing:.35em; color:var(--gold)}
 .promo-note{color:var(--muted); font-size:12px}
+/* the result pop-up: shown whenever a game ends (checkmate, time, resign, stalemate or another draw) */
+.res-wrap{position:fixed; inset:0; background:#000b; display:flex; align-items:center; justify-content:center; padding:14px; z-index:10; overflow:auto}
+.res-card{width:100%; max-width:400px; text-align:center; border:3px solid var(--gold); border-radius:20px; background:radial-gradient(circle at 50% 18%, #3A2F6B, #16142A 70%); padding:18px 16px 16px; box-shadow:0 14px 50px #000c; animation:resin .45s cubic-bezier(.2,.9,.3,1.25)}
+.res-card.lose{border-color:#FF8FA3}
+.res-card svg{width:110px; height:110px; display:block; margin:0 auto; overflow:visible}
+.res-card.win svg{animation:resHop 1.6s ease-in-out 2}
+.res-card.lose svg{animation:resTaunt 1.8s ease-in-out 2}
+.res-card.draw svg{animation:resShrug 1.6s ease-in-out 1}
+.res-card h2{margin:6px 0 2px; font-size:1.7rem; font-weight:900; letter-spacing:.04em; color:var(--gold)}
+.res-card.lose h2{color:#FF8FA3}
+.res-card .sc{margin:2px 0 8px}
+.res-card .q{margin:0 auto 12px; max-width:30ch; color:var(--muted); font-style:italic}
+.res-card .row{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
+.res-card .row .btn{flex:1 1 auto}
+@keyframes resin{from{transform:scale(.85); opacity:0} to{transform:none; opacity:1}}
+@keyframes resHop{0%,100%{transform:translateY(0)} 30%{transform:translateY(-18px) rotate(-4deg)} 60%{transform:translateY(0) rotate(3deg)}}
+@keyframes resTaunt{0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg) translateX(-6px)} 40%{transform:rotate(8deg) translateX(6px)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(4deg)}}
+@keyframes resShrug{0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion: reduce){.res-card,.res-card svg{animation:none}}
 </style>
 </head>
 <body>
@@ -954,7 +973,51 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     talk(line);
     syncControls();
     $("shareBtn").hidden = !(humanWon && !daily);
+    showResultCard(end, headline, st);
   }
+
+  // The dad's lines for the pop-up. A win gets congratulations, a loss a taunt (worded by how it ended), a draw neither.
+  const RESULT_LINES = {
+    win: ["Okay, okay, you got me. Proud of you, kiddo!", "Fair play. You beat Dad at his own game. Rematch?", "Ugh, that one's on me. Go again and I'll be ready."],
+    lose: ["Checkmate! Did you see that coming? Didn't think so. Rematch?", "Ha! Dad's sharper than the board. Go again?", "Easy one. Don't cry, kiddo. Rematch?"],
+    time: ["The clock got you, kiddo. Dad's moves were just quicker. Rematch?", "Tick tock! Dad was still thinking when your time ran out. Rematch?"],
+    resign: ["Waving the white flag already? Dad's keeping the trophy. Rematch?"],
+    draw: ["Nobody could finish it off. A draw, and not a bad one.", "Even steven. Want to settle it in a rematch?"],
+  };
+  // Every ending shows the pop-up, however it came about: mate, the clock, a resignation or a draw (stalemate and the rest).
+  function showResultCard(end, headline, st) {
+    document.querySelector(".res-wrap")?.remove();
+    const key = end === "lose" ? (st.reason === "time" ? "time" : st.reason === "resign" ? "resign" : "lose") : end;
+    const lines = RESULT_LINES[key];
+    const name = C.TIERS[tierKey].name;
+    const wrap = document.createElement("div");
+    wrap.className = "res-wrap";
+    wrap.innerHTML = `<div class="res-card ${end}" role="dialog" aria-modal="true" aria-labelledby="resT">
+      ${avatarSVG(tierKey, 110)}
+      <h2 id="resT"></h2>
+      <p class="sc"></p>
+      <p class="q"></p>
+      <div class="row">
+        ${end === "win" && !daily ? `<button class="btn" type="button" data-r="share">📤 Share your win</button>` : ""}
+        <button class="btn primary" type="button" data-r="again">Rematch</button>
+        <button class="btn" type="button" data-r="close">Close</button>
+      </div></div>`;
+    wrap.querySelector("h2").textContent = headline;
+    wrap.querySelector(".sc").textContent = `${name}: ${moveCount()}`;
+    wrap.querySelector(".q").textContent = `“${pick(lines)}”`;
+    document.body.appendChild(wrap);
+    const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    wrap.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-r]"); if (!b) return;
+      if (b.dataset.r === "share") { shareWin(); return; }
+      close();
+      if (b.dataset.r === "again") startGame();
+    });
+    wrap.querySelector('[data-r="again"]').focus();
+  }
+  const moveCount = () => { const n = Math.ceil(sanLog.length / 2); return `${n} move${n === 1 ? "" : "s"}`; };
 
   // A picture of the win to post or send (phone share sheet, or a download on a computer).
   async function shareWin() {
