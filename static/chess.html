@@ -214,7 +214,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
 <div class="clocks" id="clocks" role="group" aria-label="Game clocks" hidden>
   <div class="clk" id="clkDadBox"><span><i class="ico" id="clkDadIco" aria-hidden="true"></i> <span id="clkDadName">Dad</span></span><b id="clkDad" role="timer" aria-live="off">0:00</b></div>
-  <div class="clk" id="clkYouBox"><span><i class="ico" aria-hidden="true">♙</i> You</span><b id="clkYou" role="timer" aria-live="off">0:00</b></div>
+  <div class="clk" id="clkYouBox"><span><i class="ico" id="clkYouIco" aria-hidden="true">♙</i> You</span><b id="clkYou" role="timer" aria-live="off">0:00</b></div>
 </div>
 <div class="sr" id="clockSR" aria-live="polite"></div>
 
@@ -284,9 +284,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     coach:    { min: 25, inc: 5 },
     bookworm: { min: 20, inc: 5 },
     labdad:   { min: 20, inc: 5 },
-    professor:{ min: 6,  inc: 15 },
+    professor:{ min: 15, inc: 15 },
     grandpa:  { min: 10, inc: 2 },
   };
+  // Your own clock icon climbs the board as the dads get tougher: pawn, knight, bishop, rook, queen, and the king for the hardest.
+  const RANK_ICONS = ["♙", "♘", "♗", "♖", "♕", "♔"];
   // Each dad's icon on the clock.
   const ICONS = { modern: "🧢", skater: "🛹", eighties: "🕹️", gamer: "🎮", coach: "📣", bookworm: "📚", labdad: "🧪", professor: "🎓", grandpa: "🤖" };
   // How long each dad takes to answer, at least and at most (ms). Keeps replies from landing the
@@ -414,6 +416,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     $("clkDad").textContent = fmt(dad);
     $("clkDadName").textContent = tierKey === "grandpa" ? "Gramps" : C.TIERS[tierKey].name.replace(/ Dad$/, "");
     $("clkDadIco").textContent = ICONS[tierKey] || "♟";
+    $("clkYouIco").textContent = RANK_ICONS[Math.min(RANK_ICONS.length, C.TIERS[tierKey].tier) - 1];
     $("clkYouBox").classList.toggle("run", clk.side === human);
     $("clkDadBox").classList.toggle("run", clk.side === dadSide());
     $("clkYouBox").classList.toggle("low", you < LOW_MS);
