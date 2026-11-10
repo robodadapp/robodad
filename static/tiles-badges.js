@@ -42,6 +42,8 @@
       (st) => BEAT.every(([dad]) => n((st.wins || {})[dad]) >= 1),
       (st) => `${BEAT.filter(([dad]) => n((st.wins || {})[dad]) >= 1).length} of 9 dads beaten`],
   ];
+  // dad -> the badge you get for beating him (the game's victory card shows and shares it)
+  window.ROBO_TILE_BEAT = Object.fromEntries(BEAT.map(([dad, id]) => [dad, id]));
   window.robodadTileStats = () => {
     try { return JSON.parse(localStorage.getItem("robodad.tiles.stats") || "{}") || {}; } catch { return {}; }
   };

@@ -162,7 +162,38 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 @keyframes pulse{50%{opacity:.55}}
 .clock[hidden]{display:none}
 
+/* ---- mid-game: the other dads wait their turn, and Exit gets a nudge */
+.tier-grid.midgame .tier[aria-checked="false"]{opacity:.45; filter:saturate(.4)}
+.top a.nudge{animation:nudge .9s ease-in-out 2; border-color:var(--gold)}
+@keyframes nudge{0%,100%{transform:none} 20%{transform:translateX(-4px)} 40%{transform:translateX(4px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(2px)}}
+
+/* ---- the victory card */
+.win-wrap{position:fixed; inset:0; background:#000b; display:flex; align-items:center; justify-content:center; padding:14px; z-index:10; overflow:auto}
+.win-card{position:relative; width:100%; max-width:440px; text-align:center; border:3px solid var(--gold); border-radius:20px; background:radial-gradient(circle at 50% 18%, #3A2F6B, #16142A 70%); padding:18px 16px 16px; box-shadow:0 0 0 6px #F5C51822, 0 14px 50px #000c; overflow:hidden; animation:winin .5s cubic-bezier(.2,.9,.3,1.25)}
+@keyframes winin{from{transform:scale(.7) translateY(20px); opacity:0} to{transform:none; opacity:1}}
+.win-card svg.av{width:96px; height:96px; display:block; margin:0 auto}
+.win-card h2{margin:4px 0 2px; font-size:2rem; font-weight:900; letter-spacing:.06em; color:var(--gold); text-shadow:0 3px 0 #0008}
+.win-card .sc{margin:2px 0 8px; font-size:1.02rem}
+.win-card .q{margin:0 auto 10px; max-width:34ch; color:var(--muted); font-style:italic}
+.win-badges{background:#0F0D1E; border:2px solid var(--edge); border-radius:14px; padding:8px 10px; margin:8px 0; text-align:left}
+.win-badges h3{margin:0 0 6px; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+.chip{display:flex; align-items:center; gap:8px; padding:6px 0}
+.chip + .chip{border-top:1px solid var(--edge)}
+.chip .medal{flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; background:var(--rc); box-shadow:0 0 12px var(--rc)}
+.chip b{display:block} .chip small{color:var(--muted); font-weight:700}
+.chip .rar{color:var(--rc); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; font-weight:900}
+.win-card .next{margin:10px 0 6px; font-weight:800}
+.win-card .row{display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
+.win-card .row .btn{flex:1 1 auto}
+.win-card .btn.primary{display:inline-flex; gap:6px; align-items:center; justify-content:center; font-size:15px; padding:10px 14px; flex-basis:100%}
+.win-card .btn.primary svg{width:28px; height:28px}
+.win-card input{font:inherit; padding:6px 10px; border-radius:10px; border:2px solid var(--edge); background:#0F0D1E; color:var(--ink); text-transform:uppercase; width:6.5em; font-family:ui-monospace,monospace; letter-spacing:.3em; text-align:center}
+.confetti{position:absolute; inset:0; pointer-events:none}
+.confetti i{position:absolute; top:-12px; width:8px; height:14px; border-radius:2px; opacity:0; animation:fall 2.8s cubic-bezier(.3,.5,.6,1) forwards}
+@keyframes fall{0%{opacity:1; transform:translateY(0) rotate(0)} 100%{opacity:0; transform:translateY(520px) rotate(720deg)}}
+
 @media (prefers-reduced-motion: reduce){
+  .win-card,.top a.nudge{animation:none} .confetti{display:none}
   .tile.pop,.tile.dealt,.tile.commit,.rtile.deal,.score b.bump,.status,.bonus,.explain,.iconbtn.spin span,.clock.crit b{animation:none}
   .rtile{transition:none}
 }
@@ -170,7 +201,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 </head>
 <body>
 <div class="top">
-  <a href="/" aria-label="Exit to RoboDad. Your game is saved" title="Your game is saved. Pick it up any time.">← Exit</a>
+  <a href="/" id="exitBtn" aria-label="Exit to RoboDad. Your game is saved" title="Your game is saved. Pick it up any time.">← Exit</a>
   <h1>Tile Talk</h1>
   <div style="display:flex; gap:6px">
     <button class="btn" id="musicBtn" type="button" aria-pressed="false" aria-label="Background music">♪ Off</button>
@@ -239,13 +270,13 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 <p class="foot"><b>The clock:</b> your thinking time is capped for the whole game, and the tougher the dad, the less you get (15 minutes against Tier 1 down to 6 against the boss). It only runs on your turn. If it hits zero, the game ends and the higher score wins. Tap the clock to turn it off for a relaxed game.</p>
 <p class="foot"><b>Bonuses:</b> play a Glow-Up word (a classier word for an everyday one) for +10, and the day's Power Word for double points. Cover a ✦ Simile Square, play a verb, or every few turns, and Dad gives you a quick bonus round: a simile, a Tense Twist or a sentence.</p>
 
-<script src="/static/radio.js?v=2"></script>
+<script src="/static/radio.js?v=3"></script>
 <script src="/static/avatars.js?v=42"></script>
 <script src="/static/words.js"></script>
 <script src="/static/glowup.js"></script>
 <script src="/static/tenses.js"></script>
-<script src="/static/tiles-badges.js"></script>
-<script src="/static/tiles-dads.js"></script>
+<script src="/static/tiles-badges.js?v=3"></script>
+<script src="/static/tiles-dads.js?v=2"></script>
 <script src="/static/tiles-engine.js?v=3"></script>
 <script>
 (() => {
@@ -319,7 +350,8 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   let swapMode = false, swapSel = new Set();
   let hintsLeft = 3, busy = false, lastDad = [], hintKeys = new Set();
   let askBlank = null;                // pending tile waiting for its letter
-  let confirmNew = false, confirmPass = false, confirmTier = null, confirmResign = false;
+  let confirmNew = false, confirmPass = false, confirmResign = false;
+  let musicHold = false;              // after a win: the station stays quiet so the jingle is heard, until the next game
   let plays = 0, lastBonus = "";      // your plays this game, and the last bonus round you got
   let cursor = null;                  // { k, dir: "across" | "down" }: tap a square, then tap letters to type them in
   let cursorTips = 0;
@@ -406,11 +438,12 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   const BADGES = window.ROBO_TILE_BADGES || [];
   const earnedNow = () => new Set(BADGES.filter((b) => b[5](stats())).map((b) => b[0]));
   let earned = earnedNow();
-  function checkBadges() {
+  function checkBadges(quiet = false) {
     const now = earnedNow();
     const fresh = BADGES.filter((b) => now.has(b[0]) && !earned.has(b[0]));
     earned = now;
-    if (fresh.length) toast(`Badge unlocked: ${fresh.map((b) => b[1]).join(", ")}! See it in your badge collection.`);
+    if (fresh.length && !quiet) toast(`Badge unlocked: ${fresh.map((b) => b[1]).join(", ")}! See it in your badge collection.`);
+    return fresh;
   }
   let toastTimer = null;
   function toast(text) {
@@ -591,6 +624,9 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     $("newBtn").textContent = confirmNew ? "Tap again to start over" : "New game";
     $("resignBtn").disabled = busy || !inProgress();
     $("resignBtn").textContent = confirmResign ? "Tap again to resign" : "Resign";
+    const mid = !!inProgress();
+    $("tierGrid").classList.toggle("midgame", mid);
+    $("pickTitle").textContent = mid ? `Pick your dad (after you finish with ${dadName()})` : "Pick your dad";
   }
 
   function renderAll() { renderBoard(); renderRack(); renderScore(); renderLog(); renderButtons(); }
@@ -1065,16 +1101,158 @@ img,svg{-webkit-user-drag:none; user-drag:none}
       if (o.winner === 0) { r.w++; r.last = "w"; } else if (o.winner === 1) { r.l++; r.last = "l"; } else { r.t++; r.last = "t"; }
       st.record[tierKey] = r;
     });
-    if (tierKey === "eighties") highScores(you);
     store.del(GAME_KEY);
-    checkBadges();
-    if (bossWasLocked && !isLocked("bookworm")) toast("Boss unlocked: Bookworm Dad is waiting at the top of the list.");
+    const won = o.winner === 0;
+    const fresh = checkBadges(won);
+    const bossOpened = bossWasLocked && !isLocked("bookworm");
     setOpponent();
     renderAll();
+    if (won) victory(you, dad, fresh, bossOpened);
+    else {
+      if (tierKey === "eighties") highScores(you);
+      if (bossOpened) toast("Boss unlocked: Bookworm Dad is waiting at the top of the list.");
+    }
+  }
+
+  // ---------------------------------------------------------------- winning
+  // The next dad to take on: the next one up the ladder you haven't beaten yet (skipping any still locked),
+  // then any you've skipped lower down. null once you've beaten them all.
+  function nextDad() {
+    const wins = stats().wins || {};
+    const open = (k) => !isLocked(k) && !(wins[k] > 0);
+    const i = ORDER.indexOf(tierKey);
+    return ORDER.slice(i + 1).find(open) || ORDER.slice(0, i).find(open) || null;
+  }
+  const RARITY = { common: "#9BE7C4", rare: "#38B6FF", epic: "#C084FC", legendary: "#F5C518" };
+  const MEDAL = { common: "🥉", rare: "🥈", epic: "🥇", legendary: "🏆" };
+
+  // You won: the station stops, the dad plays his celebration tune, and the victory card shows what you earned
+  // and who to take on next.
+  function victory(you, dad, fresh, bossOpened) {
+    const d = DAD(), v = d.victory || { title: "YOU WIN!", jingle: "gamer", nextUp: "Next up: {next}." };
+    const beaten = tierKey, beatenName = dadName();
+    musicHold = true;
+    if (RADIO) { if (musicOn && gestured && RADIO.jingle) RADIO.jingle(v.jingle, 0.6); else if (RADIO.playing) RADIO.stop(); }
+    renderMusicBtn();
+
+    // What you earned: anything new this game; if it's a repeat win, the badge you already have for him.
+    const beatId = (window.ROBO_TILE_BEAT || {})[beaten];
+    const beatBadge = BADGES.find((b) => b[0] === beatId);
+    const fromThisWin = fresh.some((b) => b[0] === beatId);
+    const show = fresh.length ? fresh.slice() : beatBadge ? [beatBadge] : [];
+    const chips = show.map((b) => `<div class="chip" style="--rc:${RARITY[b[4]] || "#9BE7C4"}"><span class="medal" aria-hidden="true">${MEDAL[b[4]] || "🏅"}</span>
+        <span><span class="rar">${esc(b[4])}${fresh.includes(b) ? " · new!" : " · already yours"}</span><b>${esc(b[1])}</b><small>${esc(b[3])}</small></span></div>`).join("")
+      + (bossOpened ? `<div class="chip" style="--rc:#C084FC"><span class="medal" aria-hidden="true">📖</span><span><span class="rar">Unlocked</span><b>Boss fight: Bookworm Dad</b><small>He's waiting at the top of the list.</small></span></div>` : "");
+
+    const nxt = nextDad();
+    const nextLine = nxt ? v.nextUp.replace("{next}", T.TIERS[nxt].name)
+      : "That's every dad on the ladder beaten. You're the undisputed Tile Talk champion!";
+    const quote = (d.lines.lose && d.lines.lose.length) ? pick(d.lines.lose) : "You beat me fair and square.";
+    const arcade = beaten === "eighties";
+    const hs = arcade ? (stats().hiscores || []) : [];
+    const qualifies = arcade && (hs.length < 5 || you > hs[hs.length - 1].s);
+
+    const wrap = document.createElement("div");
+    wrap.className = "win-wrap";
+    const colours = ["#F5C518", "#FF8FA3", "#9BE7C4", "#38B6FF", "#C084FC", "#FFB86B"];
+    const confetti = reduced() ? "" : Array.from({ length: 36 }, (_, i) =>
+      `<i style="left:${(i * 37) % 100}%; background:${colours[i % colours.length]}; animation-delay:${(i % 12) * 0.12}s"></i>`).join("");
+    wrap.innerHTML = `<div class="win-card bot" role="dialog" aria-modal="true" aria-labelledby="winT">
+      <div class="confetti" aria-hidden="true">${confetti}</div>
+      ${avatarSVG(beaten, 96).replace("<svg ", '<svg class="av" ')}
+      <h2 id="winT">${esc(v.title)}</h2>
+      <p class="sc">You beat <b>${esc(beatenName)}</b>, ${you} to ${dad}.</p>
+      <p class="q">“${esc(quote)}”</p>
+      ${chips ? `<section class="win-badges" aria-label="Achievements"><h3>${fresh.length || bossOpened ? "Achievements unlocked" : "Your achievement"}</h3>${chips}</section>` : ""}
+      ${qualifies ? `<p style="margin:6px 0">Put your initials on Arcade Dad's board: <input id="winIni" maxlength="3" autocomplete="off" aria-label="Your initials for Arcade Dad's high score table"></p>` : ""}
+      <p class="next">${esc(nextLine)}</p>
+      <div class="row">
+        ${nxt ? `<button class="btn primary" type="button" data-w="next">${avatarSVG(nxt, 28)}Challenge ${esc(T.TIERS[nxt].name)} →</button>` : ""}
+        ${beatBadge ? `<button class="btn${nxt ? "" : " primary"}" type="button" data-w="share">📤 Share my win</button>` : ""}
+        <button class="btn" type="button" data-w="again">Rematch</button>
+        <button class="btn" type="button" data-w="close">Close</button>
+      </div></div>`;
+    document.body.appendChild(wrap);
+    const card = wrap.firstElementChild;
+    if (!reduced()) { const mv = beaten === "grandpa" ? "kids" : "victory"; card.classList.add("do-" + mv); setTimeout(() => card.classList.remove("do-" + mv), 3300); }
+    (wrap.querySelector('[data-w="next"]') || wrap.querySelector('[data-w="share"]') || wrap.querySelector("[data-w]")).focus();
+
+    let hsDone = !qualifies;
+    const saveHigh = () => {                      // Arcade Dad: your score goes on his table whichever button you press
+      if (hsDone) return; hsDone = true;
+      const ini = (($("winIni") || {}).value || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3) || "YOU";
+      highScores(you, ini);
+    };
+    const close = () => { saveHigh(); wrap.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    wrap.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-w]"); if (!b) return;
+      const w = b.dataset.w;
+      if (w === "share") { shareWin(beatenName, you, dad, beatBadge, fromThisWin); return; }
+      close();
+      if (w === "next" && nxt) { tierKey = nxt; startGame(); window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" }); }
+      else if (w === "again") startGame();
+    });
+  }
+
+  // A picture of the win and the badge, to post or send (phone share sheet, or a download on a computer).
+  async function shareWin(name, you, dad, badge, isNew) {
+    const k = Object.keys(T.TIERS).find((x) => T.TIERS[x].name === name) || tierKey, t = T.TIERS[k];
+    const rc = RARITY[badge[4]] || "#F5C518";
+    try {
+      const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H;
+      const x = c.getContext("2d");
+      const bg = x.createRadialGradient(W / 2, 520, 40, W / 2, 520, 950); bg.addColorStop(0, "#3A2F6B"); bg.addColorStop(1, "#0B0B14");
+      x.fillStyle = bg; x.fillRect(0, 0, W, H);
+      x.save(); x.translate(W / 2, 520); x.fillStyle = "rgba(245,197,24,.06)";
+      for (let i = 0; i < 18; i++) { x.rotate(Math.PI * 2 / 18); x.beginPath(); x.moveTo(0, 0); x.lineTo(-70, -1100); x.lineTo(70, -1100); x.closePath(); x.fill(); }
+      x.restore();
+      try { await document.fonts.load("900 80px Nunito"); } catch {}
+      const F = (w, px) => `${w} ${px}px Nunito, ui-rounded, system-ui, sans-serif`;
+      x.textAlign = "center";
+      x.fillStyle = "#F5C518"; x.font = F(900, 44); x.fillText("★  TILE TALK VICTORY  ★", W / 2, 150);
+      const a = AV && AV.AVATARS[k];
+      if (a) {                                   // the avatar's colours come from the page; the picture uses fixed daytime ones
+        const PAL = { ink: "#1B2A3A", metal: "#B9C7D4", jacket: "#3D7CB8", jacket2: "#1B2A3A", hair: "#3A2A1E", lens: "#1B2A3A" };
+        const svg = a.svg.replace(/var\(--([a-z0-9-]+)\)/g, (m, kk) => PAL[kk] || "#8896A5");
+        const img = new Image();
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="420" height="420">${svg}</svg>`);
+        await img.decode();
+        x.fillStyle = "#FFF6D6"; x.beginPath(); x.arc(W / 2, 450, 240, 0, Math.PI * 2); x.fill();
+        x.strokeStyle = "#F5C518"; x.lineWidth = 12; x.stroke();
+        x.drawImage(img, W / 2 - 210, 240, 420, 420);
+      }
+      x.fillStyle = "#FFF6D6"; x.font = F(800, 54); x.fillText("I beat", W / 2, 785);
+      x.fillStyle = "#F5C518"; x.font = F(900, 104); x.fillText(name, W / 2, 895);
+      x.fillStyle = "#FFF6D6"; x.globalAlpha = .85; x.font = F(700, 42);
+      x.fillText(`at Tile Talk, ${you} to ${dad} · ${t.boss ? "the boss" : `Tier ${t.tier}`}`, W / 2, 965);
+      x.globalAlpha = 1;
+      // the badge, as a pill
+      x.font = F(900, 46); const label = `🏅 ${badge[1]}`, bw = x.measureText(label).width + 90;
+      x.fillStyle = "rgba(255,255,255,.08)"; x.strokeStyle = rc; x.lineWidth = 6;
+      x.beginPath(); x.roundRect ? x.roundRect(W / 2 - bw / 2, 1015, bw, 96, 48) : x.rect(W / 2 - bw / 2, 1015, bw, 96); x.fill(); x.stroke();
+      x.fillStyle = rc; x.fillText(label, W / 2, 1080);
+      x.fillStyle = "#FFF6D6"; x.globalAlpha = .7; x.font = F(800, 30); x.fillText(`${badge[4].toUpperCase()} BADGE`, W / 2, 1150);
+      x.globalAlpha = 1; x.font = F(900, 50); x.fillText("Think you can?", W / 2, 1232);
+      x.globalAlpha = .7; x.font = F(800, 34); x.fillText("RoboDad · robodad.app", W / 2, 1295);
+      const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+      const file = new File([blob], `robodad-tiletalk-${k}.png`, { type: "image/png" });
+      const text = `I beat ${name} at Tile Talk on RoboDad, ${you} to ${dad}, and ${isNew ? "unlocked" : "hold"} the "${badge[1]}" badge. Think you can? https://robodad.app/go/share`;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: `I beat ${name} at Tile Talk`, text });
+      } else {
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = file.name;
+        document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        try { await navigator.clipboard.writeText(text); toast("Picture saved, and the caption's copied. Post it anywhere!"); }
+        catch { toast("Picture saved. Post it anywhere!"); }
+      }
+    } catch (e) { if (!e || e.name !== "AbortError") toast("Couldn't make the picture. Try again."); }
   }
 
   // Arcade Dad's high score table: your best games against him, with your initials.
-  function highScores(score) {
+  // ini: initials already typed (on the victory card), so it saves straight away.
+  function highScores(score, ini) {
     const st = stats(), list = (st.hiscores || []).slice();
     const box = $("bonus"); box.hidden = false;
     const table = (rows, mine) => `<ol class="hiscore">${rows.map((r, i) => `<li class="${i === mine ? "me" : ""}">${esc(r.i)} ${String(r.s).padStart(4, " ")}</li>`).join("")}</ol>`;
@@ -1082,6 +1260,12 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     const done = `<div class="row"><button class="btn" type="button" data-done>Close</button></div>`;
     const wire = () => { const b = box.querySelector("[data-done]"); if (b) b.addEventListener("click", () => { box.hidden = true; box.innerHTML = ""; }); };
     if (!qualifies) { box.innerHTML = `<h2>HIGH SCORES</h2>${table(list, -1)}<p>Your ${score} didn't make the board. Insert coin and try again!</p>${done}`; wire(); return; }
+    if (ini) {
+      const row = { i: ini, s: score, d: new Date().toLocaleDateString("en-CA") };
+      list.push(row); list.sort((a, b) => b.s - a.s); list.length = Math.min(list.length, 5);
+      bumpStats((x) => { x.hiscores = list; });
+      box.innerHTML = `<h2>HIGH SCORES</h2>${table(list, list.indexOf(row))}${done}`; wire(); return;
+    }
     box.innerHTML = `<h2>NEW HIGH SCORE!</h2><p>${score} points. Enter your initials:</p>
       <input id="hsInit" maxlength="3" autocomplete="off" aria-label="Your initials, three letters" style="text-transform:uppercase; max-width:7em; font-family:ui-monospace,monospace; letter-spacing:.3em">
       <div class="row"><button class="btn primary" type="button" data-save>Save</button></div>`;
@@ -1101,7 +1285,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   function startGame() {
     s = T.newGame();
     pending = []; sel = -1; swapMode = false; swapSel.clear(); hintsLeft = tierKey === "grandpa" ? 4 : 3; busy = false; lastDad = []; askBlank = null; hintKeys.clear();
-    confirmNew = false; confirmPass = false; plays = 0; lastBonus = ""; pers = newPers();
+    confirmNew = false; confirmPass = false; plays = 0; lastBonus = ""; pers = newPers(); musicHold = false;
     cursor = null; clockMs = capMs(); warned = false; fx.clear();
     shown[0] = shown[1] = null; rackDeal = { from: 0, t0: performance.now() + 100 };
     $("bonus").hidden = true; $("explain").hidden = true;
@@ -1130,6 +1314,17 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     btn.addEventListener("click", () => { wrap.remove(); $("board").focus?.(); });
   }
   const inProgress = () => s && !s.over && s.log.length > 0;
+
+  // You tried to pick another dad in the middle of a game. The one you're playing calls it out
+  // and points you at Exit (the game is saved, so you can always come back to it).
+  function runaway() {
+    const l = DAD().lines.runaway;
+    $("say").textContent = talkOn && l ? pick(l) : `Finish this game first. Need a break? Tap ← Exit: your game is saved.`;
+    celebrate(DAD().move);
+    setStatus(`<strong>One dad at a time.</strong> Finish this game against ${dadName()}, or tap <strong>Resign</strong>. Need a break? Tap <strong>← Exit</strong> at the top: your game is saved.`);
+    const ex = $("exitBtn"); ex.classList.remove("nudge"); void ex.offsetWidth; ex.classList.add("nudge");
+    window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
+  }
 
   // ---------------------------------------------------------------- the game clock
   // Only your thinking time counts, and only while it's your move: not while Dad thinks, not during
@@ -1191,7 +1386,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   function syncMusic() {
     renderMusicBtn();
     if (!RADIO) return;
-    if (musicOn && gestured && !document.hidden) { RADIO.setVolume(0.22); RADIO.play(MUSIC[tierKey] || "lounge"); }
+    if (musicOn && gestured && !document.hidden && !musicHold) { RADIO.setVolume(0.22); RADIO.play(MUSIC[tierKey] || "lounge"); }
     else if (RADIO.playing) RADIO.stop();
   }
   const firstGesture = () => { if (gestured) return; gestured = true; syncMusic(); };
@@ -1327,13 +1522,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     const b = e.target.closest(".tier");
     if (!b || b.disabled || busy) return;
     if (b.dataset.k === tierKey && inProgress()) return;
-    if (inProgress() && confirmTier !== b.dataset.k) {
-      confirmTier = b.dataset.k;
-      setStatus(`Tap <strong>${T.TIERS[b.dataset.k].name}</strong> again to end this game and start a new one against him.`);
-      setTimeout(() => { if (confirmTier === b.dataset.k) confirmTier = null; }, 4000);
-      return;
-    }
-    confirmTier = null;
+    if (inProgress()) { runaway(); return; }          // one dad at a time: no jumping ship mid-game
     tierKey = b.dataset.k;
     startGame();
   });
@@ -1347,7 +1536,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
   $("talkBtn").setAttribute("aria-pressed", String(talkOn));
   $("musicBtn").addEventListener("click", () => {
-    musicOn = !musicOn; gestured = true;
+    musicOn = !musicOn; gestured = true; musicHold = false;
     store.set(MUSIC_KEY, musicOn ? "1" : "0");
     syncMusic();
   });

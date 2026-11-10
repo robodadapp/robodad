@@ -344,3 +344,54 @@ window.TILE_DADS = {
     },
   },
 };
+
+/* Two more things each dad says, kept here so they're easy to tweak:
+   runaway: you tried to switch to another dad in the middle of a game. He calls it out and points at Exit
+            (the game is saved, so leaving is fine; swapping dads mid-game isn't).
+   victory: when you beat him. title is the banner, jingle is his celebration tune (radio.js),
+            nextUp hands you on to the next dad ({next} is his name). */
+(function () {
+  const MORE = {
+    gamer: {
+      runaway: ["Rage quit mid-match? Not in my lobby. Hit ← Exit, your save's safe.", "Switching servers mid-game? Nope. Use the Exit button like a pro. Game's saved."],
+      victory: { title: "LEVEL CLEAR!", jingle: "gamer", nextUp: "GG. Next level loading: {next}. Press start." },
+    },
+    skater: {
+      runaway: ["Whoa, bailing halfway down the ramp? Ride it out, or hit ← Exit. Your game's saved.", "No ditching the half-pipe mid-run, dude. Exit's up top."],
+      victory: { title: "SICK WIN!", jingle: "skater", nextUp: "You shredded me. {next} is next on the ramp. Drop in?" },
+    },
+    eighties: {
+      runaway: ["You can't swap cabinets mid-game, champ! Hit ← Exit and I'll keep your credits.", "No continues on a different machine! Exit's up top. Your game's saved."],
+      victory: { title: "NEW HIGH SCORE!", jingle: "arcade", nextUp: "Player 1 wins! Next cabinet: {next}. Insert coin?" },
+    },
+    coach: {
+      runaway: ["Whoa, whoa! No subbing out mid-game. Finish it, or hit ← Exit for a water break.", "You don't leave the field at halftime, rookie. Exit's top left, game's saved."],
+      victory: { title: "CHAMPIONS!", jingle: "coach", nextUp: "That's a W, rookie! You're ready for the next league: {next}. Suit up!" },
+    },
+    modern: {
+      runaway: ["Leaving me for another dad? Mid-game? I'm telling Mom. Use ← Exit, I'll save your spot.", "Ah, the old switcheroo. Nice try. Exit's top left, your game's saved."],
+      victory: { title: "YOU WIN!", jingle: "modern", nextUp: "I'd tell a joke, but I'm too impressed. {next} is waiting. Go get him." },
+    },
+    labdad: {
+      runaway: ["You can't change test subjects mid-experiment! Hit ← Exit, the results are saved.", "In my lab, variables stay controlled. Use the Exit button."],
+      victory: { title: "EUREKA!", jingle: "lab", nextUp: "Hypothesis confirmed: you're good at this. Next experiment: {next}." },
+    },
+    professor: {
+      runaway: ["No switching classes mid-exam. Use the ← Exit button; your paper is saved.", "Sit down, the test isn't over. Exit's top left if you need a break."],
+      victory: { title: "TOP MARKS!", jingle: "professor", nextUp: "You've graduated from my class. Your next examiner: {next}." },
+    },
+    grandpa: {
+      runaway: ["In my day, we finished what we started! Use that ← Exit button, kiddo. I'll keep your seat warm.", "Leaving your old grandpa mid-game? Hit Exit. I'll be right here. I'm not going anywhere. My knees, you see."],
+      victory: { title: "GRANDPA'S PROUD!", jingle: "grandpa", nextUp: "You beat your old grandpa! Now go show {next} how it's done." },
+    },
+    bookworm: {
+      runaway: ["You can't skip to another book mid-chapter. Use ← Exit. I've bookmarked your page.", "Closing the book early? Exit's top left. Your page is saved."],
+      victory: { title: "THE END", jingle: "boss", nextUp: "The boss is beaten. One shelf left to clear: {next} is still waiting." },
+    },
+  };
+  for (const [k, v] of Object.entries(MORE)) {
+    const d = window.TILE_DADS[k]; if (!d) continue;
+    d.lines.runaway = v.runaway;
+    d.victory = v.victory;
+  }
+})();

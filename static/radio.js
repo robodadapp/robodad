@@ -807,6 +807,147 @@
 
   function targetGain() { return volume * 1.4 * (ducked ? 0.25 : 1); }
 
+  // ---------------------------------------------------------------- victory jingles
+  // A few seconds each, one per dad, all original: played when you beat him. They run on their own
+  // bus (straight into the compressor), so they still sound after the background station fades out.
+  let jbus = null, jrev = null, jingleUntil = 0;
+  function jsetup() {
+    if (jbus && jbus.context === ctx) return;
+    jbus = ctx.createGain(); jbus.gain.value = 0.9; jbus.connect(comp);
+    const r = ctx.createConvolver(); r.buffer = impulse(1.8, 3);
+    jrev = ctx.createGain(); jrev.gain.value = 0.25; jrev.connect(r).connect(comp);
+  }
+  // one note: n is a MIDI note, t and dur in seconds
+  function jn(n, t, dur, { type = "square", level = 0.07, cutoff = 5000, attack = 0.008, release = 0.18, glide = 0, vib = 0, detune = 0 } = {}) {
+    const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = type; o.detune.value = detune;
+    if (glide) { o.frequency.setValueAtTime(mtof(n + glide), t); o.frequency.exponentialRampToValueAtTime(mtof(n), t + 0.07); }
+    else o.frequency.setValueAtTime(mtof(n), t);
+    if (vib) {
+      const l = ctx.createOscillator(), lg = ctx.createGain();
+      l.frequency.value = 5.5; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(vib, t + Math.min(0.4, dur));
+      l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + dur + release + 0.05);
+    }
+    f.type = "lowpass"; f.frequency.value = cutoff;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(level, t + attack);
+    g.gain.setValueAtTime(level, t + Math.max(attack, dur));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(attack, dur) + release);
+    o.connect(f).connect(g); g.connect(jbus); g.connect(jrev);
+    o.start(t); o.stop(t + dur + release + 0.05);
+  }
+  const jchord = (ns, t, dur, o) => ns.forEach((n) => jn(n, t, dur, o));
+  let jnoiseBuf = null;
+  function jnoise(t, { type = "highpass", freq = 6000, q = 0.7, level = 0.05, decay = 0.3, attack = 0.002 } = {}) {
+    if (!jnoiseBuf || jnoiseBuf.sampleRate !== ctx.sampleRate) {
+      jnoiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2.5, ctx.sampleRate);
+      const d = jnoiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = jnoiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(level, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    s.connect(f).connect(g); g.connect(jbus); g.connect(jrev); s.start(t); s.stop(t + Math.min(2.45, attack + decay + 0.05));
+  }
+  function jdrum(t, { from = 150, to = 50, level = 0.25, decay = 0.35 } = {}) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(from, t); o.frequency.exponentialRampToValueAtTime(to, t + decay * 0.8);
+    g.gain.setValueAtTime(level, t); g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    o.connect(g).connect(jbus); o.start(t); o.stop(t + decay + 0.05);
+  }
+  const JINGLES = {
+    // Gamer Dad: an 8-bit level-clear arpeggio and a coin bling
+    gamer: (t) => {
+      [72, 76, 79, 84, 76, 79, 84, 88].forEach((n, i) => jn(n, t + i * 0.085, 0.07, { level: 0.05, release: 0.04 }));
+      [48, 52, 55, 60].forEach((n, i) => jn(n, t + i * 0.17, 0.15, { type: "triangle", level: 0.12, release: 0.05 }));
+      jn(91, t + 0.72, 0.55, { level: 0.05, vib: 6 }); jn(60, t + 0.72, 0.55, { type: "triangle", level: 0.12 });
+      jn(88, t + 1.45, 0.06, { level: 0.045, release: 0.03 }); jn(93, t + 1.52, 0.5, { level: 0.045, release: 0.35 });
+      return 2.2;
+    },
+    // Skater Dad: pop-punk power-chord stabs and a crash
+    skater: (t) => {
+      const pc = (r, at, d) => [r, r + 7, r + 12].forEach((n, i) => jn(n, at, d, { type: "sawtooth", level: 0.05, cutoff: 1900, detune: i ? 6 : -6, release: 0.08 }));
+      [50, 50, 55, 57].forEach((r, i) => { pc(r, t + i * 0.2, 0.12); jdrum(t + i * 0.2, { from: 120, to: 45, level: 0.2, decay: 0.2 }); jnoise(t + i * 0.2 + 0.1, { type: "bandpass", freq: 2000, level: 0.06, decay: 0.12 }); });
+      pc(50, t + 0.85, 1.1); pc(62, t + 0.85, 1.1);
+      jdrum(t + 0.85, { level: 0.28 }); jnoise(t + 0.85, { freq: 5000, level: 0.07, decay: 1.6 });
+      return 2.6;
+    },
+    // Arcade Dad: a coin-up sweep, then a high-score fanfare
+    arcade: (t) => {
+      for (let i = 0; i < 12; i++) jn(60 + i * 3, t + i * 0.03, 0.03, { level: 0.04, release: 0.02 });
+      const mel = [[67, 0, 0.12], [72, 0.13, 0.12], [76, 0.26, 0.12], [79, 0.39, 0.4], [77, 0.85, 0.12], [76, 0.98, 0.12], [77, 1.11, 0.12], [84, 1.24, 0.8]];
+      mel.forEach(([n, at, d]) => { jn(n, t + 0.45 + at, d, { level: 0.05, vib: d > 0.3 ? 8 : 0 }); jn(n - 12, t + 0.45 + at, d, { type: "triangle", level: 0.07 }); });
+      jn(48, t + 1.69, 0.8, { type: "triangle", level: 0.12 });
+      return 3;
+    },
+    // Coach Dad: two whistle blasts, a brass fanfare and a cheering crowd
+    coach: (t) => {
+      jn(98, t, 0.12, { type: "sine", level: 0.05, vib: 30, release: 0.03 }); jn(98, t + 0.2, 0.4, { type: "sine", level: 0.05, vib: 30, release: 0.05 });
+      const br = { type: "sawtooth", level: 0.045, cutoff: 1700, attack: 0.03, release: 0.12 };
+      [67, 72, 76, 79].forEach((n, i) => { jn(n, t + 0.75 + i * 0.16, 0.12, br); jdrum(t + 0.75 + i * 0.16, { from: 110, to: 60, level: 0.14, decay: 0.15 }); });
+      jchord([60, 64, 67, 72, 84], t + 1.4, 0.9, { ...br, vib: 4 });
+      jdrum(t + 1.4, { level: 0.3, decay: 0.5 });
+      jnoise(t + 1.35, { type: "bandpass", freq: 1200, q: 0.4, level: 0.05, decay: 1.6, attack: 0.25 });
+      return 3.2;
+    },
+    // Modern Dad: a smooth rolled chord, then a ba-dum-tss (it's a dad joke)
+    modern: (t) => {
+      [60, 64, 67, 71, 74].forEach((n, i) => { jn(n, t + i * 0.07, 1.1, { type: "sine", level: 0.07, release: 0.6 }); jn(n + 12, t + i * 0.07, 0.15, { type: "triangle", level: 0.015, release: 0.4 }); });
+      jn(36, t, 1.2, { type: "triangle", level: 0.12, release: 0.5 });
+      jdrum(t + 1.25, { from: 220, to: 160, level: 0.16, decay: 0.18 });
+      jdrum(t + 1.42, { from: 160, to: 110, level: 0.18, decay: 0.2 });
+      jdrum(t + 1.62, { from: 90, to: 45, level: 0.22, decay: 0.3 });
+      jnoise(t + 1.62, { freq: 7000, level: 0.06, decay: 0.8 });
+      return 2.7;
+    },
+    // Lab Dad: bubbling bleeps, a zap, and a shimmering "eureka" chord
+    lab: (t) => {
+      [72, 79, 76, 84, 81, 88, 86, 93].forEach((n, i) => jn(n, t + i * 0.09, 0.05, { type: "sine", level: 0.06, glide: -7, release: 0.04 }));
+      const z = ctx.createOscillator(), zg = ctx.createGain();
+      z.type = "sawtooth"; z.frequency.setValueAtTime(200, t + 0.75); z.frequency.exponentialRampToValueAtTime(2400, t + 1.0);
+      zg.gain.setValueAtTime(0.03, t + 0.75); zg.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+      z.connect(zg).connect(jbus); z.start(t + 0.75); z.stop(t + 1.1);
+      jchord([72, 76, 79, 83, 88], t + 1.05, 1.1, { type: "triangle", level: 0.045, vib: 10, release: 0.7 });
+      return 2.9;
+    },
+    // Professor Dad: a little harpsichord cadence with a trill, all very proper
+    professor: (t) => {
+      const hp = { type: "sawtooth", level: 0.04, cutoff: 3200, release: 0.35 };
+      jchord([43, 55, 67, 71, 74], t, 0.3, hp);
+      jchord([45, 57, 69, 73, 76], t + 0.38, 0.3, hp);
+      for (let i = 0; i < 6; i++) jn(i % 2 ? 73 : 74, t + 0.76 + i * 0.06, 0.05, { ...hp, release: 0.05 });
+      jn(73, t + 1.12, 0.12, hp);
+      jchord([38, 50, 62, 66, 69, 74], t + 1.26, 1, { ...hp, release: 0.9 });
+      return 2.9;
+    },
+    // Robo-Grandpa: a quick jukebox doo-wop turnaround and a bell
+    grandpa: (t) => {
+      const ch = [[48, 60, 64, 67], [45, 57, 60, 64], [41, 57, 60, 65], [43, 55, 59, 62]];
+      const top = [76, 72, 72, 74];
+      ch.forEach((c, i) => {
+        jn(c[0], t + i * 0.3, 0.26, { type: "triangle", level: 0.12, release: 0.06 });
+        jchord(c.slice(1), t + i * 0.3, 0.24, { type: "triangle", level: 0.03, release: 0.08 });
+        jn(top[i], t + i * 0.3, 0.26, { type: "sawtooth", level: 0.03, cutoff: 1500, vib: 5, attack: 0.04 });
+      });
+      jchord([48, 60, 64, 67], t + 1.2, 1, { type: "triangle", level: 0.05, release: 0.5 });
+      jn(79, t + 1.2, 1, { type: "sawtooth", level: 0.035, cutoff: 1500, vib: 7, attack: 0.05, release: 0.4 });
+      jn(96, t + 1.25, 0.05, { type: "sine", level: 0.06, release: 1.4 }); jn(103, t + 1.25, 0.05, { type: "sine", level: 0.025, release: 1.2 });
+      return 2.8;
+    },
+    // Bookworm Dad, the boss: timpani, brass and a big final chord
+    boss: (t) => {
+      for (let i = 0; i < 8; i++) jdrum(t + i * 0.065, { from: 95, to: 70, level: 0.06 + i * 0.025, decay: 0.2 });
+      const br = { type: "sawtooth", level: 0.035, cutoff: 1600, attack: 0.04, release: 0.15 };
+      jchord([60, 64, 67], t + 0.6, 0.22, br); jdrum(t + 0.6, { from: 100, to: 60, level: 0.2 });
+      jchord([65, 69, 72], t + 0.9, 0.22, br); jdrum(t + 0.9, { from: 100, to: 60, level: 0.2 });
+      jchord([67, 71, 74], t + 1.2, 0.3, br); jdrum(t + 1.2, { from: 110, to: 60, level: 0.22 });
+      jchord([48, 55, 60, 64, 67, 72, 76], t + 1.6, 1.5, { ...br, release: 0.9, vib: 3 });
+      jn(84, t + 1.6, 1.5, { type: "square", level: 0.02, cutoff: 2600, vib: 6, release: 0.9 });
+      jdrum(t + 1.6, { from: 90, to: 40, level: 0.32, decay: 0.8 }); jnoise(t + 1.6, { freq: 4500, level: 0.06, decay: 2 });
+      return 3.6;
+    },
+  };
+
   const api = {
     stations: Object.fromEntries(Object.entries(STATIONS).filter(([, v]) => !v.hidden).map(([k, v]) => [k, v.name])),
     get station() { return current; },
@@ -836,7 +977,7 @@
       master.gain.cancelScheduledValues(ctx.currentTime);
       master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
-      setTimeout(() => { if (!timer && ctx.state === "running") ctx.suspend(); if (!timer && unlockEl) unlockEl.pause(); }, 4000);
+      setTimeout(() => { if (!timer && performance.now() > jingleUntil && ctx.state === "running") ctx.suspend(); if (!timer && performance.now() > jingleUntil && unlockEl) unlockEl.pause(); }, 4000);
       api.onchange && api.onchange(api);
     },
     setVolume(v) {
@@ -863,6 +1004,30 @@
       for (let i = 0, t = 0.1; t < seconds; i++, t += 4 * beat) st.play(i, t, beat);
       const buf = await off.startRendering();
       ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, current, bar, nextBarTime } = saved);
+      return buf;
+    },
+    // Stops the station and plays a short celebration tune. style: gamer, skater, arcade, coach, modern,
+    // lab, professor, grandpa or boss. Resolves when it's done.
+    jingles: Object.keys(JINGLES),
+    async jingle(style, level = 0.6) {
+      api.stop();
+      unlockMediaPlayback();
+      setup(); jsetup();
+      if (ctx.state === "suspended") await ctx.resume();
+      jbus.gain.value = Math.min(1, Math.max(0, level)) * 1.5;
+      const len = (JINGLES[style] || JINGLES.gamer)(ctx.currentTime + 0.5);
+      jingleUntil = performance.now() + (len + 2.5) * 1000;
+      await new Promise((res) => setTimeout(res, (len + 0.5) * 1000));
+      setTimeout(() => { if (!timer && performance.now() > jingleUntil && ctx.state === "running") ctx.suspend(); }, 2600);
+    },
+    // Renders a jingle offline (used for testing).
+    async renderJingle(style, sampleRate = 44100) {
+      const saved = { ctx, master, comp, wet, dry, delay, delayFb, delayOut, jbus, jrev };
+      const off = new OfflineAudioContext(2, sampleRate * 5, sampleRate);
+      setup(off); jbus = null; jsetup();
+      JINGLES[style](0.1);
+      const buf = await off.startRendering();
+      ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, jbus, jrev } = saved);
       return buf;
     },
     chime() {
