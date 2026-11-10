@@ -421,7 +421,7 @@
 
   const api = { N, CENTER, VALUES, COUNTS, PREMIUM, TIERS, RACK, FULL_HOUSE,
     buildDict, newGame, evaluatePlay, generateMoves, chooseMove, bestMove, leaveValue,
-    applyPlay, applySwap, applyPass, mulberry };
+    applyPlay, applySwap, applyPass, finish, mulberry };
   if (typeof module === "object" && module.exports) module.exports = api;
   if (typeof window !== "undefined") window.RoboTiles = api;
 })();

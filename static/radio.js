@@ -774,6 +774,28 @@
     },
   });
 
+  // Final Chapter: an original, tense-but-not-scary boss theme for Bookworm Dad in D minor.
+  // Harpsichord-ish echoing arpeggios over a pulsing bass, like turning pages fast.
+  STATIONS.boss = {
+    name: "Final Chapter", bpm: 112,
+    bars: [
+      { root: 38, chord: [62, 65, 69] },   // Dm
+      { root: 34, chord: [58, 62, 65] },   // Bb
+      { root: 36, chord: [60, 64, 67] },   // C
+      { root: 33, chord: [57, 61, 64] },   // A (harmonic minor lift)
+    ],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 4];
+      pad(chord.map((n) => n - 12), t, 4 * b, { type: "triangle", cutoff: 900, level: 0.04 });
+      for (let s = 0; s < 8; s++) bass(root + (s % 2 ? 12 : 0), t + s * b / 2, b * 0.35, { type: "sawtooth", level: 0.07, cutoff: 420 });
+      const arp = [chord[0], chord[1], chord[2], chord[1] + 12, chord[2] + 12, chord[1] + 12, chord[2], chord[1]];
+      for (let s = 0; s < 16; s++) pluck(arp[s % 8] + 12, t + s * b / 4, { type: "square", level: 0.022, decay: 0.28, cutoff: 1800, echo: s % 4 === 0 });
+      kick(t, 0.16); kick(t + 2 * b, 0.14); kick(t + 2.75 * b, 0.08);
+      snare(t + b, 0.05); snare(t + 3 * b, 0.05);
+      for (let k = 0; k < 8; k++) hit(t + k * b / 2, { type: "highpass", freq: 8000, level: k % 2 ? 0.006 : 0.01, decay: 0.04 });
+    },
+  };
+
   function tick() {
     const st = STATIONS[current]; if (!st) return;
     const beat = 60 / (st.bpm * tempoMul);
