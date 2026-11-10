@@ -57,5 +57,14 @@ for loc in locs:
     page = client.get(loc.replace("https://robodad.app", "") or "/")
     check(f"sitemap page loads and is indexable: {loc}", page.status_code == 200 and "noindex" not in page.text.split("</head>")[0])
 
+r = client.get("/no-such-page", headers={"accept": "text/html"})
+check("a missing page gets a friendly 404 page", r.status_code == 404 and "text/html" in r.headers["content-type"] and 'href="/"' in r.text)
+check("the 404 page is kept out of search results", 'name="robots" content="noindex"' in r.text)
+check("the 404 page carries the security policy", "content-security-policy" in r.headers)
+r = client.get("/api/no-such-thing", headers={"accept": "text/html"})
+check("a missing API route still answers in JSON", r.status_code == 404 and r.headers["content-type"].startswith("application/json"))
+r = client.get("/no-such-page")
+check("a missing page answers in JSON when no page was asked for", r.status_code == 404 and r.headers["content-type"].startswith("application/json"))
+
 print("\nall good" if not failed else f"\n{failed} failed")
 sys.exit(1 if failed else 0)

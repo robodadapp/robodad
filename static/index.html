@@ -1196,6 +1196,16 @@ details.why[open] summary::before{content:"–"}
 .study-modes button{border:2px solid var(--line); border-radius:14px; background:transparent; color:var(--ink); font:inherit; padding:10px 6px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px}
 .study-modes button b{font-size:1.15rem; font-weight:900} .study-modes button small{color:var(--muted); font-size:.78rem; font-weight:700}
 .study-modes button[aria-checked="true"]{border-color:var(--denim); background:color-mix(in srgb, var(--denim) 12%, transparent)}
+.study-modes.four{grid-template-columns:repeat(4, 1fr)} .study-modes.four button b{font-size:1.02rem} .study-modes.four button small{font-size:.72rem}
+.study-modes.six{grid-template-columns:repeat(6, 1fr)} .study-modes.six button{padding:10px 2px}
+.study-kinds{display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; padding:4px; border-radius:16px; background:color-mix(in srgb, var(--line) 55%, transparent)}
+.study-kinds button{border:0; border-radius:12px; background:transparent; color:var(--muted); font:inherit; font-size:.92rem; white-space:nowrap; font-weight:800; padding:9px 2px; min-height:44px; cursor:pointer}
+.study-kinds button[aria-checked="true"]{background:var(--surface); color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.study-fields{display:flex; flex-wrap:wrap; gap:10px}
+.study-num{flex:1 1 90px; display:flex; flex-direction:column; gap:4px; font-weight:800}
+.study-num input{width:100%; font:inherit; font-weight:800; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; min-height:44px}
+.study-num small{color:var(--muted); font-size:.78rem; font-weight:700}
+.study-done{margin:0; padding:10px 12px; border-radius:14px; background:color-mix(in srgb, var(--ok) 16%, transparent)}
 .study-topic{width:100%; font:inherit; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:12px; padding:10px 12px}
 .study-ring{--p:0; width:min(220px, 62vw); aspect-ratio:1; border-radius:50%; margin:4px auto; display:grid; place-items:center;
   background:radial-gradient(closest-side, var(--surface) 82%, transparent 83% 100%), conic-gradient(var(--denim) calc(var(--p) * 1%), var(--line) 0)}
@@ -1927,7 +1937,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="tile" type="button" data-go="word"><span class="t-ico" aria-hidden="true">📖</span><b>Word of the day</b><small>Learn it, use it</small></button>
       <button class="tile" type="button" data-go="fact"><span class="t-ico" aria-hidden="true">💡</span><b>Fact of the day</b><small>True and surprising</small></button>
       <button class="tile" type="button" data-go="otd"><span class="t-ico" aria-hidden="true">📜</span><b>On this day with Dad</b><small>Dad-and-kid history</small></button>
-      <button class="tile" type="button" data-open-study=""><span class="t-ico" aria-hidden="true">⏱️</span><b>Study Hall</b><small>25 minutes on, 5 off</small></button>
+      <button class="tile" type="button" data-open-study=""><span class="t-ico" aria-hidden="true">⏱️</span><b>Study Hall</b><small>Focus, kitchen and workout timers</small></button>
       <button class="tile" type="button" data-go="brain"><span class="t-ico" aria-hidden="true">🧩</span><b>Brain teasers</b><small>Train your thinking</small></button>
       <button class="tile" type="button" data-go="vocab"><span class="t-ico" aria-hidden="true">✨</span><b>Vocabulary with Dad</b><small>Glow-Up, Comebacks, Word Origins, Vocab Duel</small></button>
       <a class="tile" href="/tiles"><span class="t-ico" aria-hidden="true">🔤</span><b>Tile Talk</b><small>Words, bonus squares and nine dads</small></a>
@@ -3931,22 +3941,52 @@ const PLAYERS = {
   }));
 
 
-  // ---------- Study Hall: a focus timer with Professor Dad ----------
+  // ---------- Study Hall: a focus timer with Professor Dad, plus a kitchen timer and workout laps ----------
   // Times are kept as "ends at" timestamps, so the timer stays right even if the phone sleeps the tab.
+  // Three kinds of timer share one clock: "study" (focus / break, repeating), "kitchen" (one countdown)
+  // and "workout" (go / rest for a set number of rounds). Only study sessions count towards badges.
   const STUDY_MODES = { classic:[25, 5, "Classic"], quick:[15, 3, "Quick"], deep:[45, 10, "Deep focus"] };
+  const KITCHEN_PICKS = [1, 3, 5, 10, 15, 30];                                                     // minutes
+  const WORKOUTS = { laps:[30, 15, 8, "Laps"], tabata:[20, 10, 8, "Tabata"], sets:[45, 15, 6, "Long sets"] };   // go seconds, rest seconds, rounds
+  const STUDY_KINDS = { study:["Study", "📚"], kitchen:["Kitchen", "🍳"], workout:["Workout", "💪"] };
   const STUDY_RUN = "robodad.studyRun", STUDY_OPTS = "robodad.studyOpts";
   const FOCUS_DONE = ["Nice work. Stand up, stretch, and drink some water.", "Break time. Look at something far away for 20 seconds. Your eyes will thank you.",
     "Round done! Grab a snack. Not the whole bag.", "That's a round. Roll your shoulders and take three slow breaths.", "Break! Reply to that text, then come back. I'm watching. Kindly."];
   const BREAK_DONE = ["Back to it. You've got this.", "Break's over, champ. One more round.", "Phones down, brains on. Let's go.", "Small steps, big results. Next round."];
+  const KITCHEN_DONE = ["Time's up! Go check on it before it checks on you.", "Ding! That's your timer. Oven gloves on, kiddo.", "Timer's done. If it's burnt, we call it \"well done\"."];
+  const GO_DONE = ["Rest. Breathe in through your nose.", "Rest. Shake it out.", "Rest. Sip of water.", "Rest. You earned it."];
+  const REST_DONE = ["Go! Good form beats fast.", "Go! You've got this.", "Go! Strong and steady.", "Go! One more like the last one."];
+  const WORKOUT_DONE = ["Workout done! Stretch it out and drink some water. Proud of you.", "That's every round. Nice work, champ. Now go stretch.", "Done! Your future self says thanks."];
   const studyDlg = $("studyDlg"), studyBody = $("studyBody"), studyPill = $("studyPill");
-  let sOpts = { mode:"classic", music:true, awake:true, topic:"" }; try { sOpts = { ...sOpts, ...JSON.parse(localStorage.getItem(STUDY_OPTS) || "{}") }; } catch {}
+  let sOpts = { kind:"study", mode:"classic", music:true, awake:true, topic:"", cf:30, cb:5, kMin:10, kLabel:"", wk:"laps", cw:40, cr:20, cn:6 };
+  try { sOpts = { ...sOpts, ...JSON.parse(localStorage.getItem(STUDY_OPTS) || "{}") }; } catch {}
+  if (!STUDY_KINDS[sOpts.kind]) sOpts.kind = "study";
+  if (sOpts.mode !== "custom" && !STUDY_MODES[sOpts.mode]) sOpts.mode = "classic";
+  if (sOpts.wk !== "custom" && !WORKOUTS[sOpts.wk]) sOpts.wk = "laps";
   let sRun = null; try { sRun = JSON.parse(sessionStorage.getItem(STUDY_RUN) || "null"); } catch {}
-  let sTimer = null, sWake = null, sReturn = null, sSay = "", sStartedMusic = false;
+  if (sRun && !sRun.f) {                                    // a session started before timers had kinds
+    const m = STUDY_MODES[sRun.mode] || STUDY_MODES.classic;
+    sRun = { ...sRun, kind:"study", f: m[0] * 60000, b: m[1] * 60000, rounds:0 };
+  }
+  let sTimer = null, sWake = null, sReturn = null, sSay = "", sDone = "", sStartedMusic = false;
   const saveSRun = () => { try { sRun ? sessionStorage.setItem(STUDY_RUN, JSON.stringify(sRun)) : sessionStorage.removeItem(STUDY_RUN); } catch {} };
   const saveSOpts = () => setPref(STUDY_OPTS, JSON.stringify(sOpts));
   const sLeft = () => !sRun ? 0 : sRun.paused != null ? sRun.paused : Math.max(0, sRun.endsAt - Date.now());
   const sFmt = (ms) => { const t = Math.ceil(ms / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
-  const sDur = () => (sRun.phase === "focus" ? STUDY_MODES[sRun.mode][0] : STUDY_MODES[sRun.mode][1]) * 60000;
+  const sDur = () => sRun.phase === "focus" ? sRun.f : sRun.b;
+  const sNum = (v, lo, hi, dflt) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n > 0 ? Math.min(hi, Math.max(lo, n)) : dflt; };
+  const sSecs = (s) => s % 60 === 0 && s >= 60 ? `${s / 60} min` : `${s}s`;
+  // What the chosen settings mean: focus and break lengths in milliseconds, and how many rounds (0 = keep going).
+  function sPlan(){
+    if (sOpts.kind === "kitchen") return { f: sNum(sOpts.kMin, 1, 180, 10) * 60000, b: 0, rounds: 1 };
+    if (sOpts.kind === "workout") {
+      const [w, r, n] = sOpts.wk === "custom" ? [sNum(sOpts.cw, 5, 600, 40), sNum(sOpts.cr, 5, 600, 20), sNum(sOpts.cn, 1, 30, 6)] : WORKOUTS[sOpts.wk];
+      return { f: w * 1000, b: r * 1000, rounds: n };
+    }
+    const [f, b] = sOpts.mode === "custom" ? [sNum(sOpts.cf, 1, 120, 30), sNum(sOpts.cb, 1, 60, 5)] : STUDY_MODES[sOpts.mode];
+    return { f: f * 60000, b: b * 60000, rounds: 0 };
+  }
+  const sWords = () => sRun.kind === "kitchen" ? ["Timer", "Timer"] : sRun.kind === "workout" ? ["Go", "Rest"] : ["Focus", "Break"];
   const baseTitle = document.title;
   async function wakeOn(){ if (!sOpts.awake || !("wakeLock" in navigator) || sWake) return; try { sWake = await navigator.wakeLock.request("screen"); sWake.addEventListener("release", () => { sWake = null; }); } catch {} }
   function wakeOff(){ try { sWake && sWake.release(); } catch {} sWake = null; }
@@ -3955,82 +3995,148 @@ const PLAYERS = {
     if (studyDlg.hidden) { sReturn = document.activeElement; studyDlg.hidden = false; }
     renderStudy(); setTimeout(() => studyBody.querySelector("button")?.focus(), 30);
   }
-  function closeStudy(){ studyDlg.hidden = true; sReturn?.focus?.(); }
+  function closeStudy(){ studyDlg.hidden = true; sDone = ""; sReturn?.focus?.(); }
+  const sField = (key, label, lo, hi, unit) => `<label class="study-num"><span>${label}</span><input type="number" inputmode="numeric" min="${lo}" max="${hi}" data-opt="${key}" value="${esc(sOpts[key])}"><small>${unit}</small></label>`;
   function renderStudy(){
     const p = prog("study");
     if (!sRun) {
-      studyBody.innerHTML = `<p>Focus for a set time, then take a short break. Repeat. It's the simplest study trick there is, and it works.</p>
-        <div class="study-modes" role="radiogroup" aria-label="Session length">${Object.entries(STUDY_MODES).map(([k, [f, b, n]]) =>
-          `<button type="button" role="radio" data-mode="${k}" aria-checked="${sOpts.mode === k}"><b>${f} / ${b}</b><small>${n}</small></button>`).join("")}</div>
-        <label for="studyTopic" style="font-weight:800">What are you studying? <span style="color:var(--muted); font-weight:700">(optional, stays on this device)</span></label>
-        <input class="study-topic" id="studyTopic" maxlength="40" placeholder="Fractions, French verbs, history essay…" value="${esc(sOpts.topic || "")}">
-        <div class="setting"><span>Play Study Hall lo-fi</span><button class="switch" type="button" data-act="music" aria-pressed="${!!sOpts.music}"><span class="sr">Play Study Hall lo-fi</span></button></div>
-        <div class="setting"><span>Keep the screen on</span><button class="switch" type="button" data-act="awake" aria-pressed="${!!sOpts.awake}"><span class="sr">Keep the screen on</span></button></div>
-        <div class="row"><button class="primary" type="button" data-act="start">Start focusing</button></div>
-        <p class="study-stats"><span>${p.sessions || 0} session${p.sessions === 1 ? "" : "s"} done</span><span>${p.minutes || 0} minutes focused</span></p>`;
+      const kind = sOpts.kind;
+      const kinds = `<div class="study-kinds" role="radiogroup" aria-label="Kind of timer">${Object.entries(STUDY_KINDS).map(([k, [n, ico]]) =>
+        `<button type="button" role="radio" data-kind="${k}" aria-checked="${kind === k}"><span aria-hidden="true">${ico}</span> ${n}</button>`).join("")}</div>`;
+      const done = sDone ? `<p class="study-say study-done" role="status">${esc(sDone)}</p>` : "";
+      const awake = `<div class="setting"><span>Keep the screen on</span><button class="switch" type="button" data-act="awake" aria-pressed="${!!sOpts.awake}"><span class="sr">Keep the screen on</span></button></div>`;
+      let body;
+      if (kind === "kitchen") {
+        body = `<p>One timer, no fuss. For pasta, pizza, laundry, or ten more minutes of anything.</p>
+          <div class="study-modes six" role="radiogroup" aria-label="Timer length">${KITCHEN_PICKS.map(m =>
+            `<button type="button" role="radio" data-kmin="${m}" aria-checked="${Number(sOpts.kMin) === m}"><b>${m}</b><small>min</small></button>`).join("")}</div>
+          <div class="study-fields">${sField("kMin", "Or set your own", 1, 180, "minutes")}</div>
+          <label for="studyTopic" style="font-weight:800">What's it for? <span style="color:var(--muted); font-weight:700">(optional)</span></label>
+          <input class="study-topic" id="studyTopic" data-opt="kLabel" maxlength="40" placeholder="Pasta, pizza, laundry…" value="${esc(sOpts.kLabel || "")}">
+          ${awake}<div class="row"><button class="primary" type="button" data-act="start">Start timer</button></div>`;
+      } else if (kind === "workout") {
+        body = `<p>Go hard, rest, repeat. I'll count the rounds so you don't have to.</p>
+          <div class="study-modes four" role="radiogroup" aria-label="Workout">${Object.entries(WORKOUTS).map(([k, [w, r, n, name]]) =>
+            `<button type="button" role="radio" data-wk="${k}" aria-checked="${sOpts.wk === k}"><b>${w} / ${r}</b><small>${name} × ${n}</small></button>`).join("")}
+            <button type="button" role="radio" data-wk="custom" aria-checked="${sOpts.wk === "custom"}"><b>?</b><small>Your own</small></button></div>
+          ${sOpts.wk === "custom" ? `<div class="study-fields">${sField("cw", "Go", 5, 600, "seconds")}${sField("cr", "Rest", 5, 600, "seconds")}${sField("cn", "Rounds", 1, 30, "rounds")}</div>` : ""}
+          <p class="study-stats"><span>Seconds of go / seconds of rest</span></p>
+          ${awake}<div class="row"><button class="primary" type="button" data-act="start">Start workout</button></div>`;
+      } else {
+        body = `<p>Focus for a set time, then take a short break. Repeat. It's the simplest study trick there is, and it works.</p>
+          <div class="study-modes four" role="radiogroup" aria-label="Session length">${Object.entries(STUDY_MODES).map(([k, [f, b, n]]) =>
+            `<button type="button" role="radio" data-mode="${k}" aria-checked="${sOpts.mode === k}"><b>${f} / ${b}</b><small>${n}</small></button>`).join("")}
+            <button type="button" role="radio" data-mode="custom" aria-checked="${sOpts.mode === "custom"}"><b>?</b><small>Your own</small></button></div>
+          ${sOpts.mode === "custom" ? `<div class="study-fields">${sField("cf", "Focus", 1, 120, "minutes")}${sField("cb", "Break", 1, 60, "minutes")}</div>` : ""}
+          <label for="studyTopic" style="font-weight:800">What are you studying? <span style="color:var(--muted); font-weight:700">(optional, stays on this device)</span></label>
+          <input class="study-topic" id="studyTopic" data-opt="topic" maxlength="40" placeholder="Fractions, French verbs, history essay…" value="${esc(sOpts.topic || "")}">
+          <div class="setting"><span>Play Study Hall lo-fi</span><button class="switch" type="button" data-act="music" aria-pressed="${!!sOpts.music}"><span class="sr">Play Study Hall lo-fi</span></button></div>
+          ${awake}<div class="row"><button class="primary" type="button" data-act="start">Start focusing</button></div>
+          <p class="study-stats"><span>${p.sessions || 0} session${p.sessions === 1 ? "" : "s"} done</span><span>${p.minutes || 0} minutes focused</span></p>`;
+      }
+      studyBody.innerHTML = done + kinds + body;
       return;
     }
-    const [f, b] = STUDY_MODES[sRun.mode], focus = sRun.phase === "focus";
-    studyBody.innerHTML = `${sRun.topic ? `<p style="text-align:center; margin:0">Studying: <b>${esc(sRun.topic)}</b></p>` : ""}
-      <div class="study-ring${focus ? "" : " brk"}" id="studyRing"><div><div class="study-time" id="studyTime" aria-live="off">${sFmt(sLeft())}</div><span class="study-phase">${focus ? "Focus" : "Break"} · round ${sRun.round}</span></div></div>
-      <p class="study-say" aria-live="polite">${esc(sSay || (focus ? "Phones face down. I'll tell you when it's break time." : "Break time. Stretch, water, eyes off the screen."))}</p>
+    const focus = sRun.phase === "focus", kind = sRun.kind, [on, off] = sWords();
+    const phase = kind === "kitchen" ? "Timer" : kind === "workout" ? `${focus ? on : off} · round ${sRun.round} of ${sRun.rounds}` : `${focus ? on : off} · round ${sRun.round}`;
+    const quiet = kind === "kitchen" ? "I'll ding when it's ready. Don't wander too far." : kind === "workout" ? (focus ? "Go! Good form beats fast." : "Rest. Breathe.")
+      : focus ? "Phones face down. I'll tell you when it's break time." : "Break time. Stretch, water, eyes off the screen.";
+    const stats = kind === "kitchen" ? `<span>${sSecs(sRun.f / 1000)} timer</span>`
+      : kind === "workout" ? `<span>${sSecs(sRun.f / 1000)} go</span><span>${sSecs(sRun.b / 1000)} rest</span><span>${sRun.rounds} rounds</span>`
+      : `<span>${sRun.f / 60000} min focus</span><span>${sRun.b / 60000} min break</span><span>${p.sessions || 0} session${p.sessions === 1 ? "" : "s"} so far</span>`;
+    studyBody.innerHTML = `${sRun.topic ? `<p style="text-align:center; margin:0">${kind === "kitchen" ? "Timer for" : "Studying"}: <b>${esc(sRun.topic)}</b></p>` : ""}
+      <div class="study-ring${focus ? "" : " brk"}" id="studyRing"><div><div class="study-time" id="studyTime" aria-live="off">${sFmt(sLeft())}</div><span class="study-phase">${phase}</span></div></div>
+      <p class="study-say" aria-live="polite">${esc(sSay || quiet)}</p>
       <div class="row" style="justify-content:center"><button class="primary" type="button" data-act="pause">${sRun.paused != null ? "Resume" : "Pause"}</button>
-        <button class="ghost" type="button" data-act="skip">${focus ? "Skip to break" : "Skip break"}</button><button class="ghost" type="button" data-act="end">End session</button></div>
-      <p class="study-stats"><span>${f} min focus</span><span>${b} min break</span><span>${p.sessions || 0} session${p.sessions === 1 ? "" : "s"} so far</span></p>`;
+        ${kind === "kitchen" ? `<button class="ghost" type="button" data-act="more">+1 minute</button>`
+          : `<button class="ghost" type="button" data-act="skip">${kind === "workout" ? (focus ? "Skip to rest" : "Skip rest") : focus ? "Skip to break" : "Skip break"}</button>`}
+        <button class="ghost" type="button" data-act="end">${kind === "kitchen" ? "Stop timer" : kind === "workout" ? "End workout" : "End session"}</button></div>
+      <p class="study-stats">${stats}</p>`;
     studyTick();
   }
   function studyTick(){
     if (!sRun) { studyPill.hidden = true; document.title = baseTitle; return; }
-    const left = sLeft(), focus = sRun.phase === "focus";
+    const left = sLeft(), focus = sRun.phase === "focus", word = sWords()[focus ? 0 : 1];
     if (left <= 0 && sRun.paused == null) return studyNext(false);
     const txt = sFmt(left), pct = Math.round(100 * (1 - left / sDur()));
     const t = $("studyTime"); if (t) t.textContent = txt;
-    const r = $("studyRing"); if (r) r.style.setProperty("--p", pct);
-    studyPill.hidden = !studyDlg.hidden ? true : false;
+    const r = $("studyRing"); if (r) r.style.setProperty("--p", Math.max(0, pct));
+    studyPill.hidden = !studyDlg.hidden;
     studyPill.classList.toggle("brk", !focus);
-    studyPill.textContent = `${focus ? "Focus" : "Break"} ${txt}${sRun.paused != null ? " · paused" : ""}`;
-    studyPill.setAttribute("aria-label", `Study Hall: ${focus ? "focus" : "break"}, ${txt} left. Open Study Hall`);
-    document.title = `${txt} · ${focus ? "Focus" : "Break"} · RoboDad`;
+    studyPill.textContent = `${word} ${txt}${sRun.paused != null ? " · paused" : ""}`;
+    studyPill.setAttribute("aria-label", `Study Hall: ${word.toLowerCase()}, ${txt} left. Open Study Hall`);
+    document.title = `${txt} · ${word} · RoboDad`;
   }
   function studyStartMusic(){
     if (!sOpts.music || !window.RoboRadio) return;
     try { if (!(RoboRadio.playing && RoboRadio.station === "study")) { radioPrefs.st = "study"; saveRadio(); RoboRadio.play("study"); sStartedMusic = true; try { radioUI(); } catch {} } } catch {}
   }
+  function studyChime(times){
+    for (let i = 0; i < times; i++) setTimeout(() => { try { window.RoboRadio && RoboRadio.chime(); } catch {} }, i * 900);
+    try { navigator.vibrate && navigator.vibrate(times > 1 ? [300, 150, 300, 150, 300] : 200); } catch {}
+  }
   function studyStart(){
-    const tp = $("studyTopic"); sOpts.topic = (tp?.value || "").trim().slice(0, 40); saveSOpts();
-    sRun = { mode: sOpts.mode, phase:"focus", round:1, topic: sOpts.topic, endsAt: Date.now() + STUDY_MODES[sOpts.mode][0] * 60000, paused:null };
-    sSay = ""; saveSRun(); studyStartMusic(); wakeOn(); clearInterval(sTimer); sTimer = setInterval(studyTick, 500); renderStudy();
+    const plan = sPlan(), kind = sOpts.kind;
+    sOpts.topic = String(sOpts.topic || "").trim().slice(0, 40); sOpts.kLabel = String(sOpts.kLabel || "").trim().slice(0, 40); saveSOpts();
+    sRun = { kind, mode: sOpts.mode, phase:"focus", round:1, rounds: plan.rounds, f: plan.f, b: plan.b,
+      topic: kind === "study" ? sOpts.topic : kind === "kitchen" ? sOpts.kLabel : "", endsAt: Date.now() + plan.f, paused:null };
+    sSay = ""; sDone = ""; saveSRun(); if (kind === "study") studyStartMusic(); wakeOn(); clearInterval(sTimer); sTimer = setInterval(studyTick, 250); renderStudy();
+  }
+  // A kitchen timer or a workout has an end. Study sessions go round until you stop them.
+  function studyFinish(msg){
+    sRun = null; sSay = ""; sDone = msg; saveSRun(); clearInterval(sTimer); wakeOff(); studyChime(3);
+    if (studyDlg.hidden) { toast(msg); sDone = ""; }
+    studyTick(); renderStudy();
   }
   function studyNext(skipped){
-    const [f, b] = STUDY_MODES[sRun.mode];
+    const kind = sRun.kind;
+    if (kind === "kitchen") return studyFinish(sRun.topic ? `Time's up: ${sRun.topic}! Go check on it.` : pick(KITCHEN_DONE));
     if (sRun.phase === "focus") {
-      if (!skipped) { const p = prog("study"); p.sessions = (p.sessions || 0) + 1; p.minutes = (p.minutes || 0) + f; saveLp(); checkLangBadges(); }
-      sRun.phase = "break"; sRun.endsAt = Date.now() + b * 60000; sSay = skipped ? "Break time. Stretch, water, eyes off the screen." : pick(FOCUS_DONE);
+      if (kind === "workout" && sRun.round >= sRun.rounds) return studyFinish(pick(WORKOUT_DONE));
+      if (kind === "study" && !skipped) { const p = prog("study"); p.sessions = (p.sessions || 0) + 1; p.minutes = (p.minutes || 0) + Math.round(sRun.f / 60000); saveLp(); checkLangBadges(); }
+      sRun.phase = "break"; sRun.endsAt = Date.now() + sRun.b;
+      sSay = kind === "workout" ? pick(GO_DONE) : skipped ? "Break time. Stretch, water, eyes off the screen." : pick(FOCUS_DONE);
     } else {
-      sRun.phase = "focus"; sRun.round++; sRun.endsAt = Date.now() + f * 60000; sSay = pick(BREAK_DONE);
+      sRun.phase = "focus"; sRun.round++; sRun.endsAt = Date.now() + sRun.f;
+      sSay = kind === "workout" ? (sRun.round === sRun.rounds ? "Go! Last round. Leave nothing behind." : pick(REST_DONE)) : pick(BREAK_DONE);
     }
     sRun.paused = null; saveSRun();
-    try { window.RoboRadio && RoboRadio.chime(); } catch {}
+    studyChime(1);
     if (!skipped && studyDlg.hidden) toast(sSay);
     renderStudy(); studyTick();
   }
   function studyEnd(){
     const p = prog("study");
-    toast(`Session ended. You've done ${p.sessions || 0} focus session${p.sessions === 1 ? "" : "s"} in total. Proud of you.`);
+    toast(sRun.kind === "kitchen" ? "Timer stopped." : sRun.kind === "workout" ? `Workout ended in round ${sRun.round}. Showing up is the hard part. Nice work.`
+      : `Session ended. You've done ${p.sessions || 0} focus session${p.sessions === 1 ? "" : "s"} in total. Proud of you.`);
     sRun = null; sSay = ""; saveSRun(); clearInterval(sTimer); wakeOff();
     if (sStartedMusic && window.RoboRadio && RoboRadio.station === "study") { try { RoboRadio.stop(); radioUI(); } catch {} }
     sStartedMusic = false; studyTick(); renderStudy();
   }
+  // Typed settings are kept as you type, so switching a preset never wipes what you wrote.
+  studyBody.addEventListener("input", (e) => {
+    const k = e.target.dataset?.opt; if (!k) return;
+    sOpts[k] = e.target.value; saveSOpts();
+    if (k === "kMin") studyBody.querySelectorAll("[data-kmin]").forEach(b => b.setAttribute("aria-checked", String(Number(b.dataset.kmin) === Number(e.target.value))));
+  });
   studyBody.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
-    if (b.dataset.mode) { sOpts.mode = b.dataset.mode; saveSOpts(); return renderStudy(); }
+    const again = (sel) => { saveSOpts(); sDone = ""; renderStudy(); studyBody.querySelector(sel)?.focus(); };
+    if (b.dataset.kind) { sOpts.kind = b.dataset.kind; return again(`[data-kind="${sOpts.kind}"]`); }
+    if (b.dataset.mode) { sOpts.mode = b.dataset.mode; return again(`[data-mode="${sOpts.mode}"]`); }
+    if (b.dataset.wk) { sOpts.wk = b.dataset.wk; return again(`[data-wk="${sOpts.wk}"]`); }
+    if (b.dataset.kmin) { sOpts.kMin = Number(b.dataset.kmin); return again(`[data-kmin="${sOpts.kMin}"]`); }
     const act = b.dataset.act;
     if (act === "music" || act === "awake") { sOpts[act] = !sOpts[act]; saveSOpts(); b.setAttribute("aria-pressed", String(sOpts[act])); }
     else if (act === "start") studyStart();
     else if (act === "pause") {
       if (sRun.paused != null) { sRun.endsAt = Date.now() + sRun.paused; sRun.paused = null; wakeOn(); }
       else { sRun.paused = sLeft(); wakeOff(); }
-      saveSRun(); renderStudy();
+      saveSRun(); renderStudy(); studyBody.querySelector('[data-act="pause"]')?.focus();
+    }
+    else if (act === "more") {
+      if (sRun.paused != null) sRun.paused += 60000; else sRun.endsAt += 60000;
+      sRun.f += 60000; saveSRun(); studyTick();
     }
     else if (act === "skip") studyNext(true);
     else if (act === "end") studyEnd();
@@ -4043,7 +4149,7 @@ const PLAYERS = {
     const fromSide = b.closest(".side"); if (fromSide) fromSide.classList.remove("open");
     openStudy(); if (fromSide) sReturn = $("sideBtn");
   }));
-  if (sRun) setTimeout(() => { sTimer = setInterval(studyTick, 500); studyTick(); }, 0);   // after the rest of the page has set up
+  if (sRun) setTimeout(() => { sTimer = setInterval(studyTick, 250); studyTick(); }, 0);   // after the rest of the page has set up
 
   // role-play: a separate chat in French or Hindi; your normal chat waits for you
   function renderLog(){
