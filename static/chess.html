@@ -148,12 +148,25 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 /* Clocks */
 .clocks{width:100%; max-width:640px; display:flex; gap:8px}
 .clocks[hidden]{display:none}
-.clk{flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--panel); border:2px solid var(--edge); border-radius:12px; padding:6px 12px; font-variant-numeric:tabular-nums}
-.clk span{color:var(--muted); font-size:.85rem; font-weight:800}
-.clk b{font-size:1.4rem; font-weight:900; letter-spacing:.02em}
-.clk.run{border-color:var(--gold)}
+.clocks{--clk-bg:var(--panel); --clk-edge:var(--edge); --clk-ink:var(--ink); --clk-muted:var(--muted); --clk-accent:var(--gold); --clk-font:inherit; --clk-glow:none; --clk-digits:var(--ink)}
+.clk{flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--clk-bg); color:var(--clk-ink); border:2px solid var(--clk-edge); box-shadow:var(--clk-glow); font-family:var(--clk-font); border-radius:12px; padding:6px 12px; font-variant-numeric:tabular-nums}
+.clk span{color:var(--clk-muted); font-size:.82rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+@media (max-width:380px){.clk{padding:6px 8px; gap:4px}.clk b{font-size:1.05rem; letter-spacing:0}.clk span{font-size:.72rem}.clk .ico{font-size:.95rem}}
+.clk .ico{font-style:normal; font-size:1.05rem}
+.clk b{font-size:1.4rem; font-weight:900; letter-spacing:.02em; color:var(--clk-digits)}
+.clk.run{border-color:var(--clk-accent); box-shadow:0 0 0 1px var(--clk-accent), var(--clk-glow)}
 .clk.low b{color:var(--check)}
 .clk.low.run{animation:lowpulse 1s ease-in-out infinite}
+/* Each clock wears the board's colours (set from the board skin in applySkin). */
+.clocks[data-skin="modern"]{--clk-bg:#2B343C; --clk-edge:#46535F; --clk-accent:#38B6FF; --clk-muted:#B9C4CE}
+.clocks[data-skin="skater"]{--clk-bg:#111; --clk-edge:#4A4A50; --clk-accent:#FF3EA5; --clk-muted:#F2C230; --clk-glow:0 0 0 2px #F2C230}
+.clocks[data-skin="eighties"]{--clk-bg:#0B0820; --clk-edge:#2B2070; --clk-accent:#FF3EA5; --clk-muted:#2DE2E6; --clk-digits:#2DE2E6; --clk-glow:0 0 10px #FF3EA555; --clk-font:ui-monospace,"Courier New",monospace}
+.clocks[data-skin="gamer"]{--clk-bg:#1B2029; --clk-edge:#566074; --clk-accent:#39FF88; --clk-muted:#39FF88; --clk-digits:#F4F7FF; --clk-font:ui-monospace,monospace}
+.clocks[data-skin="coach"]{--clk-bg:#2F6B2E; --clk-edge:#63B25A; --clk-accent:#FFE14D; --clk-muted:#E6F5E3; --clk-digits:#fff}
+.clocks[data-skin="bookworm"]{--clk-bg:#4A2C17; --clk-edge:#86532F; --clk-accent:#C9A227; --clk-muted:#E8D8B4; --clk-digits:#FFF8E7; --clk-font:Georgia,"Times New Roman",serif}
+.clocks[data-skin="labdad"]{--clk-bg:#1E4E8A; --clk-edge:#3577C2; --clk-accent:#FFD84D; --clk-muted:#CFE8FF; --clk-digits:#fff; --clk-font:ui-monospace,monospace}
+.clocks[data-skin="professor"]{--clk-bg:#3E1F10; --clk-edge:#8A4B2A; --clk-accent:#B8892E; --clk-muted:#EBCB9B; --clk-digits:#FFFDF5; --clk-font:Georgia,"Times New Roman",serif}
+.clocks[data-skin="grandpa"]{--clk-bg:#0E1712; --clk-edge:#2F4D3E; --clk-accent:#39FF88; --clk-muted:#9AA6AE; --clk-digits:#39FF88; --clk-glow:0 0 10px #39FF8844; --clk-font:ui-monospace,monospace}
 @keyframes lowpulse{50%{border-color:var(--check)}}
 @media (prefers-reduced-motion: reduce){.clk.low.run{animation:none; border-color:var(--check)}}
 .status{width:100%; max-width:640px; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px; min-height:3.2em; font-size:.98rem}
@@ -200,8 +213,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 </section>
 
 <div class="clocks" id="clocks" role="group" aria-label="Game clocks" hidden>
-  <div class="clk" id="clkDadBox"><span id="clkDadName">Dad</span><b id="clkDad" role="timer" aria-live="off">0:00</b></div>
-  <div class="clk" id="clkYouBox"><span>You</span><b id="clkYou" role="timer" aria-live="off">0:00</b></div>
+  <div class="clk" id="clkDadBox"><span><i class="ico" id="clkDadIco" aria-hidden="true"></i> <span id="clkDadName">Dad</span></span><b id="clkDad" role="timer" aria-live="off">0:00</b></div>
+  <div class="clk" id="clkYouBox"><span><i class="ico" aria-hidden="true">♙</i> You</span><b id="clkYou" role="timer" aria-live="off">0:00</b></div>
 </div>
 <div class="sr" id="clockSR" aria-live="polite"></div>
 
@@ -239,7 +252,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <div class="tier-grid" id="tierGrid" role="radiogroup" aria-label="Opponent"></div>
 </section>
 
-<p class="foot">Tap a piece, then tap where it goes. When a pawn reaches the far side you pick what it becomes. Every dad plays on a clock, and the tougher the dad, the tighter the clock. It starts after your first move, and the Clock button turns it off for a relaxed game. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
+<p class="foot">Tap a piece, then tap where it goes. When a pawn reaches the far side you pick what it becomes. Every dad plays on a clock set by how tough he is. It starts after your first move, and the Clock button turns it off for a relaxed game. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
 
 <script src="/static/avatars.js"></script>
 <script src="/static/radio.js"></script>
@@ -261,19 +274,21 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   const MUSIC_KEY = "robodad.chess.music";
   const CLOCK_KEY = "robodad.chess.clock";
 
-  // The clock for each side: minutes each, plus seconds added after every move you make.
-  // Tougher dads get tighter clocks. Change a number here and the whole page follows.
+  // The clock for each side: minutes each for the whole game, plus seconds added after every move that side makes.
+  // Change a number here and the whole page follows.
   const CLOCKS = {
-    modern:   { min: 15, inc: 10 },
-    skater:   { min: 12, inc: 8 },
-    eighties: { min: 12, inc: 8 },
-    gamer:    { min: 10, inc: 5 },
-    coach:    { min: 10, inc: 5 },
-    bookworm: { min: 8,  inc: 5 },
-    labdad:   { min: 8,  inc: 5 },
-    professor:{ min: 6,  inc: 3 },
-    grandpa:  { min: 5,  inc: 2 },
+    modern:   { min: 35, inc: 10 },
+    skater:   { min: 30, inc: 8 },
+    eighties: { min: 30, inc: 8 },
+    gamer:    { min: 25, inc: 5 },
+    coach:    { min: 25, inc: 5 },
+    bookworm: { min: 20, inc: 5 },
+    labdad:   { min: 20, inc: 5 },
+    professor:{ min: 6,  inc: 15 },
+    grandpa:  { min: 10, inc: 2 },
   };
+  // Each dad's icon on the clock.
+  const ICONS = { modern: "🧢", skater: "🛹", eighties: "🕹️", gamer: "🎮", coach: "📣", bookworm: "📚", labdad: "🧪", professor: "🎓", grandpa: "🤖" };
   // How long each dad takes to answer, at least and at most (ms). Keeps replies from landing the
   // instant you move, gives your piece time to land, and makes his clock tick like a real player's.
   const PACE = {
@@ -397,7 +412,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     lastClk = sig;
     $("clkYou").textContent = fmt(you);
     $("clkDad").textContent = fmt(dad);
-    $("clkDadName").textContent = C.TIERS[tierKey].name;
+    $("clkDadName").textContent = tierKey === "grandpa" ? "Gramps" : C.TIERS[tierKey].name.replace(/ Dad$/, "");
+    $("clkDadIco").textContent = ICONS[tierKey] || "♟";
     $("clkYouBox").classList.toggle("run", clk.side === human);
     $("clkDadBox").classList.toggle("run", clk.side === dadSide());
     $("clkYouBox").classList.toggle("low", you < LOW_MS);
@@ -578,6 +594,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const board = $("board");
     if (skin === "classic") board.removeAttribute("data-skin");
     else board.dataset.skin = skin;
+    if (skin === "classic") $("clocks").removeAttribute("data-skin"); else $("clocks").dataset.skin = skin;
     if (states.length) renderBoard();     // Arcade Dad's board swaps in pixel pieces
   }
 
