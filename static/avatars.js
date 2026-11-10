@@ -336,17 +336,16 @@
       <path d="M32 53.8 L25.8 50.4 L25.8 57.2Z M32 53.8 L38.2 50.4 L38.2 57.2Z" fill="#C8102E" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
       <circle cx="32" cy="53.8" r="2" fill="#9E0C24" stroke="${INK}" stroke-width="1.1"/>
       <g class="hd">${head}
+        <path d="M13.2 27 C11.5 17.5 18 11.2 28 11 C38 10.4 49.5 13 50.8 27 C49.6 22.6 47.4 20.4 43.6 19.8 C37 18.8 31 19.4 27.5 17.2 C25 19.2 20.6 19.8 17.4 21.4 C15.2 22.6 14 24.4 13.2 27Z" fill="#4A4F57" stroke="${INK}" stroke-width="1.9" stroke-linejoin="round"/>
+        <path d="M27.5 12.2 C27.2 14.4 27.3 16 27.5 17.2" stroke="#2E3238" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <path d="M13.6 25.6 C13.2 22.6 14 20.8 15.6 19.6 M50.4 25.6 C50.6 22.6 49.8 20.6 48 19.6" stroke="#C9CED6" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M33 13 C38 13 43 14.2 46 17" stroke="#8A9099" stroke-width="1.2" fill="none" stroke-linecap="round"/>
         <path d="M18 24.2 L27.5 23 M36.5 23 L46 24.2" stroke="#3B2A1E" stroke-width="2.6" stroke-linecap="round" fill="none"/>
         ${eyes}
         <g class="pspecs"><rect x="17" y="26.6" width="12" height="8.2" rx="2" fill="#fff" fill-opacity=".15" stroke="#262B33" stroke-width="2"/><rect x="35" y="26.6" width="12" height="8.2" rx="2" fill="#fff" fill-opacity=".15" stroke="#262B33" stroke-width="2"/>
           <path d="M29 29.6 Q32 28 35 29.6" fill="none" stroke="#262B33" stroke-width="1.8"/>
           <path class="glint" d="M19.2 29.2 L21.2 27.8 M37.2 29.2 L39.2 27.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/></g>
         ${smile}
-        <g class="mortar"><path d="M15.5 19.5 C15.5 13.2 21 11 32 11 C43 11 48.5 13.2 48.5 19.5 Q32 16.6 15.5 19.5Z" fill="#26303D" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M32 2 L58 7.8 L32 13.6 L6 7.8Z" fill="#33404F" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M32 7.8 L50.5 10.2 V19" fill="none" stroke="#F2B533" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M49 18.5 H52 L52.8 24.5 H48.2Z" fill="#F2B533" stroke="${INK}" stroke-width=".9" stroke-linejoin="round"/>
-          <circle cx="32" cy="7.8" r="1.5" fill="#F2B533" stroke="${INK}" stroke-width=".8"/></g>
       </g>
       <g class="mv mv-chalk" opacity="0"><text x="3" y="15" font-family="'Gochi Hand', cursive" font-size="15" fill="#F7D54A" stroke="${INK}" stroke-width=".5">π</text>
         <rect x="52" y="36" width="9" height="3.2" rx="1" fill="#fff" stroke="${INK}" stroke-width="1" transform="rotate(-35 56.5 37.6)"/></g>
