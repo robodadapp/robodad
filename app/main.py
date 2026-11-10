@@ -226,6 +226,49 @@ async def harden(request: Request, call_next):
     return response
 
 
+# ---------------------------------------------------------------- page not found
+# A mistyped or out-of-date link gets a friendly page with a way back, not a
+# line of JSON. API and file requests keep their plain JSON answer.
+NOT_FOUND_PAGE = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Page not found · RoboDad</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:light dark; --sky:#E8EFF5; --surface:#FFFFFF; --ink:#1B2A3A; --muted:#5A6B7E; --line:#D3DEE8; --denim:#2E5C8A}
+@media (prefers-color-scheme: dark){:root{--sky:#101821; --surface:#1A2632; --ink:#E5EDF5; --muted:#9AAABB; --line:#2B3A49; --denim:#4C80B8}}
+*{box-sizing:border-box}
+body{margin:0; min-height:100dvh; display:grid; place-items:center; padding:24px; background:var(--sky); color:var(--ink);
+  font:1.05rem/1.55 "Nunito", ui-rounded, system-ui, -apple-system, "Segoe UI", sans-serif}
+main{max-width:460px; width:100%; background:var(--surface); border:1px solid var(--line); border-radius:22px; padding:28px 24px; text-align:center}
+img{width:84px; height:84px}
+h1{margin:10px 0 6px; font-size:1.6rem; line-height:1.2}
+p{margin:0 0 14px; color:var(--muted); font-weight:600}
+.go{display:inline-block; background:var(--denim); color:#fff; font-weight:800; text-decoration:none; border-radius:999px; padding:12px 22px; min-height:44px}
+.go:focus-visible, nav a:focus-visible{outline:3px solid var(--denim); outline-offset:3px}
+nav{margin-top:18px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px 18px}
+nav a{color:var(--denim); font-weight:800}
+</style></head>
+<body><main>
+<img src="/static/favicon.svg" alt="">
+<h1>Well, this page wandered off.</h1>
+<p>I checked the garage, the attic and behind the couch. Nothing. The link might be old, or have a typo in it.</p>
+<a class="go" href="/">Back to RoboDad</a>
+<nav aria-label="Other pages"><a href="/learn">Learn</a><a href="/chess">Chess</a><a href="/tiles">Tile Talk</a><a href="/changelog">What's new</a></nav>
+</main></body></html>"""
+
+
+@app.exception_handler(404)
+async def not_found(request: Request, exc):
+    path = request.url.path
+    wants_page = request.method in ("GET", "HEAD") and "text/html" in request.headers.get("accept", "")
+    if wants_page and not path.startswith(("/api/", "/static/", "/.well-known/")):
+        return HTMLResponse(NOT_FOUND_PAGE, status_code=404, headers={"Cache-Control": "no-store"})
+    detail = getattr(exc, "detail", "Not Found")
+    return JSONResponse({"detail": detail}, status_code=404)
+
+
 # ---------------------------------------------------------------- rate limits
 _max_hits, _window = (int(x) for x in RATE_LIMIT.split("/"))
 _hits: dict[str, deque] = defaultdict(deque)

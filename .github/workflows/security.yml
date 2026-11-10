@@ -1,6 +1,7 @@
 name: Security checks
 on:
   push: { branches: [main] }
+  pull_request:
   schedule: [{ cron: "17 9 * * 1" }]   # Mondays
   workflow_dispatch:
 permissions:
@@ -26,6 +27,14 @@ jobs:
           python scripts/test_chess_daily.py
       - name: On this day with Dad tests
         run: python scripts/test_onthisday.py
+      - name: Tile Talk rules and coach tests
+        run: |
+          node scripts/test_tiles.js
+          python scripts/test_tiles_api.py
+      - name: Brain teaser answer key
+        run: node scripts/check_brain.js
+      - name: Link previews, sitemap and the page-not-found screen
+        run: python scripts/test_seo.py
       # The gitleaks CLI is MIT-licensed and free for organisation repos. The
       # gitleaks-action wrapper is not: since v2 it needs a paid licence key for
       # org-owned repos, which is why this job failed after the move to the
