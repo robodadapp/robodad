@@ -33,7 +33,7 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
   --coord-light:var(--sq-dark); --coord-dark:var(--sq-light); --coord-font:"Nunito", ui-rounded, system-ui, sans-serif}
 .sq{position:relative; border:0; padding:0; margin:0; display:flex; align-items:center; justify-content:center; font-size:clamp(26px,8vw,46px); line-height:1; cursor:pointer; background:var(--tex-dark), var(--sq-dark); color:inherit}
 .sq.light{background:var(--tex-light), var(--sq-light)}
-.sq .p{transition:transform .08s}
+.sq .p{display:inline-block}
 .sq.w-piece{color:var(--pw); text-shadow:0 0 2px var(--pw-edge),0 0 2px var(--pw-edge)}
 .sq.b-piece{color:var(--pb); text-shadow:0 0 1px var(--pb-edge),0 0 1px var(--pb-edge)}
 .sq.last{box-shadow:inset 0 0 0 999px var(--last)}
@@ -123,10 +123,52 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 .sq .px{width:72%; height:72%; display:block; shape-rendering:crispEdges}
 .board[data-skin="eighties"] .sq.w-piece .px{filter:drop-shadow(0 0 3px #2DE2E6)}
 .board[data-skin="eighties"] .sq.b-piece .px{filter:drop-shadow(0 0 3px #FF3EA5)}
-.skin-row{width:100%; max-width:640px; display:flex; align-items:center; gap:8px; color:var(--muted); font-size:14px}
+.skin-row{width:100%; max-width:640px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:var(--muted); font-size:14px}
+.skin-row #skinNote{order:9; flex:1 0 100%}
+.skin-row #skinNote:empty{display:none}
 .skin-row select{background:var(--panel); color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 8px; font:inherit; font-size:14px}
 .skin-row select:focus-visible{outline:3px solid var(--gold); outline-offset:1px}
 .sq:focus-visible{outline:3px solid var(--gold); outline-offset:-3px; z-index:1}
+/* Smooth play. The board is redrawn after every move, so motion comes from short animations that
+   chess.html starts on the freshly drawn squares (the slide, the capture fade, the promotion pop). */
+.board,.sq{touch-action:manipulation; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none}
+.sq.sel .p{animation:lift .14s ease-out both}
+@keyframes lift{from{transform:none}to{transform:scale(1.14) translateY(-2px)}}
+.sq.legal::after{animation:dot .16s ease-out both}
+@keyframes dot{from{transform:scale(.3); opacity:0}to{transform:none; opacity:1}}
+.sq.check.pulse{animation:checkpulse .7s ease-out 1 backwards}
+.sq .p.popin{animation:popin .34s cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes popin{from{transform:scale(.4)}to{transform:none}}
+@keyframes checkpulse{0%{filter:brightness(1)}35%{filter:brightness(1.7)}100%{filter:none}}
+.sq.ghost{position:absolute; inset:0; z-index:2; pointer-events:none; background:none !important; box-shadow:none !important}
+.sq.ghost::after{content:none}
+@media (prefers-reduced-motion: reduce){
+  .sq.sel .p,.sq.legal::after,.sq.check.pulse,.sq .p.popin{animation:none}
+}
+/* Clocks */
+.clocks{width:100%; max-width:640px; display:flex; gap:8px}
+.clocks[hidden]{display:none}
+.clocks{--clk-bg:var(--panel); --clk-edge:var(--edge); --clk-ink:var(--ink); --clk-muted:var(--muted); --clk-accent:var(--gold); --clk-font:inherit; --clk-glow:none; --clk-digits:var(--ink)}
+.clk{flex:1 1 0; min-width:0; display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--clk-bg); color:var(--clk-ink); border:2px solid var(--clk-edge); box-shadow:var(--clk-glow); font-family:var(--clk-font); border-radius:12px; padding:6px 12px; font-variant-numeric:tabular-nums}
+.clk span{color:var(--clk-muted); font-size:.82rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+@media (max-width:380px){.clk{padding:6px 8px; gap:4px}.clk b{font-size:1.05rem; letter-spacing:0}.clk span{font-size:.72rem}.clk .ico{font-size:.95rem}}
+.clk .ico{font-style:normal; font-size:1.05rem}
+.clk b{font-size:1.4rem; font-weight:900; letter-spacing:.02em; color:var(--clk-digits)}
+.clk.run{border-color:var(--clk-accent); box-shadow:0 0 0 1px var(--clk-accent), var(--clk-glow)}
+.clk.low b{color:var(--check)}
+.clk.low.run{animation:lowpulse 1s ease-in-out infinite}
+/* Each clock wears the board's colours (set from the board skin in applySkin). */
+.clocks[data-skin="modern"]{--clk-bg:#2B343C; --clk-edge:#46535F; --clk-accent:#38B6FF; --clk-muted:#B9C4CE}
+.clocks[data-skin="skater"]{--clk-bg:#111; --clk-edge:#4A4A50; --clk-accent:#FF3EA5; --clk-muted:#F2C230; --clk-glow:0 0 0 2px #F2C230}
+.clocks[data-skin="eighties"]{--clk-bg:#0B0820; --clk-edge:#2B2070; --clk-accent:#FF3EA5; --clk-muted:#2DE2E6; --clk-digits:#2DE2E6; --clk-glow:0 0 10px #FF3EA555; --clk-font:ui-monospace,"Courier New",monospace}
+.clocks[data-skin="gamer"]{--clk-bg:#1B2029; --clk-edge:#566074; --clk-accent:#39FF88; --clk-muted:#39FF88; --clk-digits:#F4F7FF; --clk-font:ui-monospace,monospace}
+.clocks[data-skin="coach"]{--clk-bg:#2F6B2E; --clk-edge:#63B25A; --clk-accent:#FFE14D; --clk-muted:#E6F5E3; --clk-digits:#fff}
+.clocks[data-skin="bookworm"]{--clk-bg:#4A2C17; --clk-edge:#86532F; --clk-accent:#C9A227; --clk-muted:#E8D8B4; --clk-digits:#FFF8E7; --clk-font:Georgia,"Times New Roman",serif}
+.clocks[data-skin="labdad"]{--clk-bg:#1E4E8A; --clk-edge:#3577C2; --clk-accent:#FFD84D; --clk-muted:#CFE8FF; --clk-digits:#fff; --clk-font:ui-monospace,monospace}
+.clocks[data-skin="professor"]{--clk-bg:#3E1F10; --clk-edge:#8A4B2A; --clk-accent:#B8892E; --clk-muted:#EBCB9B; --clk-digits:#FFFDF5; --clk-font:Georgia,"Times New Roman",serif}
+.clocks[data-skin="grandpa"]{--clk-bg:#0E1712; --clk-edge:#2F4D3E; --clk-accent:#39FF88; --clk-muted:#9AA6AE; --clk-digits:#39FF88; --clk-glow:0 0 10px #39FF8844; --clk-font:ui-monospace,monospace}
+@keyframes lowpulse{50%{border-color:var(--check)}}
+@media (prefers-reduced-motion: reduce){.clk.low.run{animation:none; border-color:var(--check)}}
 .status{width:100%; max-width:640px; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px; min-height:3.2em; font-size:.98rem}
 .status strong{color:var(--gold)}
 .controls{width:100%; max-width:640px; display:flex; flex-wrap:wrap; gap:8px}
@@ -170,13 +212,20 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <div class="bubble" id="say" role="status" aria-live="polite"></div>
 </section>
 
+<div class="clocks" id="clocks" role="group" aria-label="Game clocks" hidden>
+  <div class="clk" id="clkDadBox"><span><i class="ico" id="clkDadIco" aria-hidden="true"></i> <span id="clkDadName">Dad</span></span><b id="clkDad" role="timer" aria-live="off">0:00</b></div>
+  <div class="clk" id="clkYouBox"><span><i class="ico" id="clkYouIco" aria-hidden="true">♙</i> You</span><b id="clkYou" role="timer" aria-live="off">0:00</b></div>
+</div>
+<div class="sr" id="clockSR" aria-live="polite"></div>
+
 <div class="board" id="board" role="group" aria-label="Chess board"></div>
 
 <div class="skin-row">
   <label for="skinSel">Board</label>
   <select id="skinSel"></select>
   <span id="skinNote"></span>
-  <button class="btn" id="soundBtn" type="button" aria-pressed="true" style="margin-left:auto">Sound: on</button>
+  <button class="btn" id="musicBtn" type="button" aria-pressed="true" style="margin-left:auto">Music: on</button>
+  <button class="btn" id="soundBtn" type="button" aria-pressed="true">Sound: on</button>
 </div>
 
 <div class="status" id="status" aria-live="polite">You play white. Your move.</div>
@@ -185,6 +234,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <button class="btn primary" id="newBtn" type="button">New game</button>
   <button class="btn" id="undoBtn" type="button">Take back a move (1 left)</button>
   <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
+  <button class="btn" id="clockBtn" type="button" aria-pressed="true">Clock: on</button>
   <button class="btn" id="dailyBtn" type="button">Daily Board</button>
   <button class="btn" id="shareBtn" type="button" hidden>Share your win</button>
 </div>
@@ -202,9 +252,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <div class="tier-grid" id="tierGrid" role="radiogroup" aria-label="Opponent"></div>
 </section>
 
-<p class="foot">Tap a piece, then tap where it goes. When a pawn reaches the far side you pick what it becomes. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
+<p class="foot">Tap a piece, then tap where it goes. When a pawn reaches the far side you pick what it becomes. Every dad plays on a clock set by how tough he is. It starts after your first move, and the Clock button turns it off for a relaxed game. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
 
 <script src="/static/avatars.js"></script>
+<script src="/static/radio.js"></script>
 <script src="/static/chess-engine.js"></script>
 <script src="/static/chess-puzzles.js"></script>
 <script>
@@ -220,6 +271,36 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   const SKIN_KEY = "robodad.chess.skin";      // "auto" (match the dad), "classic", or a dad's key
   const BOARDS_KEY = "robodad.chess.boards";  // dads whose board you've won by beating them
   const SOUND_KEY = "robodad.chess.sound";
+  const MUSIC_KEY = "robodad.chess.music";
+  const CLOCK_KEY = "robodad.chess.clock";
+
+  // The clock for each side: minutes each for the whole game, plus seconds added after every move that side makes.
+  // Change a number here and the whole page follows.
+  const CLOCKS = {
+    modern:   { min: 35, inc: 10 },
+    skater:   { min: 30, inc: 8 },
+    eighties: { min: 30, inc: 8 },
+    gamer:    { min: 25, inc: 5 },
+    coach:    { min: 25, inc: 5 },
+    bookworm: { min: 20, inc: 5 },
+    labdad:   { min: 20, inc: 5 },
+    professor:{ min: 15, inc: 15 },
+    grandpa:  { min: 10, inc: 2 },
+  };
+  // Your own clock icon climbs the board as the dads get tougher: pawn, knight, bishop, rook, queen, and the king for the hardest.
+  const RANK_ICONS = ["♙", "♘", "♗", "♖", "♕", "♔"];
+  // Each dad's icon on the clock.
+  const ICONS = { modern: "🧢", skater: "🛹", eighties: "🕹️", gamer: "🎮", coach: "📣", bookworm: "📚", labdad: "🧪", professor: "🎓", grandpa: "🤖" };
+  // How long each dad takes to answer, at least and at most (ms). Keeps replies from landing the
+  // instant you move, gives your piece time to land, and makes his clock tick like a real player's.
+  const PACE = {
+    modern: [900, 1600], skater: [700, 1300], eighties: [800, 1400], gamer: [600, 1100], coach: [900, 1500],
+    bookworm: [1100, 1900], labdad: [900, 1700], professor: [1200, 2200], grandpa: [1000, 2000],
+  };
+  // Slide speed for each dad's own pieces: 1 is normal, lower is snappier, higher is more stately.
+  const SPEED = { skater: 0.8, gamer: 0.8, bookworm: 1.25, professor: 1.3 };
+  const DAD_CHARGE_CAP = 8000;     // a slow connection never costs a dad more than this per move
+  const LOW_MS = 30000;            // the clock turns red and the music speeds up under this
 
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -249,6 +330,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       professor: ["Working it out properly.", "Chalk dust everywhere. Still thinking."],
       grandpa:   ["Back in my day we took our time.", "I've seen this position before. 1974."],
     },
+    lowTime: ["Tick tock. Trust your gut.", "Clock's getting low. Pick a good one."],
+    timePlayer: ["The clock got you this time. Rematch, with a little less thinking?"],
+    timeBot: ["My clock ran out? I'm calling that a lesson in pacing."],
     backup: ["The big engine's napping, so I'm playing from here. Same board, same rules."],
   };
   let talkOn = store.get(TALK_KEY) !== "0";
@@ -285,6 +369,220 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   const getLetters = () => { try { return JSON.parse(store.get(LETTER_KEY) || "{}") || {}; } catch { return {}; } };
 
   function cur() { return states[states.length - 1]; }
+  let gameId = 0;                         // bumps on every new game, so a late reply from the engine can be told apart and dropped
+  let anim = null, curAnim = null;        // the move to animate on the next draw; the one still playing if the board is redrawn mid-slide
+  let hinting = false;
+
+  // ---- music: every dad has his own loop (RoboRadio's hidden "chess-<dad>" stations) ----
+  let musicOn = store.get(MUSIC_KEY) !== "0";
+  let tense = false;
+  function musicSync() {
+    const r = window.RoboRadio; if (!r) return;
+    if (!musicOn || daily || over || document.hidden) { r.stop(); return; }
+    r.setVolume(0.22);
+    r.setTempo(tense ? 1.12 : 1);
+    Promise.resolve(r.play("chess-" + tierKey)).catch(() => {});   // starts on your first tap if the browser is still waiting for one
+  }
+  function setTense(v) {
+    if (v === tense) return;
+    tense = v;
+    const r = window.RoboRadio; if (r) r.setTempo(v ? 1.12 : 1);    // the loop picks up speed when your clock runs low
+  }
+
+  // ---- clocks ----
+  let clockOn = store.get(CLOCK_KEY) !== "0";
+  const clk = { w: 0, b: 0, side: null, at: null, warned: 999, tickSec: -1 };   // ms left per side; whose clock runs; when it started
+  const clkCfg = () => CLOCKS[tierKey] || CLOCKS.modern;
+  const dadSide = () => (human === "w" ? "b" : "w");
+  const nowMs = () => performance.now();
+  const clockLeft = (side) => clk[side] - (clk.side === side && clk.at != null ? nowMs() - clk.at : 0);
+  function fmt(ms) {
+    ms = Math.max(0, ms);
+    if (ms < 10000) return "0:0" + (Math.floor(ms / 100) / 10).toFixed(1);
+    const sec = Math.ceil(ms / 1000);
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+  }
+  const timeText = (key, short) => { const c = CLOCKS[key]; return !clockOn || !c ? "" : short ? ` · ${c.min} min` : ` · ${c.min} min + ${c.inc} s`; };
+  let lastClk = "";
+  function renderClocks(force) {
+    const show = clockOn && !daily;
+    $("clocks").hidden = !show;
+    if (!show) return;
+    const you = clockLeft(human), dad = clockLeft(dadSide());
+    const sig = [fmt(you), fmt(dad), clk.side, tierKey, human].join("|");
+    if (!force && sig === lastClk) return;
+    lastClk = sig;
+    $("clkYou").textContent = fmt(you);
+    $("clkDad").textContent = fmt(dad);
+    $("clkDadName").textContent = tierKey === "grandpa" ? "Gramps" : C.TIERS[tierKey].name.replace(/ Dad$/, "");
+    $("clkDadIco").textContent = ICONS[tierKey] || "♟";
+    $("clkYouIco").textContent = RANK_ICONS[Math.min(RANK_ICONS.length, C.TIERS[tierKey].tier) - 1];
+    $("clkYouBox").classList.toggle("run", clk.side === human);
+    $("clkDadBox").classList.toggle("run", clk.side === dadSide());
+    $("clkYouBox").classList.toggle("low", you < LOW_MS);
+    $("clkDadBox").classList.toggle("low", dad < LOW_MS);
+  }
+  function clockReset() {
+    clk.w = clk.b = clkCfg().min * 60000;
+    clk.side = null; clk.at = null; clk.warned = 999; clk.tickSec = -1;
+    setTense(false);
+    renderClocks(true);
+  }
+  // A side has just moved: bank the time they used, add their bonus, and start the other side's clock.
+  // Your very first move is free: the clock starts when you've made it.
+  function clockMoved(mover) {
+    if (!clockOn || daily) return;
+    if (clk.side === mover && clk.at != null) {
+      let used = nowMs() - clk.at;
+      if (mover === dadSide()) used = Math.min(used, DAD_CHARGE_CAP);
+      clk[mover] = Math.max(0, clk[mover] - used) + clkCfg().inc * 1000;
+    }
+    clk.side = mover === "w" ? "b" : "w";
+    clk.at = document.hidden ? null : nowMs();
+    renderClocks();
+  }
+  function clockHalt() {
+    if (clk.side && clk.at != null) clk[clk.side] = Math.max(0, clk[clk.side] - (nowMs() - clk.at));
+    clk.side = null; clk.at = null;
+    setTense(false);
+    renderClocks();
+  }
+  const clockPause = () => { if (clk.side && clk.at != null) { clk[clk.side] -= nowMs() - clk.at; clk.at = null; } };
+  const clockResume = () => { if (clk.side && clk.at == null) clk.at = nowMs(); };
+  // After the Clock button is switched on mid-game, carry on from the times on the board.
+  function clockSync() {
+    if (!clockOn || daily || over || !sanLog.length) { clk.side = null; clk.at = null; }
+    else if (!clk.side) { clk.side = cur().turn; clk.at = document.hidden ? null : nowMs(); }
+    renderClocks(true);
+  }
+  // Can this side still deliver mate? If not, running out of time against them is a draw.
+  function canMate(board, side) {
+    let minors = 0;
+    for (const p of board) {
+      if (!p || (p === p.toUpperCase()) !== (side === "w")) continue;
+      const t = p.toLowerCase();
+      if (t === "p" || t === "r" || t === "q") return true;
+      if (t === "b" || t === "n") minors++;
+    }
+    return minors >= 2;
+  }
+  function flagFall(side) {
+    if (over || daily) return;
+    const winner = side === "w" ? "b" : "w", draw = !canMate(cur().board, winner);
+    clk[side] = 0;
+    endGame({ over: true, reason: "time", draw, result: draw ? "1/2-1/2" : winner === "w" ? "1-0" : "0-1" });
+  }
+  function clockTick() {
+    if (!clockOn || daily || over) { renderClocks(); return; }
+    setTense(clockLeft(human) < LOW_MS && !!clk.side);
+    if (clk.side) {
+      const side = clk.side, left = clockLeft(side);
+      if (left <= 0) { flagFall(side); return; }
+      if (side === human) {
+        if (left > 61000) clk.warned = 999;
+        const mark = [10, 30, 60].find((x) => left <= x * 1000);
+        if (mark && mark < clk.warned) {
+          clk.warned = mark;
+          $("clockSR").textContent = mark === 60 ? "One minute left." : `${mark} seconds left.`;
+          if (mark === 30) talk("lowTime");
+        }
+        const sec = Math.ceil(left / 1000);
+        if (left <= 10000 && sec !== clk.tickSec) { clk.tickSec = sec; sfx("tick"); }
+      }
+    }
+    renderClocks();
+  }
+
+  // ---- the engine runs in a Worker, so a dad thinking never freezes the board, the clocks or the music ----
+  // If Workers aren't available the same engine runs on the page instead.
+  let worker = null, workerBad = false, reqSeq = 0;
+  const waiting = new Map();
+  function dropWorker() {
+    if (worker) { try { worker.terminate(); } catch {} }
+    worker = null;
+    for (const w of waiting.values()) w.reject(new Error("engine reset"));
+    waiting.clear();
+  }
+  function getWorker() {
+    if (workerBad) return null;
+    if (!worker) {
+      try {
+        worker = new Worker("/static/chess-worker.js");
+        worker.onmessage = (e) => {
+          const w = waiting.get(e.data.id); if (!w) return;
+          waiting.delete(e.data.id);
+          if (e.data.error) w.reject(new Error(e.data.error)); else w.resolve(e.data.move);
+        };
+        worker.onerror = () => { workerBad = true; dropWorker(); };
+      } catch { workerBad = true; worker = null; }
+    }
+    return worker;
+  }
+  function askWorker(fen, level, op) {
+    const w = getWorker();
+    if (!w) return Promise.reject(new Error("no worker"));
+    return new Promise((resolve, reject) => { const id = ++reqSeq; waiting.set(id, { resolve, reject }); w.postMessage({ id, fen, level, op }); });
+  }
+  // A move for `state` from the browser engine, or null if there isn't one (or the game moved on).
+  async function localEngineMove(state, key, gid) {
+    let uci;
+    try { uci = await askWorker(C.toFEN(state), key); } catch { uci = undefined; }
+    if (gid !== gameId) return null;
+    if (uci) { const m = C.legalMoves(state).find((x) => C.uci(x) === uci); if (m) return m; }
+    if (uci === null) return null;
+    return C.chooseMove(state, key);       // the worker couldn't answer: think on the page instead
+  }
+
+  // ---- animations ----
+  const reduceMotion = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const slideMs = (dad) => (dad ? 330 * (SPEED[tierKey] || 1) : 230);
+  const ANIM_TOTAL = 800;
+  const EASE = "cubic-bezier(.22,.9,.28,1)";
+  // Describe a move for the animation: the piece that travels, what it captures, a castling rook, a promotion.
+  function moveAnim(before, m, next, dad) {
+    const white = before.turn === "w";
+    const cap = m.ep ? { sq: m.to + (white ? -8 : 8), p: white ? "p" : "P" } : before.board[m.to] ? { sq: m.to, p: before.board[m.to] } : null;
+    const rook = !m.castle ? null : m.to === 6 ? { from: 7, to: 5 } : m.to === 2 ? { from: 0, to: 3 } : m.to === 62 ? { from: 63, to: 61 } : { from: 56, to: 59 };
+    return { from: m.from, to: m.to, dad, cap, rook, promo: !!m.promo, check: C.inCheck(next, next.turn), king: next.board.indexOf(next.turn === "w" ? "K" : "k") };
+  }
+  // Start the animation for a move on the squares just drawn. `elapsed` is how far into it we already
+  // are, for when the board is redrawn while a piece is still sliding (a tap, say).
+  function playAnim(a, elapsed) {
+    if (reduceMotion() || typeof Element.prototype.animate !== "function") return;
+    const board = $("board"), sqEl = (i) => board.querySelector(`.sq[data-i="${i}"]`);
+    const dur = slideMs(a.dad), glitchy = a.dad && activeSkin() === "grandpa";   // Robo-Grandpa doesn't slide, he glitches
+    const run = (el, frames, opts) => {
+      if (elapsed >= opts.duration) return null;            // already finished by the time of this redraw
+      const an = el.animate(frames, opts); an.currentTime = elapsed; return an;
+    };
+    const slide = (from, to) => {
+      const el = sqEl(to), fe = sqEl(from);
+      if (!el || !fe) return;
+      const p = el.querySelector(".p"); if (!p || !p.firstChild) return;
+      const r1 = fe.getBoundingClientRect(), r2 = el.getBoundingClientRect();
+      el.style.zIndex = 5;                                      // so the moving piece passes over its neighbours
+      const done = () => { el.style.zIndex = ""; };
+      const an = run(p, [{ transform: `translate(${r1.left - r2.left}px, ${r1.top - r2.top}px) scale(1.1)` }, { transform: "none" }], { duration: dur, easing: EASE });
+      if (an) an.onfinish = an.oncancel = done; else done();
+    };
+    if (!glitchy) { slide(a.from, a.to); if (a.rook) slide(a.rook.from, a.rook.to); }
+    if (a.cap) {                                                // the captured piece lingers, then shrinks away as the capturer lands
+      const host = sqEl(a.cap.sq);
+      if (host) {
+        const t = a.cap.p.toLowerCase(), g = document.createElement("span");
+        g.className = `sq ghost ${a.cap.p === t ? "b-piece" : "w-piece"}`;
+        g.innerHTML = `<span class="p">${activeSkin() === "eighties" ? pixelPiece(t) : GLYPH[t]}</span>`;
+        g.setAttribute("aria-hidden", "true");
+        host.appendChild(g);
+        const total = glitchy ? 260 : dur * 1.5;
+        const an = run(g, [{ opacity: 1, transform: "none", offset: 0 }, { opacity: 1, transform: "none", offset: glitchy ? 0.1 : 0.6 }, { opacity: 0, transform: "scale(.5) rotate(14deg)", offset: 1 }], { duration: total, easing: "ease-in" });
+        if (an) an.onfinish = an.oncancel = () => g.remove(); else g.remove();
+      }
+    }
+    const land = glitchy ? 0 : dur;
+    if (a.promo) { const p = sqEl(a.to) && sqEl(a.to).querySelector(".p"); if (p) { p.style.animationDelay = (land - elapsed) + "ms"; p.classList.add("popin"); } }
+    if (a.check && a.king >= 0) { const k = sqEl(a.king); if (k && k.classList.contains("check")) { k.style.animationDelay = (land - elapsed) + "ms"; k.classList.add("pulse"); } }
+  }
 
   // ---- board skins ----
   // Playing a dad shows his board. Beat him and his board is yours to use against anyone.
@@ -299,6 +597,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const board = $("board");
     if (skin === "classic") board.removeAttribute("data-skin");
     else board.dataset.skin = skin;
+    if (skin === "classic") $("clocks").removeAttribute("data-skin"); else $("clocks").dataset.skin = skin;
     if (states.length) renderBoard();     // Arcade Dad's board swaps in pixel pieces
   }
 
@@ -382,6 +681,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       move: () => noise(0.05, { freq: 1800, q: 2, vol: 0.35 }),
       capture: () => { noise(0.07, { freq: 1200, q: 1.5, vol: 0.45 }); noise(0.05, { freq: 2200, q: 2, vol: 0.25, at: 0.04 }); },
       check: () => tone(880, 0.18, { type: "triangle", vol: 0.2 }),
+      tick: () => noise(0.03, { freq: 3200, q: 3, vol: 0.22 }),
       win: () => jingle(WIN, "triangle", 0.11, 0.2), lose: () => jingle(LOSE, "triangle", 0.13, 0.18), draw: () => jingle(DRAW, "triangle", 0.15, 0.18),
     },
     modern: {
@@ -495,7 +795,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     grid.innerHTML = ORDER.map((k) => {
       const t = C.TIERS[k];
       const locked = t.secret && store.get(UNLOCK_KEY) !== "1";
-      const label = locked ? "Locked. Find him in the Secret Vault." : (t.server ? `Tier ${t.tier} · online` : `Tier ${t.tier}`);
+      const label = locked ? "Locked. Find him in the Secret Vault." : (t.server ? `Tier ${t.tier} · online` : `Tier ${t.tier}`) + timeText(k, true);
       return `<button class="tier" type="button" role="radio" data-k="${k}" aria-checked="${k === tierKey}" ${locked ? "disabled" : ""}>
         ${locked ? "" : avatarSVG(k, 36)}<span>${t.name}<small>${label}</small></span></button>`;
     }).join("");
@@ -505,7 +805,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const t = C.TIERS[tierKey];
     $("oppArt").innerHTML = avatarSVG(tierKey, 56);
     $("oppName").textContent = t.name;
-    $("oppTier").textContent = t.server ? `Tier ${t.tier} · needs a connection` : `Tier ${t.tier}`;
+    $("oppTier").textContent = (t.server ? `Tier ${t.tier} · needs a connection` : `Tier ${t.tier}`) + timeText(tierKey);
     renderPicker();
     applySkin();
   }
@@ -543,11 +843,20 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     }
     board.innerHTML = html;
     freshBot = false;                     // the glitch plays once, on the render right after the dad's move
+    if (anim) { curAnim = { a: anim, at: nowMs() }; anim = null; playAnim(curAnim.a, 0); }
+    else if (curAnim) {                   // redrawn while a piece was still sliding: carry on from where it was
+      const el = nowMs() - curAnim.at;
+      if (el < ANIM_TOTAL) playAnim(curAnim.a, el); else curAnim = null;
+    }
+    syncControls();
+    renderMoves();
+  }
+
+  function syncControls() {
     $("undoBtn").textContent = `Take back a move (${undoLeft} left)`;
     $("undoBtn").disabled = !!daily || !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
     $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
-    $("hintBtn").disabled = !!daily || !!busy || hintsLeft <= 0 || cur().turn !== human || !!over;
-    renderMoves();
+    $("hintBtn").disabled = !!daily || !!busy || !!hinting || hintsLeft <= 0 || cur().turn !== human || !!over;
   }
 
   function pieceName(p) {
@@ -581,22 +890,33 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   function endGame(st) {
     over = st;
     busy = false;
-    let headline, line;
+    pendingPromo = null;
+    stopThinking();
+    clockHalt();
+    let headline, line, humanWon = false;
     if (st.reason === "checkmate") {
-      const humanWon = st.result === "1-0";
+      humanWon = st.result === "1-0";
       headline = humanWon ? "Checkmate. You win!" : "Checkmate. Dad wins.";
-      if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
       line = humanWon ? "playerWins" : "botWins";
+    } else if (st.reason === "time" && !st.draw) {
+      humanWon = st.result === "1-0";
+      headline = humanWon ? `Time's up for ${C.TIERS[tierKey].name}. You win on time!` : "Time's up. Dad wins on the clock.";
+      line = humanWon ? "timeBot" : "timePlayer";
+    } else if (st.reason === "time") {
+      headline = "Time's up, but neither side could have mated. Draw.";
+      line = "draw";
     } else {
       headline = `Draw (${st.reason}).`;
       line = "draw";
     }
+    if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
     setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
-    const end = st.reason !== "checkmate" ? "draw" : st.result === "1-0" ? "win" : "lose";
-    setTimeout(() => sfx(end), 300);
+    const end = humanWon ? "win" : line === "draw" ? "draw" : "lose";
+    if (window.RoboRadio) RoboRadio.stop();           // let the jingle be heard; the loop comes back with the next game
+    setTimeout(() => sfx(end), 650);
     talk(line);
-    renderBoard();
-    $("shareBtn").hidden = !(line === "playerWins" && !daily);
+    syncControls();
+    $("shareBtn").hidden = !(humanWon && !daily);
   }
 
   // A picture of the win to post or send (phone share sheet, or a download on a computer).
@@ -612,7 +932,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       x.restore();
       const F = (w, px) => `${w} ${px}px Nunito, ui-rounded, system-ui, sans-serif`;
       x.textAlign = "center";
-      x.fillStyle = "#F5C518"; x.font = F(900, 44); x.fillText("♚  CHECKMATE  ♚", W / 2, 170);
+      x.fillStyle = "#F5C518"; x.font = F(900, 44); x.fillText(over && over.reason === "time" ? "♚  WON ON TIME  ♚" : "♚  CHECKMATE  ♚", W / 2, 170);
       const a = AV && AV.AVATARS[tierKey];
       if (a) {                                   // the avatar's colours come from the page; the picture uses fixed daytime ones
         const PAL = { ink: "#1B2A3A", metal: "#B9C7D4", jacket: "#3D7CB8", jacket2: "#1B2A3A", hair: "#3A2A1E", lens: "#1B2A3A" };
@@ -650,15 +970,18 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   function startGame() {
     stopThinking();
+    gameId++; dropWorker(); curAnim = null; anim = null; hinting = false;     // anything the old game's dad was working on is dropped
     daily = null; human = "w"; $("dailyBox").hidden = true;
     const start = C.fromFEN(C.START);
     states = [start];
-    sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null;
+    sanLog = []; selected = -1; targets = []; hintSq = null; lastPair = null; pendingPromo = null;
     over = null; busy = false; undoLeft = 1; hintsLeft = 3; $("shareBtn").hidden = true;
+    clockReset();
     setOpponent();
     renderBoard();
     refreshStatus();
     talk("start");
+    musicSync();
   }
 
   // ---- human moves ----
@@ -744,7 +1067,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     over = null; busy = false; pendingPromo = null; $("shareBtn").hidden = true;
     human = st.turn;
     const already = !!getLetters()[info.index];
+    gameId++; dropWorker(); curAnim = null; anim = null; hinting = false;
     daily = { index: info.index, solved: already };
+    clockHalt(); renderClocks(true); musicSync();                  // the Daily Board has no clock and no music: it's a puzzle
     $("dailyBox").hidden = false;
     $("dailyStory").innerHTML = `<strong>${p.title}.</strong> ${p.story}`;
     $("say").textContent = "";
@@ -762,6 +1087,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     sanLog.push(san);
     lastPair = { from: m.from, to: m.to };
     selected = -1; targets = []; hintSq = null;
+    anim = moveAnim(before, m, next, false);
+    clockMoved(human);
     sfx(moveKind(next, captured), false);
     if (hangsPiece(next, next.turn)) talk("hungPlayer");
     else if (captured) talk("capture");
@@ -774,32 +1101,46 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   // ---- the dad's move ----
   async function botMove() {
-    const cfg = C.TIERS[tierKey];
+    const cfg = C.TIERS[tierKey], key = tierKey, gid = gameId, state = cur();
+    const stale = () => gid !== gameId || !!over;      // a new game started, or the clock ended this one, while he was thinking
     busy = true;
     renderBoard();
     startThinking();
+    const t0 = performance.now();
     let m = null;
     if (cfg.server) {
       try {
-        const res = await fetch("/api/chess/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fen: C.toFEN(cur()), level: tierKey }),
-        });
+        const ctl = new AbortController(), killer = setTimeout(() => ctl.abort(), 12000);   // a sleeping server shouldn't hold the game up
+        let res;
+        try {
+          res = await fetch("/api/chess/move", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fen: C.toFEN(state), level: key }),
+            signal: ctl.signal,
+          });
+        } finally { clearTimeout(killer); }
         if (!res.ok) throw new Error("server " + res.status);
         const data = await res.json();
-        m = C.legalMoves(cur()).find((x) => C.uci(x) === data.move) || null;
+        if (stale()) return;
+        m = C.legalMoves(state).find((x) => C.uci(x) === data.move) || null;
         if (!m) throw new Error("unusable move " + (data && data.move));
       } catch {
         // Backup: the same board, played by the browser engine at this dad's local depth.
+        if (stale()) return;
         stopThinking();                 // so a late waiting line can't overwrite this notice
         talk("backup", true);
-        m = C.chooseMove(cur(), tierKey);
+        m = await localEngineMove(state, key, gid);
       }
     } else {
-      await new Promise((r) => setTimeout(r, 350));
-      m = C.chooseMove(cur(), tierKey);
+      m = await localEngineMove(state, key, gid);
     }
+    if (stale()) return;
+    // Take a human amount of time: his clock ticks, and your piece has landed before he answers.
+    const [lo, hi] = PACE[key] || [800, 1400];
+    const wait = lo + Math.random() * (hi - lo) - (performance.now() - t0);
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    if (stale()) return;
     stopThinking();
     if (!m) { busy = false; renderBoard(); refreshStatus(); return; }
     const before = cur();
@@ -810,7 +1151,12 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     sanLog.push(san);
     lastPair = { from: m.from, to: m.to };
     freshBot = true;
-    sfx(moveKind(next, captured), true);
+    anim = moveAnim(before, m, next, true);
+    clockMoved(dadSide());
+    const kind = moveKind(next, captured);
+    // the clack lands with the piece
+    const land = reduceMotion() || activeSkin() === "grandpa" ? 0 : Math.round(slideMs(true) * 0.7);
+    if (land) setTimeout(() => { if (gid === gameId) sfx(kind, true); }, land); else sfx(kind, true);
     busy = false;
     const waiting = $("say").textContent;
     if (hangsPiece(next, human)) talk("botBlunder");
@@ -825,22 +1171,32 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (busy || over || undoLeft <= 0 || states.length < 3 || cur().turn !== human) return;
     states.pop(); states.pop();
     sanLog.pop(); sanLog.pop();
-    lastPair = null; selected = -1; targets = []; hintSq = null;
+    lastPair = null; selected = -1; targets = []; hintSq = null; curAnim = null;
     undoLeft--;
     renderBoard();
     refreshStatus();
   }
 
-  function hint() {
-    if (busy || over || hintsLeft <= 0 || cur().turn !== human) return;
-    const best = C.rankMoves(cur(), 3, {})[0];
-    if (!best) return;
+  async function hint() {
+    if (busy || hinting || over || hintsLeft <= 0 || cur().turn !== human) return;
+    hinting = true; syncControls();
+    const gid = gameId, len = states.length, state = cur();
+    let from = -1;
+    try {
+      const uci = await askWorker(C.toFEN(state), tierKey, "hint");    // off the main thread, like the dads
+      if (uci) from = C.sqFromName(uci.slice(0, 2));
+    } catch {
+      const best = C.rankMoves(state, 3, {})[0];
+      if (best) from = best.move.from;
+    }
+    hinting = false;
+    if (gid !== gameId || states.length !== len || over || from < 0) { syncControls(); return; }
     hintsLeft--;
-    hintSq = best.move.from;
+    hintSq = from;
     selected = -1; targets = [];
     talk("hint");
     renderBoard();
-    setTimeout(() => { if (hintSq === best.move.from) { hintSq = null; renderBoard(); } }, 6000);
+    setTimeout(() => { if (hintSq === from && gid === gameId) { hintSq = null; renderBoard(); } }, 6000);
   }
 
   // ---- wiring ----
@@ -884,6 +1240,37 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (soundOn) sfx("move");
   });
   showSound();
+  const showMusic = () => {
+    $("musicBtn").textContent = `Music: ${musicOn ? "on" : "off"}`;
+    $("musicBtn").setAttribute("aria-pressed", String(musicOn));
+  };
+  $("musicBtn").addEventListener("click", () => {
+    musicOn = !musicOn;
+    store.set(MUSIC_KEY, musicOn ? "1" : "0");
+    showMusic();
+    musicSync();
+  });
+  showMusic();
+  const showClock = () => {
+    $("clockBtn").textContent = `Clock: ${clockOn ? "on" : "off"}`;
+    $("clockBtn").setAttribute("aria-pressed", String(clockOn));
+  };
+  $("clockBtn").addEventListener("click", () => {
+    clockOn = !clockOn;
+    store.set(CLOCK_KEY, clockOn ? "1" : "0");
+    showClock();
+    if (clockOn) clockSync(); else { clockHalt(); renderClocks(true); }
+    renderPicker();
+    $("oppTier").textContent = (C.TIERS[tierKey].server ? `Tier ${C.TIERS[tierKey].tier} · needs a connection` : `Tier ${C.TIERS[tierKey].tier}`) + timeText(tierKey);
+  });
+  showClock();
+  // The clocks and the music wait while the page is out of sight.
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { clockPause(); if (window.RoboRadio) RoboRadio.stop(); }
+    else { clockResume(); musicSync(); }
+  });
+  window.addEventListener("pagehide", () => { if (window.RoboRadio) RoboRadio.stop(); });
+  setInterval(clockTick, 100);
   $("newBtn").addEventListener("click", () => { if (daily) startDaily(); else startGame(); });
   $("dailyBtn").addEventListener("click", startDaily);
   $("shareBtn").addEventListener("click", shareWin);
