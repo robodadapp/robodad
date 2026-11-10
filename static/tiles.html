@@ -108,13 +108,74 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .boss-card svg{width:96px; height:96px}
 .opp .bubble{flex:1 1 140px; max-width:none}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+
+/* ---- touch: no text selection, no long-press menus, no blue tap flash (typing boxes still work) */
+html,body{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent}
+input,textarea{-webkit-user-select:text; user-select:text; -webkit-touch-callout:default}
+button,a{touch-action:manipulation}
+img,svg{-webkit-user-drag:none; user-drag:none}
+
+/* ---- rack bar: shuffle sits right next to your tiles */
+.rackbar{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; max-width:600px}
+.rackbar .rack{flex:0 1 auto; width:auto; max-width:none; gap:5px}
+.rackbar .rtile{width:min(52px, calc((100vw - 112px) / 7))}
+.rtile{touch-action:none; transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease, opacity .15s ease; will-change:transform}
+.rtile.lift{opacity:.25}
+.iconbtn{flex:none; width:44px; height:44px; border-radius:12px; border:2px solid var(--edge); background:var(--panel); color:var(--ink); font-size:20px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:border-color .15s, transform .15s}
+.iconbtn:hover:not(:disabled){border-color:var(--gold)}
+.iconbtn:active:not(:disabled){transform:scale(.92)}
+.iconbtn:disabled{opacity:.4; cursor:default}
+.iconbtn.spin span{display:inline-block; animation:spin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---- dragging a tile */
+.ghost{position:fixed; left:0; top:0; z-index:20; pointer-events:none; width:min(14vw, 56px); aspect-ratio:1; border-radius:10px; background:var(--tile); color:var(--tile-ink); display:flex; align-items:center; justify-content:center; font:900 clamp(22px,6.5vw,30px)/1 "Nunito", ui-rounded, system-ui, sans-serif; text-transform:uppercase; box-shadow:0 10px 24px #000a, 0 0 0 3px var(--gold); transform:translate(-50%,-70%) scale(1.08)}
+.cell.over{box-shadow:inset 0 0 0 3px var(--gold); background-image:linear-gradient(#F5C51833,#F5C51833)}
+.rtile.over{box-shadow:0 0 0 3px #9BE7C4, 0 3px 0 #0008}
+
+/* ---- tap a square first, then tap letters: they type in along the arrow */
+.cell.cursor{box-shadow:inset 0 0 0 3px var(--gold); z-index:1}
+.cell.cursor .lbl{opacity:1; color:var(--gold); font-size:calc(var(--cell) * .55)}
+
+/* ---- smoother motion */
+.tile{transition:background-color .25s ease}
+.tile.pop{animation:tpop .26s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes tpop{from{transform:scale(.55); opacity:.4} to{transform:none; opacity:1}}
+.tile.dealt{animation:tdrop .42s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes tdrop{from{transform:translateY(-140%) scale(.8); opacity:0} to{transform:none; opacity:1}}
+.tile.commit{animation:tglow .6s ease-out}
+@keyframes tglow{0%{box-shadow:0 0 0 0 #F5C518cc} 100%{box-shadow:0 0 0 calc(var(--cell) * .35) #F5C51800}}
+.rtile.deal{animation:rdeal .34s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes rdeal{from{transform:translateY(24px) scale(.7); opacity:0} to{transform:none; opacity:1}}
+.score b{display:inline-block; transition:color .2s}
+.score b.bump{animation:bump .5s ease-out}
+@keyframes bump{40%{transform:scale(1.25); color:var(--gold)}}
+.status,.bonus,.explain{animation:fadein .25s ease-out}
+@keyframes fadein{from{opacity:.4; transform:translateY(3px)} to{opacity:1; transform:none}}
+
+/* ---- the game clock */
+.clock{font-variant-numeric:tabular-nums; color:var(--ink)}
+.clock b{font-variant-numeric:tabular-nums}
+.clock.paused b{color:var(--muted)}
+.clock.low b{color:#FFB86B}
+.clock.crit b{color:#FF6B81; animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+.clock[hidden]{display:none}
+
+@media (prefers-reduced-motion: reduce){
+  .tile.pop,.tile.dealt,.tile.commit,.rtile.deal,.score b.bump,.status,.bonus,.explain,.iconbtn.spin span,.clock.crit b{animation:none}
+  .rtile{transition:none}
+}
 </style>
 </head>
 <body>
 <div class="top">
   <a href="/">← RoboDad</a>
   <h1>Tile Talk</h1>
-  <button class="btn" id="talkBtn" type="button" aria-pressed="true">Trash talk: on</button>
+  <div style="display:flex; gap:6px">
+    <button class="btn" id="musicBtn" type="button" aria-pressed="false" aria-label="Background music">♪ Off</button>
+    <button class="btn" id="talkBtn" type="button" aria-pressed="true">Trash talk: on</button>
+  </div>
 </div>
 
 <section class="opp" aria-label="Your opponent">
@@ -130,7 +191,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
 <div class="score" aria-live="polite">
   <span id="youScore">You <b>0</b></span>
-  <span id="bagLeft">Tiles left <b>86</b></span>
+  <button class="clock btn" id="clock" type="button" style="padding:2px 8px; font-size:.95rem" aria-label="Your game clock. Tap to turn the clock off or on">⏱ <b>15:00</b></button>
+  <span id="bagLeft">Tiles <b>86</b></span>
   <span id="dadScore">Dad <b>0</b></span>
 </div>
 
@@ -142,7 +204,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <span style="--c:var(--dw)">2W double word</span><span style="--c:var(--tw)">3W triple word</span><span style="--c:#2E7D5B">✦ Simile Square</span>
 </div>
 
-<div class="rack" id="rack" role="group" aria-label="Your tiles"></div>
+<div class="rackbar">
+  <div class="rack" id="rack" role="group" aria-label="Your tiles. Drag to reorder or onto the board"></div>
+  <button class="iconbtn" id="shuffleBtn" type="button" aria-label="Shuffle your tiles" title="Shuffle"><span aria-hidden="true">🔀</span></button>
+</div>
 
 <section class="bonus" id="bonus" aria-live="polite" hidden></section>
 
@@ -151,7 +216,6 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 <div class="controls">
   <button class="btn primary" id="playBtn" type="button">Play word</button>
   <button class="btn" id="recallBtn" type="button">Take back tiles</button>
-  <button class="btn" id="shuffleBtn" type="button">Shuffle</button>
   <button class="btn" id="hintBtn" type="button">Hint (3 left)</button>
   <button class="btn" id="swapBtn" type="button">Swap tiles</button>
   <button class="btn" id="passBtn" type="button">Pass</button>
@@ -170,16 +234,18 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   <div class="tier-grid" id="tierGrid" role="radiogroup" aria-label="Opponent"></div>
 </section>
 
-<p class="foot">Tap one of your tiles, then tap a square to put it there. Tap a tile on the board to take it back. All your tiles go in one line, across or down, and join up with what's already there. The first word covers the star. Use all seven tiles in one go for a Full House: 50 extra points.</p>
+<p class="foot"><b>Three ways to place tiles:</b> drag a tile onto a square; or tap a tile, then a square; or tap an empty square first (tap it again to switch ▶ across / ▼ down) and then tap your letters in order. Drag tiles along your rack to reorder them, or hit 🔀 to shuffle and spot new words. Tap a tile on the board to take it back. All your tiles go in one line, across or down, and join up with what's already there. The first word covers the star. Use all seven tiles in one go for a Full House: 50 extra points.</p>
+<p class="foot"><b>The clock:</b> your thinking time is capped for the whole game, and the tougher the dad, the less you get (15 minutes against Tier 1 down to 6 against the boss). It only runs on your turn. If it hits zero, the game ends and the higher score wins. Tap the clock to turn it off for a relaxed game.</p>
 <p class="foot"><b>Bonuses:</b> play a Glow-Up word (a classier word for an everyday one) for +10, and the day's Power Word for double points. Cover a ✦ Simile Square, play a verb, or every few turns, and Dad gives you a quick bonus round: a simile, a Tense Twist or a sentence.</p>
 
+<script src="/static/radio.js?v=2"></script>
 <script src="/static/avatars.js"></script>
 <script src="/static/words.js"></script>
 <script src="/static/glowup.js"></script>
 <script src="/static/tenses.js"></script>
 <script src="/static/tiles-badges.js"></script>
 <script src="/static/tiles-dads.js"></script>
-<script src="/static/tiles-engine.js?v=2"></script>
+<script src="/static/tiles-engine.js?v=3"></script>
 <script>
 (() => {
   "use strict";
@@ -193,6 +259,12 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   const COLS = "ABCDEFGHIJKLMNO";
   const PREM_LABEL = { dl: "2L", tl: "3L", dw: "2W", tw: "3W", sim: "✦" };
   const PREM_NAME = { dl: "double letter", tl: "triple letter", dw: "double word", tw: "triple word", sim: "Simile Square" };
+  // Your thinking time for the whole game, in minutes: the tougher the dad, the tighter the clock.
+  const CLOCK_MIN = { gamer: 15, skater: 15, eighties: 12, coach: 12, modern: 10, labdad: 10, professor: 8, grandpa: 8, bookworm: 6 };
+  // Each dad's background music (radio.js stations, all original or public domain, made live in the browser).
+  const MUSIC = { gamer: "lobby", skater: "skate", eighties: "drive", coach: "block", modern: "lounge", labdad: "study", professor: "canon", grandpa: "jukebox", bookworm: "boss" };
+  const CLOCK_KEY = "robodad.tiles.clock", MUSIC_KEY = "robodad.tiles.music";
+  const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
@@ -248,6 +320,20 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   let askBlank = null;                // pending tile waiting for its letter
   let confirmNew = false, confirmPass = false, confirmTier = null;
   let plays = 0, lastBonus = "";      // your plays this game, and the last bonus round you got
+  let cursor = null;                  // { k, dir: "across" | "down" }: tap a square, then tap letters to type them in
+  let cursorTips = 0;
+  let timerOn = store.get(CLOCK_KEY) !== "0", clockMs = 0, warned = false;
+  let musicOn = store.get(MUSIC_KEY) !== "0", gestured = false;
+  // Animation bookkeeping. Kept by time, so a re-render mid-animation carries on smoothly instead of restarting.
+  const fx = new Map();               // board square -> { cls, t0, delay, dur }
+  let rackDeal = null;                // { from, t0 }: rack tiles from this index were just dealt
+  const addFx = (k, cls, delay = 0, dur = 650) => fx.set(k, { cls, t0: performance.now(), delay, dur });
+  function fxFor(k) {
+    const f = fx.get(k); if (!f) return ["", ""];
+    const gone = performance.now() - f.t0;
+    if (gone > f.delay + f.dur || reduced()) { fx.delete(k); return ["", ""]; }
+    return [f.cls, ` style="animation-delay:${Math.round(f.delay - gone)}ms"`];
+  }
 
   // ---------------------------------------------------------------- vocabulary and grammar data
   const dayNumber = () => { const n = new Date(); return Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 86400000); };
@@ -337,7 +423,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   function save() {
     if (!s) return;
     if (s.over) { store.del(GAME_KEY); return; }
-    store.set(GAME_KEY, JSON.stringify({ s, tierKey, hintsLeft, lastDad, plays, lastBonus, pers }));
+    store.set(GAME_KEY, JSON.stringify({ s, tierKey, hintsLeft, lastDad, plays, lastBonus, pers, clockMs, warned }));
   }
   function load() {
     try {
@@ -347,6 +433,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       if (T.TIERS[g.tierKey] && isLocked(g.tierKey)) return false;
       s = g.s; tierKey = T.TIERS[g.tierKey] ? g.tierKey : "gamer"; hintsLeft = g.hintsLeft ?? 3; lastDad = g.lastDad || [];
       plays = g.plays || 0; lastBonus = g.lastBonus || ""; pers = g.pers || newPers();
+      clockMs = typeof g.clockMs === "number" ? g.clockMs : capMs(); warned = !!g.warned;
       return true;
     } catch { return false; }
   }
@@ -380,9 +467,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       const locked = isLocked(k);
       const label = t.boss ? (locked ? "Boss · beat a Tier 3 dad to unlock" : "Boss")
         : locked ? "Locked. Find him in the Secret Vault." : `Tier ${t.tier}`;
+      const mins = timerOn && !locked ? ` · ${CLOCK_MIN[k]} min` : "";
       const art = t.secret && locked ? "" : avatarSVG(k, 36);
       return `<button class="tier${t.boss ? " boss" : ""}" type="button" role="radio" data-k="${k}" aria-checked="${k === tierKey}" ${locked ? "disabled" : ""}>
-        ${art}<span>${t.name}<small>${label}</small></span></button>`;
+        ${art}<span>${t.name}<small>${label}${mins}</small></span></button>`;
     }).join("");
   }
 
@@ -398,8 +486,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     renderPicker();
   }
 
-  function tileHTML(ch, blank, cls) {
-    return `<span class="tile${blank ? " blank" : ""}${cls ? " " + cls : ""}">${ch}${blank ? "" : `<i>${T.VALUES[ch]}</i>`}</span>`;
+  function tileHTML(ch, blank, cls, style = "") {
+    return `<span class="tile${blank ? " blank" : ""}${cls ? " " + cls : ""}"${style}>${ch}${blank ? "" : `<i>${T.VALUES[ch]}</i>`}</span>`;
   }
 
   function renderBoard() {
@@ -411,9 +499,14 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       const star = r === T.CENTER && c === T.CENTER;
       const cls = ["cell"]; if (prem) cls.push(prem); if (star) cls.push("star");
       if (!t && !p && sel >= 0) cls.push("drop");
+      const isCursor = !t && !p && cursor && cursor.k === k;
+      if (isCursor) cls.push("cursor");
+      if (p) cls.push("hp");
+      const [fc, fs] = fxFor(k);
       let inner = "", label = `${COLS[c]}${r + 1}`;
-      if (t) { inner = tileHTML(t.ch, t.blank, last.has(k) ? "last" : ""); label += `, ${up(t.ch)}${t.blank ? " (blank)" : ""}`; }
-      else if (p) { inner = tileHTML(p.ch || "?", p.blank, "pending" + (hintKeys.has(k) ? " hint" : "")); label += `, your ${p.ch ? up(p.ch) : "blank"}, tap to take back`; }
+      if (t) { inner = tileHTML(t.ch, t.blank, [last.has(k) ? "last" : "", fc].filter(Boolean).join(" "), fs); label += `, ${up(t.ch)}${t.blank ? " (blank)" : ""}`; }
+      else if (p) { inner = tileHTML(p.ch || "?", p.blank, "pending" + (hintKeys.has(k) ? " hint" : "") + (fc ? " " + fc : ""), fs); label += `, your ${p.ch ? up(p.ch) : "blank"}, tap to take back`; }
+      else if (isCursor) { inner = `<span class="lbl">${cursor.dir === "across" ? "▶\uFE0E" : "▼"}</span>`; label += `, typing ${cursor.dir}, tap again to switch direction`; }
       else { inner = `<span class="lbl">${star ? "★" : (PREM_LABEL[prem] || "")}</span>`; label += prem ? `, ${PREM_NAME[prem]}` : ", empty"; }
       html += `<button class="${cls.join(" ")}" type="button" data-k="${k}" aria-label="${label}">${inner}</button>`;
     }
@@ -428,18 +521,44 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   function renderRack() {
     $("rack").innerHTML = rackLeft().map(({ ch, i }) => {
       const cls = ["rtile"]; if (i === sel) cls.push("sel"); if (swapMode && swapSel.has(i)) cls.push("swap");
+      let style = "";
+      if (rackDeal && i >= rackDeal.from && !reduced()) {
+        const gone = performance.now() - rackDeal.t0, delay = (i - rackDeal.from) * 70;
+        if (gone < delay + 400) { cls.push("deal"); style = ` style="animation-delay:${Math.round(delay - gone)}ms"`; }
+      }
       const name = ch === "?" ? "blank tile" : `${up(ch)}, ${T.VALUES[ch]} point${T.VALUES[ch] === 1 ? "" : "s"}`;
-      return `<button class="${cls.join(" ")}" type="button" data-i="${i}" aria-label="${name}" aria-pressed="${i === sel || swapSel.has(i)}">${ch === "?" ? "&nbsp;" : ch}${ch === "?" ? "" : `<i>${T.VALUES[ch]}</i>`}</button>`;
+      return `<button class="${cls.join(" ")}"${style} type="button" data-i="${i}" aria-label="${name}" aria-pressed="${i === sel || swapSel.has(i)}">${ch === "?" ? "&nbsp;" : ch}${ch === "?" ? "" : `<i>${T.VALUES[ch]}</i>`}</button>`;
     }).join("");
   }
 
+  const shown = [null, null], tweens = [null, null];
+  function countTo(p, el, target) {
+    if (shown[p] === null || target < shown[p] || reduced()) { shown[p] = target; el.textContent = target; return; }
+    if (shown[p] === target || (tweens[p] && tweens[p].to === target)) return;
+    if (tweens[p]) cancelAnimationFrame(tweens[p].raf);
+    const from = shown[p], t0 = performance.now(), dur = 600, tw = tweens[p] = { to: target, raf: 0 };
+    el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      shown[p] = Math.round(from + (target - from) * e); el.textContent = shown[p];
+      if (k < 1) tw.raf = requestAnimationFrame(step); else tweens[p] = null;
+    };
+    tw.raf = requestAnimationFrame(step);
+  }
   function renderScore() {
     const yourTurn = !s.over && s.turn === 0 && !busy;
-    $("youScore").innerHTML = `You <b>${s.scores[0]}</b>`;
+    if (!$("youNum")) {
+      $("youScore").innerHTML = `You <b id="youNum">0</b>`;
+      $("dadScore").innerHTML = `<span id="dadNm"></span> <b id="dadNum">0</b>`;
+      $("bagLeft").innerHTML = `Tiles <b id="bagNum">0</b>`;
+    }
+    countTo(0, $("youNum"), s.scores[0]);
+    countTo(1, $("dadNum"), s.scores[1]);
+    $("dadNm").textContent = dadName();
     $("youScore").className = yourTurn ? "turn" : "";
-    $("dadScore").innerHTML = `${dadName()} <b>${s.scores[1]}</b>`;
     $("dadScore").className = !s.over && !yourTurn ? "turn" : "";
-    $("bagLeft").innerHTML = `Tiles left <b>${s.bag.length}</b>`;
+    $("bagNum").textContent = s.bag.length;
+    renderClock();
   }
 
   function renderLog() {
@@ -472,7 +591,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   }
 
   function renderAll() { renderBoard(); renderRack(); renderScore(); renderLog(); renderButtons(); }
-  function setStatus(html) { $("status").innerHTML = html; }
+  function setStatus(html) {
+    const el = $("status"); el.innerHTML = html;
+    if (!reduced() && el.animate) el.animate([{ opacity: 0.45, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: "ease-out" });
+  }
 
   function yourMoveStatus() {
     if (s.over) return;
@@ -491,12 +613,44 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       if (askBlank === p) { askBlank = null; yourMoveStatus(); }
       renderAll(); return;
     }
-    if (s.board[k] || sel < 0) return;
-    const ch = s.racks[0][sel];
-    const tile = { r, c, ch: ch === "?" ? "" : ch, blank: ch === "?", idx: sel };
+    if (s.board[k]) return;
+    if (sel < 0) {                                    // no tile chosen yet: aim the typing arrow here
+      if (cursor && cursor.k === k) cursor.dir = cursor.dir === "across" ? "down" : "across";
+      else cursor = { k, dir: guessDir(k) };
+      if (cursorTips < 2 && !askBlank) { cursorTips++; setStatus(`Now tap your letters in order and they go in <strong>${cursor.dir === "across" ? "▶\uFE0E across" : "▼ down"}</strong>. Tap the square again to switch direction.`); }
+      renderBoard(); return;
+    }
+    cursor = null;
+    placeAt(k, sel);
+  }
+
+  const occupied = (k) => !!s.board[k] || pending.some((p) => p.r * N + p.c === k);
+  // Which way you're probably going: along the tiles you've already put down, or along the word you're touching.
+  function guessDir(k) {
+    const r = Math.floor(k / N), c = k % N;
+    if (pending.length) {
+      if (pending.every((p) => p.r === r)) return "across";
+      if (pending.every((p) => p.c === c)) return "down";
+    }
+    const filled = (rr, cc) => rr >= 0 && rr < N && cc >= 0 && cc < N && !!s.board[rr * N + cc];
+    if ((filled(r - 1, c) || filled(r + 1, c)) && !filled(r, c - 1) && !filled(r, c + 1)) return "down";
+    return "across";
+  }
+  function nextCursor(k, dir) {
+    let r = Math.floor(k / N), c = k % N;
+    do { if (dir === "across") c++; else r++; } while (r < N && c < N && occupied(r * N + c));
+    return r < N && c < N ? { k: r * N + c, dir } : null;
+  }
+
+  // Put rack tile i on square k. letter: for a blank typed on a keyboard, the letter it becomes.
+  function placeAt(k, i, letter) {
+    if (occupied(k) || i < 0 || pending.some((p) => p.idx === i)) return;
+    const r = Math.floor(k / N), c = k % N, ch = s.racks[0][i];
+    const tile = { r, c, ch: ch === "?" ? (letter || "") : ch, blank: ch === "?", idx: i };
     pending.push(tile);
     sel = -1;
-    if (tile.blank) { askBlank = tile; showLetterPicker(); }
+    addFx(k, "pop", 0, 300);
+    if (tile.blank && !letter) { askBlank = tile; showLetterPicker(); }
     renderAll();
   }
 
@@ -508,11 +662,12 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   function onRack(i) {
     if (!dict || busy || s.over || s.turn !== 0) return;
     if (swapMode) { swapSel.has(i) ? swapSel.delete(i) : swapSel.add(i); renderRack(); renderButtons(); return; }
+    if (cursor) { const k = cursor.k, dir = cursor.dir; cursor = nextCursor(k, dir); placeAt(k, i); return; }
     sel = sel === i ? -1 : i;
     renderBoard(); renderRack();
   }
 
-  function recall() { pending = []; askBlank = null; sel = -1; hintKeys.clear(); yourMoveStatus(); renderAll(); }
+  function recall() { pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear(); yourMoveStatus(); renderAll(); }
 
   function play() {
     if (!pending.length || askBlank || busy || s.turn !== 0) return;
@@ -525,8 +680,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       } else setStatus(`<strong>Not quite.</strong> ${ev.error}`);
       return;
     }
-    pending = []; sel = -1; hintKeys.clear(); confirmPass = false;
+    pending = []; sel = -1; cursor = null; hintKeys.clear(); confirmPass = false;
+    const keep = s.racks[0].length - tiles.length;
     T.applyPlay(s, tiles, ev);
+    tiles.forEach((t, n) => addFx(t.r * N + t.c, "commit", n * 40, 600));
+    rackDeal = { from: keep, t0: performance.now() + 150 };
     noteWords(ev);
     lastDad = [];
     plays++;
@@ -692,16 +850,41 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     show(d);
   }
 
+  // Rearrange the tiles still on your rack (tiles you've put on the board stay put), sliding each one to its new spot.
+  // order(positions) returns the old positions in their new order.
+  function rearrange(order) {
+    const rack = s.racks[0], used = new Set(pending.map((p) => p.idx));
+    const U = rack.map((_, i) => i).filter((i) => !used.has(i)), L = U.map((i) => rack[i]);
+    const o = order(U.map((_, n) => n));
+    const before = [...$("rack").children].map((el) => el.getBoundingClientRect());
+    o.forEach((from, n) => { rack[U[n]] = L[from]; });
+    sel = -1; rackDeal = null;
+    renderRack(); renderBoard();
+    if (!reduced()) [...$("rack").children].forEach((el, n) => {
+      const a = before[o[n]], b = el.getBoundingClientRect();
+      if (!a || !el.animate) return;
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (dx || dy) el.animate([{ transform: `translate(${dx}px,${dy}px) scale(1.06)` }, { transform: "none" }], { duration: 320 + n * 30, easing: "cubic-bezier(.2,.8,.2,1)" });
+    });
+    save();
+  }
   function shuffle() {
-    pending = []; askBlank = null; sel = -1; hintKeys.clear();
-    const r = s.racks[0];
-    for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
-    yourMoveStatus(); renderAll(); save();
+    if (!s || busy || s.over || s.turn !== 0 || swapMode) return;
+    rearrange((pos) => { let o = pos; for (let tries = 0; tries < 6 && o.every((v, i) => v === i) && pos.length > 1; tries++) o = shuffled(pos); return o; });
+    const b = $("shuffleBtn"); b.classList.remove("spin"); void b.offsetWidth; b.classList.add("spin");
+  }
+  // Drag a rack tile onto another: it moves into that spot and the rest slide over.
+  function reorder(a, b) {
+    const used = new Set(pending.map((p) => p.idx));
+    const U = s.racks[0].map((_, i) => i).filter((i) => !used.has(i));
+    const from = U.indexOf(a), to = U.indexOf(b);
+    if (from < 0 || to < 0 || from === to) return;
+    rearrange((pos) => { const o = pos.slice(); const [x] = o.splice(from, 1); o.splice(to, 0, x); return o; });
   }
 
   function hint() {
     if (hintsLeft <= 0 || busy || s.turn !== 0) return;
-    pending = []; askBlank = null; sel = -1; hintKeys.clear();
+    pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear();
     const best = T.bestMove(s.board, s.racks[0], dict, common);
     if (!best) { setStatus("Dad can't find a word with these tiles either. Try swapping them."); renderAll(); return; }
     hintsLeft--;
@@ -728,7 +911,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (!swapSel.size) { swapMode = false; yourMoveStatus(); renderAll(); return; }
     const letters = [...swapSel].map((i) => s.racks[0][i]);
     swapMode = false; swapSel.clear(); lastDad = [];
+    const keep = s.racks[0].length - letters.length;
     T.applySwap(s, letters);
+    rackDeal = { from: keep, t0: performance.now() + 150 };
     talk("swap");
     setStatus(`You swapped ${letters.length} tile${letters.length === 1 ? "" : "s"}.`);
     afterTurn();
@@ -777,6 +962,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
         const ev = T.evaluatePlay(s.board, mv.move.tiles, dict);
         T.applyPlay(s, mv.move.tiles, ev);
         lastDad = mv.move.tiles.map((t) => t.r * N + t.c);
+        lastDad.forEach((k, n) => addFx(k, "dealt", n * 90, 450));
         const big = ev.fullHouse || ev.score >= 25;
         if (ev.fullHouse) talk("dadFull");
         else if (big) { sayDad("big"); celebrate(d.move); }
@@ -860,7 +1046,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const o = s.over;
     const you = s.scores[0], dad = s.scores[1];
     const headline = o.winner === 0 ? "You win!" : o.winner === 1 ? `${dadName()} wins.` : "It's a tie!";
-    const how = o.wentOut === 0 ? "You used your last tile, so you get Dad's leftover points." :
+    const how = o.timeout ? "Your clock ran out, so the game stopped there. Leftover tiles came off both scores." : o.wentOut === 0 ? "You used your last tile, so you get Dad's leftover points." :
       o.wentOut === 1 ? `${dadName()} used his last tile and gets your leftover points.` :
       "Nobody could score for six turns in a row, so the game stopped.";
     const theEnd = T.TIERS[tierKey].boss ? "<strong>THE END.</strong> " : "";
@@ -913,9 +1099,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     s = T.newGame();
     pending = []; sel = -1; swapMode = false; swapSel.clear(); hintsLeft = tierKey === "grandpa" ? 4 : 3; busy = false; lastDad = []; askBlank = null; hintKeys.clear();
     confirmNew = false; confirmPass = false; plays = 0; lastBonus = ""; pers = newPers();
+    cursor = null; clockMs = capMs(); warned = false; fx.clear();
+    shown[0] = shown[1] = null; rackDeal = { from: 0, t0: performance.now() + 100 };
     $("bonus").hidden = true; $("explain").hidden = true;
     store.set(TIER_KEY, tierKey);
-    setOpponent(); renderAll(); yourMoveStatus();
+    setOpponent(); renderAll(); yourMoveStatus(); syncMusic();
     const rec = record(tierKey);
     if (rec.last && DAD().lines[rec.last === "w" ? "returnWin" : "returnLose"]) sayDad(rec.last === "w" ? "returnWin" : "returnLose");
     else sayDad("start");
@@ -940,9 +1128,159 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   }
   const inProgress = () => s && !s.over && s.log.length > 0;
 
+  // ---------------------------------------------------------------- the game clock
+  // Only your thinking time counts, and only while it's your move: not while Dad thinks, not during
+  // bonus rounds or quizzes, not while the boss card is up, and not while the app is in the background.
+  const capMs = () => (CLOCK_MIN[tierKey] || 10) * 60000;
+  const clockLive = () => timerOn && !!s && !s.over && !!dict && s.turn === 0 && !busy && !document.hidden && !document.querySelector(".boss-wrap");
+  const fmtClock = (ms) => { const t = Math.ceil(ms / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
+  let clockShown = "";
+  function renderClock() {
+    const el = $("clock");
+    const live = clockLive();
+    const html = timerOn ? `⏱ <b>${fmtClock(clockMs)}</b>` : "⏱ <b>off</b>";
+    const cls = "clock btn" + (!timerOn || !live ? " paused" : "") + (timerOn && clockMs <= 15000 ? " crit" : timerOn && clockMs <= 60000 ? " low" : "");
+    if (html + cls !== clockShown) { el.innerHTML = html; el.className = cls; clockShown = html + cls; }
+  }
+  let lastTick = performance.now();
+  setInterval(() => {
+    const now = performance.now(), dt = Math.min(now - lastTick, 1000); lastTick = now;
+    if (clockLive()) {
+      clockMs = Math.max(0, clockMs - dt);
+      if (!warned && clockMs <= 60000) { warned = true; toast("One minute left on your clock!"); }
+      if (clockMs <= 0) { timeUp(); return; }
+    }
+    renderClock();
+  }, 250);
+  setInterval(() => { if (clockLive()) save(); }, 5000);
+  function timeUp() {
+    if (!s || s.over) return;
+    pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear(); swapMode = false; swapSel.clear();
+    T.finish(s, -1); s.over.timeout = true;
+    talk(s.over.winner === 0 ? "playerWins" : s.over.winner === 1 ? "dadWins" : "draw");
+    endGame();
+  }
+
+  // ---------------------------------------------------------------- music
+  const RADIO = window.RoboRadio;
+  function renderMusicBtn() {
+    const b = $("musicBtn"), name = RADIO && RADIO.stations[MUSIC[tierKey]];
+    b.textContent = musicOn ? "♪ On" : "♪ Off";
+    b.setAttribute("aria-pressed", String(musicOn));
+    b.setAttribute("aria-label", musicOn ? `Music on: ${name || "Dad's theme"}. Tap to turn off` : "Music off. Tap to turn on");
+    b.title = musicOn && name ? `Now playing: ${name}` : "Background music";
+  }
+  // Browsers only allow sound after you've tapped something, so the music starts on your first tap.
+  function syncMusic() {
+    renderMusicBtn();
+    if (!RADIO) return;
+    if (musicOn && gestured && !document.hidden) { RADIO.setVolume(0.22); RADIO.play(MUSIC[tierKey] || "lounge"); }
+    else if (RADIO.playing) RADIO.stop();
+  }
+  const firstGesture = () => { if (gestured) return; gestured = true; syncMusic(); };
+  document.addEventListener("pointerdown", firstGesture, true);
+  document.addEventListener("keydown", firstGesture, true);
+  document.addEventListener("visibilitychange", () => { syncMusic(); lastTick = performance.now(); if (document.hidden) save(); });
+
+  // ---------------------------------------------------------------- dragging tiles
+  // Drag from the rack onto a square to place it, or onto another rack tile to reorder.
+  // Drag a tile you've put down to another square to move it, or back to the rack to take it back.
+  let drag = null, suppressClickUntil = 0;
+  const canAct = () => !!dict && !!s && !busy && !s.over && s.turn === 0 && !swapMode;
+  function onDragStart(e) {
+    if (e.button > 0 || !canAct() || drag) return;
+    const rt = e.target.closest(".rtile"), cell = e.target.closest(".cell.hp");
+    if (rt) drag = { from: "rack", i: +rt.dataset.i, el: rt };
+    else if (cell) drag = { from: "board", k: +cell.dataset.k, el: cell };
+    else return;
+    Object.assign(drag, { id: e.pointerId, x0: e.clientX, y0: e.clientY, started: false, ghost: null, over: null });
+  }
+  function targetAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!el) return null;
+    const cell = el.closest(".cell"), rt = el.closest(".rtile"), rack = el.closest(".rackbar");
+    if (cell) return { el: cell, kind: "cell", k: +cell.dataset.k };
+    if (rt) return { el: rt, kind: "rtile", i: +rt.dataset.i };
+    if (rack) return { el: $("rack"), kind: "rack" };
+    return null;
+  }
+  function onDragMove(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.started) {
+      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 8) return;
+      drag.started = true;
+      const ch = drag.from === "rack" ? s.racks[0][drag.i] : (pending.find((p) => p.r * N + p.c === drag.k) || {}).ch;
+      const g = drag.ghost = document.createElement("div");
+      g.className = "ghost"; g.textContent = ch && ch !== "?" ? ch : ""; g.setAttribute("aria-hidden", "true");
+      document.body.appendChild(g);
+      drag.el.classList.add("lift");
+      sel = -1; cursor = null;
+    }
+    e.preventDefault();
+    drag.ghost.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -70%) scale(1.08)`;
+    const t = targetAt(e.clientX, e.clientY);
+    const ok = t && ((t.kind === "cell" && !occupied(t.k)) || (t.kind === "rtile" && drag.from === "rack" && t.i !== drag.i) || (t.kind !== "cell" && drag.from === "board"));
+    const el = ok ? t.el : null;
+    if (drag.over !== el) { if (drag.over) drag.over.classList.remove("over"); if (el) el.classList.add("over"); drag.over = el; }
+  }
+  function onDragEnd(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    if (!d.started) return;                       // it was a tap: the normal click handler takes it
+    suppressClickUntil = performance.now() + 400;
+    if (d.ghost) d.ghost.remove();
+    if (d.over) d.over.classList.remove("over");
+    d.el.classList.remove("lift");
+    const t = e.type === "pointerup" ? targetAt(e.clientX, e.clientY) : null;
+    if (!t || !canAct()) { renderAll(); return; }
+    if (d.from === "rack") {
+      if (t.kind === "cell" && !occupied(t.k)) placeAt(t.k, d.i);
+      else if (t.kind === "rtile") reorder(d.i, t.i);
+      else renderAll();
+    } else {
+      const p = pending.find((x) => x.r * N + x.c === d.k);
+      if (!p) { renderAll(); return; }
+      if (t.kind === "cell" && !occupied(t.k)) {
+        const was = hintKeys.has(d.k); hintKeys.delete(d.k);
+        p.r = Math.floor(t.k / N); p.c = t.k % N;
+        if (was) hintKeys.add(t.k);
+        addFx(t.k, "pop", 0, 300); renderAll();
+      } else if (t.kind !== "cell") onCell(d.k);  // back to the rack
+      else renderAll();
+    }
+  }
+  document.addEventListener("pointerdown", onDragStart);
+  document.addEventListener("pointermove", onDragMove, { passive: false });
+  document.addEventListener("pointerup", onDragEnd);
+  document.addEventListener("pointercancel", onDragEnd);
+
+  // ---------------------------------------------------------------- keyboard: tap a square, then type
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("input, textarea") || e.ctrlKey || e.metaKey || e.altKey || !canAct()) return;
+    if (/^[a-z]$/i.test(e.key) && cursor) {
+      const l = e.key.toLowerCase(), used = new Set(pending.map((p) => p.idx));
+      let i = s.racks[0].findIndex((ch, n) => ch === l && !used.has(n));
+      if (i < 0) i = s.racks[0].findIndex((ch, n) => ch === "?" && !used.has(n));
+      if (i < 0) return;
+      e.preventDefault();
+      const k = cursor.k; cursor = nextCursor(k, cursor.dir); placeAt(k, i, s.racks[0][i] === "?" ? l : undefined);
+    } else if (e.key === "Backspace" && pending.length) {
+      e.preventDefault();
+      const p = pending[pending.length - 1], k = p.r * N + p.c, dir = cursor ? cursor.dir : guessDir(k);
+      onCell(k); cursor = { k, dir }; renderBoard();
+    } else if (e.key === "Enter" && pending.length && !askBlank && !(e.target.closest && e.target.closest("button"))) { e.preventDefault(); play(); }
+    else if (e.key === "Escape" && (cursor || pending.length)) { cursor = null; recall(); }
+  });
+
+  // ---------------------------------------------------------------- no text selection or long-press menus (typing boxes still work)
+  const inTextBox = (t) => { const el = t && (t.nodeType === 1 ? t : t.parentElement); return !!(el && el.closest("input, textarea")); };
+  document.addEventListener("contextmenu", (e) => { if (!inTextBox(e.target)) e.preventDefault(); });
+  document.addEventListener("selectstart", (e) => { if (!inTextBox(e.target)) e.preventDefault(); });
+  document.addEventListener("dragstart", (e) => e.preventDefault());
+
   // ---------------------------------------------------------------- wiring
-  $("board").addEventListener("click", (e) => { const b = e.target.closest(".cell"); if (b) onCell(+b.dataset.k); });
-  $("rack").addEventListener("click", (e) => { const b = e.target.closest(".rtile"); if (b) onRack(+b.dataset.i); });
+  $("board").addEventListener("click", (e) => { if (performance.now() < suppressClickUntil) return; const b = e.target.closest(".cell"); if (b) onCell(+b.dataset.k); });
+  $("rack").addEventListener("click", (e) => { if (performance.now() < suppressClickUntil) return; const b = e.target.closest(".rtile"); if (b) onRack(+b.dataset.i); });
   $("status").addEventListener("click", (e) => {
     const b = e.target.closest("[data-letter]");
     if (!b || !askBlank) return;
@@ -990,11 +1328,25 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   });
   $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
   $("talkBtn").setAttribute("aria-pressed", String(talkOn));
+  $("musicBtn").addEventListener("click", () => {
+    musicOn = !musicOn; gestured = true;
+    store.set(MUSIC_KEY, musicOn ? "1" : "0");
+    syncMusic();
+  });
+  $("clock").addEventListener("click", () => {
+    if (timerOn && inProgress()) { toast(`The clock stays on for this game. Switch it off before your next one.`); return; }
+    timerOn = !timerOn;
+    store.set(CLOCK_KEY, timerOn ? "1" : "0");
+    if (timerOn) { clockMs = capMs(); warned = false; }
+    toast(timerOn ? `Clock on: ${CLOCK_MIN[tierKey]} minutes against ${dadName()}.` : "Clock off. Take all the time you need.");
+    renderClock(); renderPicker(); save();
+  });
+  renderMusicBtn();
 
   // ---------------------------------------------------------------- start
   if (!T.TIERS[tierKey] || isLocked(tierKey)) tierKey = "gamer";
   const resumed = load();
-  if (!resumed) s = T.newGame();
+  if (!resumed) { s = T.newGame(); clockMs = capMs(); }
   setOpponent(); renderAll();
   Promise.all([fetch("/static/tiles-words.txt").then((r) => { if (!r.ok) throw 0; return r.text(); }),
                fetch("/static/tiles-common.txt").then((r) => { if (!r.ok) throw 0; return r.text(); })])
