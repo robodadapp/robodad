@@ -512,13 +512,17 @@
   let twoP = null;                                // { turn: 1|2, scores: [a, b], seed }
   let bonus = null;                               // { kind, lang, qs, i, right, phase, timer, blocks, after }
   let shareBlob = null, sel = 0, btns = [], albumSel = 0;
+  // which slide keys / fingers are physically down right now, tracked in EVERY state, so a run, retry or resume
+  // that starts while you are already holding slide picks it straight up instead of waiting for a fresh press
+  const slideKeys = new Set();
+  const slideWanted = () => slideKeys.size > 0 || [...ptrs.values()].some(q => q.side === "slide");
   const P = { x: 40, y: GY - 22, vy: 0, slide: false, slideHeld: false, held: false, buf: 0, airT: 0, dbl: false, ff: false, frame: 0, ft: 0, air: false, sx: 1, sy: 1 };
   let best = parseInt(store.get("robodad.dadquest.best") || "0", 10) || 0;
   let daily = jget("robodad.dadquest.daily", null);
   const JV = -5.8, G = 0.36;
 
   let shownAt = 0;
-  function setState(s, wipe){ state = s; sel = 0; shownAt = t; if (wipe && !calm) { trans = 16; sfx.stat(); } }
+  function setState(s, wipe){ state = s; sel = 0; shownAt = t; if (s === "play" || s === "bonus") P.slideHeld = slideWanted(); if (wipe && !calm) { trans = 16; sfx.stat(); } }
   const roomIdxAt = (b) => ((gen && gen.base || 0) + Math.floor(Math.max(0, b) / 100)) % ROOMS.length;
   function room(){ return mode === "story" ? ROOMS[level] : ROOMS[roomIdxAt(rt / BEAT)]; }
   function curSpeed(){
@@ -526,7 +530,9 @@
     if (mode === "daily") return 2.2 + 0.7 * clamp(rt / (roomBeats * BEAT), 0, 1);
     return Math.min(4.2, 2.2 + Math.max(0, rt) / 3600 * 0.55) * (hard ? 1 : 0.88);
   }
-  function resetDad(){ P.y = GY - 22; P.vy = 0; P.slide = false; P.slideHeld = false; P.held = false; P.buf = 0; P.air = false; P.ff = false; P.dbl = false; P.sx = P.sy = 1; ptrs.clear(); }
+  function resetDad(){ P.y = GY - 22; P.vy = 0; P.slide = false; P.held = false; P.buf = 0; P.air = false; P.ff = false; P.dbl = false; P.sx = P.sy = 1;
+    for (const [id, q] of ptrs) if (q.side !== "slide") ptrs.delete(id);              // a thumb still resting on the slide zone stays counted
+    P.slideHeld = slideWanted(); }
   function snapStart(at){ roomStart = Math.ceil((mt + 1) / BEAT) * BEAT - at; rt = mt - roomStart; }
   function start(lv, m = "story", keep = false){
     mode = m; level = lv;
@@ -671,6 +677,7 @@
   function blow(){ if (state === "boot" && !bootT) { bootT = 1; sfx.blow(); burst(W / 2, 98, 26, ["#FFF6D6", "#9A93B8", "#C0C0C8"], 2.6, 0.6, 30); } }
   addEventListener("keydown", (e) => {
     audioOn();
+    if (e.code === "ArrowDown" || e.code === "KeyS") slideKeys.add(e.code);
     if (state === "boot") { if (["Space", "Enter"].includes(e.code)) { e.preventDefault(); blow(); } return; }
     if (inMenu()) {
       if (["ArrowDown", "ArrowRight", "KeyS", "KeyD"].includes(e.code)) { e.preventDefault(); menuKey(1); }
@@ -683,8 +690,9 @@
     else if (["ArrowDown", "KeyS"].includes(e.code)) { e.preventDefault(); if (!e.repeat) slideOn(); }
     else if (e.code === "KeyP" || e.code === "Escape") pause();
   });
+  addEventListener("blur", () => { slideKeys.clear(); slideOff(); releaseJump(); });      // keyup never arrives if the window loses focus
   addEventListener("keyup", (e) => {
-    if (["ArrowDown", "KeyS"].includes(e.code)) slideOff();
+    if (["ArrowDown", "KeyS"].includes(e.code)) { slideKeys.delete(e.code); if (!slideWanted()) slideOff(); }
     else if (["Space", "ArrowUp", "KeyW"].includes(e.code)) releaseJump();
   });
   const wrap = document.getElementById("wrap");
@@ -1091,7 +1099,8 @@
     if (showDad) {
       if (ghost && state === "play" && rt >= 0 && (rt >> 1) < ghost.d.length) {            // your best run, see-through
         const c = ghost.d.charCodeAt(rt >> 1) - 40, gs = c >= 100, gy = GY - 22 - (c % 100);
-        x.globalAlpha = 0.28; if (gs) drawDad(P.x, GY - 12, P.frame, true, false); else drawDad(P.x, gy, P.frame, false, gy < GY - 22); x.globalAlpha = 1;
+        const gx = P.x - 26;                                  // trails behind you, so it can never be mistaken for your hitbox
+        x.globalAlpha = 0.22; if (gs) drawDad(gx, GY - 12, P.frame, true, false); else drawDad(gx, gy, P.frame, false, gy < GY - 22); x.globalAlpha = 1;
       }
       R(P.x + 2, GY, 10, 2, "rgba(0,0,0,.28)");
       if (strength > 0 && !calm) for (let i = 1; i <= 3; i++) drawDadAt(P.x - i * 7, P.y, 0.25 - i * 0.06);
