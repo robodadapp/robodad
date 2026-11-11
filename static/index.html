@@ -2206,6 +2206,11 @@ textarea::placeholder{color:var(--muted)}
   const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || "[]"); } catch { return []; } };
   const getPref = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
   const setPref = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  // anonymous counters: a fixed list of event names, no IDs, nothing about the person (see /privacy)
+  const ping = (name) => { try {
+    if (getPref("robodad.ageCheck") !== "ok") return;
+    fetch("/api/event", { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ name }), keepalive:true }).catch(() => {});
+  } catch {} };
 
   // ---------- tiny, safe markdown ----------
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -2652,6 +2657,7 @@ textarea::placeholder{color:var(--muted)}
       history.push(item); save();
       renderTools(stack, item);
       maybeAskRating(meta);
+      if (getPref("robodad.obFirst")) { setPref("robodad.obFirst", ""); if (meta?.mode !== "safety") ping("ob_first_answer"); }
       if (inPractice) { if (meta?.mode !== "safety") practiceTurnDone(); if (readAloud && meta?.mode !== "safety" && !L[inPractice.lang]?.coach) speakLang(practiceSpoken(text), inPractice.lang); else if (readAloud) speak(text); }
       else if (readAloud) speak(text);
     } catch (err) {
@@ -4524,7 +4530,7 @@ const PLAYERS = {
     clearTimeout(sayTimer); sayTimer = setTimeout(() => vb.classList.remove("saying"), 2600);
   }
 
-  // ---------- Daily Dad Challenge: one small real-world task a day, no streaks ----------
+  // ---------- Daily Dad Challenge: one small real-world task a day, with a forgiving streak ----------
   const CHALLENGES = [
     "Make your bed before you leave the house.", "Text or call a grandparent or relative just to say hi.", "Cook, or help cook, one meal.",
     "Fold and put away a load of laundry.", "Write down three things you spent money on this week.", "Drink a glass of water before you look at a screen.",
@@ -4546,13 +4552,34 @@ const PLAYERS = {
     const d = new Date(); const n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5);
     return CHALLENGES[n % CHALLENGES.length];
   }
+
+  // Streak of Daily Dad Challenges done. One missed day is forgiven (and you earn another for every 7 days),
+  // so one bad day never wipes out a good run. A streak that ends is just a number going back to 1: nothing is lost.
+  function challengeStreak(){
+    const day = (k) => Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) / 864e5;
+    const ds = [...new Set(chDone)].filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).map(day).sort((a, b) => a - b);
+    let n = 0, best = 0, freezes = 1, prev = null;
+    for (const d of ds) {
+      if (prev === null) n = 1;
+      else if (d - prev === 1) { n++; if (n % 7 === 0) freezes = Math.min(freezes + 1, 2); }
+      else if (d - prev === 2 && freezes > 0) { freezes--; n++; }
+      else { n = 1; freezes = 1; }
+      best = Math.max(best, n); prev = d;
+    }
+    if (prev === null) return { n: 0, best: 0, atRisk: false };
+    const t = day(todayKey()), gap = t - prev;
+    if (gap > 2 || (gap === 2 && freezes < 1)) return { n: 0, best, atRisk: false };
+    return { n, best, atRisk: gap >= 1 };
+  }
   function renderChallenge(){
     const done = chDone.includes(todayKey()), n = chDone.length;
     document.querySelectorAll(".challenge").forEach(c => {
       c.classList.toggle("done", done);
       c.querySelector(".ch-text").textContent = todaysChallenge();
       const btn = c.querySelector(".ch-done"); btn.disabled = done; btn.textContent = done ? "Done today ✓" : "Done it!";
-      c.querySelector(".ch-count").textContent = n ? `${n} done so far. No streaks, no pressure.` : "Honour system. A new one every day.";
+      const st = challengeStreak();
+      c.querySelector(".ch-count").textContent = st.n >= 2 ? `🔥 ${st.n}-day streak${st.n >= st.best ? "" : ` · best ${st.best}`}${st.atRisk ? " · do today's to keep it" : ""}`
+        : n ? `${n} done so far. Do one tomorrow to start a streak.` : "Honour system. A new one every day.";
     });
   }
   document.querySelectorAll(".ch-head").forEach(h => h.addEventListener("click", () => {
@@ -4562,6 +4589,7 @@ const PLAYERS = {
     if (chDone.includes(todayKey())) return;
     const before = isEarned(BADGES.challenge);
     chDone.push(todayKey()); setPref(CH_KEY, JSON.stringify(chDone)); renderChallenge(); updateBeltMini();
+    { const sn = challengeStreak().n; if ([3, 7, 14, 30].includes(sn)) { ping("streak_" + sn); toast(`🔥 ${sn}-day streak. That's real habit-building.`); } }
     nod(); bubbleWord(pick(["Proud of you!", "That's my kid!", "Atta kid!", "Nailed it!"]));
     if (!before && isEarned(BADGES.challenge)) { revealReturn = document.activeElement; revealQ.push("challenge"); if ($("reveal").hidden) showReveal(); }
     else toast(chDone.length === 1 ? "First challenge done. See you tomorrow for the next one." : `Nice work. That's ${chDone.length} challenges done.`);
@@ -5320,7 +5348,7 @@ const PLAYERS = {
   const saveRate = (r) => setPref(RATE_KEY, JSON.stringify(r));
   if (inApp) {
     $("rateRow").hidden = false;
-    $("rateRow").addEventListener("click", () => { const r = loadRate(); r.done = true; saveRate(r); });
+    $("rateRow").addEventListener("click", () => { const r = loadRate(); r.done = true; saveRate(r); ping("rate_tap"); });
     const r0 = loadRate(), day = new Date().toLocaleDateString("en-CA");
     if (!(r0.days || []).includes(day)) { r0.days = [...(r0.days || []), day].slice(-30); saveRate(r0); }
   }
@@ -5333,13 +5361,13 @@ const PLAYERS = {
     if ((r.days || []).length < 3) return;                        // came back on at least 3 different days
     if (history.filter(m => m.role === "user").length < 6) return; // and has actually chatted
     if (history[history.length - 1]?.meta?.mode === "safety") return;
-    r.asked = (r.asked || 0) + 1; r.last = Date.now(); saveRate(r);
+    r.asked = (r.asked || 0) + 1; r.last = Date.now(); saveRate(r); ping("rate_shown");
     setTimeout(() => {
       const t = $("toast"); t.textContent = "";
       const msg = document.createElement("span"); msg.textContent = "Is RoboDad helping? A quick rating helps other teens find it. ";
       const yes = document.createElement("a"); yes.href = RATE_URL; yes.target = "_blank"; yes.rel = "noopener"; yes.textContent = "Rate it";
       yes.style.cssText = "font-weight:800; margin-left:6px; color:inherit; text-decoration:underline";
-      yes.addEventListener("click", () => { const q = loadRate(); q.done = true; saveRate(q); t.hidden = true; });
+      yes.addEventListener("click", () => { const q = loadRate(); q.done = true; saveRate(q); ping("rate_tap"); t.hidden = true; });
       t.append(msg, yes); t.hidden = false; clearTimeout(toastTimer);
       toastTimer = setTimeout(() => { t.hidden = true; }, 12000);
     }, 2500);
@@ -5354,7 +5382,7 @@ const PLAYERS = {
     ["🤗 I just need to talk", "I just need to talk"],
     ["😂 Surprise me", "Tell me something fun I probably don't know"],
   ];
-  function obClose(){ obDlg.hidden = true; setPref(OB_KEY, "1"); input.focus(); }
+  function obClose(how){ obDlg.hidden = true; setPref(OB_KEY, "1"); if (how === "skip") ping("ob_skip"); input.focus(); }
   function obStepName(){
     $("obStep").textContent = "Step 1 of 2";
     $("obTitle").textContent = "Hey, I'm RoboDad.";
@@ -5369,19 +5397,19 @@ const PLAYERS = {
     const box = $("obPicks"); box.hidden = false; box.textContent = "";
     OB_PICKS.forEach(([label, say]) => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = label;
-      b.addEventListener("click", () => { obClose(); submit(say); });
+      b.addEventListener("click", () => { obClose("pick"); ping("ob_first_q"); setPref("robodad.obFirst", "1"); submit(say); });
       box.appendChild(b);
     });
     box.firstChild.focus();
   }
-  function startOnboarding(){ if (getPref(OB_KEY)) return; obDlg.hidden = false; obStepName(); }
+  function startOnboarding(){ if (getPref(OB_KEY)) return; obDlg.hidden = false; ping("ob_shown"); obStepName(); }
   $("obNameForm").addEventListener("submit", (e) => {
     e.preventDefault();
     nickname = $("obName").value.replace(/[^\p{L}\s'\-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20);
-    setPref(NAME_KEY, nickname); applyName(); obStepTopic();
+    setPref(NAME_KEY, nickname); applyName(); if (nickname) ping("ob_name"); obStepTopic();
   });
-  $("obSkip").addEventListener("click", obClose);
-  obDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") obClose(); });
+  $("obSkip").addEventListener("click", () => obClose("skip"));
+  obDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") obClose("skip"); });
 
   // ---------- age check (neutral: asks birth year, stores only the result) ----------
   const gate = $("gate"), birthYear = $("birthYear"), gateGo = $("gateGo");
@@ -5400,6 +5428,15 @@ const PLAYERS = {
   else if (ageState !== "ok") { gate.hidden = false; setTimeout(() => birthYear.focus(), 50); }
 
   // ---------- boot ----------
+  (function returnVisit(){                       // one anonymous count per day, bucketed by days since first visit
+    if (getPref(AGE_KEY) !== "ok") return;
+    const t = new Date().toLocaleDateString("en-CA"), FS = "robodad.firstSeen", LS = "robodad.lastPing";
+    const first = getPref(FS); if (!first) { setPref(FS, t); setPref(LS, t); return; }
+    if (getPref(LS) === t) return; setPref(LS, t);
+    const d = Math.round((new Date(t) - new Date(first)) / 864e5);
+    ping(d <= 1 ? "return_d1" : d <= 3 ? "return_d2_3" : d <= 7 ? "return_d4_7" : "return_d8plus");
+  })();
+  document.querySelectorAll(".tab[data-tab]").forEach(b => b.addEventListener("click", () => { const k = "tab_" + b.dataset.tab; if (k !== "tab_chat") ping(k); }));
   history = load();
   if (history.length) renderLog();
   updatePracticeBar();

@@ -351,7 +351,7 @@ Groq's free tier allows about 3,600 characters of speech a day for the Orpheus v
 ## Seasonal look, challenges and extras (v1.16)
 
 - **Haunted House** (Halloween): turns on by itself once a season (Oct 15 to Nov 2), remembering the previous look and restoring it afterwards. Count Dadcula avatar (cape, bat, "Bleh!"), jack-o'-lantern player, original "Haunted Hayride" station. Preview any time with `/?season=halloween`; `/?season=off` hides it.
-- **Daily Dad Challenge**: 40 small real-world tasks, one per day (same for everyone), on the welcome screen and dashboard. Honour system, no streaks; 7 done unlocks the secret "Challenge Accepted" badge. Stored only on the device.
+- **Daily Dad Challenge**: 40 small real-world tasks, one per day (same for everyone), on the welcome screen and dashboard. Honour system, with a forgiving streak (one missed day is forgiven, and nothing is lost when it ends); 7 done unlocks the secret "Challenge Accepted" badge. Stored only on the device.
 - **Dad-joke cards**: "Share joke" on joke replies and "Share it" on the joke of the day make a 1080×1350 picture.
 - **Easter egg**: tap RoboDad 5 times quickly, or say "back in my day", to unlock Robo-Grandpa.
 - **For parents** page at `/parents`.

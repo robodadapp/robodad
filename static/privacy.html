@@ -89,6 +89,9 @@ th{font-weight:800}
       <tr><td>Short-link visits (for example robodad.app/go/tiktok) and "I want this" votes on the Learn with Dad page</td>
           <td>Our database (Supabase): only the name of the platform or topic and the time. No IP address, no cookie and nothing that identifies you. Your browser remembers which topics you voted for so you don't vote twice.</td>
           <td>Kept as simple totals to see which platforms people come from and what to build next</td></tr>
+      <tr><td>Anonymous usage counts (for example "someone finished the welcome steps" or "someone came back after a day")</td>
+          <td>Our database (Supabase): only the name of the event from a fixed list and the time. No IP address, no device ID, no cookie, no account and nothing you type. We can't tell which counts came from the same person.</td>
+          <td>Kept as simple totals to see whether the first minute works and whether people come back</td></tr>
       <tr><td>Technical data such as IP address and the time of a request</td>
           <td>Our hosting provider's server logs (Render). Your IP address is also used briefly in memory to limit how fast messages can be sent.</td>
           <td>Short-term, for security and fixing problems</td></tr>

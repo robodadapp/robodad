@@ -662,15 +662,16 @@ INTEREST_TOPICS = {
 _counted: dict[str, deque] = defaultdict(deque)
 
 
-async def _count(kind: str, name: str, request: Request) -> None:
-    """Add one anonymous count. Each visitor counts once per name per 10 minutes."""
-    now = time.monotonic()
-    _prune(_counted, 600, now)
-    key = f"{_client_ip(request)}|{kind}|{name}"
-    q = _counted[key]
-    if q and now - q[-1] < 600:
-        return
-    q.append(now)
+async def _count(kind: str, name: str, request: Request, dedupe: bool = True) -> None:
+    """Add one anonymous count. By default each visitor counts once per name per 10 minutes."""
+    if dedupe:
+        now = time.monotonic()
+        _prune(_counted, 600, now)
+        key = f"{_client_ip(request)}|{kind}|{name}"
+        q = _counted[key]
+        if q and now - q[-1] < 600:
+            return
+        q.append(now)
     log.info("COUNT %s %s", kind, name)
     if not (SUPABASE_URL and SUPABASE_KEY):
         return
@@ -714,6 +715,30 @@ async def interest(i: Interest, request: Request):
     if _rate_limited(_client_ip(request)):
         return JSONResponse({"error": "Too many tries. Wait a minute."}, status_code=429)
     await _count("interest", i.topic, request)
+    return {"ok": True}
+
+
+# Anonymous product counters: a fixed list of event names, no IDs, no IP stored, no free text.
+EVENTS = {
+    "ob_shown", "ob_name", "ob_skip", "ob_first_q", "ob_first_answer",
+    "return_d1", "return_d2_3", "return_d4_7", "return_d8plus",
+    "streak_3", "streak_7", "streak_14", "streak_30",
+    "tab_play", "tab_learn", "tab_chill", "tab_me", "rate_shown", "rate_tap",
+}
+
+
+class EventIn(BaseModel):
+    name: str = Field(max_length=24)
+
+
+@app.post("/api/event")
+async def event(e: EventIn, request: Request):
+    """One anonymous count for a named event. Unknown names are rejected; nothing identifies the visitor."""
+    if e.name not in EVENTS:
+        raise HTTPException(400, "Unknown event.")
+    if _rate_limited(_client_ip(request)):
+        return JSONResponse({"error": "Too many tries."}, status_code=429)
+    await _count("event", e.name, request, dedupe=False)
     return {"ok": True}
 
 
