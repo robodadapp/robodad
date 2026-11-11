@@ -977,6 +977,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       headline = `Draw (${st.reason}).`;
       line = "draw";
     }
+    if (humanWon && tierKey === "eighties" && !daily) store.set("robodad.otto.goal.chess", "1");   // a play goal for the READY door (Otto mode)
     if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
     setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
     const end = humanWon ? "win" : line === "draw" ? "draw" : "lose";

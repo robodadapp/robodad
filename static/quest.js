@@ -886,8 +886,12 @@
     if (level + 1 > reached) { reached = level + 1; store.set("robodad.dadquest.reached", String(reached)); }
     setState("level", true); say(ROOMS[level].name + " cleared. Next room, or try a bonus room.");
   }
+  // The READY door: opens once READY is entered in Otto mode (rung 8) and the other two play goals are done
+  const homeGoals = () => [["BEAT ARCADE DAD AT CHESS", store.get("robodad.otto.goal.chess") === "1"], ["SOLVE 10 NOTEBOOK PAGES", store.get("robodad.otto.goal.nb") === "1"], ["PLAY LEVEL 1 TO THE DOOR", true]];
+  const doorReady = () => (parseInt(store.get("robodad.otto") || "0", 10) || 0) >= 8 && homeGoals().every(g => g[1]);
   function homeDone(){
     endRun(); store.set("robodad.dadquest.home", "1"); sfx.power();
+    if (doorReady()) { sfx.win(); setState("homeEnd", true); say("The door says READY. It opens!"); return; }
     setState("homeEnd", true); say("The door says NOT YET. Something still isn't ready.");
   }
   function dailyDone(){
@@ -1023,7 +1027,7 @@
       if (!s.passed) { text("DAD'S CHAIR", sx, GY - 46, 7, "#AED581"); R(sx - 1, GY - 39, 2, 3, "#AED581"); } }
     else if (s.t === "door") { R(sx - 12, GY - 50, 26, 50, "#3E2A1E"); R(sx - 9, GY - 47, 20, 47, "#FFF6D6"); x.fillStyle = "rgba(255,246,214,.12)"; x.beginPath(); x.arc(sx + 1, GY - 22, 40, 0, 7); x.fill(); text("NEXT ROOM", sx, GY - 60, 7, "#F5C518"); }
     else if (s.t === "nydoor") { R(sx - 12, GY - 50, 26, 50, "#3E2A1E"); R(sx - 9, GY - 47, 20, 47, "#8E8AA8"); R(sx - 9, GY - 47, 20, 3, "#6E6890"); R(sx + 6, GY - 24, 3, 3, "#F5C518");
-      R(sx - 6, GY - 40, 14, 9, "#C0C0C8"); text("NOT YET", sx + 1, GY - 38, 5, "#2A2440", "center", true); text("THE DOOR", sx, GY - 60, 7, "#F5C518"); }
+      R(sx - 6, GY - 40, 14, 9, "#C0C0C8"); text(doorReady() ? "READY" : "NOT YET", sx + 1, GY - 38, 5, "#2A2440", "center", true); text("THE DOOR", sx, GY - 60, 7, "#F5C518"); }
     else if (s.t === "flag") { R(sx, GY - 54, 2, 54, "#C0C0C8"); for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) R(sx + 2 + i * 5, GY - 54 + j * 5, 5, 5, (i + j) % 2 ? "#0B0B14" : "#FFFFFF"); text("FINISH", sx + 10, GY - 64, 7, "#F5C518"); }
   }
   function hud(){
@@ -1198,11 +1202,17 @@
       menu([{ label: store.get("robodad.dadquest.home") === "1" ? "LEVEL 1: HOME ✓" : "LEVEL 1: HOME", act: () => { twoP = null; start(0, "home"); } }], 72, 1, 150, 12, 3);
       text(touchSeen ? "TAP RIGHT: JUMP · HOLD LEFT: SLIDE" : "SPACE: JUMP · ↓: SLIDE · P: PAUSE", W / 2, 120, 7, "#9A93B8");
     } else if (state === "homeEnd") {
-      panel(110);
+      panel(130);
       text("LEVEL 1: HOME", W / 2, 38, 14, "#F5C518");
       text("YOU MADE IT TO THE DOOR.", W / 2, 58, 8, "#FFF6D6");
-      text("IT SAYS NOT YET.", W / 2, 72, 8, "#FF4D6D");
-      menu([{ label: "RUN IT AGAIN", act: () => start(0, "home") }, { label: "MENU", act: () => setState("title") }], 88, 2, 76, 12, 3);
+      if (doorReady()) {
+        text("IT SAYS READY. IT OPENS!", W / 2, 72, 8, "#AED581");
+        text("DEV LEFT ONE LAST WORD FOR YOU IN OTTO MODE.", W / 2, 86, 6, "#9A93B8");
+      } else {
+        text("IT SAYS NOT YET.", W / 2, 72, 8, "#FF4D6D");
+        if ((parseInt(store.get("robodad.otto") || "0", 10) || 0) >= 8) homeGoals().forEach((g, i) => text((g[1] ? "✓ " : "· ") + g[0], W / 2, 84 + i * 9, 6, g[1] ? "#AED581" : "#9A93B8"));
+      }
+      menu([{ label: "RUN IT AGAIN", act: () => start(0, "home") }, { label: "MENU", act: () => setState("title") }], 112, 2, 76, 12, 3);
     } else if (state === "title") {
       panel(172);
       text("DAD QUEST", W / 2, 10, 20, "#F5C518");

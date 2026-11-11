@@ -59,6 +59,7 @@
     s.xp += points;
     if (opts.keepStreak) { s.streak++; s.best = Math.max(s.best, s.streak); } else s.streak = 0;
     if (opts.id && !s.done.includes(opts.id)) s.done.push(opts.id);
+    syncNbGoal(s);
     if (opts.hands && !s.handsDone.includes(opts.hands)) s.handsDone.push(opts.hands);
     const lines = [];
     if (opts.keepStreak && STREAK_SAY[s.streak]) lines.push(STREAK_SAY[s.streak]);
@@ -116,6 +117,9 @@
       h("p", { class:"bz-foot" }, `Solved ${P.filter(p => s.done.includes(p.id)).length} of ${P.length} puzzles · Best streak ${s.best}`));
     sayText = ""; focusFirst();
   }
+
+  // the READY door's second play goal: ten Dev's Notebook pages solved
+  function syncNbGoal(s){ try { if (NB.filter(p => (s || S()).done.includes(p.id)).length >= 10) localStorage.setItem("robodad.otto.goal.nb", "1"); } catch {} }
 
   // ---------- Dev's Notebook ----------
   function notebookMenu(say){

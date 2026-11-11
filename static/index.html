@@ -2138,7 +2138,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=3"></script>
-<script src="/static/brain.js?v=2"></script>
+<script src="/static/brain.js?v=3"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=1"></script>
@@ -4759,6 +4759,7 @@ const PLAYERS = {
       if (j.kind === "hunt_wait") { codeMsg.textContent = huntWaitText(j.opens); codeMsg.hidden = false; return; }
       if (j.kind === "book_locked") { codeMsg.textContent = j.first ? "Otto's not online yet. Start with the first word Otto ever asked Kai for." : "Otto hasn't reached that part of the story yet. Keep reading, then come back."; codeMsg.hidden = false; return; }
       codeDlg.hidden = true;
+      if (j.kind === "book" && j.rung === OTTO_RUNGS.length && !ottoGoals().every(g => g[1])) { codeDlg.hidden = false; codeMsg.textContent = "Otto says the door isn't open yet. Finish the three play goals first: " + ottoGoals().filter(g => !g[1]).map(g => g[0].toLowerCase()).join(", ") + "."; codeMsg.hidden = false; return; }
       if (j.kind === "book") { ottoUnlock(j.rung); return; }
       if (j.kind === "hunt") { huntUnlock(j.chapter, j.solver); return; }
       const head = AV ? `<svg viewBox="0 0 64 64" aria-hidden="true">${AV.AVATARS[avKind].svg}</svg>` : "";
@@ -4786,7 +4787,13 @@ const PLAYERS = {
     { ch: 6,  ic: "🚪", name: "DAD QUEST: Level 1", got: "A pixel apartment, and a door that says NOT YET.", say: "Hold SELECT. Level 1: Home. Then count with Kai." },
     { ch: 10, ic: "💬", name: "Talk to your folks", got: "Starter conversations for Hindi, Marathi and Bengali at home.", say: "Kai's idea: start the talk at the kitchen table." },
     { ch: 11, ic: "✅", name: "The READY door", got: "The door now says READY. It opens when the play goals are done.", say: "The whole crew solved the last clue. One door left." },
-    { ch: 12, ic: "🏆", name: "Player Two Wins", got: "The last rung. A hint of what comes next.", say: "Who wins in the end? Player Two. See you at New Year." },
+    { ch: 12, ic: "🏆", name: "Player Two Wins", got: "Full DAD QUEST is yours, someone's stirring in the dark, and Dev left a note about a time capsule.", say: "Who wins in the end? Player Two. See you at New Year." },
+  ];
+  // the READY door's three play goals (set by the chess page, Brain Teasers and DAD QUEST)
+  const ottoGoals = () => [
+    ["Beat Arcade Dad at chess", getPref("robodad.otto.goal.chess") === "1"],
+    ["Solve 10 pages of Dev's Notebook", getPref("robodad.otto.goal.nb") === "1"],
+    ["Play Level 1 to the door", getPref("robodad.dadquest.home") === "1"],
   ];
   const ottoProgress = () => Math.min(OTTO_RUNGS.length, parseInt(getPref(OTTO_KEY) || "0", 10) || 0);
   function ottoUI(){
@@ -4800,6 +4807,7 @@ const PLAYERS = {
     $("ottoTitle").textContent = n >= OTTO_RUNGS.length ? "Otto's bookshelf: all rungs open" : `Otto's bookshelf: ${n} of ${OTTO_RUNGS.length}`;
     $("ottoMeter").style.width = `${Math.round(n / OTTO_RUNGS.length * 100)}%`;
     $("ottoLine").textContent = n ? `You've read up to Chapter ${r.ch}. Each Otto's Log in the book hides a code. Find the next one.` : "";
+    if (n >= 6 && n < OTTO_RUNGS.length) $("ottoLine").textContent += "  Play goals for the door: " + ottoGoals().map(g => (g[1] ? "✓ " : "☐ ") + g[0]).join(" · ") + ".";
     $("ottoList").innerHTML = OTTO_RUNGS.map((x, i) => {
       const on = i < n;
       return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on && i === 4 ? '<button class="ghost vs-go" type="button" data-otto="pun">Open</button>' : on && i === 5 ? '<a class="ghost vs-go" href="/quest">Play</a>' : on ? '<span class="vs-done">✓</span>' : ""}</li>`;
@@ -4812,6 +4820,12 @@ const PLAYERS = {
     if (first) setPref(OTTO_KEY, String(rung));
     ottoUI();
     const x = OTTO_RUNGS[rung - 1];
+    if (rung === OTTO_RUNGS.length && first) {   // the finale: full DAD QUEST, a Robo-Grandpa silhouette, and the Season 2 hook
+      setPref("robodad.egg.dadquest", "1"); setPref("robodad.otto.s2", "1"); try { huntUI(); } catch {}
+      const gp = AV ? `<span style="filter:brightness(0) opacity(.55);display:inline-block;width:84px;height:84px"><svg viewBox="0 0 64 64" aria-hidden="true">${AV.AVATARS.grandpa.svg}</svg></span>` : `<span style="font-size:4rem" aria-hidden="true">🏆</span>`;
+      secretReveal("OTTO'S LOG · CHAPTER 12", x.name, esc(x.say) + " Full DAD QUEST is unlocked. Someone's stirring in the dark… Dev's last note: “An old time capsule in the garage, with a lock on it. Something tells me we'll need it in the new year…”", gp, "otto", "Open the bookshelf");
+      return;
+    }
     secretReveal(rung === 1 ? "OTTO MODE ON" : `OTTO'S LOG · CHAPTER ${x.ch}`, x.name, esc(x.say) + " " + esc(x.got), `<span style="font-size:4rem" aria-hidden="true">${x.ic}</span>`, "otto", "Open the bookshelf");
   }
   $("ottoBtn").addEventListener("click", openOtto);
