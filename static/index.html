@@ -1146,6 +1146,13 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .report-box button{border:1px solid var(--line); background:transparent; border-radius:999px; padding:4px 10px; cursor:pointer; font-size:.85rem; font-weight:700}
 .report-box button:hover{background:var(--sky)}
 
+
+/* ---------- first-run onboarding: skippable, ends in a real answer ---------- */
+.ob-step{font-size:.78rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; opacity:.7}
+.ob-picks{display:flex; flex-direction:column; gap:8px}
+.ob-picks button{font:inherit; font-weight:700; text-align:left; color:var(--ink); background:var(--sky); border:1.5px solid var(--line); border-radius:14px; padding:12px 14px; cursor:pointer}
+.ob-picks button:hover,.ob-picks button:focus-visible{border-color:var(--mustard); outline:3px solid var(--mustard); outline-offset:1px}
+
 /* ---------- dialogs (age check, nickname) ---------- */
 .overlay{position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:16px;
   background:color-mix(in srgb, var(--ink) 55%, transparent)}
@@ -1923,6 +1930,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="tile" type="button" id="nameBtn" data-close-sheet><span class="t-ico" aria-hidden="true">👋</span><b>Nickname</b><small id="meName">What RoboDad calls you</small></button>
       <button class="tile" type="button" id="codeBtn" data-close-sheet><span class="t-ico" aria-hidden="true">🔑</span><b id="codeLabel">Got a secret code?</b><small>Enter it here</small></button>
       <button class="tile" type="button" id="ottoBtn" data-close-sheet hidden><span class="t-ico" aria-hidden="true">🤖</span><b>Otto mode</b><small id="ottoSub">Your bookshelf</small></button>
+      <a class="tile" id="rateRow" href="https://play.google.com/store/apps/details?id=app.robodad" target="_blank" rel="noopener" hidden><span class="t-ico" aria-hidden="true">⭐</span><b>Rate RoboDad</b><small>Tell other teens it's worth a try</small></a>
       <button class="tile" type="button" id="installRow" data-close-sheet hidden><span class="t-ico" aria-hidden="true">📲</span><b>Install app</b><small>Put RoboDad on your home screen</small></button>
     </div>
     <div class="me-help">
@@ -2153,6 +2161,22 @@ textarea::placeholder{color:var(--muted)}
       <button class="ghost" id="nameCancel" type="button">Cancel</button>
     </div>
   </form>
+</div>
+
+
+<div class="overlay" id="obDlg" role="dialog" aria-modal="true" aria-labelledby="obTitle" hidden>
+  <div class="card" id="obCard">
+    <p class="ob-step" id="obStep" aria-live="polite"></p>
+    <h2 id="obTitle"></h2>
+    <p id="obText"></p>
+    <form id="obNameForm" hidden>
+      <label for="obName">Nickname (optional)</label>
+      <input id="obName" maxlength="20" autocomplete="off" placeholder="e.g. Sam">
+      <div class="row" style="margin-top:12px"><button class="primary" type="submit">Next</button></div>
+    </form>
+    <div class="ob-picks" id="obPicks" hidden></div>
+    <div class="row"><button class="ghost" id="obSkip" type="button">Skip for now</button></div>
+  </div>
 </div>
 
 <script src="/static/lessons.js?v=41"></script>
@@ -2627,6 +2651,7 @@ textarea::placeholder{color:var(--muted)}
       if (inPractice) { if (!L[inPractice.lang]?.coach) item.lang = inPractice.lang; } else item.extra = pickExtra(meta);
       history.push(item); save();
       renderTools(stack, item);
+      maybeAskRating(meta);
       if (inPractice) { if (meta?.mode !== "safety") practiceTurnDone(); if (readAloud && meta?.mode !== "safety" && !L[inPractice.lang]?.coach) speakLang(practiceSpoken(text), inPractice.lang); else if (readAloud) speak(text); }
       else if (readAloud) speak(text);
     } catch (err) {
@@ -5286,6 +5311,78 @@ const PLAYERS = {
   nameDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeName(); });
   applyName();
 
+
+
+  // ---------- rate RoboDad (Android app only; polite, rare, never after a hard moment) ----------
+  const RATE_KEY = "robodad.rate", RATE_URL = "https://play.google.com/store/apps/details?id=app.robodad";
+  const inApp = !!window.RoboDadNative;
+  const loadRate = () => { try { return JSON.parse(getPref(RATE_KEY) || "{}"); } catch { return {}; } };
+  const saveRate = (r) => setPref(RATE_KEY, JSON.stringify(r));
+  if (inApp) {
+    $("rateRow").hidden = false;
+    $("rateRow").addEventListener("click", () => { const r = loadRate(); r.done = true; saveRate(r); });
+    const r0 = loadRate(), day = new Date().toLocaleDateString("en-CA");
+    if (!(r0.days || []).includes(day)) { r0.days = [...(r0.days || []), day].slice(-30); saveRate(r0); }
+  }
+  function maybeAskRating(meta){
+    if (!inApp) return;
+    const r = loadRate();
+    if (r.done || (r.asked || 0) >= 2) return;
+    if (r.last && Date.now() - r.last < 30 * 864e5) return;
+    if (meta?.mode === "safety") return;                          // never after a crisis reply
+    if ((r.days || []).length < 3) return;                        // came back on at least 3 different days
+    if (history.filter(m => m.role === "user").length < 6) return; // and has actually chatted
+    if (history[history.length - 1]?.meta?.mode === "safety") return;
+    r.asked = (r.asked || 0) + 1; r.last = Date.now(); saveRate(r);
+    setTimeout(() => {
+      const t = $("toast"); t.textContent = "";
+      const msg = document.createElement("span"); msg.textContent = "Is RoboDad helping? A quick rating helps other teens find it. ";
+      const yes = document.createElement("a"); yes.href = RATE_URL; yes.target = "_blank"; yes.rel = "noopener"; yes.textContent = "Rate it";
+      yes.style.cssText = "font-weight:800; margin-left:6px; color:inherit; text-decoration:underline";
+      yes.addEventListener("click", () => { const q = loadRate(); q.done = true; saveRate(q); t.hidden = true; });
+      t.append(msg, yes); t.hidden = false; clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.hidden = true; }, 12000);
+    }, 2500);
+  }
+
+  // ---------- first-run onboarding (new visitors only; skippable at every step; ends in a real reply) ----------
+  const OB_KEY = "robodad.onboarded";
+  const obDlg = $("obDlg");
+  const OB_PICKS = [
+    ["😮‍💨 School or exams are stressing me out", "I'm stressed about exams. Where do I start?"],
+    ["🧰 Teach me a life skill", "Teach me an easy life skill I can learn in five minutes"],
+    ["🤗 I just need to talk", "I just need to talk"],
+    ["😂 Surprise me", "Tell me something fun I probably don't know"],
+  ];
+  function obClose(){ obDlg.hidden = true; setPref(OB_KEY, "1"); input.focus(); }
+  function obStepName(){
+    $("obStep").textContent = "Step 1 of 2";
+    $("obTitle").textContent = "Hey, I'm RoboDad.";
+    $("obText").textContent = "I'm an AI dad: patient, a bit corny, always around. What should I call you? You can skip this.";
+    $("obNameForm").hidden = false; $("obPicks").hidden = true; $("obName").focus();
+  }
+  function obStepTopic(){
+    $("obStep").textContent = "Step 2 of 2";
+    $("obTitle").textContent = nickname ? `What's on your mind, ${nickname}?` : "What's on your mind?";
+    $("obText").textContent = "Pick one and I'll answer right now.";
+    $("obNameForm").hidden = true;
+    const box = $("obPicks"); box.hidden = false; box.textContent = "";
+    OB_PICKS.forEach(([label, say]) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+      b.addEventListener("click", () => { obClose(); submit(say); });
+      box.appendChild(b);
+    });
+    box.firstChild.focus();
+  }
+  function startOnboarding(){ if (getPref(OB_KEY)) return; obDlg.hidden = false; obStepName(); }
+  $("obNameForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    nickname = $("obName").value.replace(/[^\p{L}\s'\-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20);
+    setPref(NAME_KEY, nickname); applyName(); obStepTopic();
+  });
+  $("obSkip").addEventListener("click", obClose);
+  obDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") obClose(); });
+
   // ---------- age check (neutral: asks birth year, stores only the result) ----------
   const gate = $("gate"), birthYear = $("birthYear"), gateGo = $("gateGo");
   const thisYear = new Date().getFullYear();
@@ -5294,10 +5391,11 @@ const PLAYERS = {
   function showUnder(){ $("gateCard").hidden = true; $("gateNo").hidden = false; gate.hidden = false; }
   gateGo.addEventListener("click", () => {
     const age = thisYear - Number(birthYear.value);
-    if (age >= 13) { setPref(AGE_KEY, "ok"); gate.hidden = true; }
+    if (age >= 13) { setPref(AGE_KEY, "ok"); gate.hidden = true; startOnboarding(); }
     else { setPref(AGE_KEY, "under"); showUnder(); }
   });
   const ageState = getPref(AGE_KEY);
+  if (ageState === "ok" && !getPref(OB_KEY)) setPref(OB_KEY, "1");   // existing users: never interrupt
   if (ageState === "under") showUnder();
   else if (ageState !== "ok") { gate.hidden = false; setTimeout(() => birthYear.focus(), 50); }
 
