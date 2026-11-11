@@ -263,7 +263,50 @@
     after: "Something fell off the top shelf as the door opened: a sticky note that says \"The cartridge is still lost.\" Hmm. Keep your eyes open.",
   };
 
-  window.BRAINTEASERS = { puzzles: P, locks: LOCKS, hands: HANDS, escape: ESCAPE };
+  // ---------- Dev's Notebook (unlocked by the LEVEL code from Otto's Log; ten palindrome and word-flip puzzles) ----------
+  const NB = [
+    { id:"nb01", kind:"type", type:"riddle", q:"Dev's notebook starts with a name that reads the same forwards and backwards. It's what you call your mum. Three letters.",
+      hints:["Say it out loud, then say it backwards.", "A name for the person who tucks you in.", "It starts and ends with M."],
+      answer:"MOM", accept:["MOM", "MUM"], why:"MOM spelled backwards is still MOM. That's a palindrome." },
+
+    { id:"nb02", kind:"type", type:"riddle", q:"Page two: a word for the middle of the day, and it's a palindrome. Four letters.",
+      hints:["Think of the clock when both hands point straight up.", "Twelve o'clock.", "It starts with N and ends with N."],
+      answer:"NOON", accept:["NOON"], why:"NOON backwards is NOON." },
+
+    { id:"nb03", kind:"type", type:"riddle", q:"Word flip. Write STRESSED backwards. You'll get something sweet at the end of dinner.",
+      hints:["Write the letters in reverse, starting from the last D.", "The last letters of STRESSED are S, E, D.", "It's plural, and Dev was always saving room for it."],
+      answer:"DESSERTS", accept:["DESSERTS"], why:"STRESSED backwards is DESSERTS. Stressed is just desserts spelled the other way." },
+
+    { id:"nb04", kind:"type", type:"riddle", q:"Word flip. Reverse the word LIVE to get the opposite of good.",
+      hints:["Only four letters.", "Start with the E.", "A villain in a game is this."],
+      answer:"EVIL", accept:["EVIL"], why:"LIVE backwards is EVIL." },
+
+    { id:"nb05", kind:"type", type:"riddle", q:"Dev loved this sentence because it reads the same both ways, ignoring spaces: \"A man, a plan, a canal: ___.\" Which place finishes it?",
+      hints:["The canal is a famous shortcut for ships.", "It joins the Atlantic and the Pacific.", "It's also a country in Central America. Seven letters."],
+      answer:"Panama", accept:["PANAMA"], why:"\"A man, a plan, a canal: Panama\" is a famous palindrome sentence." },
+
+    { id:"nb06", kind:"type", type:"number", q:"What's the smallest three-digit palindrome number that is also a multiple of 7?",
+      hints:["Palindromes start 101, 111, 121, 131…", "Divide each by 7 and look for no remainder.", "It's in the 160s."],
+      answer:"161", accept:["161"], why:"161 = 7 × 23, and it reads the same backwards. The ones before it (101, 111, 121, 131, 141, 151) aren't multiples of 7." },
+
+    { id:"nb07", kind:"type", type:"riddle", q:"Word flip. Reverse the word REWARD to get a place where you keep your socks.",
+      hints:["Write REWARD from the last letter to the first.", "It has a handle and slides open.", "It starts with DR."],
+      answer:"DRAWER", accept:["DRAWER"], why:"REWARD backwards is DRAWER." },
+
+    { id:"nb08", kind:"type", type:"riddle", q:"Dev drew a toy vehicle on the cover that is a palindrome and has seven letters. It goes fast around a track.",
+      hints:["It has wheels, and it's a kind of competition.", "Think of a fast car on a track.", "RACE and CAR, joined together."],
+      answer:"RACECAR", accept:["RACECAR", "RACECARS"], why:"RACECAR backwards is RACECAR." },
+
+    { id:"nb09", kind:"type", type:"number", q:"Number flip. Take 47, flip its digits to get 74, then add the two together. What do you get?",
+      hints:["47 + 74.", "Add the tens, then the ones.", "The answer is a palindrome too."],
+      answer:"121", accept:["121"], why:"47 + 74 = 121, which reads the same backwards. Dev tried this with lots of numbers." },
+
+    { id:"nb10", kind:"type", type:"riddle", q:"Dev's last page is written backwards: DRAWKCAB. Read it the right way round. What does it say?",
+      hints:["Start from the last letter and go left.", "B, A, C, K…", "It's the word for the way Dev wrote the page."],
+      answer:"BACKWARD", accept:["BACKWARD", "BACKWARDS"], why:"DRAWKCAB reversed is BACKWARD. Dev wrote the whole notebook with a flip in it." },
+  ];
+
+  window.BRAINTEASERS = { puzzles: P, notebook: NB, locks: LOCKS, hands: HANDS, escape: ESCAPE };
 
   // "Ask Dad" coach: the same chat machinery as the maths coach, one scene per puzzle.
   const KIND = { riddle:"Riddle", pattern:"Pattern", number:"Number trick", logic:"Logic puzzle" };
@@ -273,7 +316,7 @@
     name: "Brain teasers", native: "Brain teasers", voice: "en-CA", hello: "Hi", coach: true,
     lessons: [],
     scenes: [
-      ...P.map(p => ({
+      ...[...P, ...NB].map(p => ({
         id: p.id, title: KIND[p.type] || "Puzzle", who: "Dad's your puzzle coach",
         open: `Brain teaser mode. The puzzle is: ${p.q} What have you tried so far? I'll give you hints, not the answer, so you get to crack it yourself.`,
         hints: hint3,

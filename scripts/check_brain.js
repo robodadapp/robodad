@@ -5,7 +5,8 @@
 // - every escape-room step points at a real puzzle
 global.window = {};
 require("../static/brainteasers.js");
-const { puzzles, locks, hands, escape } = window.BRAINTEASERS;
+const { puzzles: base, notebook = [], locks, hands, escape } = window.BRAINTEASERS;
+const puzzles = [...base, ...notebook];
 let bad = 0; const fail = (m) => { bad++; console.log("FAIL", m); };
 const ids = new Set();
 for (const p of puzzles) {

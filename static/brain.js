@@ -6,7 +6,9 @@
    so the learning badges unlock by themselves. */
 (function(){
   const D = window.BRAINTEASERS || { puzzles:[], locks:[], hands:{}, escape:{ rooms:[] } };
-  const P = D.puzzles, BYID = Object.fromEntries(P.map(p => [p.id, p]));
+  const P = D.puzzles, NB = D.notebook || [], BYID = Object.fromEntries([...P, ...NB].map(p => [p.id, p]));
+  // Dev's Notebook opens with the LEVEL code from Otto's Log (the second rung of Otto mode)
+  const notebookOpen = () => { try { return (parseInt(localStorage.getItem("robodad.otto") || "0", 10) || 0) >= 2; } catch { return false; } };
   const HKINDS = ["lights", "lock", "river", "tiles"];
 
   const LEVELS = [[0, "Curious Kid"], [100, "Clue Hunter"], [250, "Riddle Wrangler"], [500, "Logic Ninja"],
@@ -109,9 +111,25 @@
         mk("⚡", "Puzzle Run", "Riddles, logic and hands-on puzzles. Keep your streak alive.", () => startRun(), "bz-focus"),
         mk(dailyDone ? "✅" : "📅", "Today's puzzle", dailyDone ? "Done! A new one tomorrow." : "Double points, once a day.", () => dailyDone ? hub("You already cracked today's puzzle. Come back tomorrow for a new one!") : startPuzzle(dailyPuzzle(), { mode:"daily" })),
         mk("🧩", "Hands-on", "Lights Out, Code Lock, River Run and Slide Tiles.", handsMenu),
+        notebookOpen() ? mk("📓", "Dev's Notebook", `${NB.filter(p => s.done.includes(p.id)).length} of ${NB.length} puzzles solved.`, notebookMenu) : null,
         mk("🚪", E.title, s.escaped ? "Escaped! Play it again any time." : `${roomsDone} of ${E.rooms.length} rooms cracked.`, escapeMenu)),
-      h("p", { class:"bz-foot" }, `Solved ${s.done.length} of ${P.length} puzzles · Best streak ${s.best}`));
+      h("p", { class:"bz-foot" }, `Solved ${P.filter(p => s.done.includes(p.id)).length} of ${P.length} puzzles · Best streak ${s.best}`));
     sayText = ""; focusFirst();
+  }
+
+  // ---------- Dev's Notebook ----------
+  function notebookMenu(say){
+    view = "notebook"; ctx = null;
+    const s = S(), n = NB.filter(p => s.done.includes(p.id)).length;
+    paint(topBar("Dev's Notebook", { fn: () => hub() }),
+      bubble((typeof say === "string" && say) || (n >= NB.length ? "Every page solved. Dev would be so proud." : "Dev's notebook, page by page. Palindromes and word flips. Pick a page.")),
+      h("div", { class:"bz-tiles" }, NB.map((p, i) => {
+        const done = s.done.includes(p.id);
+        const b = btn("", "bz-tile" + (i ? "" : " bz-focus"), () => startPuzzle(p, { mode:"notebook" }));
+        b.append(h("span", { class:"bz-ic", "aria-hidden":"true" }, done ? "✅" : "📄"), h("b", {}, `Page ${i + 1}`), h("small", {}, done ? "Solved" : p.type === "number" ? "Number page" : "Word page"));
+        return b; })),
+      h("p", { class:"bz-foot" }, `${n} of ${NB.length} pages solved`));
+    focusFirst();
   }
 
   // ---------- Puzzle Run ----------
@@ -127,15 +145,15 @@
   function startPuzzle(p, c){
     view = "puzzle";
     ctx = { ...c, p, hints:0, wrong:0, done:false, msg:"", say:"", t0:Date.now(), options: p.kind === "type" ? null : shuffle([p.ok, ...p.no]) };
-    ctx.say = c.mode === "daily" ? "Today's puzzle! Double points if you crack it." : c.mode === "escape" ? "This one's guarding the next clue." : pick(["Here's one for you.", "Try this one.", "Ooh, I like this one."]);
+    ctx.say = c.mode === "notebook" ? "A page from Dev's notebook." : c.mode === "daily" ? "Today's puzzle! Double points if you crack it." : c.mode === "escape" ? "This one's guarding the next clue." : pick(["Here's one for you.", "Try this one.", "Ooh, I like this one."]);
     renderPuzzle(); focusFirst(".bz-opt, .bz-input");
   }
-  const backFor = () => ctx && ctx.mode === "escape" ? { label:"Room", fn: () => roomView(ctx.room) } : { fn: () => hub() };
+  const backFor = () => ctx && ctx.mode === "escape" ? { label:"Room", fn: () => roomView(ctx.room) } : ctx && ctx.mode === "notebook" ? { label:"Notebook", fn: () => notebookMenu() } : { fn: () => hub() };
   // Sends the question (never the answer) to a friend as a picture. Not offered in the escape room, where puzzles guard clues.
   const challengeBtn = (p) => bridge?.share && ctx.mode !== "escape" ? btn("Challenge a friend", "ghost", () => bridge.share(p.q)) : null;
   function renderPuzzle(){
     const c = ctx, p = c.p;
-    const nodes = [topBar(c.mode === "daily" ? "Today's puzzle" : c.mode === "escape" ? D.escape.rooms[c.room].name : "Puzzle Run", backFor()), bubble(c.say)];
+    const nodes = [topBar(c.mode === "daily" ? "Today's puzzle" : c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "notebook" ? "Dev's Notebook" : "Puzzle Run", backFor()), bubble(c.say)];
     nodes.push(h("p", { class:"bz-q" }, p.q));
     p.hints.slice(0, c.hints).forEach((t, i) => nodes.push(h("p", { class:"bz-hint" }, `Hint ${i + 1}: ${t}`)));
     if (c.msg) nodes.push(h("p", { class:"bz-msg" + (c.done ? " ok" : "") }, c.msg));
@@ -162,6 +180,7 @@
     } else {
       nodes.push(h("div", { class:"bz-row" }, c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
         : c.mode === "daily" ? btn("Back to the menu", "primary bz-focus", () => hub())
+        : c.mode === "notebook" ? btn("Back to the notebook →", "primary bz-focus", () => notebookMenu())
         : btn("Next puzzle →", "primary bz-focus", startRun)));
       if (c.mode === "run") nodes[nodes.length - 1].append(btn("Menu", "ghost", () => hub()));
       const ch = challengeBtn(p); if (ch) nodes[nodes.length - 1].append(ch);
