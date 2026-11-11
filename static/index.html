@@ -1920,6 +1920,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="tile" type="button" data-go="badges"><span class="t-ico" aria-hidden="true">🏅</span><b>Badges</b><small id="meBadges">Do it for real, unlock them</small></button>
       <button class="tile" type="button" id="nameBtn" data-close-sheet><span class="t-ico" aria-hidden="true">👋</span><b>Nickname</b><small id="meName">What RoboDad calls you</small></button>
       <button class="tile" type="button" id="codeBtn" data-close-sheet><span class="t-ico" aria-hidden="true">🔑</span><b id="codeLabel">Got a secret code?</b><small>Enter it here</small></button>
+      <button class="tile" type="button" id="ottoBtn" data-close-sheet hidden><span class="t-ico" aria-hidden="true">🤖</span><b>Otto mode</b><small id="ottoSub">Your bookshelf</small></button>
       <button class="tile" type="button" id="installRow" data-close-sheet hidden><span class="t-ico" aria-hidden="true">📲</span><b>Install app</b><small>Put RoboDad on your home screen</small></button>
     </div>
     <div class="me-help">
@@ -2080,6 +2081,17 @@ textarea::placeholder{color:var(--muted)}
     <p>RoboDad hid a few surprises around the app. Here's a clue for each one. Some need a code, some don't.</p>
     <ul class="vault-list" id="vaultList"></ul>
     <div class="row"><button class="primary" id="vaultCode" type="button">Enter a secret code</button><button class="ghost" id="vaultClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="ottoDlg" role="dialog" aria-modal="true" aria-labelledby="ottoTitle" hidden>
+  <div class="card vault">
+    <p class="vault-kick">OTTO MODE · PLAYER TWO</p>
+    <h2 id="ottoTitle">Otto's bookshelf</h2>
+    <div class="vault-meter" aria-hidden="true"><i id="ottoMeter"></i></div>
+    <p id="ottoLine"></p>
+    <ul class="vault-list" id="ottoList"></ul>
+    <div class="row"><button class="primary" id="ottoCode" type="button">Enter an Otto's Log code</button><button class="ghost" id="ottoClose" type="button">Close</button></div>
   </div>
 </div>
 
@@ -3517,6 +3529,7 @@ const PLAYERS = {
     const act = e.target.closest("[data-act]")?.dataset.act;
     if (act === "next") showReveal(); else if (act === "share") shareBadge($("reveal").dataset.id);
     else if (act === "cheat") { applyLook("cheat"); lookStation("cheat"); showReveal(); }
+    else if (act === "otto") { showReveal(); openOtto(); }
     else if (act === "grandpa") { avPref = "grandpa"; setPref(AV_KEY, avPref); mountAvatar(document.documentElement.dataset.look || "classic"); showReveal(); setTimeout(() => avPlay("kids"), 700); }
   });
   $("reveal").addEventListener("keydown", (e) => { if (e.key === "Escape") { revealQ.length = 0; showReveal(); } });
@@ -4729,11 +4742,13 @@ const PLAYERS = {
     const code = codeInput.value.trim(); if (!code) return;
     $("codeGo").disabled = true;
     try {
-      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code, family: getPref("robodad.family") || "", hunt: huntProgress() }) });
+      const r = await fetch("/api/code", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ code, family: getPref("robodad.family") || "", hunt: huntProgress(), otto: ottoProgress() }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { codeMsg.textContent = j.error || "Hmm, that didn't work. Try again."; codeMsg.hidden = false; return; }
       if (j.kind === "hunt_wait") { codeMsg.textContent = huntWaitText(j.opens); codeMsg.hidden = false; return; }
+      if (j.kind === "book_locked") { codeMsg.textContent = j.first ? "Otto's not online yet. Start with the first word Otto ever asked Kai for." : "Otto hasn't reached that part of the story yet. Keep reading, then come back."; codeMsg.hidden = false; return; }
       codeDlg.hidden = true;
+      if (j.kind === "book") { ottoUnlock(j.rung); return; }
       if (j.kind === "hunt") { huntUnlock(j.chapter, j.solver); return; }
       const head = AV ? `<svg viewBox="0 0 64 64" aria-hidden="true">${AV.AVATARS[avKind].svg}</svg>` : "";
       if (j.kind === "family") {
@@ -4748,6 +4763,51 @@ const PLAYERS = {
     finally { $("codeGo").disabled = false; }
   });
   codeUI();
+
+  // ---------- Otto mode (companion to the novel; each Otto's Log code opens one rung, in order) ----------
+  const OTTO_KEY = "robodad.otto";
+  const OTTO_RUNGS = [
+    { ch: 1,  ic: "🤖", name: "Otto mode", got: "Otto knows your name, and you're Player Two.", say: "Four letters, same forwards and backwards. You already know me. Welcome, Player Two." },
+    { ch: 2,  ic: "📓", name: "Dev's Notebook", got: "A pack of palindrome and word-flip puzzles from Dev's notebook.", say: "Kai and Zara cracked the first page. Your turn." },
+    { ch: 3,  ic: "🗺️", name: "Season 1 hunt map", got: "The first pin on the map: Kensington Market.", say: "He did not say look around. He said look up. Pin dropped." },
+    { ch: 4,  ic: "🕹️", name: "Arcade Dad", got: "Arcade Dad is yours to challenge, Marcus-style trash talk and all.", say: "Dev's best score started with 999. Marcus would be proud." },
+    { ch: 5,  ic: "🥬", name: "Thursday Rules", got: "Mom's pun cards, and a Thursday nudge to eat together.", say: "Lettuce celebrate. Thursday dinner is a rule now." },
+    { ch: 6,  ic: "🚪", name: "DAD QUEST: Level 1", got: "A pixel apartment, and a door that says NOT YET.", say: "Hold SELECT. Level 1: Home. Then count with Kai." },
+    { ch: 10, ic: "💬", name: "Talk to your folks", got: "Starter conversations for Hindi, Marathi and Bengali at home.", say: "Kai's idea: start the talk at the kitchen table." },
+    { ch: 11, ic: "✅", name: "The READY door", got: "The door now says READY. It opens when the play goals are done.", say: "The whole crew solved the last clue. One door left." },
+    { ch: 12, ic: "🏆", name: "Player Two Wins", got: "The last rung. A hint of what comes next.", say: "Who wins in the end? Player Two. See you at New Year." },
+  ];
+  const ottoProgress = () => Math.min(OTTO_RUNGS.length, parseInt(getPref(OTTO_KEY) || "0", 10) || 0);
+  function ottoUI(){
+    const n = ottoProgress();
+    $("ottoBtn").hidden = n < 1;
+    $("ottoSub").textContent = n >= OTTO_RUNGS.length ? "Every rung opened" : `${n} of ${OTTO_RUNGS.length} rungs opened`;
+  }
+  function renderOtto(){
+    const n = ottoProgress(), r = OTTO_RUNGS[Math.max(0, n - 1)];
+    $("ottoTitle").textContent = n >= OTTO_RUNGS.length ? "Otto's bookshelf: all rungs open" : `Otto's bookshelf: ${n} of ${OTTO_RUNGS.length}`;
+    $("ottoMeter").style.width = `${Math.round(n / OTTO_RUNGS.length * 100)}%`;
+    $("ottoLine").textContent = n ? `You've read up to Chapter ${r.ch}. Each Otto's Log in the book hides a code. Find the next one.` : "";
+    $("ottoList").innerHTML = OTTO_RUNGS.map((x, i) => {
+      const on = i < n;
+      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on ? '<span class="vs-done">✓</span>' : ""}</li>`;
+    }).join("");
+  }
+  function openOtto(){ renderOtto(); $("ottoDlg").hidden = false; $("ottoCode").focus(); }
+  function closeOtto(){ $("ottoDlg").hidden = true; }
+  function ottoUnlock(rung){
+    const first = rung > ottoProgress();
+    if (first) setPref(OTTO_KEY, String(rung));
+    ottoUI();
+    const x = OTTO_RUNGS[rung - 1];
+    secretReveal(rung === 1 ? "OTTO MODE ON" : `OTTO'S LOG · CHAPTER ${x.ch}`, x.name, esc(x.say) + " " + esc(x.got), `<span style="font-size:4rem" aria-hidden="true">${x.ic}</span>`, "otto", "Open the bookshelf");
+  }
+  $("ottoBtn").addEventListener("click", openOtto);
+  $("ottoClose").addEventListener("click", closeOtto);
+  $("ottoDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeOtto(); });
+  $("ottoDlg").addEventListener("click", (e) => { if (e.target === $("ottoDlg")) closeOtto(); });
+  $("ottoCode").addEventListener("click", () => { closeOtto(); openCode(); });
+  ottoUI();
 
   // ---------- The Lost Cartridge (puzzle hunt; answers are checked on the server) ----------
   const HUNT = window.HUNT, HUNT_KEY = "robodad.hunt";

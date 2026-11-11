@@ -350,6 +350,7 @@ class CodeRequest(BaseModel):
     code: str = Field(min_length=1, max_length=60)
     family: str = Field(default="", max_length=64)          # lets the family preview the hunt early
     hunt: int = Field(default=0, ge=0, le=6)                # the chapter this device has reached
+    otto: int = Field(default=0, ge=0, le=9)                # how many Otto's Log codes this device has entered
 
 
 # ---------------------------------------------------------------- secret codes
@@ -374,6 +375,12 @@ ARG_START = os.getenv("ARG_START", "").strip()
 HUNT_OPEN_THROUGH = int(os.getenv("HUNT_OPEN_THROUGH", "2") or 0)
 # RETRO (the five Daily Board letters) opens the next chapter early. Stored as a hash like the rest.
 HUNT_EARLY_HASH = hashlib.sha256(b"retro").hexdigest()
+
+
+# Otto's Log codes from the companion novel. Each opens one rung of Otto mode, in order
+# (OTTO first). They give flavour and extras, never the Season 1 prize, and never expire.
+BOOK_HASHES = {hashlib.sha256(w.encode()).hexdigest(): n for n, w in enumerate(
+    ("otto", "level", "lookup", "999", "lettuce", "select", "talktome", "ready", "playertwo"), 1)}
 
 
 def _hunt_opens(chapter: int):
@@ -1150,6 +1157,12 @@ async def secret_code(c: CodeRequest, request: Request):
             log.info("HUNT: chapter %s opened early with the Daily Board code", c.hunt + 1)
             return {"kind": "hunt", "chapter": c.hunt + 1}
         return JSONResponse({"error": "Nice work on the Daily Board. That code has nothing to open yet."}, status_code=404)
+    rung = BOOK_HASHES.get(digest)
+    if rung:
+        if rung > c.otto + 1:
+            return {"kind": "book_locked", "first": c.otto == 0}
+        log.info("OTTO: rung %s opened", rung)
+        return {"kind": "book", "rung": rung}
     chapter = HUNT_HASHES.get(digest)
     if chapter:
         opens = _hunt_opens(chapter)
