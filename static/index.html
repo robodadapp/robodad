@@ -2162,10 +2162,10 @@ textarea::placeholder{color:var(--muted)}
   const VOICE_KEY = "robodad.voice";
   // RoboDad's voices: two Groq voices, each at normal speed or slowed a little (slower = deeper)
   const VOICES = {
-    troy:   { api:"troy",   rate:1,    label:"Joe King",   note:"natural" },
-    bruce:  { api:"troy",   rate:0.88, label:"Ray Dio",  note:"deeper" },
-    peter:  { api:"austin", rate:1,    label:"Al Gorithm",  note:"easygoing" },
-    austin: { api:"austin", rate:0.88, label:"Sir Kit Breaker", note:"easygoing, deeper" },
+    troy:   { api:"troy",   az:"guy",   rate:1,    label:"Joe King",   note:"natural" },
+    bruce:  { api:"troy",   az:"guy",   rate:0.88, label:"Ray Dio",  note:"deeper" },
+    peter:  { api:"austin", az:"davis", rate:1,    label:"Al Gorithm",  note:"easygoing" },
+    austin: { api:"austin", az:"davis", rate:0.88, label:"Sir Kit Breaker", note:"easygoing, deeper" },
   };
   let voicePref = VOICES[getPref(VOICE_KEY)] ? getPref(VOICE_KEY) : "troy";
   const curVoice = () => VOICES[voicePref] || VOICES.troy;
@@ -2223,8 +2223,8 @@ textarea::placeholder{color:var(--muted)}
     u.onend = unduck; u.onerror = unduck;
     speechSynthesis.speak(u);
   }
-  const fetchClip = (text, lang) => fetch("/api/tts", { method:"POST", headers:{ "content-type":"application/json" },
-    body: JSON.stringify(lang ? { text, lang } : { text, voice: curVoice().api }) }).then(r => { if (!r.ok) throw new Error("tts"); return r.blob(); });
+  const fetchClip = (text, lang, voice) => fetch("/api/tts", { method:"POST", headers:{ "content-type":"application/json" },
+    body: JSON.stringify(lang ? (voice ? { text, lang, voice } : { text, lang }) : { text, voice: curVoice().api }) }).then(r => { if (!r.ok) throw new Error("tts"); return r.blob(); });
   // play fetched clips one after another; resolves "done", "stopped" or "failed" (failed = nothing played)
   async function playClips(blobs, id, rate){
     for (let i = 0; i < blobs.length; i++) {
@@ -2243,12 +2243,22 @@ textarea::placeholder{color:var(--muted)}
     }
     return "done";
   }
-  // When RoboDad's online voice is unavailable (its free daily allowance runs out),
-  // a whole reply is read by the phone's voice instead: never half and half.
-  let onlineDownUntil = 0, toldVoiceRest = false;
-  function voiceResting(){
-    onlineDownUntil = Date.now() + 15 * 60 * 1000;
-    if (!toldVoiceRest) { toldVoiceRest = true; showCap("", `${voiceLabel()} is resting his voice, so I'm using your phone's voice for now`); }
+  // Three tiers, tried in order, one voice per whole reply (never half and half):
+  // 1) Groq's own voice, 2) Azure's male English voice as backup, 3) the phone's voice.
+  const REST = 15 * 60 * 1000;
+  let onlineDownUntil = 0, azureDownUntil = 0, toldVoiceRest = false;
+  function voiceResting(backup){
+    if (toldVoiceRest) return; toldVoiceRest = true;
+    showCap("", backup ? `${voiceLabel()} is resting his voice, so his backup voice is stepping in`
+                       : `${voiceLabel()} is resting his voice, so I'm using your phone's voice for now`);
+  }
+  // fetch every piece first (so it plays without gaps), then play; "down" = a clip could not be fetched
+  async function playTier(parts, id, getClip, desc){
+    let blobs;
+    try { blobs = await Promise.all(parts.map(getClip)); } catch { return "down"; }
+    if (id !== speakId) return "stopped";
+    lastVoice = desc;
+    return playClips(blobs, id, curVoice().rate);                 // slowing the clip lowers the pitch too
   }
   async function speak(text){
     if (!canSpeak) return;
@@ -2256,15 +2266,22 @@ textarea::placeholder{color:var(--muted)}
     const said = plain(text).replace(/\s+/g, " ").trim(); if (!said) return;
     if (window.RoboRadio) RoboRadio.duck(true);
     $("voiceBtn")?.classList.add("speaking");
-    if (!player || Date.now() < onlineDownUntil) return speakDevice(said, id);
+    if (!player) return speakDevice(said, id);
     const parts = chunks(said);
-    let blobs;
-    try { blobs = await Promise.all(parts.map(fetchClip)); }      // fetch every piece first, so it plays without gaps
-    catch { if (id === speakId) { voiceResting(); speakDevice(said, id); } return; }
-    lastVoice = `RoboDad's own male dad voice (${voiceLabel()})`;
-    const how = await playClips(blobs, id, curVoice().rate);   // slowing the clip lowers the pitch too
-    if (how === "failed") return speakDevice(said, id);
-    if (how === "done") unduck();
+    let how = "down", backup = false;
+    if (Date.now() >= onlineDownUntil) {
+      how = await playTier(parts, id, t => fetchClip(t), `RoboDad's own male dad voice (${voiceLabel()})`);
+      if (how === "down") onlineDownUntil = Date.now() + REST;
+    }
+    if ((how === "down" || how === "failed") && id === speakId && Date.now() >= azureDownUntil) {
+      backup = true;
+      how = await playTier(parts, id, t => fetchClip(t, "en", curVoice().az), `RoboDad's backup male dad voice (${voiceLabel()}'s stand-in, Azure)`);
+      if (how === "down") azureDownUntil = Date.now() + REST;
+    }
+    if (id !== speakId || how === "stopped") return;
+    if (how === "done") { if (backup) voiceResting(true); return unduck(); }
+    voiceResting(false);
+    speakDevice(said, id);
   }
   // voice picker in settings
   function fillVoices(){
