@@ -370,6 +370,8 @@ EGGS = {"cheat"}
 HUNT_HASHES = {hashlib.sha256(w.encode()).hexdigest(): n for w, n in (
     ("pressstart", 1), ("joypad", 2), ("attic", 3), ("badge", 4), ("392", 5), ("39200", 5), ("dadquest", 6))}
 ARG_START = os.getenv("ARG_START", "").strip()
+# Chapters up to this number open straight away, ahead of the 3-day calendar.
+HUNT_OPEN_THROUGH = int(os.getenv("HUNT_OPEN_THROUGH", "2") or 0)
 # RETRO (the five Daily Board letters) opens the next chapter early. Stored as a hash like the rest.
 HUNT_EARLY_HASH = hashlib.sha256(b"retro").hexdigest()
 
@@ -1133,7 +1135,7 @@ async def secret_code(c: CodeRequest, request: Request):
     chapter = HUNT_HASHES.get(digest)
     if chapter:
         opens = _hunt_opens(chapter)
-        if not _is_family(c.family) and (opens is None or _toronto_today() < opens):
+        if not _is_family(c.family) and chapter > HUNT_OPEN_THROUGH and (opens is None or _toronto_today() < opens):
             when = opens.strftime("%A, %B %-d") if opens else None
             return {"kind": "hunt_wait", "opens": when}
         log.info("HUNT: chapter %s opened", chapter)
