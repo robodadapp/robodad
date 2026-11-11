@@ -1641,6 +1641,13 @@ textarea::placeholder{color:var(--muted)}
 </main>
 
 <div class="composer">
+  <div class="practice-bar" id="playBar" hidden>
+    <div class="pb-row">
+      <span class="pb-tag">😂 Dad joke time</span>
+      <button class="chipbtn" id="pbAnother" type="button">Another one</button>
+      <button class="chipbtn" id="pbBackPlay" type="button">← Back to Play</button>
+    </div>
+  </div>
   <div class="practice-bar" id="practiceBar" hidden>
     <div class="pb-row">
       <span class="pb-tag" id="pbTag"></span>
@@ -4321,7 +4328,9 @@ const PLAYERS = {
     $("playVault").textContent = `${$("chestCount").textContent} secrets found`;
     $("meName").textContent = nickname ? `RoboDad calls you ${nickname}` : "What RoboDad calls you";
   }
+  const playBar = $("playBar");
   function goTab(name){
+    playBar.hidden = true;
     const was = tabNow();
     playDlg.hidden = learnDlg.hidden = meDlg.hidden = true; side.classList.remove("open");
     if (name !== "chat" && name !== was) {
@@ -4337,7 +4346,7 @@ const PLAYERS = {
   }
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => goTab(t.dataset.tab)));
   const GO = {
-    brain: () => openBrain(), vault: () => openVault(), joke: () => submit("Tell me a dad joke"),
+    brain: () => openBrain(), vault: () => openVault(), joke: () => { playBar.hidden = false; submit("Tell me a dad joke"); },
     vocab: () => openVocab(), grammar: () => openGrammar(),
     word: () => openMind("word"), fact: () => openMind("fact"), otd: () => openMind("otd"),
     looks: () => openMenu(false), badges: () => openBelt(), name: () => $("nameBtn").click(), code: () => $("codeBtn").click(),
@@ -4355,6 +4364,35 @@ const PLAYERS = {
     const now = tabNow(); if (e.key !== "Escape" || !SHEETS[now]) return;
     SHEETS[now].hidden = true; document.querySelector(`.tab[data-tab="${now}"]`).focus();
   });
+  $("pbAnother").addEventListener("click", () => submit("Tell me a dad joke"));
+  $("pbBackPlay").addEventListener("click", () => goTab("play"));
+
+  // ---------- the Back button / swipe-back closes the top layer instead of leaving the app ----------
+  // Everything here is an overlay on one page, so without a history entry Back used to exit RoboDad.
+  // While any layer is open we keep one extra history entry; Back pops it and closes the top layer.
+  const layerEls = [...document.querySelectorAll(".overlay")].filter(o => o.id !== "gate");
+  const openOverlays = () => layerEls.filter(o => !o.hidden);
+  const layerCount = () => openOverlays().length + (side.classList.contains("open") ? 1 : 0) + (playBar.hidden ? 0 : 1);
+  let guarded = false, skipPop = false;
+  function closeTopLayer(){
+    const ov = openOverlays().sort((a, b) => (+getComputedStyle(a).zIndex || 0) - (+getComputedStyle(b).zIndex || 0)).pop();
+    if (ov) { const x = ov.querySelector('[data-sheet-close], button[id$="Close"]'); if (x) x.click(); if (!ov.hidden) ov.hidden = true; return; }
+    if (side.classList.contains("open")) { side.classList.remove("open"); return; }
+    if (!playBar.hidden) goTab("play");               // back from a joke opened in Play lands in Play
+  }
+  function syncGuard(){
+    const n = layerCount();
+    if (n && !guarded) { guarded = true; window.history.pushState({ rd:1 }, ""); }
+    else if (!n && guarded) { guarded = false; skipPop = true; window.history.back(); }
+  }
+  window.addEventListener("popstate", () => {
+    if (skipPop) { skipPop = false; return; }
+    if (!guarded) return;                              // nothing open: a normal Back, leave it alone
+    guarded = false; closeTopLayer(); syncGuard();     // entry already consumed; re-arm if layers remain
+  });
+  const guardWatch = new MutationObserver(syncGuard);
+  [...layerEls, side, playBar].forEach(el => guardWatch.observe(el, { attributes:true, attributeFilter:["hidden", "class"] }));
+
   const tabWatch = new MutationObserver(syncTabs);
   [playDlg, learnDlg, meDlg, side].forEach(el => tabWatch.observe(el, { attributes:true, attributeFilter:["hidden", "class"] }));
   if (!getPref("robodad.meSeen")) $("meBtn").classList.add("dot");
