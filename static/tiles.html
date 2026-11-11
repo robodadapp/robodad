@@ -12,7 +12,8 @@
 <style>
 :root{--bg:#0B0B14; --panel:#16142A; --ink:#FFF6D6; --muted:#9A93B8; --gold:#F5C518; --edge:#2A2650;
   --cellbg:#221F3D; --tile:#F3E6C4; --tile-ink:#1B1530; --pending:#FFD84D; --last:#9BE7C4;
-  --dl:#2F6F9E; --tl:#1D4C8C; --dw:#A8456B; --tw:#B8432F;
+  --dl:#2F6F9E; --tl:#1D4C8C; --dw:#A8456B; --tw:#B8432F; --sim:#2E7D5B; --star:var(--gold);
+  --cell-ink:var(--ink); --frame:var(--edge); --frame-glow:none;
   --metal:#C9D3DC; --hair:#3A2A1E; --jacket:#3D7CB8; --jacket2:#1B2A3A; --lens:#38B6FF;
   --bw:min(96vw, 560px); --cell:calc(var(--bw) / 15)}
 *{box-sizing:border-box}
@@ -32,11 +33,11 @@ h1{margin:0; font-size:1.5rem; font-weight:900; letter-spacing:-.01em}
 .score{display:flex; justify-content:space-between; gap:8px; font-size:.95rem; color:var(--muted)}
 .score b{color:var(--ink); font-size:1.15rem}
 .score .turn b{color:var(--gold)}
-.board{width:var(--bw); aspect-ratio:1; display:grid; grid-template-columns:repeat(15,1fr); gap:1px; background:var(--edge); border:3px solid var(--edge); border-radius:8px; overflow:hidden; touch-action:manipulation}
-.cell{position:relative; border:0; padding:0; margin:0; background:var(--cellbg); color:var(--ink); display:flex; align-items:center; justify-content:center; font:800 calc(var(--cell) * .28)/1 "Nunito", ui-rounded, system-ui, sans-serif; cursor:pointer; min-width:0}
+.board{width:var(--bw); aspect-ratio:1; display:grid; grid-template-columns:repeat(15,1fr); gap:1px; background:var(--frame); border:3px solid var(--frame); border-radius:8px; overflow:hidden; touch-action:manipulation; box-shadow:var(--frame-glow)}
+.cell{position:relative; border:0; padding:0; margin:0; background:var(--cellbg); color:var(--cell-ink); display:flex; align-items:center; justify-content:center; font:800 calc(var(--cell) * .28)/1 "Nunito", ui-rounded, system-ui, sans-serif; cursor:pointer; min-width:0}
 .cell.dl{background:var(--dl)} .cell.tl{background:var(--tl)} .cell.dw{background:var(--dw)} .cell.tw{background:var(--tw)}
 .cell .lbl{opacity:.85; letter-spacing:-.02em}
-.cell.star .lbl{font-size:calc(var(--cell) * .55); color:var(--gold); opacity:1}
+.cell.star .lbl{font-size:calc(var(--cell) * .55); color:var(--star); opacity:1}
 .cell.drop{box-shadow:inset 0 0 0 2px var(--gold)}
 .tile{position:absolute; inset:1px; border-radius:calc(var(--cell) * .14); background:var(--tile); color:var(--tile-ink); display:flex; align-items:center; justify-content:center; font-size:calc(var(--cell) * .6); font-weight:900; text-transform:uppercase; box-shadow:0 1px 0 #0006}
 .tile i{position:absolute; right:calc(var(--cell) * .08); bottom:calc(var(--cell) * .02); font-style:normal; font-size:calc(var(--cell) * .26); font-weight:800}
@@ -75,12 +76,27 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .tier[disabled]{opacity:.5; cursor:default}
 .foot{color:var(--muted); font-size:13px; text-align:center}
 .key{display:flex; flex-wrap:wrap; gap:6px 12px; justify-content:center; font-size:12px; color:var(--muted)}
+.skin-row{width:var(--bw); display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px; color:var(--muted); font-size:14px}
+.skin-row select{background:var(--panel); color:var(--ink); border:2px solid var(--edge); border-radius:10px; padding:6px 8px; font:inherit; font-size:14px}
+.skin-row select:focus-visible{outline:3px solid var(--gold); outline-offset:1px}
+.skin-row #skinNote{flex:1 0 100%; text-align:center}
+.skin-row #skinNote:empty{display:none}
 .key span::before{content:""; display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:4px; vertical-align:-2px; background:var(--c)}
 .loading{color:var(--muted)}
 .dots::after{content:"\2026"; display:inline-block; width:1.1em; text-align:left; animation:dots 1.4s steps(1,end) infinite}
 @keyframes dots{0%{content:"."}33%{content:".."}66%{content:"..."}}
 @media (prefers-reduced-motion: reduce){.dots::after{content:"\2026"; animation:none} .rtile.sel{transform:none}}
-.cell.sim{background:#2E7D5B}
+.cell.sim{background:var(--sim); color:#fff}
+/* Board skins, one per dad (like chess): the attribute on the root picks the board's colours. Classic is the plain default. */
+:root[data-skin="gamer"]{--cellbg:#1B2029; --cell-ink:#E6FFF0; --star:#39FF88; --dl:#1E4F63; --tl:#1F6B4B; --dw:#5B2D7A; --tw:#8A1F4E; --sim:#1F7A4F; --frame:#39FF88; --frame-glow:0 0 12px #39FF8866}
+:root[data-skin="skater"]{--cellbg:#C9C5BD; --cell-ink:#111; --star:#B5470F; --dl:#F7D774; --tl:#FF8CC8; --dw:#9FD8F0; --tw:#FF3EA5; --sim:#2E7D5B; --frame:#111; --frame-glow:0 0 0 3px #F2C230}
+:root[data-skin="eighties"]{--cellbg:#2B2070; --cell-ink:#F4EEFF; --star:#2DE2E6; --dl:#1F6F80; --tl:#158C92; --dw:#7A2A8A; --tw:#FF3EA5; --sim:#0E8A8F; --frame:#FF3EA5; --frame-glow:0 0 14px #FF3EA5aa}
+:root[data-skin="coach"]{--cellbg:#63B25A; --cell-ink:#F7FFF2; --star:#FFE14D; --dl:#4E9E4A; --tl:#2F6E2E; --dw:#C9A227; --tw:#B3432E; --sim:#1F5C2A; --frame:#F4F4F0}
+:root[data-skin="modern"]{--cellbg:#E6EBEF; --cell-ink:#1E2830; --star:#B5470F; --dl:#CFE6F7; --tl:#7FB8E6; --dw:#F6C9B0; --tw:#E8837A; --sim:#46535F; --frame:#46535F}
+:root[data-skin="labdad"]{--cellbg:#3577C2; --cell-ink:#E6F3FF; --star:#FFD84D; --dl:#5B9BD9; --tl:#1E4E8A; --dw:#FF7A59; --tw:#C73E2A; --sim:#0A2A55; --frame:#CFE8FF; --frame-glow:0 0 0 2px #9FD8FF}
+:root[data-skin="professor"]{--cellbg:#EBCB9B; --cell-ink:#3E1F10; --star:#8A4B2A; --dl:#E8C58E; --tl:#C9A06B; --dw:#D9825A; --tw:#E0A06B; --sim:#5E3A22; --frame:#3E1F10; --frame-glow:0 0 0 2px #B8892E}
+:root[data-skin="grandpa"]{--cellbg:#0E1712; --cell-ink:#39FF88; --star:#39FF88; --dl:#13402A; --tl:#1B5C3A; --dw:#2E4D2A; --tw:#5C2E1F; --sim:#1F6B4A; --frame:#9AA6AE; --frame-glow:0 0 12px #39FF8866}
+:root[data-skin="bookworm"]{--cellbg:#F0E3C4; --cell-ink:#3A2412; --star:#86532F; --dl:#E6D3A3; --tl:#C9A227; --dw:#B9824F; --tw:#D98B4E; --sim:#4A2C17; --frame:#4A2C17; --frame-glow:0 0 0 2px #C9A227}
 .power,.bonus,.explain{width:100%; max-width:600px; background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:8px 12px; font-size:.92rem}
 .power{border-color:#6B5A12}
 .power b{color:var(--gold); letter-spacing:.04em}
@@ -233,7 +249,12 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 <div class="board" id="board" role="group" aria-label="Game board, 15 by 15"></div>
 <div class="key" aria-hidden="true">
   <span style="--c:var(--dl)">2L double letter</span><span style="--c:var(--tl)">3L triple letter</span>
-  <span style="--c:var(--dw)">2W double word</span><span style="--c:var(--tw)">3W triple word</span><span style="--c:#2E7D5B">✦ Simile Square</span>
+  <span style="--c:var(--dw)">2W double word</span><span style="--c:var(--tw)">3W triple word</span><span style="--c:var(--sim)">✦ Simile Square</span>
+</div>
+<div class="skin-row">
+  <label for="skinSel">Board</label>
+  <select id="skinSel"></select>
+  <span id="skinNote"></span>
 </div>
 
 <div class="rackbar">
@@ -402,8 +423,28 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   }
   function applyTheme() {
     const t = DAD().theme || {}, st = document.documentElement.style;
-    st.setProperty("--tile", t.tile || "#F3E6C4"); st.setProperty("--tile-ink", t.ink || "#1B1530"); st.setProperty("--cellbg", t.cell || "#221F3D");
+    st.setProperty("--tile", t.tile || "#F3E6C4"); st.setProperty("--tile-ink", t.ink || "#1B1530");
+    applySkin();
   }
+  // Board skins, the same idea as chess: each dad has his own board. "Match the dad" follows whoever you're playing,
+  // and beating a dad unlocks his board to use against anyone. The colours are root variables, so the legend follows too.
+  const SKIN_KEY = "robodad.tiles.skin";
+  let skinChoice = store.get(SKIN_KEY) || "auto";
+  const wonBoards = () => ORDER.filter((k) => ((stats().wins || {})[k] || 0) > 0);
+  if (skinChoice !== "auto" && skinChoice !== "classic" && !wonBoards().includes(skinChoice)) skinChoice = "auto";
+  const activeSkin = () => (skinChoice === "auto" ? tierKey : skinChoice);
+  function applySkin() {
+    const skin = activeSkin();
+    if (skin === "classic") document.documentElement.removeAttribute("data-skin");
+    else document.documentElement.dataset.skin = skin;
+  }
+  function renderSkinPicker() {
+    const won = wonBoards();
+    const opts = [["auto", "Match the dad"], ["classic", "Classic"]].concat(won.map((k) => [k, `${T.TIERS[k].name}'s board`]));
+    $("skinSel").innerHTML = opts.map(([v, label]) => `<option value="${v}"${v === skinChoice ? " selected" : ""}>${label}</option>`).join("");
+    $("skinNote").textContent = won.length ? "" : "Beat a dad to win his board.";
+  }
+  $("skinSel").addEventListener("change", (e) => { skinChoice = e.target.value; store.set(SKIN_KEY, skinChoice); applySkin(); });
   // The teaching note for one of a dad's favourite words, or "" if it isn't one.
   function favNote(dadKey, word) {
     const d = DADS[dadKey]; if (!d || !d.favs[word]) return "";
@@ -518,6 +559,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     $("oppRecord").textContent = rec.w + rec.l + rec.t ? `Record vs you: ${rec.l}–${rec.w}${rec.t ? `–${rec.t}` : ""} (Dad–you)` : "";
     $("oppLesson").textContent = DAD().lesson ? `Teaches: ${DAD().lesson}` : "";
     applyTheme();
+    renderSkinPicker();
     renderPicker();
   }
 
