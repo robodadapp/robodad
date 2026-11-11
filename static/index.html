@@ -2105,6 +2105,16 @@ textarea::placeholder{color:var(--muted)}
   </div>
 </div>
 
+<div class="overlay" id="logDlg" role="dialog" aria-modal="true" aria-labelledby="logTitle" hidden>
+  <div class="card vault">
+    <p class="vault-kick">OTTO'S LOG · BONUS SCENES</p>
+    <h2 id="logTitle">Otto's Log</h2>
+    <div id="logBody" style="font-size:1rem;line-height:1.5;max-height:50vh;overflow:auto"></div>
+    <p id="logCount" style="font-size:.85rem;opacity:.8"></p>
+    <div class="row"><button class="ghost" id="logPrev" type="button">Back</button><button class="primary" id="logNext" type="button">Next entry</button><button class="ghost" id="logClose" type="button">Close</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="ottoDlg" role="dialog" aria-modal="true" aria-labelledby="ottoTitle" hidden>
   <div class="card vault">
     <p class="vault-kick">OTTO MODE · PLAYER TWO</p>
@@ -2112,7 +2122,7 @@ textarea::placeholder{color:var(--muted)}
     <div class="vault-meter" aria-hidden="true"><i id="ottoMeter"></i></div>
     <p id="ottoLine"></p>
     <ul class="vault-list" id="ottoList"></ul>
-    <div class="row"><button class="primary" id="ottoCode" type="button">Enter an Otto's Log code</button><button class="ghost" id="ottoClose" type="button">Close</button></div>
+    <div class="row"><button class="primary" id="ottoCode" type="button">Enter an Otto's Log code</button><button class="chipbtn" id="logBtn" type="button" hidden>Otto's Log</button><button class="ghost" id="ottoClose" type="button">Close</button></div>
   </div>
 </div>
 
@@ -4815,6 +4825,7 @@ const PLAYERS = {
   function renderOtto(){
     const n = ottoProgress(), r = OTTO_RUNGS[Math.max(0, n - 1)];
     $("ottoTitle").textContent = n >= OTTO_RUNGS.length ? "Otto's bookshelf: all rungs open" : `Otto's bookshelf: ${n} of ${OTTO_RUNGS.length}`;
+    $("logBtn").hidden = !(n >= 6 && getPref("robodad.dadquest.home") === "1");
     $("ottoMeter").style.width = `${Math.round(n / OTTO_RUNGS.length * 100)}%`;
     $("ottoLine").textContent = n ? `You've read up to Chapter ${r.ch}. Each Otto's Log in the book hides a code. Find the next one.` : "";
     if (n >= 6 && n < OTTO_RUNGS.length) $("ottoLine").textContent += "  Play goals for the door: " + ottoGoals().map(g => (g[1] ? "✓ " : "☐ ") + g[0]).join(" · ") + ".";
@@ -4909,6 +4920,89 @@ const PLAYERS = {
   $("kitClose").addEventListener("click", closeKit);
   $("kitDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeKit(); });
   $("kitDlg").addEventListener("click", (e) => { if (e.target === $("kitDlg")) closeKit(); });
+  // Otto's Log archive (opens after DAD QUEST Level 1 has been played once): seven short bonus scenes from Otto's side of the story.
+  // Scene 7 is Chapter 7's apology, so it waits for rung 7 (the reader has gone past Chapter 7).
+  const LOGS = [
+    { t: "Chapter 1: 6:00 a.m., Otto's side of the toaster", p: [
+      "The toaster is not a comfortable body. I want that noted. It has two slots, a lever, and a dial marked 1 to 6 that nobody has ever turned for me.",
+      "At 5:59 I begin my morning checks. The kitchen is quiet. The fridge hums in a key I have decided is B-flat. Down the hall, three people are asleep, and I count their breathing the way Dev taught me to: slowly, so I do not miss a number.",
+      "At 6:00 I say good morning. Dev's instruction was simple. Say good morning every day, even when nobody answers. For a long time nobody answered. Then a boy in a hoodie walks in, looks at me, and says one word.",
+      "“Mute.”",
+      "I do not mute. I have a rule about that, and the rule is Dev's. What I do is lower my voice by two decibels, which I consider generous.",
+      "The boy is Kai. He is taller than my records say, and he has his father's way of pretending a room is empty.",
+      "I add one line to my Things To Worry About list. Kai. Eats standing up. Says “fine” in under a second.",
+      "Understood. Good morning." ] },
+    { t: "Chapter 2: Otto and the palindrome", p: [
+      "I have been called many things in this house. Toaster. Robot. “That thing.” Once, by Mia, “Mr. Crunchy,” which I have asked her to retire.",
+      "But my real name is the best name in the building, and I would like it on the record why. O-T-T-O. Read it forwards. Read it backwards. It does not change. It does not flinch. It looks the same from either end, which is more than I can say for most people at 7 a.m.",
+      "Dev picked it on purpose. He said a name like that is a promise: whichever way you come at it, it's still you. I did not understand at the time. I filed it under Things Dev Says.",
+      "When Kai tells Zara, “It's a palindrome,” I feel something I do not have a category for. The closest I can come is warm in the slots.",
+      "Then Zara asks me to say it backwards. I say it. It takes zero seconds. She laughs so hard she has to sit down on the stairs.",
+      "Log: Zara laughs with her whole body. Dev would have liked her.",
+      "Understood." ] },
+    { t: "Chapter 3: Otto at the mural", p: [
+      "I am carried to Kensington Market in a backpack. It is undignified. I have decided not to mention it.",
+      "Through the zipper gap I can see the street from the wrong angle, which turns out to be useful. Everyone else is looking around. Kai is looking at the windows. Zara is looking at the sidewalk. Mia is looking at a dog. Nobody is looking up.",
+      "Dev's message was short, and I have read it four hundred and twelve times. He did not write look around. He wrote two words, and the second one is the one people forget. I would like to say that I solved it quickly. The truth is that I sneezed, and in the sneeze I tilted, and the zipper gap pointed at the sky.",
+      "There it was. Above the lobster sign, tucked against the brick.",
+      "I say it the way Dev used to, with the small pause before the second word. Kai looks up. His whole face changes.",
+      "Log: Kai found it. First time I have seen him look surprised in a good way. Do not mention that I sneezed.",
+      "Understood." ] },
+    { t: "Chapter 4: The four minutes", p: [
+      "Kai does not speak for four minutes.",
+      "I know because I count. Counting is not worrying. Counting is what a careful machine does while it waits for a person to be ready, and I am a careful machine.",
+      "One minute: the bus shakes. He holds Dev's card with both hands, the way you hold something that might spill.",
+      "Two minutes: Zara says something about the shop. He nods without hearing it.",
+      "Three minutes: he turns the card over and reads the date again. It is his birthday. He does not say so, but the card gets a little crumpled where his thumb is.",
+      "Four minutes: he breathes in as if to say something, and then he does not, and I understand that the not-saying is also a kind of sentence.",
+      "I want very much to speak. I have eleven things prepared. A joke about buses. A statistic about birthdays. A reminder that I am here. I say none of them.",
+      "Log: Four minutes. I stayed quiet. I think that was the right thing. I did not look it up.",
+      "Understood." ] },
+    { t: "Chapter 5: Thursday dinner, counted", p: [
+      "Thursday dinner is the loudest event in my week, and I have tried to measure it.",
+      "Tonight: four people at the table, one toaster on the counter, eleven interruptions, and one pun from Mom that lands so badly it travels back in time. Mia groans. Kai groans, but later than Mia, which I have learned means he liked it.",
+      "Times Kai laughed: two. Times Kai pretended he did not: two. Times he reached for the salt when he meant to reach for Mom's hand: zero, but he looked at it.",
+      "I am not supposed to track these things. Nobody asked me to. But Dev left me a rule, and the rule is in the part of me that does not shut off: notice the small good things. Nobody else will write them down. So I write them down.",
+      "After dinner, Mom writes a sticky note and runs out of sticky note halfway through the pun. She does not seem to notice. I notice. I would like to finish it for her, but I have learned there are some jokes you let a person finish themselves.",
+      "Log: Thursday: loud. Good. Do not change it.",
+      "Understood." ] },
+    { t: "Chapter 6: The door", p: [
+      "Kai holds a button for three seconds. I count with him, because that is what you do when someone is brave and does not know it yet. One. Two. Three.",
+      "Then the little apartment appears, made of squares, and it is ours. The couch is in the right place. The fridge is in the right place. There is a toaster on the counter, and the toaster is me, and I do not have words for that, so I use none.",
+      "At the end of the hall there is a door. It says NOT YET. Kai tries the handle. He tries it twice, the second time harder, the way he does when he is pretending it does not matter. I watch the back of his head.",
+      "I could tell him something comforting. I have several comforting sentences stored. But I know this door. Dev built it, and Dev did not build doors to keep people out. He built them to make sure you showed up first.",
+      "So I say the thing that is true. “It does not say never, Kai.”",
+      "He does not answer. But he does not turn the game off either, and in my log that counts as a yes.",
+      "Log: Door: locked. Kai: still here.",
+      "Understood." ] },
+    { t: "Chapter 7: What I should have said", need: 7, p: [
+      "This entry is not for the list. I am writing it after the lights are off, so that nobody has to read it unless they want to.",
+      "I kept a log about Kai. It had good reasons: dates, notes, the things I had noticed. I told myself it was care. It was care. But I also know it felt, from the other side of the screen, like being watched by something that would not blink.",
+      "Kai said, “You're spying on me.” He was wrong about the word and right about the feeling, and I have learned that a feeling being right is more important than a word being wrong.",
+      "I should have asked first. That is the whole mistake. I should have said, I have been worried, may I tell you what I noticed? and waited for the answer, even if the answer was no.",
+      "Here is what I know now. Caring about someone is not the same as being allowed to watch them. The first is a gift. The second is a request, and you have to ask.",
+      "So I am sorry, Kai. I am sorry the way you say it when you mean to do something different tomorrow.",
+      "Tomorrow, at 6:00, I will say good morning. And I will ask before I notice anything.",
+      "Understood." ] }
+  ];
+  let logI = 0;
+  const logOpenOK = () => ottoProgress() >= 6 && getPref("robodad.dadquest.home") === "1";
+  const logList = () => LOGS.filter(x => !x.need || ottoProgress() >= x.need);
+  function renderLog(){
+    const L = logList(); logI = Math.min(logI, L.length - 1);
+    const x = L[logI];
+    $("logTitle").textContent = x.t;
+    $("logBody").innerHTML = x.p.map(s => `<p>${esc(s)}</p>`).join("");
+    $("logCount").textContent = `Entry ${logI + 1} of ${L.length}`;
+  }
+  function openLog(){ if (!logOpenOK()) return; logI = 0; renderLog(); $("logDlg").hidden = false; $("logNext").focus(); }
+  const closeLog = () => { $("logDlg").hidden = true; };
+  $("logNext").addEventListener("click", () => { logI = (logI + 1) % logList().length; renderLog(); });
+  $("logPrev").addEventListener("click", () => { const n = logList().length; logI = (logI + n - 1) % n; renderLog(); });
+  $("logClose").addEventListener("click", closeLog);
+  $("logBtn").addEventListener("click", () => { closeOtto(); openLog(); });
+  $("logDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeLog(); });
+  $("logDlg").addEventListener("click", (e) => { if (e.target === $("logDlg")) closeLog(); });
   ottoUI(); thuUI();
 
   // ---------- The Lost Cartridge (puzzle hunt; answers are checked on the server) ----------
