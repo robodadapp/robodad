@@ -14,6 +14,9 @@
   };
   const jget = (k, d) => { try { const v = JSON.parse(store.get(k)); return v == null ? d : v; } catch { return d; } };
   const unlocked = !!(store.get("robodad.egg.dadquest") || store.get("robodad.family"));
+  // Level 1: Home opens with the SELECT code from Otto's Log (Otto mode rung 6), even before the cartridge is found
+  const homeOpen = () => (parseInt(store.get("robodad.otto") || "0", 10) || 0) >= 6;
+  const homeOnly = !unlocked && homeOpen();
   const calm = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   const buzz = (ms) => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -407,6 +410,13 @@
       rep(off, 0.3, 150, (bx) => { R(bx, 64, 70, 86, "#24324F"); for (let s = 0; s < 4; s++) { R(bx + 4, 70 + s * 19, 62, 2, "#5A4632");
         for (let b = 0; b < 8; b++) R(bx + 6 + b * 7, 72 + s * 19 - (b % 3), 5, 15 + (b % 3), ["#E3342F", "#2F80ED", "#F5C518", "#27AE60", "#9A93B8"][(b + s) % 5]); } });
       R(262, 16, 50, 18, "#E8E2D0"); R(264, 18, 46, 14, "#1F3B2C"); text("A²+B²=C²", 287, 22, 7, "#E8E2D0"); } };
+  // Level 1: Home. A short, gentle apartment run that ends at a door marked NOT YET.
+  const HOME = { name: "Level 1: Home", speed: 1.9, beats: 84, lows: ["cat", "crate"], high: "plant", floor: "wood", floorA: "#6B4A33", floorB: "#5A3D2A",
+    deco(off){ R(0, 0, W, H, "#2A2440"); R(0, 100, W, 50, "#332B4D");
+      rep(off, 0.1, 260, (bx) => { R(bx + 30, 22, 50, 40, "#3E2A1E"); R(bx + 33, 25, 44, 34, "#10172B"); R(bx + 55, 25, 2, 34, "#3E2A1E"); R(bx + 33, 41, 44, 2, "#3E2A1E");
+        R(bx + 62, 32, 6, 6, "#FFF6D6"); R(bx + 160, 28, 22, 28, "#3E2A1E"); R(bx + 162, 30, 18, 24, "#F2D6A8"); R(bx + 168, 36, 6, 6, "#8E3B46"); R(bx + 200, 30, 16, 20, "#3E2A1E"); R(bx + 202, 32, 12, 16, "#9FC4E0"); });
+      rep(off, 0.3, 190, (bx) => { R(bx, 112, 64, 38, "#6C3F52"); R(bx - 4, 100, 12, 50, "#5A3445"); R(bx + 56, 100, 12, 50, "#5A3445"); R(bx + 8, 104, 48, 12, "#7D4A60");
+        R(bx + 90, 82, 3, 68, "#C0C0C8"); R(bx + 82, 74, 19, 10, "#F5C518"); R(bx + 120, 124, 30, 26, "#3E2A1E"); R(bx + 124, 116, 22, 8, "#27AE60"); }); } };
   function drawFloor(r, off){
     const o = Math.round(off);
     if (r.floor === "grass") { R(0, GY, W, H - GY, r.floorA); for (let i = -1; i < 28; i++) { const fx = i * 12 - (o % 12); R(fx, GY, 2, 3, r.floorB); R(fx + 5, GY + 8, 3, 2, r.floorB); R(fx + 9, GY + 17, 2, 3, r.floorB); R(fx + 3, GY - 2, 1, 2, r.floorA); R(fx + 8, GY - 3, 1, 3, r.floorA); } }
@@ -497,7 +507,7 @@
   }
 
   // ---------- game state ----------
-  let state = unlocked ? "boot" : "locked";
+  let state = unlocked || homeOnly ? "boot" : "locked";
   let mode = "story", level = 0, lives = 5, maxLives = 5, score = 0, dist = 0, speed = 2, inv = 0, runItems = 0, roomHits = 0;
   let found = { key: 0, remote: 0, sock: 0, specs: 0 }, obs = [], items = [], scen = [], joke = "", fact = null;
   let boss = null, power = 0, strength = 0, meter = 0, cp = null;
@@ -524,8 +534,9 @@
   let shownAt = 0;
   function setState(s, wipe){ state = s; sel = 0; shownAt = t; if (s === "play" || s === "bonus") P.slideHeld = slideWanted(); if (wipe && !calm) { trans = 16; sfx.stat(); } }
   const roomIdxAt = (b) => ((gen && gen.base || 0) + Math.floor(Math.max(0, b) / 100)) % ROOMS.length;
-  function room(){ return mode === "story" ? ROOMS[level] : ROOMS[roomIdxAt(rt / BEAT)]; }
+  function room(){ return mode === "home" ? HOME : mode === "story" ? ROOMS[level] : ROOMS[roomIdxAt(rt / BEAT)]; }
   function curSpeed(){
+    if (mode === "home") return HOME.speed * (hard ? 1 : 0.9);
     if (mode === "story") { const r = ROOMS[level]; return r.speed * (hard ? 1 : 0.85) * (0.86 + 0.14 * clamp(rt / (roomBeats * BEAT * 0.4), 0, 1)); }
     if (mode === "daily") return 2.2 + 0.7 * clamp(rt / (roomBeats * BEAT), 0, 1);
     return Math.min(4.2, 2.2 + Math.max(0, rt) / 3600 * 0.55) * (hard ? 1 : 0.88);
@@ -542,11 +553,11 @@
     if (!keep) { score = 0; lives = maxLives; runItems = 0; meter = 0; found = { key: 0, remote: 0, sock: 0, specs: 0 }; runc = { items: 0, socks: 0, hops: 0, score: 0 }; }
     lives = Math.min(keep && m === "story" ? lives + 1 : lives, maxLives);
     buildCourse(); snapStart(0); rec = []; loadGhost(); shareBlob = null; speed = curSpeed(); setState("play", true);
-    say((twoP ? `Player ${twoP.turn}. ` : "") + (mode === "daily" ? "Daily Run" : mode === "endless" ? "Endless mode" : ROOMS[lv].name) + ". Go!");
+    say((twoP ? `Player ${twoP.turn}. ` : "") + (mode === "daily" ? "Daily Run" : mode === "endless" ? "Endless mode" : mode === "home" ? HOME.name : ROOMS[lv].name) + ". Go!");
   }
   // back to Dad's armchair (or the start of the room) with full hearts
   function retry(){
-    if (mode !== "story" || !cp) return start(mode === "story" ? level : 0, mode, false);
+    if ((mode !== "story" && mode !== "home") || !cp) return start(mode === "story" ? level : 0, mode, false);
     obs = []; items = []; parts = []; boss = null; power = 0; strength = 0; inv = 60; dist = 0;
     scen = cp.bossCp ? [] : [{ t: "chair", x: P.x - 6, passed: true }];
     resetDad(); lives = maxLives; score = cp.score; found = { ...cp.found }; runItems = cp.runItems; meter = cp.meter;
@@ -590,7 +601,10 @@
     [...POOL1, "triple", "limbo", "stairs", "stairs", "twin"], [...POOL1, "triple", "limbo", "stairs", "bat", "bat", "bat"]];
   function buildCourse(){
     evs = [];
-    if (mode === "story") {
+    if (mode === "home") {
+      roomBeats = HOME.beats; gen = { R: rng(hash("dq-home-" + (hard ? "h" : "c"))), beat: 10, tape: 1, tre: 1 };
+      genMore(roomBeats); addEv(roomBeats + 6, { k: "nydoor" });
+    } else if (mode === "story") {
       roomBeats = ROOMS[level].beats; gen = { R: rng(hash("dq-room-" + level + (hard ? "-h" : "-c"))), beat: 10 };
       genMore(roomBeats); if (!ROOMS[level].boss) addEv(roomBeats + 6, { k: "door" });
     } else if (mode === "daily") {
@@ -602,9 +616,9 @@
     }
   }
   function genMore(until){
-    const g = gen, R0 = g.R, story = mode === "story";
+    const g = gen, R0 = g.R, story = mode === "story" || mode === "home";
     while (g.beat < until) {
-      const b = g.beat, rm = story ? ROOMS[level] : ROOMS[roomIdxAt(b)], prog = story ? b / roomBeats : 0;
+      const b = g.beat, rm = mode === "home" ? HOME : story ? ROOMS[level] : ROOMS[roomIdxAt(b)], prog = story ? b / roomBeats : 0;
       const tier = story ? level : Math.min(6, Math.floor(b / 56));
       const tough = mode === "daily" ? b > 200 : story ? hard : hard || b > 300;
       const inner = tough ? 3 : 4;
@@ -821,6 +835,7 @@
         s.passed = true;
         if (s.t === "chair") { cp = { f: s.f, score, found: { ...found }, runItems, meter }; if (lives < maxLives) lives++; sfx.power(); sparkle(P.x + 7, GY - 26); showToast("CHECKPOINT: DAD'S CHAIR", "#AED581"); say("Checkpoint. Dad's chair."); saveMissions(); }
         else if (s.t === "door") return roomCleared();
+        else if (s.t === "nydoor") return homeDone();
         else if (s.t === "flag") return dailyDone();
       }
     }
@@ -870,6 +885,10 @@
     }
     if (level + 1 > reached) { reached = level + 1; store.set("robodad.dadquest.reached", String(reached)); }
     setState("level", true); say(ROOMS[level].name + " cleared. Next room, or try a bonus room.");
+  }
+  function homeDone(){
+    endRun(); store.set("robodad.dadquest.home", "1"); sfx.power();
+    setState("homeEnd", true); say("The door says NOT YET. Something still isn't ready.");
   }
   function dailyDone(){
     score += lives * 250; saveGhost(true); bump("daily", true); endRun();
@@ -1003,6 +1022,8 @@
     if (s.t === "chair") { R(sx - 12, GY - 20, 24, 20, "#8E3B46"); R(sx - 14, GY - 30, 8, 30, "#7A323C"); R(sx - 12, GY - 34, 22, 16, "#A04452"); R(sx + 8, GY - 22, 6, 22, "#7A323C"); R(sx - 9, GY - 30, 16, 1, "#C96A76"); R(sx - 10, GY - 2, 3, 2, "#3E2A1E"); R(sx + 8, GY - 2, 3, 2, "#3E2A1E");
       if (!s.passed) { text("DAD'S CHAIR", sx, GY - 46, 7, "#AED581"); R(sx - 1, GY - 39, 2, 3, "#AED581"); } }
     else if (s.t === "door") { R(sx - 12, GY - 50, 26, 50, "#3E2A1E"); R(sx - 9, GY - 47, 20, 47, "#FFF6D6"); x.fillStyle = "rgba(255,246,214,.12)"; x.beginPath(); x.arc(sx + 1, GY - 22, 40, 0, 7); x.fill(); text("NEXT ROOM", sx, GY - 60, 7, "#F5C518"); }
+    else if (s.t === "nydoor") { R(sx - 12, GY - 50, 26, 50, "#3E2A1E"); R(sx - 9, GY - 47, 20, 47, "#8E8AA8"); R(sx - 9, GY - 47, 20, 3, "#6E6890"); R(sx + 6, GY - 24, 3, 3, "#F5C518");
+      R(sx - 6, GY - 40, 14, 9, "#C0C0C8"); text("NOT YET", sx + 1, GY - 38, 5, "#2A2440", "center", true); text("THE DOOR", sx, GY - 60, 7, "#F5C518"); }
     else if (s.t === "flag") { R(sx, GY - 54, 2, 54, "#C0C0C8"); for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) R(sx + 2 + i * 5, GY - 54 + j * 5, 5, 5, (i + j) % 2 ? "#0B0B14" : "#FFFFFF"); text("FINISH", sx + 10, GY - 64, 7, "#F5C518"); }
   }
   function hud(){
@@ -1026,7 +1047,7 @@
     } else if (mode !== "endless") {
       const r = room(), p = clamp(rt / ((roomBeats + 6) * BEAT), 0, 1);
       R(W / 2 - 40, 22, 80, 3, "#3A3560"); R(W / 2 - 40, 22, Math.round(80 * p), 3, "#F5C518");
-      if (mode === "story") R(W / 2, 21, 2, 5, cp ? "#AED581" : "#9A93B8");
+      if (mode === "story" || mode === "home") R(W / 2, 21, 2, 5, cp ? "#AED581" : "#9A93B8");
       text(mode === "daily" ? "DAILY RUN" : r.name, W / 2, 28, 7, "#9A93B8");
     } else text(twoP ? "PLAYER " + twoP.turn + " · " + room().name : "ENDLESS · " + room().name, W / 2, 22, 7, "#F5C518");
   }
@@ -1069,7 +1090,7 @@
     t++;
     x.save();
     if (shake > 0 && !calm) x.translate(Math.round((Math.random() - 0.5) * shake * 0.4), Math.round((Math.random() - 0.5) * shake * 0.4));
-    const idle = ["title", "locked", "boot", "skins", "bonusPick", "missions", "album", "rooms"].includes(state);
+    const idle = ["title", "locked", "boot", "skins", "bonusPick", "missions", "album", "rooms", "homeEnd"].includes(state);
     const inBonus = state === "bonus" || state === "bonusEnd" || (state === "paused" && pausedFrom === "bonus");
     const r = idle ? ROOMS[Math.floor(t / 900) % ROOMS.length] : inBonus ? STUDY_ROOM : room();
     const off = idle ? t * 0.6 : dist;
@@ -1170,6 +1191,18 @@
       text("DAD QUEST", W / 2, 50, 18, "#F5C518");
       wrapText("This cartridge is still lost. Find it in RoboDad's secret hunt, The Lost Cartridge, to play.", W / 2, 76, 230, 8, "#FFF6D6", 9);
       text("HINT: TRY THE SECRET CODE BOX IN THE MENU.", W / 2, 112, 7, "#9A93B8");
+    } else if (state === "title" && homeOnly) {
+      panel(110);
+      text("DAD QUEST", W / 2, 38, 18, "#F5C518");
+      text("LEVEL 1 IS OPEN. THE REST OF THE CARTRIDGE IS STILL LOST.", W / 2, 58, 6, "#9A93B8");
+      menu([{ label: store.get("robodad.dadquest.home") === "1" ? "LEVEL 1: HOME ✓" : "LEVEL 1: HOME", act: () => { twoP = null; start(0, "home"); } }], 72, 1, 150, 12, 3);
+      text(touchSeen ? "TAP RIGHT: JUMP · HOLD LEFT: SLIDE" : "SPACE: JUMP · ↓: SLIDE · P: PAUSE", W / 2, 120, 7, "#9A93B8");
+    } else if (state === "homeEnd") {
+      panel(110);
+      text("LEVEL 1: HOME", W / 2, 38, 14, "#F5C518");
+      text("YOU MADE IT TO THE DOOR.", W / 2, 58, 8, "#FFF6D6");
+      text("IT SAYS NOT YET.", W / 2, 72, 8, "#FF4D6D");
+      menu([{ label: "RUN IT AGAIN", act: () => start(0, "home") }, { label: "MENU", act: () => setState("title") }], 88, 2, 76, 12, 3);
     } else if (state === "title") {
       panel(172);
       text("DAD QUEST", W / 2, 10, 20, "#F5C518");
@@ -1179,6 +1212,7 @@
       menu([
         { label: reached > 0 ? "START · PICK A ROOM" : "START", act: () => { twoP = null; if (reached > 0) setState("rooms"); else start(0); } },
         { label: dDone ? "DAILY RUN · BEST " + daily.best : "DAILY RUN · NEW TODAY", act: () => { twoP = null; start(0, "daily"); } },
+        ...(homeOpen() ? [{ label: store.get("robodad.dadquest.home") === "1" ? "LEVEL 1: HOME ✓" : "LEVEL 1: HOME", act: () => { twoP = null; start(0, "home"); } }] : []),
         { label: "2 PLAYERS", act: () => { twoP = { turn: 1, scores: [0, 0], seed: (Math.random() * 4294967296) >>> 0 }; start(0, "endless"); } },
         { label: "DAD: " + SKINS[skin].name.toUpperCase(), act: () => setState("skins") },
         { label: `MISSIONS ${mdone.length}/${MISSIONS.length}`, act: () => setState("missions") },
@@ -1275,7 +1309,7 @@
       let y = wrapText("“" + joke + "”", W / 2, top + 21, 240, 7, "#FFF6D6", 8);
       if (fact) { R(50, y + 1, W - 100, 1, "#3A3560"); text("DAD FACT", W / 2, y + 5, 7, "#F5C518"); y = wrapText(fact.f, W / 2, y + 14, 236, 7, "#FFF6D6", 8); }
       text("SCORE " + Math.floor(score) + "  ·  BEST " + best, W / 2, y + 3, 8, "#F5C518");
-      const list = [{ label: mode === "story" && cp ? (cp.bossCp ? "AGAIN: BOSS" : "AGAIN: CHAIR") : "AGAIN", act: retry }, { label: "SHARE", act: share }];
+      const list = [{ label: (mode === "story" || mode === "home") && cp ? (cp.bossCp ? "AGAIN: BOSS" : "AGAIN: CHAIR") : "AGAIN", act: retry }, { label: "SHARE", act: share }];
       if (fact) list.push({ label: "ASK DAD", act: () => { location.href = "/?ask=" + encodeURIComponent(fact.ask); } });
       list.push({ label: "MENU", act: () => setState("title") });
       menu(list, y + 14, list.length, 62, 12, 3);

@@ -4802,7 +4802,7 @@ const PLAYERS = {
     $("ottoLine").textContent = n ? `You've read up to Chapter ${r.ch}. Each Otto's Log in the book hides a code. Find the next one.` : "";
     $("ottoList").innerHTML = OTTO_RUNGS.map((x, i) => {
       const on = i < n;
-      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on && i === 4 ? '<button class="ghost vs-go" type="button" data-otto="pun">Open</button>' : on ? '<span class="vs-done">✓</span>' : ""}</li>`;
+      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on && i === 4 ? '<button class="ghost vs-go" type="button" data-otto="pun">Open</button>' : on && i === 5 ? '<a class="ghost vs-go" href="/quest">Play</a>' : on ? '<span class="vs-done">✓</span>' : ""}</li>`;
     }).join("");
   }
   function openOtto(){ renderOtto(); $("ottoDlg").hidden = false; $("ottoCode").focus(); }
