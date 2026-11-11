@@ -1,4 +1,4 @@
-# RoboDad: Google Play listing (draft v1)
+# RoboDad: Google Play listing (v2, after closed-test feedback, Nov 2026)
 
 Character limits are Play's own. Counts below are checked.
 
@@ -11,37 +11,56 @@ Alternates: `RoboDad: Ask Dad Anything` (25) · `RoboDad: Advice, Games, Learn` 
 **An AI dad for teens 13+: real advice, learning, chess and word games.** (69)
 
 Alternates:
+- `AI dad for teens: life advice, study help, languages, maths & chess. 13+` (72)
 - `Ask an AI dad about life, school and money. Learn, play, chill. 13+` (67)
 - `Real-life advice from an AI dad, plus languages, maths and games.` (65)
 
 ## Full description (max 4000)
 
-Some questions are hard to ask out loud. How do I do laundry? How do I stop stressing about exams? What do I say in a job interview? RoboDad is the patient, slightly corny AI dad who's always around to answer them.
+Some questions are hard to ask out loud. How do I do laundry? How do I stop stressing about exams? What do I say in a job interview? RoboDad is the patient, slightly corny AI dad for teens who's always around to answer them, and to help you learn, play and unwind.
 
 RoboDad is for teens 13 and older. He's an AI, not a real parent, and he says so. He doesn't replace a parent or a trusted adult, and when something serious comes up he points you to real people and real help.
 
-WHAT YOU CAN DO
+★ ASK DAD ANYTHING
+• Real teen advice on life skills: budgeting, cooking, laundry, first jobs and job interviews
+• Help with friendships, exam stress, or just "I need to talk"
+• Type it or say it out loud, and have replies read to you
 
-CHAT: Real advice for real life. Budgeting, cooking, laundry, job interviews, friendships, exam stress, or just "I need to talk." Type it or say it out loud, and have replies read to you.
+★ LEARN WITH DAD (your study corner)
+• Learn French, Spanish, Hindi, Marathi and Bengali with short lessons, quizzes and role-plays
+• Maths help for Grades 7 to 10
+• Grammar games (similes, metaphors, analogies, tenses) and vocabulary games
+• A word of the day, a fact of the day and "on this day"
+• Study Hall: a focus timer, kitchen timer and workout timer
 
-LEARN: Practise French, Spanish, Hindi, Marathi and Bengali with short lessons, quizzes and role-plays. Maths help for Grades 7 to 10. Grammar and vocabulary games, a word, a fact and "on this day" every day, and a focus timer for study sessions.
+★ PLAY WITH DAD
+• Chess against nine dads, each with his own style, from beginner to boss
+• Tile Talk, a word game with a board for every dad
+• Brain teasers where Dad gives hints, not answers
+• Dad jokes on demand, and a few secrets to hunt for
 
-PLAY: Chess against a lineup of dads, each with his own style. Tile Talk, a word-tile game with a board for every dad. Brain teasers where Dad gives hints, not answers. Dad jokes on demand. And a few secrets to hunt for.
+★ CHILL
+• Sleep sounds: rain, waves, brown noise and more, with a sleep timer
+• A built-in radio and a countdown for the thing you're waiting for
 
-CHILL: Sleep sounds like rain, waves and brown noise with a timer. Radio. A countdown for the thing you're waiting for.
+★ DO IT FOR REAL
+• A Daily Dad Challenge: one small real-world task a day, with a streak
+• Collect badges for things you actually did, like cooking a meal or fixing something
 
-DO IT FOR REAL: A Daily Dad Challenge, one small real-world task a day. Collect badges for things you actually did, like cooking a meal or fixing something.
+★ MADE FOR YOU
+• A 30-second guided tour when you first open the app (skip it any time)
+• Dark mode, or match your phone
+• Pick a look and your favourite dad, choose a voice, and set your nickname
+• Send feedback or report a bug right from the Me tab
 
-MAKE IT YOURS: Pick a look and your favourite dad, choose a voice, and tell RoboDad what to call you.
+★ BUILT TO BE SAFE
+• If you mention self-harm, abuse, an eating disorder or being threatened online, RoboDad shows a fixed, human-written help message with free helplines instead of improvising
+• No ads. No selling data. No tracking cookies. No account needed
+• RoboDad never asks for personal details, and reminds you to keep your address, school and passwords private
+• A short age check on first open. 13+ only
+• Parents: a plain-language page explains what RoboDad is and what happens to your teen's information (robodad.ca)
 
-BUILT TO BE SAFE
-- If you mention self-harm, abuse, an eating disorder or being threatened online, RoboDad shows a fixed, human-written help message with free helplines instead of improvising.
-- No ads. No selling data. No tracking cookies.
-- RoboDad never asks for personal details, and reminds you to keep your address, school and passwords private.
-- A short age check on first open. 13+ only.
-- Parents: a plain-language page explains what RoboDad is and what happens to your teen's information (robodad.ca).
-
-RoboDad is free, built by a dad in Toronto, and still growing. Got an idea or found a bug? Email dad@robodad.app.
+RoboDad is built by a dad in Toronto and keeps growing, with new lessons, games and looks added often. Got an idea or found a bug? Tap Send feedback in the Me tab, or email dad@robodad.app.
 
 Emergency? Call 911. In Canada, Kids Help Phone is free any time: 1-800-668-6868, or text CONNECT to 686868.
 
@@ -53,6 +72,11 @@ Play indexes the title, short description and full description. Reuse these natu
 - calm: sleep sounds, study timer, focus timer
 Avoid claims Play rejects: "best", "#1", "free" in the title, price or ranking claims, and anything that sounds like therapy, medical or mental-health treatment.
 
+## What changed in v2 (tester feedback)
+- Full description is now scannable: short ★ section headers and • bullets (Play shows plain text, so these characters are the safe way to get bullets).
+- More of the words teens and parents search for, used naturally: teen advice, life skills, study help, learn French/Hindi, maths help, grammar, vocabulary, chess, word game, sleep sounds, focus timer.
+- New features listed: guided tour, dark mode, in-app feedback.
+
 ## Screenshots
 Draft raw screens are in `store/screenshots/` (1080 x 1919, portrait). Play needs at least 2 and allows 8. Suggested order and caption to overlay on each:
 
@@ -61,6 +85,8 @@ Draft raw screens are in `store/screenshots/` (1080 x 1919, portrait). Play need
 3. `2-play.png`: "Chess, word games and brain teasers"
 4. `4-chill.png`: "Sleep sounds and a calm corner"
 5. `5-me.png`: "Make it yours"
+6. (new) the guided tour on the Play tab: "A 30-second tour, skip any time"
+7. (new) the app in dark mode: "Dark mode, or match your phone"
 
 Before uploading: retake 1-chat once the Diwali look and its speech bubble are off (the first screen should show the default look), and retake the three sheet screens without the dimmed backdrop. Add a real conversation as a screenshot, since a reply is the clearest proof of what the app does.
 

@@ -1,4 +1,4 @@
-# Play Console: Data safety answers (draft, matches /privacy as of v1.35)
+# Play Console: Data safety answers (draft, matches /privacy as of v1.36)
 
 You are the one who attests to these in Play Console, so read each line against the live app before submitting.
 Play's rule of thumb: data that leaves the device is "collected" unless it is processed only in memory and in real time. Data sent to another company is "shared" unless that company acts only as your service provider. When unsure, declare it. An over-declared form is safe. An under-declared one can get the app pulled.
@@ -17,8 +17,8 @@ Play's rule of thumb: data that leaves the device is "collected" unless it is pr
 | Play category / type | Collected | Shared | Purpose | Optional? | Why |
 |---|---|---|---|---|---|
 | Messages > Other in-app messages | Yes | Yes (Groq, AI provider) | App functionality | No (it is the core feature) | Chat text goes through your server to Groq to write a reply. Not stored by RoboDad. Declaring it is the cautious choice; if you argue Groq is purely your service provider, "shared" can be No. |
-| App activity > Other user-generated content | Yes | No | App functionality, analytics | Yes | Thumbs up/down and reports store RoboDad's reply (never what the teen typed) in Supabase. |
-| App activity > App interactions | Yes | No | Analytics | No | Anonymous event counts (welcome steps, return visits, tab taps). Fixed event names only, no ID. |
+| App activity > Other user-generated content | Yes | No | App functionality, analytics | Yes | Thumbs up/down and reports store RoboDad's reply (never what the teen typed in chat) in Supabase. Since v1.36, the optional Send feedback box in the Me tab stores the note the user writes there, with the kind (bug, idea, hard to read, other), android/web and look. Not linked to an ID. |
+| App activity > App interactions | Yes | No | Analytics | No | Anonymous event counts (welcome steps, tour, return visits, tab taps, feedback sent). Fixed event names only, no ID. |
 | Device or other IDs | No | No | | | No advertising ID, no device ID, no cookie. |
 | Location, contacts, photos, files, health, financial | No | No | | | Not collected. |
 | Audio | No | No | | | Mic use is the device's speech recognition. RoboDad only receives text. Re-check this if the Android WebView sends audio to Google's service; if it does, declare Audio > Voice or sound recordings as collected, not stored, for app functionality, optional. |

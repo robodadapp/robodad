@@ -328,7 +328,7 @@ class FeedbackRequest(BaseModel):
     mode: str = Field(default="", max_length=16)
     model: str = Field(default="", max_length=120)
     reply: str = Field(default="", max_length=4000)
-    kind: str = Field(default="rating", pattern="^(rating|report)$")
+    kind: str = Field(default="rating", pattern="^(rating|report|app)$")
     reason: str = Field(default="", max_length=40)
 
 
@@ -724,6 +724,7 @@ EVENTS = {
     "return_d1", "return_d2_3", "return_d4_7", "return_d8plus",
     "streak_3", "streak_7", "streak_14", "streak_30",
     "tab_play", "tab_learn", "tab_chill", "tab_me", "rate_shown", "rate_tap",
+    "tour_start", "tour_done", "tour_skip", "fb_sent",
 }
 
 
@@ -1334,16 +1335,26 @@ async def dad_mode_stream(provider, system: str, history: list[dict]):
 
 @app.post("/api/feedback")
 async def feedback(fb: FeedbackRequest, request: Request):
-    """Thumbs up/down or a report on a reply. What the user typed is never stored."""
+    """Thumbs up/down or a report on a reply (what the user typed in chat is never stored),
+    or app feedback from the Me tab ("app": the note the user wrote in the feedback box)."""
     if fb.kind == "report":
         fb.rating = -1
+    if fb.kind == "app":
+        if fb.reason not in ("bug", "idea", "readability", "other"):
+            raise HTTPException(400, "Unknown feedback kind.")
+        if len(fb.reply.strip()) < 3:
+            raise HTTPException(400, "Feedback is empty.")
+        fb.rating = 1 if fb.reason == "idea" else -1
+        fb.mode, fb.confidence, fb.reply = "app", 0.0, fb.reply.strip()[:600]
     if fb.rating == 0:
         raise HTTPException(400, "Rating must be 1 or -1.")
     if _rate_limited(_client_ip(request)):
         return JSONResponse({"error": "Too many ratings. Wait a minute, then try again."}, status_code=429)
 
     p = state.get("provider")
-    fb.model = p.label if (p and fb.mode == "llm") else ""  # recorded server-side; the page never sees it
+    fb.model = p.label if (p and fb.mode == "llm") else ""
+    if fb.kind == "app":
+        log.warning("APP FEEDBACK (%s, %s): %r", fb.reason, fb.intent, fb.reply)  # recorded server-side; the page never sees it
     row = fb.model_dump()
     log.info("FEEDBACK %s%s intent=%s mode=%s model=%s reply=%r",
              "REPORT " if fb.kind == "report" else "", "up" if fb.rating > 0 else "down",

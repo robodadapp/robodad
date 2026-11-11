@@ -8,6 +8,7 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#2E5C8A">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem("robodad.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t;}catch(e){}</script>
 <style>
 :root{--sky:#E8EFF5; --surface:#FFFFFF; --ink:#1B2A3A; --muted:#5A6B7E; --line:#D3DEE8; --denim:#2E5C8A; color-scheme:light}
 @media (prefers-color-scheme: dark){
@@ -35,7 +36,7 @@ th{font-weight:800}
   <a class="back" href="/">← Back to RoboDad</a>
   <div class="card">
     <h1>RoboDad Privacy Policy</h1>
-    <p class="muted">Last updated: October 29, 2026 (new web addresses, maths, anonymous link counts and votes)</p>
+    <p class="muted">Last updated: November 11, 2026 (optional feedback box in the Me tab, anonymous usage counts)</p>
 
     <p>RoboDad is an AI chatbot that gives teenagers practical advice about everyday life. It is a passion
     project made by Saikat Sunil Ganguly in Toronto, Canada. This page explains, in plain language, what
@@ -48,7 +49,8 @@ th{font-weight:800}
       <li>Your messages are sent to an AI service to write replies. <strong>RoboDad does not save your messages.</strong></li>
       <li>Your chat and nickname stay in your own browser on your device.</li>
       <li>Secret codes you type in the menu are checked by our server and never saved. What a code unlocks is remembered only on your device.</li>
-      <li>If you rate or report a reply, we save the rating and RoboDad's reply, <strong>never what you typed</strong>.</li>
+      <li>If you rate or report a reply, we save the rating and RoboDad's reply, <strong>never what you typed</strong> in the chat.</li>
+      <li>If you choose to send feedback from the Me tab, we save the note you wrote in the feedback box, so please leave out anything private.</li>
       <li>No ads, no selling of data and no tracking cookies.</li>
     </ul>
 
@@ -89,6 +91,9 @@ th{font-weight:800}
       <tr><td>Short-link visits (for example robodad.app/go/tiktok) and "I want this" votes on the Learn with Dad page</td>
           <td>Our database (Supabase): only the name of the platform or topic and the time. No IP address, no cookie and nothing that identifies you. Your browser remembers which topics you voted for so you don't vote twice.</td>
           <td>Kept as simple totals to see which platforms people come from and what to build next</td></tr>
+      <tr><td>Feedback you send from the Me tab (optional)</td>
+          <td>Our database (Supabase): the kind you picked (bug, idea, hard to read, something else), the note you wrote in the feedback box, whether you used the Android app or the website, and your look and light/dark setting</td>
+          <td>Kept to fix bugs and decide what to build. Not linked to you or your device. Your chat messages are never attached.</td></tr>
       <tr><td>Anonymous usage counts (for example "someone finished the welcome steps" or "someone came back after a day")</td>
           <td>Our database (Supabase): only the name of the event from a fixed list and the time. No IP address, no device ID, no cookie, no account and nothing you type. We can't tell which counts came from the same person.</td>
           <td>Kept as simple totals to see whether the first minute works and whether people come back</td></tr>
@@ -132,7 +137,7 @@ th{font-weight:800}
       <li><strong>Your chats:</strong> tap <strong>New chat</strong>. They're only stored in your browser or app on your device, and we never had a copy.</li>
       <li><strong>Nickname, look, settings, badges and learning progress:</strong> clear your browser's data for robodad.app, or in the Android app go to Settings, then Apps, then RoboDad, then Storage, then Clear storage. Uninstalling the app also removes them.</li>
       <li><strong>Tester sign-up email:</strong> email <a href="mailto:dad@robodad.app?subject=Delete%20my%20RoboDad%20data">dad@robodad.app</a> from that address with the subject "Delete my RoboDad data". We delete it within 30 days and reply to confirm. Otherwise it's deleted automatically when Play Store testing ends.</li>
-      <li><strong>Ratings, reports, link counts and votes:</strong> these are anonymous and never linked to you, so we can't find "your" ones to delete. They contain RoboDad's replies or a platform or topic name, never what you typed.</li>
+      <li><strong>Ratings, reports, link counts and votes:</strong> these are anonymous and never linked to you, so we can't find "your" ones to delete. They contain RoboDad's replies or a platform or topic name, never what you typed in the chat. Feedback notes are anonymous too; if you sent one by mistake, email us roughly what it said and when, and we'll find and delete it.</li>
     </ul>
 
     <h2>Changes</h2>

@@ -36,6 +36,10 @@ import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -241,6 +245,23 @@ public class MainActivity extends Activity {
     }
 
     private class Bridge {
+        /** Google Play's own rating sheet (In-App Review API). Play decides whether it actually
+         *  shows (it has its own quota), so the page only asks at calm moments and never after a hard one. */
+        @JavascriptInterface
+        public void requestReview() {
+            ui.post(() -> {
+                if (!pageIsOurs() || isFinishing()) return;
+                try {
+                    ReviewManager rm = ReviewManagerFactory.create(MainActivity.this);
+                    rm.requestReviewFlow().addOnCompleteListener(t -> {
+                        if (!t.isSuccessful() || isFinishing()) return;
+                        ReviewInfo info = t.getResult();
+                        rm.launchReviewFlow(MainActivity.this, info);
+                    });
+                } catch (Exception ignored) { }
+            });
+        }
+
         @JavascriptInterface
         public String ttsVoices() {
             JSONArray out = new JSONArray();

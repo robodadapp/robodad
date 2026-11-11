@@ -33,7 +33,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Bungee&family=Creepster&family=Rozha+One&family=Sniglet:wght@800&family=Comfortaa:wght@500;700&family=Graduate&family=Lobster&family=Nunito:wght@400;600;700;800;900&family=Orbitron:wght@600;800&family=Permanent+Marker&family=Righteous&family=Gochi+Hand&family=Fredoka:wght@500;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-<script>try{var l=localStorage.getItem("robodad.look");if(l)document.documentElement.dataset.look=l;}catch(e){}</script>
+<script>try{var l=localStorage.getItem("robodad.look");if(l)document.documentElement.dataset.look=l;var t=localStorage.getItem("robodad.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t;}catch(e){}</script>
 <style>
 :root{
   --sky:#E8EFF5; --surface:#FFFFFF; --ink:#1B2A3A; --muted:#5A6B7E; --line:#D3DEE8;
@@ -55,6 +55,7 @@
 /* ---------- the three looks ---------- */
 :root{--display:"Nunito", ui-rounded, system-ui, sans-serif; --jacket:#2B211C; --jacket2:#3D2F27; --hair:#1B2A3A; --lens:#1B2A3A; --glow:transparent}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){--jacket:#1A1411; --jacket2:#2E241E; --hair:#0B1118; --lens:#05080C} }
+:root[data-theme="dark"]{--jacket:#1A1411; --jacket2:#2E241E; --hair:#0B1118; --lens:#05080C}
 :root[data-look="arcade"]{
   --sky:#0D0A26; --surface:#18123F; --ink:#EEEAFF; --muted:#A99FDD; --line:#2F2770;
   --denim:#FF3EA5; --denim-ink:#1A0620; --mustard:#2DE2E6; --mustard-ink:#03181A;
@@ -1153,6 +1154,30 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .ob-picks button{font:inherit; font-weight:700; text-align:left; color:var(--ink); background:var(--sky); border:1.5px solid var(--line); border-radius:14px; padding:12px 14px; cursor:pointer}
 .ob-picks button:hover,.ob-picks button:focus-visible{border-color:var(--mustard); outline:3px solid var(--mustard); outline-offset:1px}
 
+/* ---------- guided tour: a spotlight on each tab, skippable, replay from Me ---------- */
+.overlay.tour{display:block; padding:0; background:transparent; z-index:60}
+.tour-ring{position:fixed; border-radius:16px; pointer-events:none; outline:3px solid var(--mustard); outline-offset:0;
+  box-shadow:0 0 0 9999px rgba(8,12,18,.62); transition:left .25s, top .25s, width .25s, height .25s}
+.tour-tip{position:fixed; width:min(340px, calc(100vw - 24px)); padding:18px 18px 16px; gap:10px}
+.tour-tip h2{font-size:1.25rem}
+.tour-dots{display:flex; gap:6px} .tour-dots i{width:7px; height:7px; border-radius:50%; background:var(--line)} .tour-dots i.on{background:var(--mustard)}
+@media (prefers-reduced-motion:reduce){ .tour-ring{transition:none} }
+
+/* ---------- light / dark switch ---------- */
+.theme-pick{display:flex; gap:6px; flex-wrap:wrap}
+.theme-pick button{flex:1 1 0; min-width:0; white-space:nowrap; font:inherit; font-size:.9rem; font-weight:800; color:var(--ink); background:var(--sky); border:1.5px solid var(--line); border-radius:14px; padding:10px 6px; cursor:pointer}
+.theme-pick button[aria-checked="true"]{background:var(--denim); color:#fff; border-color:var(--denim)}
+.theme-pick button:focus-visible{outline:3px solid var(--mustard); outline-offset:1px}
+.theme-note{font-size:.85rem}
+
+/* ---------- send feedback ---------- */
+.fb-kinds{display:flex; gap:6px; flex-wrap:wrap}
+.fb-kinds button{font:inherit; font-weight:700; color:var(--ink); background:var(--sky); border:1.5px solid var(--line); border-radius:999px; padding:8px 12px; cursor:pointer}
+.fb-kinds button[aria-checked="true"]{border-color:var(--denim); outline:2px solid var(--denim)}
+.fb-kinds button:focus-visible{outline:3px solid var(--mustard)}
+.card textarea{font:inherit; color:var(--ink); background:var(--sky); border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; width:100%; min-height:110px; resize:vertical}
+.card textarea:focus{outline:3px solid var(--mustard); outline-offset:1px}
+
 /* ---------- dialogs (age check, nickname) ---------- */
 .overlay{position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:16px;
   background:color-mix(in srgb, var(--ink) 55%, transparent)}
@@ -1761,6 +1786,14 @@ textarea::placeholder{color:var(--muted)}
   <div class="card">
     <h2 id="menuTitle">Make it yours</h2>
     <p id="menuHint">Change how RoboDad looks and works.</p>
+    <b id="themeLabel">Light or dark</b>
+    <div class="theme-pick" role="radiogroup" aria-labelledby="themeLabel">
+      <button type="button" role="radio" data-theme-pick="auto" aria-checked="true" title="Match your phone" aria-label="Auto: match your phone">📱 Auto</button>
+      <button type="button" role="radio" data-theme-pick="light" aria-checked="false">☀️ Light</button>
+      <button type="button" role="radio" data-theme-pick="dark" aria-checked="false">🌙 Dark</button>
+    </div>
+    <p class="theme-note" id="themeNote" hidden>Light and dark change the Classic look. Your current look has its own colours, so pick Classic to see it.</p>
+    <b>Look</b>
     <div class="looks" role="radiogroup" aria-label="Look">
       <button class="look" type="button" role="radio" data-look="classic" aria-checked="true">
         <span class="pv classic"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-modern"/></svg></span>
@@ -1925,12 +1958,14 @@ textarea::placeholder{color:var(--muted)}
   <div class="card">
     <div class="sheet-head"><h2 id="meTitle">Me</h2><button class="ghost" type="button" data-sheet-close>Close</button></div>
     <div class="tiles">
-      <button class="tile" type="button" data-go="looks"><span class="t-ico" aria-hidden="true">🎨</span><b>Looks and dads</b><small>Themes, avatars, voice</small></button>
+      <button class="tile" type="button" data-go="looks"><span class="t-ico" aria-hidden="true">🎨</span><b>Looks and dads</b><small>Themes, dark mode, avatars, voice</small></button>
       <button class="tile" type="button" data-go="badges"><span class="t-ico" aria-hidden="true">🏅</span><b>Badges</b><small id="meBadges">Do it for real, unlock them</small></button>
       <button class="tile" type="button" id="nameBtn" data-close-sheet><span class="t-ico" aria-hidden="true">👋</span><b>Nickname</b><small id="meName">What RoboDad calls you</small></button>
       <button class="tile" type="button" id="codeBtn" data-close-sheet><span class="t-ico" aria-hidden="true">🔑</span><b id="codeLabel">Got a secret code?</b><small>Enter it here</small></button>
       <button class="tile" type="button" id="ottoBtn" data-close-sheet hidden><span class="t-ico" aria-hidden="true">🤖</span><b>Otto mode</b><small id="ottoSub">Your bookshelf</small></button>
       <a class="tile" id="rateRow" href="https://play.google.com/store/apps/details?id=app.robodad" target="_blank" rel="noopener" hidden><span class="t-ico" aria-hidden="true">⭐</span><b>Rate RoboDad</b><small>Tell other teens it's worth a try</small></a>
+      <button class="tile" type="button" data-go="tour"><span class="t-ico" aria-hidden="true">🧭</span><b>Take the tour</b><small>What's where, in 30 seconds</small></button>
+      <button class="tile" type="button" data-go="feedback"><span class="t-ico" aria-hidden="true">💬</span><b>Send feedback</b><small>Found a bug? Got an idea?</small></button>
       <button class="tile" type="button" id="installRow" data-close-sheet hidden><span class="t-ico" aria-hidden="true">📲</span><b>Install app</b><small>Put RoboDad on your home screen</small></button>
     </div>
     <div class="me-help">
@@ -2177,6 +2212,36 @@ textarea::placeholder{color:var(--muted)}
     <div class="ob-picks" id="obPicks" hidden></div>
     <div class="row"><button class="ghost" id="obSkip" type="button">Skip for now</button></div>
   </div>
+</div>
+
+<div class="overlay tour" id="tourDlg" role="dialog" aria-modal="true" aria-labelledby="tourTitle" hidden>
+  <div class="tour-ring" id="tourRing" aria-hidden="true"></div>
+  <div class="card tour-tip" id="tourTip">
+    <p class="ob-step" id="tourStep" aria-live="polite"></p>
+    <h2 id="tourTitle"></h2>
+    <p id="tourText"></p>
+    <div class="tour-dots" id="tourDots" aria-hidden="true"></div>
+    <div class="row"><button class="primary" id="tourNext" type="button">Next</button><button class="ghost" id="tourClose" type="button">Skip tour</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="fbDlg" role="dialog" aria-modal="true" aria-labelledby="fbTitle" hidden>
+  <form class="card" id="fbForm">
+    <h2 id="fbTitle">Send feedback</h2>
+    <p>Found a bug, got an idea, or something's hard to read? Tell me. A real dad reads every one.</p>
+    <b id="fbKindLabel">What kind?</b>
+    <div class="fb-kinds" role="radiogroup" aria-labelledby="fbKindLabel">
+      <button type="button" role="radio" data-kind="bug" aria-checked="true">🐞 Bug</button>
+      <button type="button" role="radio" data-kind="idea" aria-checked="false">💡 Idea</button>
+      <button type="button" role="radio" data-kind="readability" aria-checked="false">👓 Hard to read</button>
+      <button type="button" role="radio" data-kind="other" aria-checked="false">💬 Something else</button>
+    </div>
+    <label for="fbText">Tell me more</label>
+    <textarea id="fbText" maxlength="600" required placeholder="e.g. On the Play tab, the chess button didn't open"></textarea>
+    <small class="fine">Please don't include your name, school, address or anything private. This isn't for emergencies: if you need help now, Kids Help Phone is 1-800-668-6868.</small>
+    <p id="fbMsg" role="status" hidden></p>
+    <div class="row"><button class="primary" id="fbSend" type="submit">Send</button><button class="ghost" id="fbClose" type="button">Cancel</button></div>
+  </form>
 </div>
 
 <script src="/static/lessons.js?v=41"></script>
@@ -3255,6 +3320,26 @@ const PLAYERS = {
   $("menuDone").addEventListener("click", () => { closeMenu(); input.focus(); });
   menuDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   applyLook(getPref(LOOK_KEY) || "classic");
+
+  // ---------- light / dark: match the phone, or pick one ----------
+  const THEME_KEY = "robodad.theme";
+  function applyTheme(t){
+    if (t !== "dark" && t !== "light") t = "auto";
+    if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    menuDlg.querySelectorAll("[data-theme-pick]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.themePick === t)));
+    $("themeNote").hidden = t === "auto" || !document.documentElement.dataset.look;
+    setPref(THEME_KEY, t === "auto" ? "" : t);
+  }
+  menuDlg.querySelectorAll("[data-theme-pick]").forEach(b => b.addEventListener("click", () => applyTheme(b.dataset.themePick)));
+  menuDlg.querySelector(".theme-pick").addEventListener("keydown", (e) => {
+    if (!["ArrowRight","ArrowLeft","ArrowDown","ArrowUp"].includes(e.key)) return;
+    const bs = [...menuDlg.querySelectorAll("[data-theme-pick]")]; const i = bs.indexOf(document.activeElement);
+    if (i < 0) return; e.preventDefault();
+    const next = bs[(i + (e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : bs.length - 1)) % bs.length];
+    next.focus(); applyTheme(next.dataset.themePick);
+  });
+  menuDlg.querySelectorAll(".look").forEach(b => b.addEventListener("click", () => applyTheme(getPref(THEME_KEY) || "auto")));
+  applyTheme(getPref(THEME_KEY) || "auto");
   (function seasonal(){                        // holiday looks turn themselves on once per holiday, and off after
     const look = getPref(LOOK_KEY) || "classic"; let switched = false;
     for (const [name, se] of Object.entries(SEASONS)) {
@@ -4393,6 +4478,7 @@ const PLAYERS = {
     vocab: () => openVocab(), grammar: () => openGrammar(),
     mind: () => openMind(),
     looks: () => openMenu(false), badges: () => openBelt(),
+    tour: () => startTour(), feedback: () => openFeedback(),
   };
   Object.values(SHEETS).forEach((dlg) => {
     dlg.addEventListener("click", (e) => {
@@ -5362,6 +5448,10 @@ const PLAYERS = {
     if (history.filter(m => m.role === "user").length < 6) return; // and has actually chatted
     if (history[history.length - 1]?.meta?.mode === "safety") return;
     r.asked = (r.asked || 0) + 1; r.last = Date.now(); saveRate(r); ping("rate_shown");
+    if (typeof window.RoboDadNative.requestReview === "function") {   // Google Play's own review sheet (In-App Review API)
+      setTimeout(() => { try { window.RoboDadNative.requestReview(); } catch {} }, 2500);
+      return;
+    }
     setTimeout(() => {
       const t = $("toast"); t.textContent = "";
       const msg = document.createElement("span"); msg.textContent = "Is RoboDad helping? A quick rating helps other teens find it. ";
@@ -5372,6 +5462,97 @@ const PLAYERS = {
       toastTimer = setTimeout(() => { t.hidden = true; }, 12000);
     }, 2500);
   }
+
+  // ---------- guided tour: a spotlight on each tab (skippable; replay any time from Me) ----------
+  const TOUR_KEY = "robodad.toured";
+  const TOUR = [
+    ["chatTab", "Chat", "Ask Dad anything", "School, money, friends, cooking, or just “I need to talk.” Type it or tap the mic. Thumbs up, thumbs down or Report on any reply helps him get better."],
+    ["playTab", "Play", "Games with Dad", "Chess against nine dads, Tile Talk word battles, brain teasers where Dad gives hints instead of answers, and a Daily Dad Challenge."],
+    ["learnBtn", "Learn", "Your study corner", "French, Spanish, Hindi, Marathi and Bengali. Maths for Grades 7 to 10. Grammar and vocabulary games, a daily brain boost and Study Hall timers."],
+    ["sideBtn", "Chill", "Take a breather", "Sleep sounds with a timer, the radio, and a countdown to the thing you're waiting for."],
+    ["meBtn", "Me", "Make it yours", "Looks, dark mode, badges and your nickname. Send feedback or replay this tour from here."],
+  ];
+  const tourDlg = $("tourDlg"), tourRing = $("tourRing"), tourTip = $("tourTip");
+  let tourI = 0, tourDone = null;
+  function tourPlace(){
+    if (tourDlg.hidden) return;
+    let el = $(TOUR[tourI][0]), r = el ? el.getBoundingClientRect() : { width:0 };
+    if (!r.width && TOUR[tourI][0] === "sideBtn") { el = side; r = side.getBoundingClientRect(); }   // wide screens: Chill is the side panel
+    const W = window.innerWidth, H = window.innerHeight, tw = tourTip.offsetWidth, th = tourTip.offsetHeight;
+    if (!r.width) {                                   // tab bar hidden (keyboard up): just centre the card
+      tourRing.hidden = true; tourTip.style.left = Math.max(12, (W - tw) / 2) + "px"; tourTip.style.top = Math.max(12, (H - th) / 2) + "px"; return;
+    }
+    tourRing.hidden = false;
+    Object.assign(tourRing.style, { left:(r.left - 4) + "px", top:(r.top - 4) + "px", width:(r.width + 8) + "px", height:(r.height + 8) + "px" });
+    if (r.left > W / 2 && r.height > H / 2) {          // the Chill side panel: card to its left
+      tourTip.style.left = Math.max(12, r.left - tw - 16) + "px";
+      tourTip.style.top = Math.max(12, (H - th) / 2) + "px";
+    } else if (r.top > H / 2 || r.left > 100) {        // bottom tab bar: card sits above the tab
+      tourTip.style.left = Math.min(Math.max(12, r.left + r.width / 2 - tw / 2), W - tw - 12) + "px";
+      tourTip.style.top = Math.max(12, r.top - th - 16) + "px";
+    } else {                                          // wide screens: side rail, card to the right
+      tourTip.style.left = (r.right + 16) + "px";
+      tourTip.style.top = Math.min(Math.max(12, r.top + r.height / 2 - th / 2), H - th - 12) + "px";
+    }
+  }
+  function tourShow(){
+    const [, , title, text] = TOUR[tourI];
+    $("tourStep").textContent = `${tourI + 1} of ${TOUR.length} · ${TOUR[tourI][1]} tab`;
+    $("tourTitle").textContent = title; $("tourText").textContent = text;
+    $("tourDots").innerHTML = TOUR.map((_, i) => `<i class="${i === tourI ? "on" : ""}"></i>`).join("");
+    $("tourNext").textContent = tourI === TOUR.length - 1 ? "Got it" : "Next";
+    tourPlace(); $("tourNext").focus();
+  }
+  function startTour(onDone){
+    Object.values(SHEETS).forEach(d => { d.hidden = true; }); side.classList.remove("open");
+    tourI = 0; tourDone = typeof onDone === "function" ? onDone : null;
+    tourDlg.hidden = false; ping("tour_start"); tourShow();
+  }
+  function endTour(how){
+    if (tourDlg.hidden) return;
+    tourDlg.hidden = true; setPref(TOUR_KEY, how); ping(how === "done" ? "tour_done" : "tour_skip");
+    const cb = tourDone; tourDone = null;
+    if (cb) cb(); else { syncTabs(); input.focus(); }
+  }
+  $("tourNext").addEventListener("click", () => { if (tourI < TOUR.length - 1) { tourI++; tourShow(); } else endTour("done"); });
+  $("tourClose").addEventListener("click", () => endTour("skip"));
+  tourDlg.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.stopPropagation(); endTour("skip"); }
+    else if (e.key === "ArrowRight" && tourI < TOUR.length - 1) { tourI++; tourShow(); }
+    else if (e.key === "ArrowLeft" && tourI > 0) { tourI--; tourShow(); }
+    else if (e.key === "Tab") { e.preventDefault(); (document.activeElement === $("tourNext") ? $("tourClose") : $("tourNext")).focus(); }
+  });
+  window.addEventListener("resize", tourPlace);
+
+  // ---------- send feedback (bugs, ideas, hard-to-read spots) ----------
+  const fbDlg = $("fbDlg");
+  let fbKind = "bug";
+  function setFbKind(k){ fbKind = k; fbDlg.querySelectorAll("[data-kind]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.kind === k))); }
+  function openFeedback(kind){
+    setFbKind(kind || "bug"); $("fbMsg").hidden = true; $("fbSend").disabled = false; $("fbText").value = "";
+    fbDlg.hidden = false; $("fbText").focus();
+  }
+  function closeFeedback(){ fbDlg.hidden = true; input.focus(); }
+  fbDlg.querySelectorAll("[data-kind]").forEach(b => b.addEventListener("click", () => setFbKind(b.dataset.kind)));
+  $("fbClose").addEventListener("click", closeFeedback);
+  fbDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFeedback(); });
+  $("fbForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const note = $("fbText").value.trim(); if (note.length < 3) { $("fbText").focus(); return; }
+    $("fbSend").disabled = true; const msg = $("fbMsg"); msg.hidden = false; msg.textContent = "Sending…";
+    const where = [inApp ? "android" : "web", document.documentElement.dataset.look || "classic",
+                   document.documentElement.dataset.theme || "auto"].join(" ");
+    try {
+      const r = await fetch("/api/feedback", { method:"POST", headers:{"content-type":"application/json"},
+        body: JSON.stringify({ kind:"app", reason:fbKind, rating:fbKind === "idea" ? 1 : -1, intent:where.slice(0, 64), reply:note }) });
+      if (!r.ok) throw new Error(String(r.status));
+      msg.textContent = "Got it, thanks! That really helps."; ping("fb_sent");
+      setTimeout(() => { if (!fbDlg.hidden) closeFeedback(); }, 1600);
+    } catch {
+      msg.textContent = "Couldn't send just now. Try again in a minute, or email dad@robodad.app.";
+      $("fbSend").disabled = false;
+    }
+  });
 
   // ---------- first-run onboarding (new visitors only; skippable at every step; ends in a real reply) ----------
   const OB_KEY = "robodad.onboarded";
@@ -5384,13 +5565,13 @@ const PLAYERS = {
   ];
   function obClose(how){ obDlg.hidden = true; setPref(OB_KEY, "1"); if (how === "skip") ping("ob_skip"); input.focus(); }
   function obStepName(){
-    $("obStep").textContent = "Step 1 of 2";
+    $("obStep").textContent = "Step 1 of 3";
     $("obTitle").textContent = "Hey, I'm RoboDad.";
     $("obText").textContent = "I'm an AI dad: patient, a bit corny, always around. What should I call you? You can skip this.";
     $("obNameForm").hidden = false; $("obPicks").hidden = true; $("obName").focus();
   }
   function obStepTopic(){
-    $("obStep").textContent = "Step 2 of 2";
+    $("obStep").textContent = "Step 3 of 3";
     $("obTitle").textContent = nickname ? `What's on your mind, ${nickname}?` : "What's on your mind?";
     $("obText").textContent = "Pick one and I'll answer right now.";
     $("obNameForm").hidden = true;
@@ -5402,11 +5583,23 @@ const PLAYERS = {
     });
     box.firstChild.focus();
   }
+  function obStepTour(){
+    $("obStep").textContent = "Step 2 of 3";
+    $("obTitle").textContent = nickname ? `Want a quick tour, ${nickname}?` : "Want a quick tour?";
+    $("obText").textContent = "Five tabs along the bottom. I'll show you what's behind each one. Takes 30 seconds.";
+    $("obNameForm").hidden = true;
+    const box = $("obPicks"); box.hidden = false; box.textContent = "";
+    [["👀 Show me around", () => { obDlg.hidden = true; startTour(() => { obDlg.hidden = false; obStepTopic(); }); }],
+     ["⏭️ Skip the tour, let's talk", () => { setPref(TOUR_KEY, "skip"); obStepTopic(); }]].forEach(([label, go]) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.addEventListener("click", go); box.appendChild(b);
+    });
+    box.firstChild.focus();
+  }
   function startOnboarding(){ if (getPref(OB_KEY)) return; obDlg.hidden = false; ping("ob_shown"); obStepName(); }
   $("obNameForm").addEventListener("submit", (e) => {
     e.preventDefault();
     nickname = $("obName").value.replace(/[^\p{L}\s'\-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20);
-    setPref(NAME_KEY, nickname); applyName(); if (nickname) ping("ob_name"); obStepTopic();
+    setPref(NAME_KEY, nickname); applyName(); if (nickname) ping("ob_name"); obStepTour();
   });
   $("obSkip").addEventListener("click", () => obClose("skip"));
   obDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") obClose("skip"); });
@@ -5437,6 +5630,17 @@ const PLAYERS = {
     ping(d <= 1 ? "return_d1" : d <= 3 ? "return_d2_3" : d <= 7 ? "return_d4_7" : "return_d8plus");
   })();
   document.querySelectorAll(".tab[data-tab]").forEach(b => b.addEventListener("click", () => { const k = "tab_" + b.dataset.tab; if (k !== "tab_chat") ping(k); }));
+  if (ageState === "ok" && !getPref(TOUR_KEY)) setTimeout(() => {   // been here before the tour existed: offer it once
+    if (getPref(TOUR_KEY) || document.querySelector(".overlay:not([hidden])")) return;
+    setPref(TOUR_KEY, "offered");
+    const t = $("toast"); t.textContent = "";
+    const msg = document.createElement("span"); msg.textContent = "New: a 30-second tour of what's where. ";
+    const go = document.createElement("button"); go.type = "button"; go.textContent = "Show me";
+    go.style.cssText = "font:inherit; font-weight:800; margin-left:6px; color:inherit; background:none; border:0; text-decoration:underline; cursor:pointer";
+    go.addEventListener("click", () => { t.hidden = true; startTour(); });
+    t.append(msg, go); t.hidden = false; clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 10000);
+  }, 2500);
   history = load();
   if (history.length) renderLog();
   updatePracticeBar();
