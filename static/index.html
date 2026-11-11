@@ -2095,6 +2095,16 @@ textarea::placeholder{color:var(--muted)}
   </div>
 </div>
 
+<div class="overlay" id="kitDlg" role="dialog" aria-modal="true" aria-labelledby="kitTitle" hidden>
+  <div class="card vault">
+    <p class="vault-kick">KAI'S KITCHEN TABLE</p>
+    <h2 id="kitTitle">Card 1 of 10</h2>
+    <p id="kitText" style="font-size:1.2rem;font-weight:800;line-height:1.35;margin:6px 0"></p>
+    <p style="font-size:.9rem">Ask it in any language your family speaks. Then ask them how to say the answer.</p>
+    <div class="row"><button class="primary" id="kitNext" type="button">Next card</button><button class="chipbtn" id="kitLang" type="button">Family lessons</button><button class="ghost" id="kitClose" type="button">Close</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="ottoDlg" role="dialog" aria-modal="true" aria-labelledby="ottoTitle" hidden>
   <div class="card vault">
     <p class="vault-kick">OTTO MODE · PLAYER TWO</p>
@@ -4785,7 +4795,7 @@ const PLAYERS = {
     { ch: 4,  ic: "🕹️", name: "Marcus mode", got: "Marcus mode: Arcade Dad now talks like Marcus, the arcade owner, when you play him at chess.", say: "Dev's best score started with 999. Marcus would be proud." },
     { ch: 5,  ic: "🥬", name: "Thursday Rules", got: "Mom's pun cards, and a Thursday nudge to eat together.", say: "Lettuce celebrate. Thursday dinner is a rule now." },
     { ch: 6,  ic: "🚪", name: "DAD QUEST: Level 1", got: "A pixel apartment, and a door that says NOT YET.", say: "Hold SELECT. Level 1: Home. Then count with Kai." },
-    { ch: 10, ic: "💬", name: "Talk to your folks", got: "Starter conversations for Hindi, Marathi and Bengali at home.", say: "Kai's idea: start the talk at the kitchen table." },
+    { ch: 10, ic: "💬", name: "Talk to your folks", got: "Kai's kitchen-table cards: questions to start a real conversation with your folks, and a shortcut to the family lessons.", say: "Kai's idea: start the talk at the kitchen table." },
     { ch: 11, ic: "✅", name: "The READY door", got: "The door now says READY. It opens when the play goals are done.", say: "The whole crew solved the last clue. One door left." },
     { ch: 12, ic: "🏆", name: "Player Two Wins", got: "Full DAD QUEST is yours, someone's stirring in the dark, and Dev left a note about a time capsule.", say: "Who wins in the end? Player Two. See you at New Year." },
   ];
@@ -4810,7 +4820,7 @@ const PLAYERS = {
     if (n >= 6 && n < OTTO_RUNGS.length) $("ottoLine").textContent += "  Play goals for the door: " + ottoGoals().map(g => (g[1] ? "✓ " : "☐ ") + g[0]).join(" · ") + ".";
     $("ottoList").innerHTML = OTTO_RUNGS.map((x, i) => {
       const on = i < n;
-      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on && i === 4 ? '<button class="ghost vs-go" type="button" data-otto="pun">Open</button>' : on && i === 5 ? '<a class="ghost vs-go" href="/quest">Play</a>' : on ? '<span class="vs-done">✓</span>' : ""}</li>`;
+      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on && i === 4 ? '<button class="ghost vs-go" type="button" data-otto="pun">Open</button>' : on && i === 5 ? '<a class="ghost vs-go" href="/quest">Play</a>' : on && i === 6 ? '<button class="ghost vs-go" type="button" data-otto="kit">Open</button>' : on ? '<span class="vs-done">✓</span>' : ""}</li>`;
     }).join("");
   }
   function openOtto(){ renderOtto(); $("ottoDlg").hidden = false; $("ottoCode").focus(); }
@@ -4874,7 +4884,31 @@ const PLAYERS = {
   $("punClose").addEventListener("click", closePun);
   $("punDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closePun(); });
   $("punDlg").addEventListener("click", (e) => { if (e.target === $("punDlg")) closePun(); });
-  $("ottoList").addEventListener("click", (e) => { if (e.target.closest("[data-otto=pun]")) { closeOtto(); openPun(); } });
+  $("ottoList").addEventListener("click", (e) => { if (e.target.closest("[data-otto=pun]")) { closeOtto(); openPun(); } else if (e.target.closest("[data-otto=kit]")) { closeOtto(); openKit(); } });
+
+  // Kai's Kitchen Table (TALKTOME, Otto mode rung 7): questions to start a real conversation at home. No translations here;
+  // the family lessons (Hindi, Marathi, Bengali) are one tap away and are still checked by fluent speakers.
+  const KIT = [
+    "What was your favourite food when you were my age?",
+    "What did you do for fun when you were a kid?",
+    "What's a story about our family that I haven't heard yet?",
+    "What was your first day at a new school or job like?",
+    "Which festival did you look forward to most, and why?",
+    "What's something you wish you'd learned earlier?",
+    "What was the best advice anyone ever gave you?",
+    "What's a word in our language that doesn't translate well into English?",
+    "What did you want to be when you grew up?",
+    "What's one thing you'd like to teach me before I'm older?"
+  ];
+  let kitI = 0;
+  function renderKit(){ $("kitTitle").textContent = `Card ${kitI + 1} of ${KIT.length}`; $("kitText").textContent = KIT[kitI]; }
+  function openKit(){ kitI = Math.floor(Date.now() / 864e5) % KIT.length; renderKit(); $("kitDlg").hidden = false; $("kitNext").focus(); }
+  const closeKit = () => { $("kitDlg").hidden = true; };
+  $("kitNext").addEventListener("click", () => { kitI = (kitI + 1) % KIT.length; renderKit(); });
+  $("kitLang").addEventListener("click", () => { closeKit(); document.querySelector("[data-open-lang]")?.click(); });
+  $("kitClose").addEventListener("click", closeKit);
+  $("kitDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeKit(); });
+  $("kitDlg").addEventListener("click", (e) => { if (e.target === $("kitDlg")) closeKit(); });
   ottoUI(); thuUI();
 
   // ---------- The Lost Cartridge (puzzle hunt; answers are checked on the server) ----------
