@@ -358,9 +358,22 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     timeBot: ["My clock ran out? I'm calling that a lesson in pacing."],
     backup: ["The big engine's napping, so I'm playing from here. Same board, same rules."],
   };
+  // Marcus mode: the 999 code from Otto's Log (Otto mode rung 4) gives Arcade Dad the voice of Marcus, the arcade owner.
+  // Same rules as the rest: playful, about the moves, never about you.
+  const MARCUS = {
+    start: ["Welcome to the arcade, kid. First game's on the house.", "Pop a quarter in. Let's see what you've got.", "High score is mine. Come and take it."],
+    capture: ["Ooh, that one's going on the leaderboard. Under 'ouch'.", "Nice grab. I'll allow it. Once."],
+    check: ["Check! The machine's flashing at you.", "Check. Insert coin to continue."],
+    hungPlayer: ["Free piece? Marcus doesn't say no to free pieces.", "That one just rolled out of the machine for me. Thanks!"],
+    botBlunder: ["I was testing the controls. Totally on purpose.", "Lag. Definitely lag."],
+    playerWins: ["Game over for me. Okay, okay, that was a good one. Rematch?", "You beat the high score. Don't tell the other kids. Actually, tell everyone."],
+    botWins: ["Game over! Insert coin to try again.", "Good game, kid. Everyone loses to the machine at first."],
+    draw: ["A draw. Nobody gets the free game. Run it back?"],
+  };
+  const marcusOn = () => tierKey === "eighties" && (parseInt(store.get("robodad.otto") || "0", 10) || 0) >= 4;
   let talkOn = store.get(TALK_KEY) !== "0";
   const talk = (kind, force) => {
-    const text = pick(LINES[kind]);
+    const text = pick(marcusOn() && MARCUS[kind] ? MARCUS[kind] : LINES[kind]);
     if (talkOn || force) $("say").textContent = text;
     else $("say").textContent = "";
   };
