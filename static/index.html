@@ -1430,12 +1430,13 @@ textarea::placeholder{color:var(--muted)}
 /* header badge counter */
 .belt-pill{display:inline-flex; align-items:center; gap:6px; flex:none; padding:6px 12px; font-weight:900}
 .belt-pill svg{width:18px; height:18px; color:var(--mustard)}
-/* welcome-screen starters */
-.starters{display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; max-width:520px}
-.starters .chip{display:flex; align-items:center; gap:8px; text-align:left; border-radius:16px; padding:10px 12px; min-height:52px; line-height:1.2; font-weight:800; background:var(--surface);
-  color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
-.starters .chip:hover{background:var(--denim); color:var(--denim-ink)}
-.starters .chip span{font-size:1.25rem; flex:none}
+/* welcome-screen starters: one row that drifts sideways like a broadcast ticker, swipeable, pauses when touched */
+.ticker{width:100%; max-width:720px; margin:0 auto; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; overscroll-behavior-x:contain;
+  -webkit-mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent)}
+.ticker::-webkit-scrollbar{display:none}
+.ticker-track{display:flex; gap:8px; width:max-content; padding:2px 24px}
+.ticker .chip{white-space:nowrap; flex:none; background:var(--surface); color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
+.ticker .chip:hover{background:var(--denim); color:var(--denim-ink)}
 
 @media (max-width:520px){
   body{font-size:16px}
@@ -1575,10 +1576,15 @@ textarea::placeholder{color:var(--muted)}
         </button>
       </div>
       <p>Real advice for real life. Ask me anything, or tap one to start.</p>
-      <div class="starters" role="group" aria-label="Things to ask RoboDad">
-        <button class="chip" type="button" data-say="I'm stressed about exams"><span aria-hidden="true">😮‍💨</span>Stressed about exams</button>
-        <button class="chip" type="button" data-say="How do I make a budget?"><span aria-hidden="true">💸</span>Make a budget</button>
-        <button class="chip" type="button" data-say="Help me prep for a job interview"><span aria-hidden="true">💼</span>Job interview prep</button>
+      <div class="ticker" id="ticker" role="group" aria-label="Things to ask RoboDad">
+        <div class="ticker-track" id="tickerTrack">
+          <button class="chip" type="button" data-say="I'm stressed about exams">I'm stressed about exams</button>
+          <button class="chip" type="button" data-say="How do I make a budget?">How do I make a budget?</button>
+          <button class="chip" type="button" data-say="Help me prep for a job interview">Help me prep for a job interview</button>
+          <button class="chip lang-chip" type="button" data-open-lang="">Practice French, Spanish or Hindi</button>
+          <button class="chip lang-chip" type="button" data-open-math="">Maths help, Grades 7–10</button>
+          <button class="chip lang-chip" type="button" data-open-study="">Study Hall focus timer</button>
+        </div>
       </div>
       <button class="sleepcard" id="sleepCard" type="button" hidden>
         <span class="sc-moon"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="mglowA" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFE9A8" stop-opacity=".55"/><stop offset="1" stop-color="#FFE9A8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="31" fill="url(#mglowA)"/><path d="M40 14a19 19 0 1 0 10 32A16 16 0 0 1 40 14z" fill="#FFE9A8" stroke="#1E1E24" stroke-width="2"/><circle cx="31" cy="38" r="2.4" fill="#E9CF86"/><circle cx="25" cy="29" r="1.6" fill="#E9CF86"/><path d="M12 12l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z M52 50l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#FFF3B0"/></svg></span>
@@ -4559,6 +4565,30 @@ const PLAYERS = {
   if (getPref("robodad.bubHint")) setTimeout(shuffleHintLater, 3000);
   $("shuffleSpot").addEventListener("click", shuffleTap);
   $("shuffleMenu").addEventListener("click", () => { closeMenu(); shuffleTap(); });
+
+  // Starter-chip ticker: a copy of the chips follows the originals so the row loops forever.
+  // It drifts on its own, stops while you touch or hover it, and you can swipe it either way.
+  const ticker = $("ticker"), track = $("tickerTrack");
+  const originals = [...track.children];
+  originals.forEach((c, i) => { const k = c.cloneNode(true); k.dataset.clone = i; k.tabIndex = -1; k.setAttribute("aria-hidden", "true"); track.appendChild(k); });
+  track.addEventListener("click", (e) => { const k = e.target.closest("[data-clone]"); if (k) originals[+k.dataset.clone].click(); });
+  let tkHold = 0, tkLast = 0, tkPos = 0;
+  const tkPause = (ms) => { tkHold = performance.now() + ms; };
+  ["pointerdown", "wheel", "focusin"].forEach(ev => ticker.addEventListener(ev, () => tkPause(4000), { passive:true }));
+  ticker.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") tkPause(1e9); });
+  ticker.addEventListener("pointerleave", () => tkPause(1200));
+  ticker.addEventListener("scroll", () => { if (performance.now() < tkHold) tkPos = ticker.scrollLeft; }, { passive:true });
+  function tkStep(t){
+    const dt = tkLast ? Math.min(t - tkLast, 64) : 0; tkLast = t;
+    const loop = track.scrollWidth / 2;
+    if (!$("hello").hidden && !calm() && t > tkHold && loop > ticker.clientWidth / 2) {
+      tkPos += dt * 0.03;                      // about 30px a second: readable, never rushed
+      if (tkPos >= loop) tkPos -= loop;
+      ticker.scrollLeft = tkPos;
+    } else if (loop && ticker.scrollLeft >= loop) { tkPos = ticker.scrollLeft - loop; ticker.scrollLeft = tkPos; }
+    requestAnimationFrame(tkStep);
+  }
+  requestAnimationFrame(tkStep);
 
   // Countdown
   const CD_KEY = "robodad.countdown";
