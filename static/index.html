@@ -1435,6 +1435,7 @@ textarea::placeholder{color:var(--muted)}
   -webkit-mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image:linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent)}
 .ticker::-webkit-scrollbar{display:none}
 .ticker-track{display:flex; gap:8px; width:max-content; padding:2px 24px}
+.ticker .chip[hidden]{display:none}
 .ticker .chip{white-space:nowrap; flex:none; background:var(--surface); color:color-mix(in srgb, var(--denim) 72%, var(--ink))}
 .ticker .chip:hover{background:var(--denim); color:var(--denim-ink)}
 
@@ -1578,12 +1579,24 @@ textarea::placeholder{color:var(--muted)}
       <p>Real advice for real life. Ask me anything, or tap one to start.</p>
       <div class="ticker" id="ticker" role="group" aria-label="Things to ask RoboDad">
         <div class="ticker-track" id="tickerTrack">
-          <button class="chip" type="button" data-say="I'm stressed about exams">I'm stressed about exams</button>
-          <button class="chip" type="button" data-say="How do I make a budget?">How do I make a budget?</button>
-          <button class="chip" type="button" data-say="Help me prep for a job interview">Help me prep for a job interview</button>
-          <button class="chip lang-chip" type="button" data-open-lang="">Practice French, Spanish or Hindi</button>
-          <button class="chip lang-chip" type="button" data-open-math="">Maths help, Grades 7–10</button>
-          <button class="chip lang-chip" type="button" data-open-study="">Study Hall focus timer</button>
+          <button class="chip" type="button" data-say="How&#39;s your day going, Dad?">👋 How&#39;s your day going, Dad?</button>
+          <button class="chip" type="button" data-say="I&#39;m stressed about exams">😮‍💨 I&#39;m stressed about exams</button>
+          <button class="chip" type="button" data-act="whisper:flicker">📼 Dad, why does the screen flicker sometimes?</button>
+          <button class="chip" type="button" data-say="How do I make a budget?">💸 How do I make a budget?</button>
+          <button class="chip" type="button" data-act="mind:fact">💡 Fact of the day</button>
+          <button class="chip" type="button" data-say="Help me prep for a job interview">💼 Help me prep for a job interview</button>
+          <button class="chip" type="button" data-act="mind:word">📖 Word of the day</button>
+          <button class="chip" type="button" data-say="Teach me an easy dinner I can cook">🍳 Teach me an easy dinner I can cook</button>
+          <button class="chip" type="button" data-act="whisper:lost">🕵️ Dad, did you lose something?</button>
+          <button class="chip lang-chip" type="button" data-open-lang="">🗣️ Practice French, Spanish or Hindi</button>
+          <button class="chip" type="button" data-act="mind:otd">📜 On this day with Dad</button>
+          <button class="chip" type="button" data-say="How do I do my laundry?">🧺 How do I do my laundry?</button>
+          <button class="chip" type="button" data-act="whisper:book">📚 Is there a book about you, Dad?</button>
+          <button class="chip lang-chip" type="button" data-open-math="">➗ Maths help, Grades 7–10</button>
+          <button class="chip" type="button" data-say="I just need to talk">🤗 I just need to talk</button>
+          <button class="chip" type="button" data-act="whisper:garage" data-when="done">🚪 What&#39;s in the garage, Dad?</button>
+          <button class="chip lang-chip" type="button" data-open-study="">⏱️ Study Hall focus timer</button>
+          <button class="chip" type="button" data-act="page:/changelog">🆕 What&#39;s new in RoboDad?</button>
         </div>
       </div>
       <button class="sleepcard" id="sleepCard" type="button" hidden>
@@ -2605,7 +2618,7 @@ textarea::placeholder{color:var(--muted)}
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(input.value); }
   });
   form.addEventListener("submit", (e) => { e.preventDefault(); submit(input.value); });
-  document.querySelectorAll(".chip:not(.lang-chip)").forEach(c => c.addEventListener("click", () => submit(c.dataset.say || c.textContent)));
+  document.querySelectorAll(".chip:not(.lang-chip):not([data-act])").forEach(c => c.addEventListener("click", () => submit(c.dataset.say || c.textContent)));
   // ---------- Learning: languages, maths and more, from one button ----------
   // One fact per day: the same fact all day, the next one tomorrow. Each is well established.
   const FACTS = [
@@ -4607,6 +4620,47 @@ const PLAYERS = {
   }
   requestAnimationFrame(tkStep);
 
+  // Ticker chips that do something instead of asking the AI: open a feature, or a short scripted whisper
+  // from RoboDad. The whispers hint at the hunt and the story without giving any answer away.
+  const WHISPERS = {
+    flicker: () => ({
+      ask: "Dad, why does the screen flicker sometimes?",
+      say: "Flicker? Old hardware, kiddo. Probably. ...Mostly. If you ever get the feeling something's hiding in here, the Secrets chest keeps the clues. And if anything sticks, you know the trick: blow on the cartridge.",
+      btn: ["Open the Secrets chest", () => openVault()],
+    }),
+    lost: () => {
+      const p = huntProgress(), done = !!getPref("robodad.hunt.done");
+      if (done) return { ask: "Dad, did you lose something?", say: "I did. And you found it. Thank you, kiddo. DAD QUEST is waiting in Play whenever you want a round.", btn: ["Play DAD QUEST", () => { location.href = "/quest"; }] };
+      if (p) return { ask: "Dad, did you lose something?", say: "Still looking, kiddo. My memory chip's scrambled, but you're helping it come back one piece at a time. Want to pick up where we left off?", btn: ["Open my chapter", () => huntOpen(Math.min(p, 5))] };
+      return { ask: "Dad, did you lose something?", say: "Lose something? Me? Never. ...Okay, maybe a cartridge. A very important one. The Secrets chest might remember more than I do.", btn: ["Open the Secrets chest", () => openVault()] };
+    },
+    book: () => ({
+      ask: "Is there a book about you, Dad?",
+      say: "Between you and me? Yes. There's a story about a robot, a kid and a mystery that's still being written. It isn't ready for you yet, but when it is, you'll hear it here first. Keep your eyes open.",
+    }),
+    garage: () => ({
+      ask: "What's in the garage, Dad?",
+      say: "The garage? Boxes. Old paint. Definitely not a time capsule with a lock on it. Forget I said anything. ...Ask me again in the new year.",
+    }),
+  };
+  function whisper(key){
+    if (busy || !$("gate").hidden || !WHISPERS[key]) return;
+    const w = WHISPERS[key](); nod(); addUser(w.ask);
+    const r = addRobo(); r.bubble.innerHTML = md(w.say);
+    if (w.btn) { const b = document.createElement("button"); b.type = "button"; b.className = "chipbtn"; b.textContent = w.btn[0]; b.addEventListener("click", w.btn[1]); r.stack.appendChild(b); }
+    scrollDown();
+  }
+  document.querySelectorAll(".chip[data-act]").forEach(c => c.addEventListener("click", () => {
+    const i = c.dataset.act.indexOf(":"), kind = c.dataset.act.slice(0, i), arg = c.dataset.act.slice(i + 1);
+    if (kind === "mind") openMind(arg); else if (kind === "whisper") whisper(arg); else if (kind === "page") location.href = arg;
+  }));
+  // some prompts only appear once the hunt is finished
+  function tickerState(){
+    const done = !!getPref("robodad.hunt.done");
+    document.querySelectorAll('#tickerTrack [data-when="done"]').forEach(c => { c.hidden = !done; });
+  }
+  tickerState();
+
   // Countdown
   const CD_KEY = "robodad.countdown";
   function cdRender(){
@@ -4707,6 +4761,7 @@ const PLAYERS = {
     document.body.classList.toggle("hunt-glitch", !!p && !done && !paused);
     $("huntPause").textContent = paused ? "Resume the hunt" : "Pause the hunt";
     $("playQuest").hidden = !getPref("robodad.egg.dadquest");
+    tickerState();
     chestUI();
   }
   function huntOpen(n, restored){
