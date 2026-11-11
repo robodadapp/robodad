@@ -1610,6 +1610,8 @@ textarea::placeholder{color:var(--muted)}
       </section>
       <section class="widget today" aria-label="Today">
         <b>Today</b>
+        <p class="today-k" id="thuK" hidden>Thursday Rules</p>
+        <p id="thuNudge" hidden></p>
         <p class="today-k">Dad joke of the day</p>
         <p id="dailyJoke">Loading a fresh groaner…</p>
         <div class="row"><button class="chipbtn" id="jokeMore" type="button">Another one</button><button class="chipbtn" id="jokeShare" type="button">Share it</button></div>
@@ -2081,6 +2083,15 @@ textarea::placeholder{color:var(--muted)}
     <p>RoboDad hid a few surprises around the app. Here's a clue for each one. Some need a code, some don't.</p>
     <ul class="vault-list" id="vaultList"></ul>
     <div class="row"><button class="primary" id="vaultCode" type="button">Enter a secret code</button><button class="ghost" id="vaultClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="punDlg" role="dialog" aria-modal="true" aria-labelledby="punTitle" hidden>
+  <div class="card vault">
+    <p class="vault-kick">MOM'S PUN CARDS</p>
+    <h2 id="punTitle">Card 1 of 12</h2>
+    <p id="punText" style="font-size:1.25rem;font-weight:800;line-height:1.35;margin:6px 0"></p>
+    <div class="row"><button class="primary" id="punNext" type="button">Next card</button><button class="chipbtn" id="punShare" type="button">Share it</button><button class="ghost" id="punClose" type="button">Close</button></div>
   </div>
 </div>
 
@@ -4781,6 +4792,7 @@ const PLAYERS = {
   function ottoUI(){
     const n = ottoProgress();
     $("ottoBtn").hidden = n < 1;
+    if (typeof thuUI === "function") thuUI();
     $("ottoSub").textContent = n >= OTTO_RUNGS.length ? "Every rung opened" : `${n} of ${OTTO_RUNGS.length} rungs opened`;
   }
   function renderOtto(){
@@ -4790,7 +4802,7 @@ const PLAYERS = {
     $("ottoLine").textContent = n ? `You've read up to Chapter ${r.ch}. Each Otto's Log in the book hides a code. Find the next one.` : "";
     $("ottoList").innerHTML = OTTO_RUNGS.map((x, i) => {
       const on = i < n;
-      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on ? '<span class="vs-done">✓</span>' : ""}</li>`;
+      return `<li class="${on ? "on" : "off"}"><span class="vs-ic">${x.ic}</span><span class="vs-tx"><b>${on ? esc(x.name) : `Chapter ${x.ch}: locked`}</b><small>${on ? esc(x.got) : "A code from Otto's Log opens this."}</small></span>${on && i === 4 ? '<button class="ghost vs-go" type="button" data-otto="pun">Open</button>' : on ? '<span class="vs-done">✓</span>' : ""}</li>`;
     }).join("");
   }
   function openOtto(){ renderOtto(); $("ottoDlg").hidden = false; $("ottoCode").focus(); }
@@ -4807,7 +4819,49 @@ const PLAYERS = {
   $("ottoDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closeOtto(); });
   $("ottoDlg").addEventListener("click", (e) => { if (e.target === $("ottoDlg")) closeOtto(); });
   $("ottoCode").addEventListener("click", () => { closeOtto(); openCode(); });
-  ottoUI();
+
+  // ---------- Thursday Rules (LETTUCE, Otto mode rung 5): Mom's pun cards and a Thursday dinner nudge ----------
+  // Everything here stays on this device. There are no notifications; the nudge only shows up on Thursdays, in Today.
+  const PUNS = [
+    "Lettuce celebrate: it's Thursday, and the whole family's eating together.",
+    "I'm so glad we're having pasta tonight. It's the best thing since sliced bread. Wait, wrong carb.",
+    "Why did the tomato blush at dinner? It saw the salad dressing.",
+    "I told the soup I'd be right back. It said, \"Okay, but don't let me stock up.\"",
+    "Eggs-cellent work today. You really cracked it.",
+    "I'd tell you a pizza joke, but it's a bit cheesy.",
+    "Don't be so crusty. Everyone's a little rough around the edges until they've had some butter.",
+    "Thyme flies when you're having dinner with family.",
+    "I'm on a seafood diet. I see food and I eat it. With you, at the table, at six.",
+    "Orange you glad it's Thursday? Banana split plans were made.",
+    "You're one in a melon. Pass the plates.",
+    "Mom's golden rule: you can't spell \"dinner\" without \"inner\" peace. Phones down."
+  ];
+  const THU_Q = [
+    "What was the best part of your week so far?",
+    "If we could eat anywhere in the world tonight, where would it be?",
+    "What's something you learned this week that surprised you?",
+    "What's one thing that made you laugh this week?",
+    "Who's someone who helped you out this week?",
+    "What's a song you can't stop playing right now?",
+    "What are you looking forward to next week?",
+    "If you could skip one chore forever, which one?"
+  ];
+  let punI = 0;
+  function thuUI(){
+    const on = ottoProgress() >= 5 && new Date().getDay() === 4;
+    $("thuK").hidden = $("thuNudge").hidden = !on;
+    if (on) $("thuNudge").textContent = `Dinner together tonight. Phones down. Ask each other: ${THU_Q[Math.floor(Date.now() / 864e5) % THU_Q.length]}`;
+  }
+  function renderPun(){ $("punTitle").textContent = `Card ${punI + 1} of ${PUNS.length}`; $("punText").textContent = PUNS[punI]; }
+  function openPun(){ punI = Math.floor(Date.now() / 864e5) % PUNS.length; renderPun(); $("punDlg").hidden = false; $("punNext").focus(); }
+  const closePun = () => { $("punDlg").hidden = true; };
+  $("punNext").addEventListener("click", () => { punI = (punI + 1) % PUNS.length; renderPun(); });
+  $("punShare").addEventListener("click", () => shareJoke(PUNS[punI], "Mom's pun card"));
+  $("punClose").addEventListener("click", closePun);
+  $("punDlg").addEventListener("keydown", (e) => { if (e.key === "Escape") closePun(); });
+  $("punDlg").addEventListener("click", (e) => { if (e.target === $("punDlg")) closePun(); });
+  $("ottoList").addEventListener("click", (e) => { if (e.target.closest("[data-otto=pun]")) { closeOtto(); openPun(); } });
+  ottoUI(); thuUI();
 
   // ---------- The Lost Cartridge (puzzle hunt; answers are checked on the server) ----------
   const HUNT = window.HUNT, HUNT_KEY = "robodad.hunt";
