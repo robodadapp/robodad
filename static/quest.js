@@ -1122,11 +1122,7 @@
     }
     const showDad = !["locked", "title", "skins", "missions", "album", "rooms", "bonusPick"].includes(state);
     if (showDad) {
-      if (ghost && state === "play" && rt >= 0 && (rt >> 1) < ghost.d.length) {            // your best run, see-through
-        const c = ghost.d.charCodeAt(rt >> 1) - 40, gs = c >= 100, gy = GY - 22 - (c % 100);
-        const gx = P.x - 26;                                  // trails behind you, so it can never be mistaken for your hitbox
-        x.globalAlpha = 0.22; if (gs) drawDad(gx, GY - 12, P.frame, true, false); else drawDad(gx, gy, P.frame, false, gy < GY - 22); x.globalAlpha = 1;
-      }
+      // best-run ghost body removed: it trailed behind Dad and looked like a glitch; the BEST flag still marks it
       R(P.x + 2, GY, 10, 2, "rgba(0,0,0,.28)");
       if (strength > 0 && !calm) for (let i = 1; i <= 3; i++) drawDadAt(P.x - i * 7, P.y, 0.25 - i * 0.06);
       if (!(inv > 0 && strength <= 0 && Math.floor(inv / 5) % 2 === 0)) drawDadAt(P.x, P.y, 1);
