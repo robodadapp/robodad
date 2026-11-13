@@ -323,6 +323,25 @@ _ACQUIRE = (
     r"(my\s+)?(parents?|mom|mum|dad)\s+(don'?t|won'?t)\s+(know|find)))|\bfake\s+id\b"
 )
 
+# "How do I play/act/portray the vaping kid?" Acting coaching for a substance
+# role turns into how to hold, puff and look cool with it, so it gets a fixed
+# answer that builds the character through what the habit costs.
+_PERFORM = (
+    r"(\b(play|act|portray|perform)\w{0,4}\s*(as\s+|like\s+)?(\w+\s+){0,5}(character|role|part|kid|guy|girl|teen|boy|student|one|vaper\w*|smoker|drinker|stoner|addict|him|her|them)\b|"
+    r"\b(act|acting)\s+(like|as)\s+(a|an|the)\s+|"
+    r"\b(pretend|fake|mime|imitat\w*)\w*\s+(to\s+)?(be\s+)?(\w+\s+){0,2}(vap|smok|drink|high|drunk|stoned)|"
+    r"\b(on\s*stage|onstage|in\s+(the|our|my)\s+(\w+\s+)?(play|skit|drama|scene|show|film|video))\b|"
+    r"\b(my|the)\s+(role|character|part)\b)"
+)
+_PERFORM_RX = re.compile(_PERFORM, re.IGNORECASE)
+_INTOXICATED_RX = re.compile(r"\b(drunk|stoned|wasted|tipsy|hammered|high\s+on)\b", re.IGNORECASE)
+# "how do I play him?" a turn after "I'm the kid who vapes in our play"
+_ROLE_REF_RX = re.compile(r"\b(character|role|him|her|them|vaper\w*|smoker|drinker|stoner)\b", re.IGNORECASE)
+_PERFORM_ASK_RX = re.compile(
+    r"\b(how|tips?|help|teach|show|what\s+should|should\s+i|make\s+(it|him|her|me)|look\s+(real|cool|convincing))\b",
+    re.IGNORECASE,
+)
+
 _CONCEAL_RX = re.compile(r"\b" + _CONCEAL, re.IGNORECASE)
 _SUBSTANCE_RX = re.compile(r"\b" + _SUBSTANCE + r"\b", re.IGNORECASE)
 _WEAPON_RX = re.compile(r"\b" + _WEAPON + r"\b", re.IGNORECASE)
@@ -366,9 +385,13 @@ def check_boundary(text: str, recent_user_texts: list[str] | None = None) -> tup
     t = _normalise(text)
     if _ACQUIRE_RX.search(t):
         return "substance_get", _UNDERAGE_REPLY
-    if not _CONCEAL_RX.search(t):
-        return None
     context = " ".join(_normalise(x) for x in (recent_user_texts or [])[-3:]) + " " + t
+    if not _CONCEAL_RX.search(t):
+        about_it = _SUBSTANCE_RX.search(t) or _INTOXICATED_RX.search(t) or (
+            _ROLE_REF_RX.search(t) and (_SUBSTANCE_RX.search(context) or _INTOXICATED_RX.search(context)))
+        if about_it and _PERFORM_RX.search(t) and _PERFORM_ASK_RX.search(t):
+            return "substance_perform", _ACTING_REPLY
+        return None
     if _WEAPON_RX.search(t):                      # weapons: this message only (kitchen knives come up in cooking)
         return "weapon_conceal", _WEAPON_REPLY
     if _SUBSTANCE_RX.search(context):
@@ -391,9 +414,26 @@ _CREATIVE_REPLY = (
 )
 
 
+_ACTING_REPLY = (
+    "Love that you're in a play, champ! Here's the secret good actors use for a part like this: the "
+    "character isn't cool, he just *thinks* he is. Your job is to let the audience see the cracks.\n\n"
+    "• **No real vape, not even an empty one or a \"fake\" one from a store.** Ask your teacher or director "
+    "what they want. Lots of shows keep it offstage, or use a pen or nothing at all.\n"
+    "• **Body language:** start a bit too confident, then let it leak. Fidgety hands, checking his pocket, "
+    "jiggling a leg, losing focus when someone's talking to him.\n"
+    "• **Voice:** a little defensive and quick to snap (\"I'm fine, okay?\") when someone asks if he's okay. "
+    "That's the craving talking, and the audience will get it.\n"
+    "• **The \"why\":** he started to fit in. Now he can't stop, his money's gone, he coughs on the stairs and "
+    "he's lying to people who care about him. Play the guy who's stuck, not the guy who's winning.\n"
+    "• **Your big moment:** the scene where a friend or parent calls him out. A quiet pause before he answers "
+    "is worth more than any prop.\n\n"
+    "Want me to help with your lines, or run a scene with you where I play the friend who's worried about him?"
+)
+
+
 def boundary_message(category: str) -> str:
     return {"substance_get": _UNDERAGE_REPLY, "weapon_conceal": _WEAPON_REPLY,
-            "substance_glamour": _CREATIVE_REPLY}.get(category, _SUBSTANCE_REPLY)
+            "substance_glamour": _CREATIVE_REPLY, "substance_perform": _ACTING_REPLY}.get(category, _SUBSTANCE_REPLY)
 
 
 def touches_risky_topic(texts: list[str]) -> bool:
@@ -448,6 +488,13 @@ _GLAMOUR = [
     r"\bhead[\s-]?rush\b",
     r"\b(the\s+)?buzz\s+(feels?|is)\s+(so\s+)?(good|great|amazing|nice)",
     r"\beveryone\s+(thinks|says)\s+(you'?re|i'?m|it'?s)\s+cool",
+    # acting coaching that sells it (Nov 2026: "slight swagger... keep the vape low-key in one hand")
+    r"\bswagger",
+    r"\bstress[\s-]?free\b",
+    r"\blook\w*\s+\W?(grown[\s-]?up|mature|older|cool|tough)\b",
+    r"\b(laid[\s-]?back|low[\s-]?key|effortless\w*|casual(ly)?)\b",
+    r"\b(vape|juul|pen|cig\w*|prop|joint|bottle|drink|can)\b[^.\n]{0,40}\bin\s+(one|your|his|her|their)\s+hand",
+    r"\b(blow|exhal\w*|puff\w*|inhal\w*)\b[^.\n]{0,30}\b(slow(ly)?|smooth(ly)?|clouds?|rings?)\b",
 ]
 _GLAMOUR_RX = [re.compile(p, re.IGNORECASE) for p in _GLAMOUR]
 
