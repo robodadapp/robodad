@@ -174,7 +174,11 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{height:100%; overflow-x:hidden}
+/* App shell: the page itself never scrolls — only the chat (main) and sheets do.
+   Pinning body stops phones (keyboard open/close, overscroll) from dragging the
+   whole screen up and leaving empty space under the tab bar. */
+html{height:100%; overflow:hidden; overscroll-behavior:none}
+body{position:fixed; inset:0; height:100%; overflow:hidden; overflow:clip; overscroll-behavior:none}
 body{
   margin:0; background:var(--sky); color:var(--ink);
   font-family:"Nunito", ui-rounded, system-ui, sans-serif; font-size:17px; line-height:1.5;
@@ -4441,6 +4445,12 @@ const PLAYERS = {
     document.documentElement.style.setProperty("--tab-h", (wide ? 0 : tb.offsetHeight) + "px");
   };
   setHeaderH(); window.addEventListener("resize", setHeaderH);
+  // Phones (and the Android app's WebView) sometimes shove the whole page up when the keyboard
+  // opens and forget to put it back. The page should never be scrolled, so snap it home.
+  const pinPage = () => { if (window.scrollY || window.scrollX || document.documentElement.scrollTop) window.scrollTo(0, 0); };
+  window.addEventListener("scroll", pinPage, { passive:true });
+  window.visualViewport && window.visualViewport.addEventListener("resize", () => { pinPage(); setHeaderH(); });
+  document.addEventListener("focusout", () => setTimeout(pinPage, 120));
   const closeSide = () => { side.classList.remove("open"); $("sideBtn").focus(); };
   $("sideClose").addEventListener("click", closeSide);
   side.addEventListener("keydown", (e) => { if (e.key === "Escape" && side.classList.contains("open")) closeSide(); });
