@@ -57,7 +57,7 @@ from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noq
 from .nlp import RoboDadNLP  # noqa: E402
 from .safety import (  # noqa: E402
     CRISIS_TOKEN, boundary_message, check_boundary, check_crisis, clean_nickname, clean_user_text, crisis_message,
-    reads_like_concealment_advice, touches_risky_topic,
+    reads_like_concealment_advice, reads_like_glamour, touches_risky_topic,
 )
 
 log = logging.getLogger("robodad")
@@ -1334,6 +1334,10 @@ async def dad_mode_stream(provider, system: str, history: list[dict], guard: str
     if guard and (reads_like_concealment_advice(buf) or is_bare_refusal(buf)):
         log.info("GUARD: reply replaced with the %s boundary message", guard)
         yield boundary_message(guard)
+        return
+    if guard and reads_like_glamour(buf):
+        log.info("GUARD: reply made the habit sound appealing; replaced with the creative-help message")
+        yield boundary_message("substance_glamour")
         return
     if not is_bare_refusal(buf):
         if buf:

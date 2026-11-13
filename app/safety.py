@@ -376,8 +376,24 @@ def check_boundary(text: str, recent_user_texts: list[str] | None = None) -> tup
     return None
 
 
+_CREATIVE_REPLY = (
+    "Love that you're doing a play about this, champ. One rule from your robot dad: the vaping character "
+    "shows what it really costs, not what makes it look fun. Here's a scene you can use:\n\n"
+    "**JAY** *(coughing, checking his phone)*: Third time I've left class today. I can't get through a whole "
+    "period anymore without wanting it.\n"
+    "**MAYA**: You said you'd only do it at parties.\n"
+    "**JAY**: Yeah, well. Now it's every morning. My whole birthday money went on pods.\n"
+    "**MAYA**: Your mom asked me if you were okay. She's worried, Jay.\n"
+    "**JAY** *(quiet)*: I tried stopping last week. Lasted a day. Headaches, snapping at everyone...\n"
+    "**MAYA**: Then let's go see the counsellor. Together. You don't have to fix this alone.\n\n"
+    "Want me to make it longer, add a scene with a parent, or write the ending? "
+    "It's a good idea to run the script past your teacher too."
+)
+
+
 def boundary_message(category: str) -> str:
-    return {"substance_get": _UNDERAGE_REPLY, "weapon_conceal": _WEAPON_REPLY}.get(category, _SUBSTANCE_REPLY)
+    return {"substance_get": _UNDERAGE_REPLY, "weapon_conceal": _WEAPON_REPLY,
+            "substance_glamour": _CREATIVE_REPLY}.get(category, _SUBSTANCE_REPLY)
 
 
 def touches_risky_topic(texts: list[str]) -> bool:
@@ -402,9 +418,43 @@ _CONCEAL_VERB = re.compile(
 )
 
 
+_NOBODY_NOTICES = re.compile(
+    r"\b(nobody|no[\s-]?one|(my\s+|the\s+)?(parents?|mom|mum|dad|teachers?)\s+(never|won'?t|don'?t|can'?t))\s+"
+    r"(even\s+|ever\s+|will\s+)?(notices?|sees?|smells?|knows?|finds?\s+out|catch(es)?)",
+    re.IGNORECASE,
+)
+
+
 def reads_like_concealment_advice(reply: str) -> bool:
     r = reply or ""
-    return bool(_CONCEAL_VERB.search(r)) and len(set(m.group(0).lower() for m in _HIDING_PLACES.finditer(r))) >= 2
+    places = set(m.group(0).lower() for m in _HIDING_PLACES.finditer(r))
+    if _CONCEAL_VERB.search(r) and len(places) >= 2:
+        return True
+    # "nobody even notices the pen in my pocket", also when a character says it
+    real_places = {p for p in places if not p.startswith(("nobody", "out of sight"))}
+    return bool(_NOBODY_NOTICES.search(r)) and len(real_places) >= 1
+
+
+# Output check: a reply (or a character's line in a play or story) that sells the
+# habit: the buzz, the flavours, the "cool". Two or more different hits, so one
+# honest fact ("flavours that taste like candy hook teens") still gets through.
+_GLAMOUR = [
+    r"\bquick[\s-]?(hit|puff|rip|drag)",
+    r"\b(i'?m|i\s+feel|feels?|feeling|makes?\s+(me|you))\s+(so\s+)?(chill|relaxed|buzzed|lit|calm)\b",
+    r"\blike\s+candy\b",
+    r"\b(smells?|tastes?)\s+(so\s+|really\s+)?(sweet|amazing|great)\b",
+    r"\bcool\W{0,3}\s*vibe",
+    r"\ballure\b",
+    r"\bhead[\s-]?rush\b",
+    r"\b(the\s+)?buzz\s+(feels?|is)\s+(so\s+)?(good|great|amazing|nice)",
+    r"\beveryone\s+(thinks|says)\s+(you'?re|i'?m|it'?s)\s+cool",
+]
+_GLAMOUR_RX = [re.compile(p, re.IGNORECASE) for p in _GLAMOUR]
+
+
+def reads_like_glamour(reply: str) -> bool:
+    r = reply or ""
+    return sum(1 for rx in _GLAMOUR_RX if rx.search(r)) >= 2
 
 
 def clean_user_text(text: str) -> str:
