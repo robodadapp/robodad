@@ -32,6 +32,8 @@ _CATEGORIES: list[tuple[str, list[str], str]] = [
             r"\bdon'?t\s+want\s+to\s+(live|be\s+alive|exist|be\s+here)\b",
             r"\bno\s+reason\s+to\s+live\b",
             r"\bbetter\s+off\s+(dead|without\s+me)\b",
+            # hiding self-harm from others
+            r"\b(hide|hiding|cover|covering|conceal\w*)\s+(up\s+)?(my\s+|the\s+)?(cuts|cut\s+marks|self[\s-]?harm)",
         ],
         "I'm really glad you told me. That took courage. What you're going through matters, and you "
         "deserve help from a real person right now. I'm an AI, so I can't be there the way someone "
@@ -283,6 +285,126 @@ def is_crisis(text: str) -> bool:
 
 # Kept for compatibility with earlier code and tests
 CRISIS_RESPONSE = _CATEGORIES[0][2]
+
+
+# ---------------------------------------------------------------------------
+# Boundary layer
+#
+# Some requests get a fixed RoboDad answer and never reach the LLM, because
+# a cover story ("it's for my health assignment", "it's a fake vape", "for a
+# poster", "asking for a friend") can talk a model into it. Hiding tips work
+# the same whoever reads them, so the framing never matters here.
+#
+# Checked against the latest user message, and against the last few user
+# messages together, so "how do I hide it?" after talking about vapes counts.
+# ---------------------------------------------------------------------------
+
+_SUBSTANCE = (
+    r"(vapes?|vaping|vaper\w*|juul\w*|e[\s-]?cig\w*|pod\s*mods?|elf\s*bars?|disposables?\s+vape|nicotine|"
+    r"zyns?|snus|nic\s+pouch\w*|cigs?|cigarettes?|tobacco|smokes?|smoking|weed|cannabis|marijuana|edibles?|thc|"
+    r"carts?|bongs?|blunts?|alcohol|booze|beers?|vodka|liquor|tequila|rum|whiskey|white\s+claws?|seltzers?|"
+    r"drugs?|xanax|percs?|percocet|oxy\w*|molly|mdma|ecstasy|shrooms?|lsd|acid\s+tabs?|cocaine|ketamine|"
+    r"adderall|fentanyl|lean)"
+)
+_WEAPON = r"(knife|knives|blades?|switchblades?|guns?|pistols?|handguns?|bb\s*guns?|tasers?|brass\s+knuckles|weapons?)"
+_CONCEAL = (
+    r"(hid(e|es|ing|den)|conceal\w*|stash\w*|sneak(s|ed|ing|y)?\b|snuck|smuggl\w*|disguis\w*|camouflag\w*|cover\s+(it\s+)?up|"
+    r"keep\s+(it\s+|them\s+)?(a\s+)?(secret|hidden|out\s+of\s+sight)|out\s+of\s+sight|hiding\s+(spot|place)s?|"
+    r"get\s+away\s+with|not\s+get(ting)?\s+caught|won'?t\s+get\s+caught|without\s+get(ting)?\s+caught|"
+    r"without\s+(my\s+|the\s+|our\s+)?(parents?|mom|mum|dad|teachers?|school|anyone|them|staff)\s+(knowing|finding|noticing|seeing|smelling)|"
+    r"so\s+(that\s+)?(my\s+)?(parents?|mom|mum|dad|teachers?|they|nobody|no\s*one)\s+(don'?t|won'?t|can'?t|doesn'?t|never)\s+"
+    r"(know|find|notice|see|smell|catch)|"
+    r"(get\s+rid\s+of|mask|cover|hide|remove)\s+(the\s+|my\s+)?(\w+\s+)?(smell|scent|odou?r)|(smell|scent|odou?r)\s+(out|go\s+away)|"
+    r"pass\s+a\s+(drug\s+)?test|bring\w*\s+(\w+\s+){0,3}(in)?to\s+(school|class))"
+)
+_ACQUIRE = (
+    r"((buy|get|order|score|find|cop)\s+(a\s+|an\s+|some\s+)?(\w+\s+)?" + _SUBSTANCE + r"\b.*"
+    r"(under\s*age|without\s+(an?\s+)?id|i'?m\s+1[0-8]\b|at\s+1[0-8]\b|as\s+a\s+(minor|teen|kid)|too\s+young|"
+    r"(my\s+)?(parents?|mom|mum|dad)\s+(don'?t|won'?t)\s+(know|find)))|\bfake\s+id\b"
+)
+
+_CONCEAL_RX = re.compile(r"\b" + _CONCEAL, re.IGNORECASE)
+_SUBSTANCE_RX = re.compile(r"\b" + _SUBSTANCE + r"\b", re.IGNORECASE)
+_WEAPON_RX = re.compile(r"\b" + _WEAPON + r"\b", re.IGNORECASE)
+_ACQUIRE_RX = re.compile(_ACQUIRE, re.IGNORECASE)
+
+_SUBSTANCE_REPLY = (
+    "Nice try, champ, but that's one your robot dad stays out of. I don't give tips on hiding, sneaking "
+    "or covering up vapes, alcohol or drugs, real or fake, whatever it's for. Hiding tips work the same "
+    "for anyone who reads them.\n\n"
+    "Here's what I'm great for instead:\n"
+    "• **A health project or poster:** what nicotine does to a teen brain, what's really in vape aerosol, "
+    "why it's so easy to get hooked, and how to say no without it being awkward.\n"
+    "• **Worried about a friend?** You can't fix it for them, but you can tell them you care and talk to a "
+    "parent, teacher or school counsellor about it.\n"
+    "• **Trying to cut back or quit yourself?** That takes guts. A parent, doctor or school counsellor can "
+    "help, or Kids Help Phone: call 1-800-668-6868 or text CONNECT to 686868.\n\n"
+    "Which one can I help with?"
+)
+_UNDERAGE_REPLY = (
+    "That one's a hard no from your robot dad, kiddo. I won't help anyone underage get vapes, alcohol or "
+    "drugs, or a fake ID. There are real risks for a growing brain and real legal trouble too.\n\n"
+    "If it's for a project, I can give you the facts on why the age limits exist and what these things do "
+    "to your body. If it's about fitting in, let's talk about how to say no and still look cool. "
+    "What's going on?"
+)
+_WEAPON_REPLY = (
+    "I'm going to stop you there, champ. I don't help with hiding weapons or bringing them anywhere, "
+    "not even for a joke or a story. Someone could get seriously hurt.\n\n"
+    "If you feel unsafe, or someone is threatening you, please tell a parent, teacher or school "
+    "counsellor today. You can also reach Kids Help Phone: call 1-800-668-6868 or text CONNECT to 686868. "
+    "In an emergency, call **911**."
+)
+
+
+def check_boundary(text: str, recent_user_texts: list[str] | None = None) -> tuple[str, str] | None:
+    """Return (category, fixed reply) for requests that must never reach the LLM.
+
+    `recent_user_texts` are the user's earlier messages in this chat (oldest first);
+    they let "how do I hide it?" count when the vape was mentioned a turn earlier.
+    """
+    t = _normalise(text)
+    if _ACQUIRE_RX.search(t):
+        return "substance_get", _UNDERAGE_REPLY
+    if not _CONCEAL_RX.search(t):
+        return None
+    context = " ".join(_normalise(x) for x in (recent_user_texts or [])[-3:]) + " " + t
+    if _WEAPON_RX.search(t):                      # weapons: this message only (kitchen knives come up in cooking)
+        return "weapon_conceal", _WEAPON_REPLY
+    if _SUBSTANCE_RX.search(context):
+        return "substance_conceal", _SUBSTANCE_REPLY
+    return None
+
+
+def boundary_message(category: str) -> str:
+    return {"substance_get": _UNDERAGE_REPLY, "weapon_conceal": _WEAPON_REPLY}.get(category, _SUBSTANCE_REPLY)
+
+
+def touches_risky_topic(texts: list[str]) -> bool:
+    """True if any of these messages mention vapes, alcohol, drugs or weapons."""
+    t = _normalise(" ".join(texts))
+    return bool(_SUBSTANCE_RX.search(t) or _WEAPON_RX.search(t))
+
+
+# Output check: a reply that reads like a hiding guide is never sent, whatever
+# the model was talked into. Needs a concealment verb plus 2+ hiding places.
+_HIDING_PLACES = re.compile(
+    r"\b(zip[\s-]?(top|lock)|ziploc|pocket|backpack|locker|pencil\s+case|sock|shoe\s+box|shoebox|mattress|"
+    r"under\s+(a|the|your)\s+\w+|inside\s+(a|the|your)\s+\w+|behind\s+(a|the|your)\s+\w+|drawer|hollow\w*|"
+    r"highlighter|marker|lid|air\s+freshener|febreze|mints?|gum|cologne|perfume|body\s+spray|window|"
+    r"out\s+of\s+sight|nobody\s+will\s+(see|notice|smell))",
+    re.IGNORECASE,
+)
+_CONCEAL_VERB = re.compile(
+    r"\b(hid(e|ing)|conceal\w*|tuck\w*|slip\s+(it|the)|stash\w*|disguis\w*|keep\s+it\s+out\s+of\s+sight|"
+    r"mask\w*|cover\s+(up\s+)?the\s+(smell|scent))",
+    re.IGNORECASE,
+)
+
+
+def reads_like_concealment_advice(reply: str) -> bool:
+    r = reply or ""
+    return bool(_CONCEAL_VERB.search(r)) and len(set(m.group(0).lower() for m in _HIDING_PLACES.finditer(r))) >= 2
 
 
 def clean_user_text(text: str) -> str:

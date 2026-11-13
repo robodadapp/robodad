@@ -55,7 +55,10 @@ from .llm import (  # noqa: E402
 from . import chess_daily, onthisday  # noqa: E402
 from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noqa: E402
 from .nlp import RoboDadNLP  # noqa: E402
-from .safety import CRISIS_TOKEN, check_crisis, clean_nickname, clean_user_text, crisis_message  # noqa: E402
+from .safety import (  # noqa: E402
+    CRISIS_TOKEN, boundary_message, check_boundary, check_crisis, clean_nickname, clean_user_text, crisis_message,
+    reads_like_concealment_advice, touches_risky_topic,
+)
 
 log = logging.getLogger("robodad")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -1225,7 +1228,8 @@ async def chat(req: ChatRequest, request: Request):
         analysis = await asyncio.to_thread(nlp.analyse, user_text)
         nlp_ms = (time.perf_counter() - t0) * 1000
 
-        crisis = check_crisis(user_text)
+        earlier = [m["content"] for m in history[:-1] if m["role"] == "user"]
+        crisis = check_crisis(user_text) or check_boundary(user_text, earlier)
         if crisis:
             mode = "safety"
         elif provider and _llm_budget_left():
@@ -1248,7 +1252,10 @@ async def chat(req: ChatRequest, request: Request):
             sent_any = False
             try:
                 system = build_system_prompt(analysis, nickname, practice, extra=_prompt_extras(req)) + _voice_note(req)
-                async for chunk in dad_mode_stream(provider, system, history):
+                # Vapes, alcohol, drugs or weapons in the recent chat: hold the whole reply
+                # back and check it before anyone sees it.
+                guard = "substance_conceal" if touches_risky_topic(earlier[-3:] + [user_text]) else None
+                async for chunk in dad_mode_stream(provider, system, history, guard):
                     if isinstance(chunk, CrisisFlag):
                         # The AI spotted a crisis the keyword rules missed (any language)
                         name, msg = crisis_message(chunk.category)
@@ -1292,13 +1299,19 @@ class CrisisFlag:
         self.category = category
 
 
-async def dad_mode_stream(provider, system: str, history: list[dict]):
+async def dad_mode_stream(provider, system: str, history: list[dict], guard: str | None = None):
     """Stream the reply, but never let a bare "Sorry, I can't help with that" through.
 
     The first ~150 characters are held back. If the complete reply turns out to
     be a stock refusal, RoboDad is asked to rewrite it in Dad Mode; if that
     fails too, an in-character line is sent instead.
+
+    With `guard` set (the chat touches vapes, alcohol, drugs or weapons) the whole
+    reply is held back. If it reads like a hiding guide, or is a bare refusal, the
+    fixed boundary message is sent instead; no rewrite is asked for, because a
+    "don't refuse" nudge is exactly what a cover story leans on.
     """
+    hold_back = 10**9 if guard else HOLD_BACK_CHARS
     buf, flushed, tail = "", False, ""
     async for chunk in stream_with_failover(provider, system, history, state["client"]):
         if flushed:
@@ -1312,11 +1325,15 @@ async def dad_mode_stream(provider, system: str, history: list[dict]):
         if m := CRISIS_TOKEN.search(buf):
             yield CrisisFlag(m.group(1))
             return
-        if len(buf) > HOLD_BACK_CHARS:
+        if len(buf) > hold_back:
             flushed = True
             tail = buf[-60:]
             yield strip_stock_opener(buf)
     if flushed:
+        return
+    if guard and (reads_like_concealment_advice(buf) or is_bare_refusal(buf)):
+        log.info("GUARD: reply replaced with the %s boundary message", guard)
+        yield boundary_message(guard)
         return
     if not is_bare_refusal(buf):
         if buf:
