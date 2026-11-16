@@ -1189,6 +1189,9 @@ svg.rd-no{animation:rd-no .5s ease-in-out}
 .brain-q{font-weight:800; font-size:1.1rem}
 .brain-hint{color:var(--muted)}
 .brain-msg{font-weight:700}
+.toast .tbtns{display:flex; gap:6px; justify-content:center; margin-top:8px}
+.toast .tbtns button{pointer-events:auto; font:inherit; font-weight:800; font-size:.85rem; padding:6px 12px; border-radius:999px; border:1.5px solid currentColor; background:transparent; color:inherit; cursor:pointer}
+.toast:has(.tbtns){pointer-events:auto}
 .toast{position:fixed; left:50%; top:calc(14px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:40;
   background:var(--ink); color:var(--sky); font-weight:800; padding:10px 18px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); width:max-content; max-width:min(440px, calc(100vw - 32px)); text-align:center; line-height:1.35}
 .report-btn{border:0; background:transparent; cursor:pointer; padding:3px 6px; border-radius:8px; color:var(--muted); font-size:.85rem; font-weight:700; display:inline-flex; gap:4px; align-items:center}
@@ -1529,6 +1532,13 @@ textarea::placeholder{color:var(--muted)}
 }
 /* header badge counter */
 .belt-pill{display:inline-flex; align-items:center; gap:6px; flex:none; padding:6px 12px; font-weight:900}
+.streak-chip{display:inline-flex; align-items:center; gap:2px; padding-right:6px; margin-right:2px; border-right:1.5px solid color-mix(in srgb, var(--ink) 20%, transparent)}
+.streak-chip.pop{animation:rd-bump .6s cubic-bezier(.34,1.56,.64,1)}
+.me-card{display:flex; gap:14px; align-items:center; width:100%; text-align:left; padding:12px 14px; margin:0 0 12px; border-radius:18px; cursor:pointer; font:inherit; color:var(--ink);
+  border:2px solid color-mix(in srgb, var(--mustard) 60%, transparent); background:linear-gradient(135deg, color-mix(in srgb, var(--mustard) 18%, var(--surface)), var(--surface))}
+.me-dad{flex:none; width:64px; height:64px} .me-dad svg{width:64px; height:64px; overflow:visible}
+.me-tx{display:flex; flex-direction:column; gap:2px; min-width:0} .me-tx b{font-size:1.15rem} .me-tx small{color:color-mix(in srgb, var(--ink) 74%, var(--muted)); font-weight:700}
+.me-stats{display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:4px; font-weight:800; font-size:.88rem}
 .belt-pill svg{width:18px; height:18px; color:var(--mustard)}
 /* welcome-screen starters: one row that drifts sideways like a broadcast ticker, swipeable, pauses when touched */
 .ticker{width:100%; max-width:720px; margin:0 auto; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; overscroll-behavior-x:contain;
@@ -1635,7 +1645,7 @@ textarea::placeholder{color:var(--muted)}
     <p class="status waking" id="status"><span class="dot"></span>Warming up…</p>
   </div>
   <button class="ghost belt-pill" id="beltBtn" type="button" title="Badges" aria-haspopup="dialog">
-    <svg aria-hidden="true"><use href="#i-belt"/></svg><span id="beltCount" aria-hidden="true">0</span><span class="sr">Badges</span>
+    <span class="streak-chip" id="streakChip" hidden aria-hidden="true">🔥<b id="streakN">0</b></span><svg aria-hidden="true"><use href="#i-belt"/></svg><span id="beltCount" aria-hidden="true">0</span><span class="sr">Badges</span>
   </button>
 </header>
 
@@ -2018,6 +2028,11 @@ textarea::placeholder{color:var(--muted)}
 <div class="overlay sheet" id="meDlg" role="dialog" aria-modal="true" aria-labelledby="meTitle" hidden>
   <div class="card">
     <div class="sheet-head"><h2 id="meTitle">Me</h2><button class="ghost" type="button" data-sheet-close>Close</button></div>
+    <button class="me-card" type="button" data-go="looks" aria-label="Your profile. Tap to change your dad and look">
+      <span class="me-dad" id="meDad" aria-hidden="true"></span>
+      <span class="me-tx"><b id="meHi">Hey, you</b><small id="meDadName">Your dad</small>
+        <span class="me-stats"><span id="meStreak">🔥 Day 1: do one thing to light it</span><span id="meBelt">🏅 0 badges</span></span></span>
+    </button>
     <div class="tiles">
       <button class="tile" type="button" data-go="looks"><span class="t-ico" aria-hidden="true">🎨</span><b>Looks and dads</b><small>Themes, dark mode, avatars, voice</small></button>
       <button class="tile" type="button" data-go="badges"><span class="t-ico" aria-hidden="true">🏅</span><b>Badges</b><small id="meBadges">Do it for real, unlock them</small></button>
@@ -3692,6 +3707,7 @@ const PLAYERS = {
   }
   function updateBeltMini(){
     const all = Object.values(BADGES), got = all.filter(isEarned);
+    if ($("meBelt")) $("meBelt").textContent = `🏅 ${got.length} badge${got.length === 1 ? "" : "s"}`;
     $("beltCount").textContent = got.length; $("meBadges").textContent = `${got.length} of ${all.length} · ${rank(belt.size)}`;
     $("beltBtn").title = `Badges: ${got.length} of ${all.length}`;
   }
@@ -3780,7 +3796,11 @@ const PLAYERS = {
   }
   function showReveal(){
     const el = $("reveal"), id = revealQ.shift();
-    if (!id) { el.hidden = true; el.innerHTML = ""; revealReturn?.focus?.(); return; }
+    if (!id) {
+      const wasOpen = !el.hidden; el.hidden = true; el.innerHTML = ""; revealReturn?.focus?.();
+      if (wasOpen) setTimeout(() => { const m = AV?.AVATARS[avKind]?.moves || []; avPlay(m.find(x => ["victory", "oneup", "dad", "gg", "fistbump", "peace", "kids"].includes(x)) || null); }, 250);   // Dad celebrates with you
+      return;
+    }
     const b = BADGES[id], r = RARITY[b.rar];
     el.style.setProperty("--rc", r.c); el.dataset.id = id;
     el.innerHTML = `<div class="rays"></div><div class="confetti">${confetti(r)}</div><div class="rv">
@@ -4600,6 +4620,7 @@ const PLAYERS = {
       if (name === "chill") { side.classList.add("open"); side.scrollTop = 0; }
       else {
         SHEETS[name].hidden = false; $("learnSoon").hidden = true;
+        if (name === "me") { try { renderMeCard(); renderStreak(); } catch {} }
         SHEETS[name].querySelector(".card").scrollTop = 0;
         if (name === "me") { setPref("robodad.meSeen", "1"); $("meBtn").classList.remove("dot"); }
       }
@@ -4822,7 +4843,24 @@ const PLAYERS = {
     if (gap > 2 || (gap === 2 && freezes < 1)) return { n: 0, best, atRisk: false };
     return { n, best, atRisk: gap >= 1 };
   }
+  // Header flame and the Me card's streak line, from the Daily Dad Challenge streak.
+  function renderStreak(){
+    const st = challengeStreak(), chip = $("streakChip"), was = +$("streakN").textContent || 0;
+    chip.hidden = st.n < 1; $("streakN").textContent = st.n;
+    if (st.n > was && was) { chip.classList.remove("pop"); void chip.offsetWidth; chip.classList.add("pop"); }
+    $("beltBtn").setAttribute("aria-label", `Badges${st.n ? `, ${st.n}-day streak` : ""}`);
+    if ($("meStreak")) $("meStreak").textContent = st.n ? `🔥 ${st.n}-day streak` : "🔥 Day 1: do today's challenge to light it";
+  }
+  function renderMeCard(){
+    if (!$("meDad")) return;
+    const name = (getPref("robodad.nickname") || "").trim();
+    $("meHi").textContent = name ? `Hey, ${name}` : "Hey, you";
+    const a = AV && AV.AVATARS[avKind];
+    $("meDad").innerHTML = a ? `<svg viewBox="0 0 64 64" class="bot" aria-hidden="true">${a.svg}</svg>` : "";
+    $("meDadName").textContent = a ? `Your dad: ${a.name}` : "Your dad";
+  }
   function renderChallenge(){
+    renderStreak();
     const done = chDone.includes(todayKey()), n = chDone.length;
     document.querySelectorAll(".challenge").forEach(c => {
       c.classList.toggle("done", done);
@@ -4922,16 +4960,43 @@ const PLAYERS = {
     applyLook(look);
     let tune = "";
     const R = window.RoboRadio;
-    if (R) { radioPrefs.st = pickNew(Object.keys(R.stations), radioPrefs.st); saveRadio(); R.play(radioPrefs.st); radioUI(); tune = R.stations[radioPrefs.st]; }
+    // the music matches the look when the look has its own tune (no more Gym Class with Diwali music)
+    if (R) { radioPrefs.st = (LOOK_STATION[look] && R.stations[LOOK_STATION[look]]) ? LOOK_STATION[look] : pickNew(Object.keys(R.stations), radioPrefs.st);
+      saveRadio(); R.play(radioPrefs.st); radioUI(); tune = R.stations[radioPrefs.st]; }
     const tile = menuDlg.querySelector(`.look[data-look="${look}"] strong`);
     const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : look;
-    hideCap(); toast("✨ " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
+    hideCap(); shuffleToast("✨ " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
   }
+  // After a shuffle: Keep it, Undo back to what you had, or go Again.
+  let shufPrev = null;
+  function shuffleSnapshot(){
+    const R = window.RoboRadio;
+    shufPrev = { look: document.documentElement.dataset.look || "classic", av: avPref, st: radioPrefs.st, playing: !!R?.playing };
+  }
+  function shuffleUndo(){
+    const p = shufPrev; if (!p) return; shufPrev = null;
+    avPref = p.av; setPref(AV_KEY, avPref); applyLook(p.look);
+    const R = window.RoboRadio;
+    if (R) { radioPrefs.st = p.st; saveRadio(); if (p.playing) R.play(p.st); else R.stop(); radioUI(); }
+    $("toast").hidden = true; toast("Back to how it was.");
+  }
+  function shuffleToast(msg){
+    const t = $("toast");
+    t.innerHTML = `<span>${esc(msg)}</span><span class="tbtns"><button type="button" data-sh="keep">Keep</button><button type="button" data-sh="undo">Undo</button><button type="button" data-sh="again">Again</button></span>`;
+    t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; shufPrev = null; }, 7000);
+  }
+  $("toast").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-sh]"); if (!b) return;
+    if (b.dataset.sh === "keep") { shufPrev = null; $("toast").hidden = true; }
+    else if (b.dataset.sh === "undo") shuffleUndo();
+    else { $("toast").hidden = true; shuffleTap(); }
+  });
   const SHUF_KEY = "robodad.shuffled";
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   let shuffling = false;
   function shuffleTap(){
     if (shuffling) return; shuffling = true;
+    if (!shufPrev) shuffleSnapshot();      // Undo goes back to what you had before your first shuffle in a row
     if (!getPref(SHUF_KEY)) { setPref(SHUF_KEY, "1"); shuffleIdle(false); }
     hello.classList.remove("prop-in"); hello.classList.add("prop-go");
     setTimeout(() => {
