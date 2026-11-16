@@ -1300,6 +1300,11 @@ details.why[open] summary::before{content:"–"}
 .math-ex{background:var(--sky, #E8EFF5); border:1px solid var(--line); border-radius:14px; padding:10px 14px}
 .math-ex ol{margin:6px 0 0; padding-left:1.3em}
 .chip.lang-chip{border-style:dashed}
+/* Battery: looping decorations (marquee, radar, twinkles, chest wiggle) pause when the tab is hidden or nobody has touched
+   the screen for a while. Dad himself is left alone, so his blinks and moves never freeze half-way. */
+body.rd-rest :is(.top, .hello) :not(.bot, .bot *, .shuffle-hint),
+body.rd-rest :is(.top, .hello)::before, body.rd-rest :is(.top, .hello)::after,
+body.rd-rest .top, body.rd-rest .hello{animation-play-state:paused !important}
 /* Today card: one tappable line on the welcome screen; opens to the joke and the tip */
 .today-head{display:flex; align-items:center; gap:10px; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer}
 .today-head b{flex:none} .today-peek{flex:1; min-width:0; color:var(--muted); font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -1508,7 +1513,7 @@ textarea::placeholder{color:var(--muted)}
 .tile:active{transform:scale(.97)}
 .tile .t-ico{font-size:1.6rem; line-height:1.1}
 .tile b{font-weight:900; font-size:1rem; line-height:1.2}
-.tile small{color:var(--muted); font-weight:700; font-size:.8rem; line-height:1.25}
+.tile small{color:color-mix(in srgb, var(--ink) 74%, var(--muted)); font-weight:700; font-size:.8rem; line-height:1.25}
 .tile.soon{border-style:dashed; opacity:.75}
 .sheet-ch{border:1.5px dashed var(--line); border-radius:16px; padding:12px; display:flex; flex-direction:column; gap:8px}
 .sheet-ch .ch-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
@@ -1963,7 +1968,7 @@ textarea::placeholder{color:var(--muted)}
 
 <div class="overlay" id="mindDlg" role="dialog" aria-modal="true" aria-labelledby="mindTitle" hidden>
   <div class="card">
-    <h2 id="mindTitle">Daily Brain Boost</h2>
+    <h2 id="mindTitle">Brain Gym</h2>
     <div class="mind-grid three">
       <button class="mind-tile" type="button" data-mind="word"><span class="mt-ico" aria-hidden="true">📖</span><b>Word of the day</b></button>
       <button class="mind-tile" type="button" data-mind="fact"><span class="mt-ico" aria-hidden="true">💡</span><b>Fact of the day</b></button>
@@ -1999,8 +2004,8 @@ textarea::placeholder{color:var(--muted)}
     <div class="sheet-head"><h2 id="learnTitle">Learn</h2><button class="ghost" id="learnClose" type="button">Close</button></div>
     <div class="tiles">
       <button class="tile" type="button" data-open-lang=""><span class="t-ico" aria-hidden="true">🗣️</span><b>Languages</b><small>French, Spanish, Hindi, Marathi, Bengali</small></button>
-      <button class="tile" type="button" data-open-math=""><span class="t-ico" aria-hidden="true">➗</span><b>Maths</b><small>Grades 7 to 10</small></button>
-      <button class="tile" type="button" data-go="mind"><span class="t-ico" aria-hidden="true">📖</span><b>Daily Brain Boost</b><small>Word, fact and on this day</small></button>
+      <button class="tile" type="button" data-open-math=""><span class="t-ico" aria-hidden="true">➗</span><b>Maths Help</b><small>Grades 7 to 10, with hints from Dad</small></button>
+      <button class="tile" type="button" data-go="mind"><span class="t-ico" aria-hidden="true">📖</span><b>Brain Gym</b><small>Today's word, fact and on this day</small></button>
       <button class="tile" type="button" data-open-study=""><span class="t-ico" aria-hidden="true">⏱️</span><b>Study Hall</b><small>Focus, kitchen and workout timers</small></button>
       <button class="tile" type="button" data-go="vocab"><span class="t-ico" aria-hidden="true">✨</span><b>Vocabulary with Dad</b><small>Glow-Up, Comebacks, Word Origins, Vocab Duel</small></button>
       <button class="tile" type="button" data-go="grammar"><span class="t-ico" aria-hidden="true">✍️</span><b>Grammar with Dad</b><small>Similes, analogies and Tense Trouble</small></button>
@@ -5657,13 +5662,20 @@ const PLAYERS = {
     showCap("", `Tip of the day: ${topic} Tap Today for more.`);
   }
   setTimeout(tipLine, 9000);
+  // Rest the looping decorations after 40 seconds without a touch, and whenever the tab is in the background.
+  (() => {
+    let t; const wake = () => { document.body.classList.remove("rd-rest"); clearTimeout(t); t = setTimeout(() => document.body.classList.add("rd-rest"), 40000); };
+    ["pointerdown", "keydown", "wheel", "touchstart"].forEach(ev => addEventListener(ev, wake, { passive:true, capture:true }));
+    document.addEventListener("visibilitychange", () => document.hidden ? document.body.classList.add("rd-rest") : wake());
+    wake();
+  })();
   const TOUR_KEY = "robodad.toured";
   const TOUR = [
     ["chatTab", "Chat", "Ask Dad anything", "School, money, friends, cooking, or just “I need to talk.” Type it or tap the mic. Thumbs up, thumbs down or Report on any reply helps him get better."],
     ["avHero", "Chat", "Poke Dad", "Tap him any time and he'll show you a move. Each dad has his own."],
     ["shuffleSpot", "Chat", "Mix it up", "Tap the thing in the corner for a new look, a new dad and new music in one go. Change your mind in Me, under Looks."],
     ["playTab", "Play", "Games with Dad", "Chess against nine dads, Tile Talk word battles, brain teasers where Dad gives hints instead of answers, and a Daily Dad Challenge."],
-    ["learnBtn", "Learn", "Your study corner", "French, Spanish, Hindi, Marathi and Bengali. Maths for Grades 7 to 10. Grammar and vocabulary games, a daily brain boost and Study Hall timers."],
+    ["learnBtn", "Learn", "Your study corner", "French, Spanish, Hindi, Marathi and Bengali. Maths for Grades 7 to 10. Grammar and vocabulary games, Brain Gym and Study Hall timers."],
     ["sideBtn", "Chill", "Take a breather", "Sleep sounds with a timer, the radio, and a countdown to the thing you're waiting for."],
     ["meBtn", "Me", "Make it yours", "Looks, dark mode, badges and your nickname. Send feedback or replay this tour from here."],
   ];
