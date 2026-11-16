@@ -1300,6 +1300,11 @@ details.why[open] summary::before{content:"–"}
 .math-ex{background:var(--sky, #E8EFF5); border:1px solid var(--line); border-radius:14px; padding:10px 14px}
 .math-ex ol{margin:6px 0 0; padding-left:1.3em}
 .chip.lang-chip{border-style:dashed}
+/* Today card: one tappable line on the welcome screen; opens to the joke and the tip */
+.today-head{display:flex; align-items:center; gap:10px; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer}
+.today-head b{flex:none} .today-peek{flex:1; min-width:0; color:var(--muted); font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.today-head .ch-chev{transition:transform .2s} .today:not(.folded) .today-head .ch-chev{transform:rotate(90deg)}
+.today.folded > :not(.today-head){display:none}
 .lang-card{width:min(560px, 100%)}
 .lang-top{display:flex; justify-content:space-between; align-items:center; gap:8px}
 /* Close stays on screen while a long lesson, topic or game scrolls underneath it (sticky offsets count from inside the card's 24px padding, hence -24px) */
@@ -1669,24 +1674,17 @@ textarea::placeholder{color:var(--muted)}
       <p>Real advice for real life. Ask me anything, or tap one to start.</p>
       <div class="ticker" id="ticker" role="group" aria-label="Things to ask RoboDad">
         <div class="ticker-track" id="tickerTrack">
-          <button class="chip" type="button" data-say="How&#39;s your day going, Dad?">👋 How&#39;s your day going, Dad?</button>
           <button class="chip" type="button" data-say="I&#39;m stressed about exams">😮‍💨 I&#39;m stressed about exams</button>
+          <button class="chip" type="button" data-say="I just need to talk">🤗 I just need to talk</button>
+          <button class="chip" type="button" data-say="How&#39;s your day going, Dad?">👋 How&#39;s your day going, Dad?</button>
           <button class="chip" type="button" data-act="whisper:flicker">📼 Dad, why does the screen flicker sometimes?</button>
           <button class="chip" type="button" data-say="How do I make a budget?">💸 How do I make a budget?</button>
-          <button class="chip" type="button" data-act="mind:fact">💡 Fact of the day</button>
           <button class="chip" type="button" data-say="Help me prep for a job interview">💼 Help me prep for a job interview</button>
-          <button class="chip" type="button" data-act="mind:word">📖 Word of the day</button>
           <button class="chip" type="button" data-say="Teach me an easy dinner I can cook">🍳 Teach me an easy dinner I can cook</button>
           <button class="chip" type="button" data-act="whisper:lost">🕵️ Dad, did you lose something?</button>
-          <button class="chip lang-chip" type="button" data-open-lang="">🗣️ Practice French, Spanish or Hindi</button>
-          <button class="chip" type="button" data-act="mind:otd">📜 On this day with Dad</button>
           <button class="chip" type="button" data-say="How do I do my laundry?">🧺 How do I do my laundry?</button>
           <button class="chip" type="button" data-act="whisper:book">📚 Is there a book about you, Dad?</button>
-          <button class="chip lang-chip" type="button" data-open-math="">➗ Maths help, Grades 7–10</button>
-          <button class="chip" type="button" data-say="I just need to talk">🤗 I just need to talk</button>
           <button class="chip" type="button" data-act="whisper:garage" data-when="done">🚪 What&#39;s in the garage, Dad?</button>
-          <button class="chip lang-chip" type="button" data-open-study="">⏱️ Study Hall focus timer</button>
-          <button class="chip" type="button" data-act="page:/changelog">🆕 What&#39;s new in RoboDad?</button>
         </div>
       </div>
       <button class="sleepcard" id="sleepCard" type="button" hidden>
@@ -1698,8 +1696,8 @@ textarea::placeholder{color:var(--muted)}
         <button class="ch-head" type="button" aria-expanded="false"><span class="ch-tag">Daily Dad Challenge</span><span class="ch-text"></span><span class="ch-chev" aria-hidden="true">›</span></button>
         <div class="ch-row"><button class="primary ch-done" type="button">Done it!</button><small class="ch-count"></small></div>
       </section>
-      <section class="widget today" aria-label="Today">
-        <b>Today</b>
+      <section class="widget today folded" aria-label="Today">
+        <button class="today-head" type="button" aria-expanded="false"><b>Today</b><span class="today-peek">Dad joke and tip of the day</span><span class="ch-chev" aria-hidden="true">›</span></button>
         <p class="today-k" id="thuK" hidden>Thursday Rules</p>
         <p id="thuNudge" hidden></p>
         <p class="today-k">Dad joke of the day</p>
@@ -5639,6 +5637,19 @@ const PLAYERS = {
   }
 
   // ---------- guided tour: a spotlight on each tab (skippable; replay any time from Me) ----------
+  document.querySelector(".today-head")?.addEventListener("click", (e) => {
+    const sec = e.currentTarget.closest(".today"), open = sec.classList.toggle("folded") === false;
+    e.currentTarget.setAttribute("aria-expanded", String(open));
+  });
+  // Once a day, Dad says the tip of the day himself instead of it sitting in a card.
+  function tipLine(){
+    const today = new Date().toDateString(), topic = ($("tipTopic")?.textContent || "").trim();
+    if (getPref("robodad.tipSaid") === today || !getPref("robodad.bubHint")) return;
+    if (!topic || hello.hidden || document.querySelector(".overlay:not([hidden])") || !$("bubCap").hidden || busy || input.value) { setTimeout(tipLine, 5000); return; }
+    setPref("robodad.tipSaid", today);
+    showCap("", `Tip of the day: ${topic} Tap Today for more.`);
+  }
+  setTimeout(tipLine, 9000);
   const TOUR_KEY = "robodad.toured";
   const TOUR = [
     ["chatTab", "Chat", "Ask Dad anything", "School, money, friends, cooking, or just “I need to talk.” Type it or tap the mic. Thumbs up, thumbs down or Report on any reply helps him get better."],
