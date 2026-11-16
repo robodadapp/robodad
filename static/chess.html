@@ -26,6 +26,7 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 .opp .name{font-weight:900; font-size:1.05rem}
 .opp .tier{color:var(--muted); font-size:.9rem}
 .bubble{margin-left:auto; max-width:46%; background:var(--ink); color:#1B1530; border-radius:12px; padding:8px 10px; font-size:.95rem; min-height:2.4em}
+.bubble:empty{visibility:hidden}
 .board{position:relative; width:min(92vw, 480px); aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border:4px solid var(--frame); border-radius:8px; overflow:hidden; box-shadow:var(--frame-glow)}
 /* Board skin variables. Each dad's skin below only changes these, so selection,
    check and legal-move highlights keep working the same on every board. */

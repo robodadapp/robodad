@@ -685,7 +685,7 @@
   #brainBody{position:relative}
   .bz-top{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; margin-bottom:10px}
   .bz-back{padding:6px 12px}
-  .bz-label{font-weight:900; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bz-label{font-weight:900; text-align:center; line-height:1.15; min-width:0; overflow-wrap:anywhere}
   .bz-stats{display:flex; gap:10px; font-weight:900; white-space:nowrap}
   .bz-level{grid-column:1 / -1; display:flex; align-items:center; gap:8px; font-weight:800; font-size:.85rem}
   .bz-level small{color:var(--muted); white-space:nowrap}

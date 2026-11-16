@@ -1100,9 +1100,16 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 .lang-tabs.vocab-tabs{display:grid; grid-template-columns:repeat(4, 1fr)} .lang-tabs.vocab-tabs button{font-size:.9rem; padding:8px 6px}
 @media (max-width:520px){ .lang-tabs.vocab-tabs{grid-template-columns:1fr 1fr} }
 .lang-tabs.vocab-tabs.g-tabs{grid-template-columns:1fr 1fr}
+.g-plays{display:grid; grid-template-columns:1fr 1fr; gap:8px} .g-plays button{width:100%; min-width:0; white-space:normal; line-height:1.2; padding:11px 10px}
 .g-reels{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px}
 .g-reels span{padding:10px 6px; border-radius:12px; background:var(--surface); border:2px solid var(--denim); text-align:center; font-weight:900; font-size:.9rem; line-height:1.2}
-.g-reels.spinning span{animation:greel .35s ease-out} @keyframes greel{from{transform:translateY(-8px); opacity:.2} to{transform:none; opacity:1}}
+/* Spin: the three reels land one after another, then the sentence appears (it used to show before the reels stopped) */
+.g-card-spin.spinning .g-reels span{animation:greel .5s cubic-bezier(.34,1.56,.64,1) both}
+.g-card-spin.spinning .g-reels span:nth-child(2){animation-delay:.15s} .g-card-spin.spinning .g-reels span:nth-child(3){animation-delay:.3s}
+.g-card-spin.spinning .g-result{animation:gresult .35s ease-out .8s both}
+@keyframes greel{0%{transform:translateY(-14px); opacity:0; filter:blur(2px)} 60%{filter:none} 100%{transform:none; opacity:1}}
+@keyframes gresult{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){ .g-card-spin.spinning .g-reels span,.g-card-spin.spinning .g-result{animation:none} }
 .vocab-body mark{background:color-mix(in srgb, var(--mustard) 45%, transparent); color:inherit; border-radius:4px; padding:0 3px; font-weight:900}
 .g-tenses{display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:.88rem} .g-tenses div{padding:6px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--line)}
 .g-head{font-weight:800; color:var(--muted)}
@@ -1113,6 +1120,12 @@ input[type=range]{width:100%; accent-color:var(--mustard)}
 @media (max-width:480px){ .g-tenses{grid-template-columns:1fr} }
 .vocab-body{display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:62vh; overflow:auto}
 .vocab-body p{margin:0}
+/* Vocabulary and Grammar: one fixed-height sheet with a single scroll area, so switching tabs doesn't make the sheet jump
+   and lists never scroll inside another scroll. The gutter keeps the scrollbar from covering the stats row. */
+#vocabDlg > .lang-card, #grammarDlg > .lang-card{height:min(calc(100dvh - 32px), 760px); overflow:hidden}
+#vocabDlg .vocab-body, #grammarDlg .vocab-body{flex:1 1 auto; min-height:0; max-height:none; overflow:auto; scrollbar-gutter:stable; padding-right:2px; margin-right:-2px}
+.v-stats{flex-wrap:wrap}
+.v-stats span{white-space:nowrap}
 .vocab-body textarea{width:100%; min-height:84px; border:1.5px solid var(--line); border-radius:12px; padding:10px; font:inherit; background:var(--surface); color:var(--ink); resize:vertical}
 .v-card{padding:12px 14px; border-radius:14px; background:var(--sky); border:1.5px solid var(--line); display:flex; flex-direction:column; gap:6px}
 .v-card .v-k{font-size:.75rem; font-weight:900; text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
@@ -1324,7 +1337,7 @@ textarea::placeholder{color:var(--muted)}
   flex:none; border:0; border-radius:999px; background:var(--mustard); color:var(--mustard-ink);
   font-weight:900; padding:10px 18px; cursor:pointer;
 }
-.send:disabled{opacity:1; cursor:default; background:color-mix(in srgb, var(--mustard) 22%, var(--surface))!important; color:color-mix(in srgb, var(--ink) 70%, var(--surface)); box-shadow:none!important}
+.send:disabled{opacity:1; cursor:default; background:color-mix(in srgb, var(--mustard) 22%, var(--surface))!important; color:color-mix(in srgb, var(--ink) 88%, var(--surface)); outline:1.5px solid color-mix(in srgb, var(--ink) 18%, transparent); outline-offset:-1.5px; box-shadow:none!important}
 /* voice + music bubbles beside the header avatar */
 .avwrap{position:relative; flex:none; display:block; width:88px; height:46px}
 .avwrap .avatar{position:absolute; left:0; top:1px}
@@ -1893,7 +1906,7 @@ textarea::placeholder{color:var(--muted)}
         <button class="switch" id="readAloud" type="button" aria-pressed="false"><span class="sr">Read replies aloud</span></button></div>
       <div class="setting" id="voiceRow" hidden><label for="voiceSel" style="font-weight:700">RoboDad's voice</label>
         <select id="voiceSel" style="font:inherit; font-weight:700; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:12px; padding:7px 10px; max-width:58%"></select></div>
-      <p class="fine" style="white-space:normal; margin-top:14px">RoboDad™ © 2026 Saikat Sunil Ganguly</p>
+      <p class="fine" style="white-space:normal; margin-top:14px">RoboDad™ © 2026 RoboDad</p>
     </div>
     <div class="row"><button class="primary" id="menuDone" type="button">Done</button></div>
   </div>
@@ -2258,10 +2271,10 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=5"></script>
-<script src="/static/brain.js?v=5"></script>
+<script src="/static/brain.js?v=6"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
-<script src="/static/grammar.js?v=1"></script>
+<script src="/static/grammar.js?v=2"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
 <script src="/static/radio.js?v=41"></script>
 <script src="/static/sleep.js?v=1"></script>
