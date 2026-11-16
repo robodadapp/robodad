@@ -26,6 +26,12 @@
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const today = () => new Date().toLocaleDateString("en-CA");
+  // a repeatable random sequence from a number (mulberry32), so everyone gets the same daily safe
+  const seeded = (seed) => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  // Dad's Safe number: #1 was 16 November 2026, counted in the player's own calendar days
+  const safeNo = () => { const n = new Date(); return Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(2026, 10, 16)) / 86400000) + 1; };
+  // anonymous counters (a fixed list of names, checked by the server); does nothing without the app around it
+  const ping = (name) => { try { bridge?.ping?.(name); } catch {} };
   const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
 
   // ---------- tiny DOM helper ----------
@@ -116,6 +122,11 @@
       bubble(say || sayText || pick(SAY.hello)),
       h("div", { class:"bz-tiles" },
         mk("⚡", "Puzzle Run", "Riddles, logic and hands-on puzzles. Keep your streak alive.", () => startRun(), "bz-focus"),
+        (() => { const no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null, done = d && (d.won || d.lost);
+          return mk(done ? (d.won ? "🔓" : "🔒") : "🔐", `Dad's Safe #${no}`,
+            done ? (d.won ? `Cracked in ${d.tries.length + 1}. A new safe at midnight.` : "Stayed shut today. A new safe at midnight.")
+              : d && d.tries.length ? `${d.tries.length} of 6 tries used. Pick up where you left off.` : "Today's safe. Same code for everyone, six tries.",
+            () => startHands("lock", { mode:"daily" })); })(),
         mk(dailyDone ? "✅" : "📅", "Today's puzzle", dailyDone ? "Done! A new one tomorrow." : "Double points, once a day.", () => dailyDone ? hub("You already cracked today's puzzle. Come back tomorrow for a new one!") : startPuzzle(dailyPuzzle(), { mode:"daily" })),
         mk("🧩", "Hands-on", "Blackout, Crack Dad's Safe, Crossings and Scramble.", handsMenu),
         notebookOpen() ? mk("📓", "Dev's Notebook", `${NB.filter(p => s.done.includes(p.id)).length} of ${NB.length} puzzles solved.`, notebookMenu) : null,
@@ -247,6 +258,7 @@
   function handsWon(stars, line){
     const c = ctx, s = S(); c.won = true; c.stars = stars;
     s.handsStars ||= {}; s.handsStars[c.kind] = Math.max(s.handsStars[c.kind] || 0, stars);
+    if (c.mode === "daily") finishSafe(c, true); else if (c.mode === "hands") ping("hands_win");
     const extra = award([30, 30, 40, 50][stars], { hands:c.kind, keepStreak:true });
     c.say = [line || pick(SAY.hands), extra].filter(Boolean).join(" "); buzz([30, 40, 30]);
     renderHands(); focusFirst(".bz-focus");
@@ -255,11 +267,16 @@
     const c = ctx, H = D.hands[c.kind];
     // redrawing replaces every button, so remember which one had the keyboard focus and give it back
     const fk = root.contains(document.activeElement) ? document.activeElement.getAttribute("data-fk") : null;
-    const label = c.mode === "escape" ? D.escape.rooms[c.room].name : H.name;
-    const nodes = [topBar(label, c.mode === "hands" ? { label:"Hands-on", fn: handsMenu } : backFor()), bubble(c.say, "gamer")];
+    const label = c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "daily" ? `Dad's Safe #${c.no}` : H.name;
+    const back = c.mode === "hands" ? { label:"Hands-on", fn: handsMenu } : c.mode === "daily" ? { fn: () => hub() } : backFor();
+    const nodes = [topBar(label, back), bubble(c.say, "gamer")];
     nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind }, ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
-    const row = h("div", { class:"bz-row" });
-    if (c.won) {
+    const row = h("div", { class:"bz-row" }), over = c.won || c.lost;
+    if (c.mode === "daily") {
+      // one safe a day: no "new puzzle" here, just share it or go back
+      if (over) row.append(btn("Share result", "primary bz-focus", () => shareSafe(c)), btn("Menu", "ghost", () => hub()));
+      else row.append(btn("Ask Dad", "ghost", () => bridge?.coach("hands-lock")));
+    } else if (c.won) {
       row.append(c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
         : c.mode === "run" ? btn("Next puzzle →", "primary bz-focus", startRun)
         : c.kind === "river" ? (c.level + 1 < CROSSINGS.length
@@ -271,7 +288,9 @@
       row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step, level:c.level })),
         btn("Ask Dad", "ghost", () => bridge?.coach("hands-" + c.kind)));
     }
-    nodes.push(row); paint(...nodes);
+    // count what people do after a hands-on win: replay after 3 stars, retry after fewer, or go to the next crossing
+    if (c.won && c.mode === "hands") row.firstChild.addEventListener("click", () => ping(c.kind === "river" && c.level + 1 < CROSSINGS.length ? "hands_next" : c.stars < 3 ? "hands_retry" : "hands_again"));
+    nodes.push(row, c.mode === "daily" && over ? safeFoot() : null); paint(...nodes);
     if (fk) { const el = root.querySelector(`[data-fk="${fk}"]`); if (el && !el.disabled) el.focus(); else focusFirst(".bz-sbtn:not(:disabled)"); }
   }
 
@@ -336,13 +355,14 @@
      B ? `${B === 1 ? "one digit is" : B === 2 ? "two digits are" : "all three are"} right but in the wrong place` : ""].filter(Boolean).join(", and ").replace(/^./, m => m.toUpperCase());
   function score(code, guess){ let A = 0, B = 0; [...guess].forEach((d, i) => { if (code[i] === d) A++; else if (code.includes(d)) B++; }); return [A, B]; }
   const fitsClue = (s, [g, A, B]) => { const [x, y] = score(s, g); return x === A && y === B; };
-  function makeLock(){
+  function makeLock(rand = Math.random){
+    const any = (a) => a[Math.floor(rand() * a.length)];
     for (let attempt = 0; attempt < 200; attempt++) {
-      const code = pick(ALL_CODES), clues = []; let fits = ALL_CODES;
+      const code = any(ALL_CODES), clues = []; let fits = ALL_CODES;
       while (fits.length > 1 && clues.length < 5) {
         let best = null;
         for (let k = 0; k < 10; k++) {
-          const g = pick(ALL_CODES), [A, B] = score(code, g);
+          const g = any(ALL_CODES), [A, B] = score(code, g);
           if (g === code || A + B === 3 || clues.some(x => x[0] === g)) continue;   // never hand over all three digits
           const left = fits.filter(s => fitsClue(s, [g, A, B])).length;
           if (left < fits.length && (!best || left < best.left)) best = { clue:[g, A, B], left };
@@ -355,8 +375,46 @@
     return { code:"316", clues:[["210", 1, 0], ["902", 0, 0], ["362", 1, 1], ["493", 0, 1]] };   // hand-checked fallback
   }
   function initLock(){
-    Object.assign(ctx, { lock:makeLock(), dial:[0, 0, 0], tries:[], crossed:new Set(), max:6, lost:false,
+    Object.assign(ctx, { dial:[0, 0, 0], tries:[], crossed:new Set(), max:6, lost:false,
       say:"Three digits, all different. The notes on the door are all you get." });
+    if (ctx.mode !== "daily") { ctx.lock = makeLock(); return; }
+    // Dad's Safe: the same code and clues for everyone today. Progress is kept, so closing it can't reroll the safe.
+    const s = S(), no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null;
+    Object.assign(ctx, { no, lock:makeLock(seeded(no * 7919 + 13)) });
+    if (!d) { ctx.say = "Today's safe. Everyone gets the same code, and you get six tries. " + ctx.say; saveSafe(ctx); ping("safe_open"); return; }
+    Object.assign(ctx, { tries:d.tries.map(t => t.slice()), crossed:new Set(d.crossed || []), hinted:!!d.hinted, lost:!!d.lost, won:!!d.won, stars:d.stars || 0 });
+    ctx.say = d.won ? `You cracked today's safe in ${d.tries.length + 1}. A new one opens at midnight.`
+      : d.lost ? `Today's safe beat you. The code was ${ctx.lock.code}. A new one opens at midnight.`
+      : d.tries.length ? "Picking up where you left off. Same safe, same clues." : ctx.say;
+  }
+  function saveSafe(c){
+    if (c.mode !== "daily") return;
+    S().safeDay = { no:c.no, tries:c.tries, crossed:[...c.crossed], hinted:!!c.hinted, won:!!c.won, lost:!!c.lost, stars:c.stars || 0 }; save();
+  }
+  // days in a row counts days you finished the safe, won or lost. A missed day just starts it again, without a word.
+  function finishSafe(c, won){
+    const s = S(), st = (s.safeStats ||= { played:0, won:0, run:0, bestRun:0, last:0 });
+    if (st.last === c.no) return;
+    st.played++; if (won) st.won++;
+    st.run = st.last === c.no - 1 ? st.run + 1 : 1; st.last = c.no; st.bestRun = Math.max(st.bestRun, st.run);
+    saveSafe(c); ping(won ? "safe_win" : "safe_fail");
+  }
+  function safeFoot(){
+    const st = S().safeStats || {}, n = new Date(), mid = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+    const mins = Math.max(1, Math.ceil((mid - n) / 60000));
+    return h("p", { class:"bz-foot" }, `Safes cracked: ${st.won || 0} of ${st.played || 0}` + (st.run > 1 ? ` · ${st.run} days in a row` : "")
+      + ` · Next safe in ${Math.floor(mins / 60)}h ${mins % 60}m`);
+  }
+  // a spoiler-free result for the group chat: one row per try, never the digits
+  function shareSafe(c){
+    const rows = c.tries.map(([, A, B]) => "🟢".repeat(A) + "🟡".repeat(B) + "⚫".repeat(3 - A - B));
+    if (c.won) rows.push("🟢🟢🟢");
+    const head = `🔐 Dad's Safe #${c.no} · ${c.won ? c.tries.length + 1 : "X"}/${c.max}`
+      + (c.won ? " " + "★".repeat(c.stars) + "☆".repeat(3 - c.stars) : "") + (c.hinted ? " 💡" : "");
+    ping("safe_share");
+    const text = [head, ...rows].join("\n");
+    if (bridge?.shareText) bridge.shareText(text, "Dad's Safe");
+    else navigator.clipboard?.writeText(text).catch(() => {});
   }
   const lockStars = (c, used) => capStars(c, used <= 2 ? 3 : used <= 4 ? 2 : 1);
   const pegs = (A, B) => h("span", { class:"bz-pegs", "aria-hidden":"true" }, [0, 1, 2].map(i => h("i", { class:"bz-peg" + (i < A ? "" : i < A + B ? " ring" : " dash") })));
@@ -380,8 +438,9 @@
       if (g === c.lock.code) { const n = c.tries.length + 1;
         return handsWon(lockStars(c, n), n <= 2 ? `Cracked in ${n}. Should I be worried about my wallet?` : `Open in ${n} tries. The golden cartridge is yours. Don't sell it.`); }
       const [A, B] = score(c.lock.code, g); c.tries.push([g, A, B]);
-      if (c.tries.length >= c.max) { c.lost = true; buzz(120); c.say = `Six tries and it's still shut. The code was ${c.lock.code}. The safe and I are both disappointed.`; }
-      else c.say = c.tries.length === c.max - 1 ? "One try left. No pressure. Some pressure." : "Not it. But the safe just told you something. Read the row.";
+      if (c.tries.length >= c.max) { c.lost = true; buzz(120); c.say = `Six tries and it's still shut. The code was ${c.lock.code}. The safe and I are both disappointed.`;
+        if (c.mode === "daily") { c.say += " Same time tomorrow?"; finishSafe(c, false); } }
+      else { c.say = c.tries.length === c.max - 1 ? "One try left. No pressure. Some pressure." : "Not it. But the safe just told you something. Read the row."; saveSafe(c); }
       renderHands();
     };
     return [hudRow,
@@ -391,15 +450,15 @@
         h("div", { class:"bz-dials" }, h("div", { class:"bz-tumblers" }, dial(0), dial(1), dial(2)),
           h("span", { class:"bz-handle", "aria-hidden":"true", html:`<svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" style="fill:none;stroke:var(--n-dim);stroke-width:6"/><path d="M42 8v68M8 42h68M18 18l48 48M66 18L18 66" style="stroke:var(--n-dim);stroke-width:5;stroke-linecap:round"/><circle cx="42" cy="42" r="12" style="fill:var(--n-accent)"/><circle cx="42" cy="42" r="4" style="fill:var(--n-accent-ink)"/></svg>` })),
         h("div", { class:"bz-pad", role:"group", "aria-label":"Scratchpad: cross out digits you have ruled out" }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d =>
-          btn(String(d), c.crossed.has(d) ? "x" : "", () => { if (c.crossed.has(d)) c.crossed.delete(d); else c.crossed.add(d); renderHands(); },
+          btn(String(d), c.crossed.has(d) ? "x" : "", () => { if (c.crossed.has(d)) c.crossed.delete(d); else c.crossed.add(d); saveSafe(c); renderHands(); },
             { "aria-pressed":String(c.crossed.has(d)), "aria-label":`${d}${c.crossed.has(d) ? ", crossed out" : ""}`, "data-fk":"p" + d }))),
         h("ol", { class:"bz-tries", "aria-label":"Your tries" }, Array.from({ length:c.max }, (_, i) => { const t = c.tries[i];
           return h("li", { class:"bz-try" + (t ? " used" : ""), "aria-label": t ? `Try ${i + 1}: ${t[0]}, ${clueText(t[1], t[2])}` : `Try ${i + 1}: not used` }, t ? [h("span", { "aria-hidden":"true" }, t[0]), pegs(t[1], t[2])] : null); }))),
       c.lost ? null : h("div", { class:"bz-ctl" },
         sbtn("Hint", "hintb", () => { const free = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(d => !c.lock.code.includes(String(d)) && !c.crossed.has(d));
           if (!free.length) { c.say = "Every wrong digit is crossed out. The rest is on you."; return renderHands(); }
-          c.hinted = true; c.crossed.add(free[0]); c.say = `Fine. ${free[0]} isn't in the code, so I crossed it out. A hint caps this one at 2 stars.`; renderHands(); }, { "data-fk":"hint" }),
-        sbtn("Clear", "", () => { c.crossed.clear(); renderHands(); }, { disabled:!c.crossed.size, "data-fk":"clear" }),
+          c.hinted = true; c.crossed.add(free[0]); c.say = `Fine. ${free[0]} isn't in the code, so I crossed it out. A hint caps this one at 2 stars.`; saveSafe(c); renderHands(); }, { "data-fk":"hint" }),
+        sbtn("Clear", "", () => { c.crossed.clear(); saveSafe(c); renderHands(); }, { disabled:!c.crossed.size, "data-fk":"clear" }),
         sbtn("Try code", "go", tryIt, { "data-fk":"try" })),
     ];
   }
