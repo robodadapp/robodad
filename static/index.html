@@ -1303,6 +1303,7 @@ details.why[open] summary::before{content:"–"}
 .math-ex{background:var(--sky, #E8EFF5); border:1px solid var(--line); border-radius:14px; padding:10px 14px}
 .math-ex ol{margin:6px 0 0; padding-left:1.3em}
 .chip.lang-chip{border-style:dashed}
+.math-pic{margin:10px 0 0; padding:8px; border-radius:12px; background:color-mix(in srgb, var(--surface) 70%, transparent); color:var(--ink)} .math-pic svg{display:block; width:100%; height:auto; max-height:170px}
 /* Battery: looping decorations (marquee, radar, twinkles, chest wiggle) pause when the tab is hidden or nobody has touched
    the screen for a while. Dad himself is left alone, so his blinks and moves never freeze half-way. */
 body.rd-rest :is(.top, .hello) :not(.bot, .bot *, .shuffle-hint),
@@ -4152,12 +4153,40 @@ const PLAYERS = {
         return `<button class="lesson-btn${d ? " done" : ""}" type="button" data-topic="${i}"><span class="n" aria-hidden="true">${d ? "✓" : i + 1}</span><span><b>${esc(t.title)}</b><small>${esc(t.short)}${d ? " · done" : ""}</small></span></button>`; })()).join("")}</div>`).join("")
       + `<p style="font-size:.85rem">Dad's quizzes are checked by hand. In coach chats he's an AI and can slip up, so check anything important with your teacher.</p>`;
   }
+  // Pictures for the worked examples: the same numbers as the example, drawn, so the idea lands at a glance.
+  const MP_T = (x, y, t, o = "") => `<text x="${x}" y="${y}" ${o} text-anchor="middle" font-weight="800" font-size="11" fill="currentColor">${t}</text>`;
+  const MATH_PICS = {
+    integers: (() => { const x = n => 20 + (n + 5) * 22; let g = `<path d="M10 40 H310" stroke="currentColor" stroke-width="2"/>`;
+      for (let n = -5; n <= 8; n++) g += `<path d="M${x(n)} 35 v10" stroke="currentColor" stroke-width="${n === 0 ? 2.5 : 1.5}"/>` + MP_T(x(n), 60, n < 0 ? "−" + -n : n);
+      g += `<path d="M${x(-4)} 28 Q${(x(-4) + x(5)) / 2} -4 ${x(5)} 28" fill="none" stroke="#2E8B57" stroke-width="2.5" marker-end="url(#mpA)"/>`
+        + `<circle cx="${x(-4)}" cy="40" r="5" fill="#D7263D"/><circle cx="${x(5)}" cy="40" r="5" fill="#2E8B57"/>` + MP_T((x(-4) + x(5)) / 2, 10, "+9 (move right)");
+      return `<svg viewBox="0 0 320 70" role="img" aria-label="Number line: start at minus 4, move 9 to the right, land on 5"><defs><marker id="mpA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#2E8B57"/></marker></defs>${g}</svg>`; })(),
+    fractions: (() => { const bar = (y, parts, fill, col, lab) => { let g = ""; const w = 240 / parts; for (let i = 0; i < parts; i++) g += `<rect x="${40 + i * w}" y="${y}" width="${w}" height="20" fill="${i < fill ? col : "none"}" stroke="currentColor" stroke-width="1.5"/>`; return g + MP_T(20, y + 14, lab); };
+      return `<svg viewBox="0 0 320 120" role="img" aria-label="One half is three sixths, one third is two sixths, together five sixths">${bar(4, 6, 3, "#4FC3F7", "1/2")}${bar(34, 6, 2, "#FFB547", "1/3")}`
+        + (() => { let g = ""; const w = 40; for (let i = 0; i < 6; i++) g += `<rect x="${40 + i * w}" y="74" width="${w}" height="20" fill="${i < 3 ? "#4FC3F7" : i < 5 ? "#FFB547" : "none"}" stroke="currentColor" stroke-width="1.5"/>`; return g; })() + MP_T(20, 88, "=") + MP_T(160, 112, "3/6 + 2/6 = 5/6") + `</svg>`; })(),
+    percent: `<svg viewBox="0 0 320 80" role="img" aria-label="A 40 dollar bar split into four 10 dollar parts; one part, 25 percent, is taken off, leaving 30 dollars">`
+      + [0,1,2,3].map(i => `<rect x="${20 + i * 70}" y="14" width="70" height="26" fill="${i === 3 ? "none" : "#9BE08A"}" stroke="currentColor" stroke-width="1.5" ${i === 3 ? 'stroke-dasharray="5 4"' : ""}/>` + MP_T(55 + i * 70, 31, "$10")).join("")
+      + `<path d="M230 8 L290 46 M290 8 L230 46" stroke="#D7263D" stroke-width="2.5"/>` + MP_T(125, 62, "You pay $30") + MP_T(255, 62, "25% off = $10") + `</svg>`,
+    equations: `<svg viewBox="0 0 320 96" role="img" aria-label="Balance scale: 3x plus 5 on one side, 20 on the other; take 5 off both sides">
+      <path d="M160 20 V80 M120 86 H200" stroke="currentColor" stroke-width="3"/><path d="M40 30 H280" stroke="currentColor" stroke-width="3"/>
+      <path d="M60 30 L40 54 H110 L90 30 M230 30 L210 54 H280 L260 30" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      ${[0,1,2].map(i => `<rect x="${44 + i * 14}" y="40" width="12" height="12" rx="2" fill="#A06BFF"/>`).join("")}${MP_T(104, 50, "+5", 'fill="#D7263D"')}
+      ${[0,1,2,3].map(i => `<rect x="${222 + i * 12}" y="40" width="10" height="12" rx="2" fill="#FFB547"/>`).join("")}${MP_T(75, 72, "3x + 5")}${MP_T(245, 72, "20")}${MP_T(160, 12, "Do the same to both sides")}</svg>`,
+    pythagoras: `<svg viewBox="0 0 320 130" role="img" aria-label="Right triangle with sides 6 and 8 and hypotenuse 10">
+      <path d="M60 110 H220 V20 Z" fill="color-mix(in srgb, #4FC3F7 25%, transparent)" stroke="currentColor" stroke-width="2.5"/><path d="M208 110 v-12 h12" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      ${MP_T(140, 124, "8")}${MP_T(234, 70, "6")}${MP_T(126, 58, "c = 10", 'fill="#2E8B57" font-size="13"')}${MP_T(270, 30, "6² + 8²")}${MP_T(270, 46, "= 36 + 64")}${MP_T(270, 62, "= 100")}${MP_T(270, 78, "√100 = 10", 'fill="#2E8B57"')}</svg>`,
+    linear: (() => { const X = x => 40 + x * 50, Y = y => 110 - (y - 20) * 2.2; let g = `<path d="M40 110 H300 M40 110 V8" stroke="currentColor" stroke-width="1.5"/>`;
+      for (let x = 0; x <= 5; x++) g += MP_T(X(x), 124, x);
+      g += MP_T(22, Y(20) + 4, "$20") + MP_T(22, Y(40) + 4, "$40") + `<path d="M${X(0)} ${Y(20)} L${X(5)} ${Y(45)}" stroke="#A06BFF" stroke-width="3"/>`
+        + `<path d="M${X(3)} 110 V${Y(35)} H40" fill="none" stroke="#2E8B57" stroke-dasharray="4 3" stroke-width="1.5"/><circle cx="${X(3)}" cy="${Y(35)}" r="5" fill="#2E8B57"/>` + MP_T(X(3) + 34, Y(35) - 6, "3 GB → $35");
+      return `<svg viewBox="0 0 320 132" role="img" aria-label="Graph of y equals 5x plus 20, starting at 20 dollars; at 3 GB it costs 35 dollars">${g}</svg>`; })(),
+  };
   function renderTopic(i){
     mTopic = i; const t = M.topics[i];
     mathBody.innerHTML = `<button class="linkbtn" type="button" data-act="home" style="align-self:flex-start">← All topics</button>
       <p class="lang-sec"><span>${esc(t.title)}</span><small>Around Grade ${t.grade}</small></p>
       <ul class="math-learn">${t.learn.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
-      <div class="math-ex"><b>Example:</b> ${esc(t.ex.q)}<ol>${t.ex.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>
+      <div class="math-ex"><b>Example:</b> ${esc(t.ex.q)}<ol>${t.ex.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol>${MATH_PICS[t.id] ? `<figure class="math-pic">${MATH_PICS[t.id]}</figure>` : ""}</div>
       <p class="dadtip"><b>Dad tip:</b> ${esc(t.tip)}</p>
       <div class="row"><button class="primary" type="button" data-act="quiz">Take the quiz</button><button class="ghost" type="button" data-act="coach">Ask Dad</button></div>`;
     mathBody.querySelector("[data-act=quiz]").focus();

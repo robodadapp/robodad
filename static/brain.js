@@ -684,6 +684,7 @@
     const done = (i) => (s.rooms[i] || 0) >= 3, all = E.rooms.every((_, i) => done(i));
     paint(topBar(E.title, { fn: () => hub() }),
       bubble(all ? (s.escaped ? "We did it once. Fancy doing it again?" : "That's every digit! Get to the keypad!") : E.intro, "modern"),
+      garageScene(E, s, done, all),
       h("div", { class:"bz-rooms" }, E.rooms.map((r, i) => {
         const open = i === 0 || done(i - 1), st = s.rooms[i] || 0;
         const b = btn("", "bz-room" + (done(i) ? " done" : "") + (open && !done(i) ? " bz-focus" : ""), () => roomView(i), { disabled:!open });
@@ -694,6 +695,41 @@
           b.append(h("span", { class:"bz-ic", "aria-hidden":"true" }, "⌨️"), h("b", {}, "Garage door keypad"), h("small", {}, all ? "Enter the code!" : `${E.rooms.filter((_, i) => done(i)).length} of ${n} digits`)); return b; })()),
       s.escaped ? h("div", { class:"bz-row" }, btn("Reset the rooms and play again", "ghost", () => { s.rooms = {}; save(); escapeMenu(); })) : null);
     focusFirst();
+  }
+  // The garage, drawn: each corner is tappable, locked corners are dim, solved ones show their digit,
+  // the next one glows, and the keypad by the door fills in as you go. The buttons below stay for keyboards and screen readers.
+  function garageScene(E, s, done, all){
+    const open = (i) => i === 0 || done(i - 1), now = E.rooms.findIndex((_, i) => open(i) && !done(i));
+    const digits = E.rooms.map((r, i) => done(i) ? r.digit : "_").join(" ");
+    const spot = (i, x, y, w, hh, art) => {
+      const st = done(i) ? "done" : open(i) ? (i === now ? "now" : "open") : "locked";
+      const badge = st === "done" ? `<g class="gz-badge"><circle cx="${x + w - 6}" cy="${y + 6}" r="11" fill="#FFD866" stroke="#1E1E24" stroke-width="2"/><text x="${x + w - 6}" y="${y + 10.5}" text-anchor="middle" font-size="13" font-weight="900" fill="#1E1E24">${E.rooms[i].digit}</text></g>`
+        : st === "locked" ? `<text x="${x + w / 2}" y="${y + hh / 2 + 6}" text-anchor="middle" font-size="18">🔒</text>` : "";
+      const ring = st === "now" ? `<rect class="gz-ring" x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${hh + 8}" rx="10" fill="none" stroke="#FFD866" stroke-width="2.5" stroke-dasharray="6 4"/>` : "";
+      return `<g class="gz-spot gz-${st}" data-room="${i}">${ring}<g class="gz-art">${art}</g>${badge}<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="transparent"/></g>`;
+    };
+    const svg = `<svg viewBox="0 0 320 200" role="img" aria-label="Dad's garage. Code so far: ${digits.replace(/_/g, "blank")}">
+      <rect width="320" height="200" fill="#3B4150"/><path d="M0 150 L320 150 L320 200 L0 200Z" fill="#2A2D36"/>
+      <path d="M0 150 L320 150" stroke="#1E1E24" stroke-width="2"/>
+      <g><rect x="112" y="40" width="96" height="110" fill="#8C97A3" stroke="#1E1E24" stroke-width="2"/>
+        ${[0,1,2,3,4,5,6].map(k => `<path d="M112 ${54 + k * 14} H208" stroke="#6B7580" stroke-width="2"/>`).join("")}
+        <rect x="150" y="128" width="20" height="5" rx="2" fill="#5A6470"/></g>
+      <g class="gz-keypad${all ? " gz-ready" : ""}" data-keypad="1"><rect x="214" y="78" width="24" height="34" rx="3" fill="#1E1E24" stroke="${all ? "#FFD866" : "#5A6470"}" stroke-width="2"/>
+        <rect x="217" y="81" width="18" height="7" rx="1" fill="${all ? "#9BE08A" : "#3D5A3A"}"/>
+        ${[0,1,2].map(r => [0,1,2].map(c => `<rect x="${218 + c * 6}" y="${92 + r * 6}" width="4" height="4" fill="#C9D1D9"/>`).join("")).join("")}<rect x="210" y="74" width="32" height="42" fill="transparent"/></g>
+      <rect x="112" y="16" width="96" height="18" rx="4" fill="#1E1E24"/><text x="160" y="29.5" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" font-weight="800" fill="#9BE08A" letter-spacing="2">CODE ${digits}</text>
+      ${spot(0, 10, 112, 92, 38, `<rect x="12" y="122" width="88" height="8" fill="#A0703A" stroke="#1E1E24" stroke-width="2"/><path d="M18 130 v20 M94 130 v20" stroke="#1E1E24" stroke-width="3"/><rect x="24" y="112" width="26" height="6" rx="2" fill="#C9D1D9" stroke="#1E1E24" stroke-width="1.5"/><path d="M62 120 l16 -10 l4 4 l-16 10z" fill="#D7263D" stroke="#1E1E24" stroke-width="1.5"/>`)}
+      ${spot(1, 14, 34, 80, 40, `<path d="M8 74 H96" stroke="#7A5530" stroke-width="5"/><rect x="26" y="50" width="48" height="24" rx="3" fill="#D7263D" stroke="#1E1E24" stroke-width="2"/><path d="M40 50 v-6 h20 v6" fill="none" stroke="#1E1E24" stroke-width="2.5"/><path d="M26 60 H74" stroke="#1E1E24" stroke-width="1.5"/>`)}
+      ${spot(2, 222, 128, 92, 54, `<path d="M226 168 Q228 150 248 148 L262 136 Q270 132 286 132 L296 134 Q306 140 308 154 Q312 158 310 168Z" fill="#3D7CB8" stroke="#1E1E24" stroke-width="2"/><path d="M266 138 L292 138 L300 150 L258 150Z" fill="#BFE8DC" stroke="#1E1E24" stroke-width="1.5"/><circle cx="246" cy="170" r="9" fill="#1E1E24"/><circle cx="246" cy="170" r="3.5" fill="#8C97A3"/><circle cx="294" cy="170" r="9" fill="#1E1E24"/><circle cx="294" cy="170" r="3.5" fill="#8C97A3"/>`)}
+      ${spot(3, 236, 18, 78, 52, `<path d="M234 70 H316" stroke="#7A5530" stroke-width="5"/><rect x="242" y="44" width="28" height="26" fill="#C8A26B" stroke="#1E1E24" stroke-width="2"/><rect x="274" y="34" width="32" height="36" fill="#B5894F" stroke="#1E1E24" stroke-width="2"/><text x="256" y="62" text-anchor="middle" font-size="14" font-weight="900" fill="#1E1E24">?</text><text x="290" y="58" text-anchor="middle" font-size="16" font-weight="900" fill="#1E1E24">?</text>`)}
+    </svg>`;
+    const wrap = h("div", { class:"bz-garage", html: svg });
+    wrap.addEventListener("click", (e) => {
+      if (e.target.closest("[data-keypad]")) { if (all) keypad(); return; }
+      const g = e.target.closest("[data-room]"); if (!g) return;
+      const i = +g.dataset.room; if (open(i)) roomView(i);
+    });
+    return wrap;
   }
   function roomView(i, say){
     view = "room"; ctx = null;
@@ -767,6 +803,13 @@
   .bz-ic{font-size:1.6rem; line-height:1}
   .bz-room:disabled{opacity:.55; cursor:not-allowed}
   .bz-room.done{border-color:var(--denim)}
+  .bz-garage{border-radius:16px; overflow:hidden; border:1px solid var(--line); box-shadow:0 6px 18px rgba(0,0,0,.18)} .bz-garage svg{display:block; width:100%; height:auto}
+  .gz-spot{cursor:pointer} .gz-locked{cursor:not-allowed} .gz-locked .gz-art{opacity:.35; filter:grayscale(1)}
+  .gz-spot:not(.gz-locked):hover .gz-art{filter:brightness(1.15)}
+  .gz-ring{animation:gzring 1.6s linear infinite} @keyframes gzring{to{stroke-dashoffset:-20}}
+  .gz-badge{animation:gzpop .5s cubic-bezier(.34,1.56,.64,1)} @keyframes gzpop{from{transform:scale(0); transform-box:fill-box; transform-origin:center}}
+  .gz-keypad{cursor:pointer} .gz-ready rect:first-child{animation:gzglow 1.2s ease-in-out infinite} @keyframes gzglow{50%{filter:drop-shadow(0 0 6px #FFD866)}}
+  @media (prefers-reduced-motion:reduce){.gz-ring,.gz-badge,.gz-ready rect:first-child{animation:none}}
   .bz-rooms{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px}
   .bz-foot,.bz-meta{color:var(--muted); font-size:.85rem; text-align:center}
   .bz-q{font-weight:800; font-size:1.08rem}
