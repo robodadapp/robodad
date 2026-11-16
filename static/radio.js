@@ -641,23 +641,51 @@
     },
   });
 
-  // Gamer Dad: boss-fight electro in D minor (Dm-Bb-Gm-A), rolling 16th bass, square-wave arps, claps on 2 and 4
+  // Gamer Dad: drift phonk in E, written from scratch for this game. Every sound is made here from
+  // oscillators and noise: a cowbell riff, a distorted 808-style bass, claps and rolling hats.
+  // No samples and no vocal chops, so there is nothing borrowed from anyone's recording.
+  function cowbell(n, t, level = 0.05, decay = 0.22) {       // two detuned squares through a band-pass: the 808 cowbell, tuned to a note
+    const f = ctx.createBiquadFilter(), g = ctx.createGain();
+    f.type = "bandpass"; f.frequency.value = Math.min(6000, mtof(n) * 2); f.Q.value = 2.5;
+    [1, 1.48].forEach((r) => { const o = ctx.createOscillator(); o.type = "square"; o.frequency.value = mtof(n) * r; o.connect(f); o.start(t); o.stop(t + decay + 0.05); });
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.003);
+    g.gain.exponentialRampToValueAtTime(level * 0.35, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    f.connect(g); out(g, true);
+  }
+  function sub808(n, t, dur, { level = 0.11, slideTo = 0 } = {}) {   // a sine pushed into distortion, so its overtones still come through a phone speaker
+    const o = ctx.createOscillator(), pre = ctx.createGain(), ws = crunch(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(mtof(n) * 1.6, t); o.frequency.exponentialRampToValueAtTime(mtof(n), t + 0.04);
+    if (slideTo) { o.frequency.setValueAtTime(mtof(n), t + dur * 0.45); o.frequency.exponentialRampToValueAtTime(mtof(slideTo), t + dur * 0.95); }
+    pre.gain.value = 0.7; f.type = "lowpass"; f.frequency.value = 900;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.006);
+    g.gain.setValueAtTime(level, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(pre).connect(ws).connect(f).connect(g); g.connect(dry); o.start(t); o.stop(t + dur + 0.05);
+  }
+  const clap = (t, level = 0.06) => { [0, 0.012, 0.026].forEach((d, k) => hit(t + d, { type: "bandpass", freq: 1500, q: 1.1, level: level * (k === 2 ? 1 : 0.6), decay: k === 2 ? 0.16 : 0.03 })); };
   chess("gamer", {
-    name: "Gamer Dad", bpm: 140,
-    bars: [
-      { root: 38, arp: [62, 65, 69, 74] },   // Dm
-      { root: 46, arp: [58, 62, 65, 70] },   // Bb
-      { root: 43, arp: [55, 58, 62, 67] },   // Gm
-      { root: 45, arp: [57, 61, 64, 69] },   // A
+    name: "Gamer Dad", bpm: 132,
+    roots: [40, 40, 41, 40, 40, 40, 43, 41],                 // E E F E | E E G F: the flat second gives it the dark drift feel
+    riffs: [                                                 // cowbell melody, 16 steps a bar (0 = rest)
+      [76, 0, 76, 79, 0, 76, 0, 77, 76, 0, 76, 79, 0, 81, 79, 77],
+      [76, 0, 76, 79, 0, 76, 0, 77, 76, 0, 74, 76, 0, 0, 0, 0],
+      [77, 0, 77, 81, 0, 77, 0, 79, 77, 0, 77, 81, 0, 84, 81, 79],
+      [76, 0, 76, 79, 0, 76, 0, 77, 83, 81, 79, 77, 76, 0, 74, 0],
     ],
     play(i, t, b) {
-      const { root, arp } = this.bars[i % 4], heavy = i % 8 >= 4;
-      for (let s = 0; s < 16; s++) bass(root + (s % 8 === 6 ? 12 : s % 4 === 3 ? 7 : 0), t + s * b / 4, b * 0.2, { type: "square", level: 0.075, cutoff: 360 });
-      for (let s = 0; s < 16; s++) if (heavy || s % 2 === 0) pluck(arp[(s * 5) % 4] + (s % 8 >= 4 ? 12 : 24), t + s * b / 4, { type: "square", level: 0.02, decay: 0.16, cutoff: 3000, echo: s % 4 === 0 });
-      for (let k = 0; k < 4; k++) { kick(t + k * b, 0.2); hat(t + (k + 0.5) * b, 0.026); }
-      snare(t + b, 0.07, 240); snare(t + 3 * b, 0.07, 240);
-      if (heavy) for (let s = 0; s < 8; s++) hat(t + s * b / 2 + b / 4, 0.014);
-      if (i % 4 === 3) pad(arp.map((n) => n - 12), t, 4 * b, { type: "square", cutoff: 700, level: 0.018 });
+      const s16 = b / 4, k = i % 16, intro = k < 4, root = this.roots[i % 8], riff = this.riffs[i % 4];
+      riff.forEach((n, s) => { if (n) cowbell(n, t + s * s16, intro ? 0.032 : 0.042, s16 * 1.9); });
+      for (let s = 0; s < 16; s++) {
+        if (s % 2 === 0) hat(t + s * s16, 0.02);
+        else if (!intro && (s === 7 || s === 15 || i % 2)) hat(t + s * s16, 0.012);
+      }
+      if (i % 4 === 3) for (let r = 0; r < 6; r++) hat(t + 3.5 * b + r * (b / 12), 0.01 + r * 0.003);      // hat roll into the next phrase
+      if (intro) { if (k === 3) blip(88, t + 2 * b, { type: "sawtooth", level: 0.03, dur: 2 * b, to: 40, echo: false }); return; }   // riser before the drop
+      [0, 6, 10].forEach((s) => kick(t + s * s16, 0.21));
+      clap(t + b); clap(t + 3 * b);
+      sub808(root, t, 5.5 * s16);
+      sub808(root, t + 6 * s16, 3.5 * s16);
+      sub808(root, t + 10 * s16, 5.5 * s16, { slideTo: i % 4 === 3 ? root + 12 : i % 2 ? root - 5 : 0 });
+      if (k % 4 === 0) pad([root + 12, root + 15, root + 19], t, 8 * b, { type: "sawtooth", cutoff: 520, level: 0.016 });
     },
   });
 
@@ -755,22 +783,69 @@
     },
   });
 
-  // Robo-Grandpa: a 1970s funk groove played by a robot, E minor pentatonic, clavinet and glitchy bleeps
+  // Robo-Grandpa: "In the Hall of the Mountain King" (Edvard Grieg, 1875; the composition is in the
+  // public domain). This is RoboDad's own 8-bit arrangement, played live by the oscillators here, so no
+  // one's recording is used. Like the original it starts as a quiet tiptoe and gets louder, fuller and
+  // faster each time round, ends on crashing chords, then Grandpa nods off and it starts again.
+  function chip(n, t, dur, { type = "square", level = 0.03, echo = false } = {}) {   // a held chip-tune note with a short tail
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = mtof(n);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(level * 0.55, t + Math.max(0.03, dur * 0.7)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); out(g, echo); o.start(t); o.stop(t + dur + 0.03);
+  }
+  const MK = (() => {
+    // the tune in eighth notes, B minor, one array per bar; 0 holds the note before it
+    const A1 = [47, 49, 50, 52, 54, 50, 54, 0], A2 = [53, 49, 53, 0, 52, 48, 52, 0], A3 = [47, 49, 50, 52, 54, 50, 54, 59];
+    const A4 = [57, 54, 50, 54, 57, 0, 0, 0], A4end = [57, 54, 50, 54, 59, 0, 0, 0];
+    const B1 = [54, 56, 58, 59, 61, 58, 61, 0], B2 = [62, 58, 62, 0, 61, 58, 61, 0], B4 = [62, 58, 62, 0, 61, 0, 0, 0];
+    const Bm = { roots: [47, 42], chord: [59, 62, 66] }, D = { roots: [50, 45], chord: [57, 62, 66] }, DBm = { roots: [50, 47], chord: [59, 62, 66] }, Fs = { roots: [42, 49], chord: [58, 61, 66] };
+    const a = [[A1, Bm], [A2, Bm], [A3, Bm], [A4, D]], aEnd = [[A1, Bm], [A2, Bm], [A3, Bm], [A4end, DBm]], bb = [[B1, Fs], [B2, Fs], [B1, Fs], [B4, Fs]];
+    return [...a, ...a, ...bb, ...bb, ...aEnd, ...aEnd];     // 24 bars
+  })();
   chess("grandpa", {
-    name: "Robo-Grandpa", bpm: 100,
-    bass: [[0, 0, 12, 0, 0, 10, 0, 7, 0, 0, 12, 0, 15, 12, 10, 7], [0, 0, 12, 0, 0, 10, 0, 7, 0, 3, 0, 5, 7, 0, 10, 12]],
-    stabs: [[0, 3, 7, 10], [5, 8, 12, 15]],
+    name: "Robo-Grandpa", bpm: 96,
+    speeds: [96, 108, 124, 142, 160, 176],                    // one step per time round, sliding smoothly between them
+    tempo(i) {
+      const k = i % 122; if (k >= 120) return 176;
+      const c = Math.floor(k / 24), f = (k % 24) / 24;
+      return this.speeds[c] + (this.speeds[c + 1] - this.speeds[c]) * f;
+    },
     play(i, t, b) {
-      const pat = this.bass[i % 2], chord = this.stabs[Math.floor(i / 2) % 2];
-      for (let s = 0; s < 16; s++) {
-        if (s % 4 !== 1 || s % 8 === 1) bass(40 + pat[s], t + s * b / 4, b * 0.2, { type: "sawtooth", level: 0.115, cutoff: 420 });
-        hat(t + s * b / 4, s % 2 ? 0.014 : 0.022, s === 14);
+      const k = i % 122, e = b / 2;
+      if (k === 120) {                                         // the ending: three crashing chords and a drum roll
+        [0, 1, 2].forEach((q) => { [47, 59, 62, 66, 71].forEach((n) => chip(n, t + q * b, b * 0.5, { level: 0.03 })); kick(t + q * b, 0.22); hit(t + q * b, { freq: 5000, level: 0.05, decay: 0.25 }); });
+        for (let r = 0; r < 8; r++) snare(t + 3 * b + r * (b / 8), 0.03 + r * 0.006, 200);
+        return;
       }
-      [2, 3, 6, 11, 14].forEach((s) => chord.forEach((n) => clav(64 + n, t + s * b / 4, 0.04)));
-      kick(t, 0.19); kick(t + 2.5 * b, 0.14); kick(t + 3 * b, 0.12);
-      snare(t + b, 0.065, 180); snare(t + 3 * b, 0.065, 180);
-      for (let k = 0; k < 3; k++) if (rand() < 0.5) blip(pickOne([76, 79, 81, 83, 88, 91]), t + Math.floor(rand() * 16) * b / 4, { level: 0.03, dur: 0.06, to: rand() < 0.4 ? 100 : 0 });   // robot chatter
-      if (i % 8 === 7) blip(60, t + 3 * b, { type: "sawtooth", level: 0.03, dur: 0.9, to: 96 });   // a rising "system update" sweep
+      if (k === 121) {                                         // last chord, then Grandpa powers down for a nap
+        [35, 47, 59, 62, 66, 71].forEach((n) => chip(n, t, b * 1.6, { level: 0.034 })); kick(t, 0.24); hit(t, { freq: 4000, level: 0.06, decay: 0.28 });
+        blip(71, t + 2 * b, { type: "sawtooth", level: 0.028, dur: 1.6 * b, to: 35, echo: false });
+        return;
+      }
+      const c = Math.floor(k / 24), [tune, harm] = MK[k % 24];
+      // melody: tiptoe on a soft triangle first, then square leads stacking up an octave at a time
+      for (let s = 0; s < 8; s++) {
+        const n = tune[s]; if (!n) continue;
+        let len = 1; while (s + len < 8 && tune[s + len] === 0) len++;
+        const dur = len > 1 ? e * len * 0.85 : e * 0.8, at = t + s * e;
+        if (c === 0) chip(n + 12, at, dur, { type: "triangle", level: 0.105 });
+        else {
+          chip(n + 12, at, dur, { level: c === 1 ? 0.058 : 0.036 });
+          if (c >= 2) chip(n + 24, at, dur, { level: 0.027, echo: c >= 3 && s % 4 === 0 });
+          if (c >= 4) chip(n + 36, at, dur * 0.8, { type: "triangle", level: 0.022 });
+        }
+      }
+      // plucked bass on the beat, chord stabs off it
+      [0, 2].forEach((q, j) => bass(harm.roots[j], t + q * b, b * 0.45, { type: c >= 3 ? "square" : "triangle", level: c === 0 ? 0.085 : 0.11, cutoff: c >= 3 ? 520 : 420 }));
+      if (c >= 1) [1, 3].forEach((q) => harm.chord.forEach((n) => chip(n, t + q * b, b * 0.3, { type: "triangle", level: c >= 3 ? 0.034 : 0.03 })));
+      // drums come in on the third time round and fill out after that
+      if (c >= 2) { kick(t, 0.17); kick(t + 2 * b, 0.15); snare(t + b, 0.05, 190); snare(t + 3 * b, 0.05, 190); }
+      if (c >= 3) for (let s = 0; s < 8; s++) hat(t + s * e, s % 2 ? 0.012 : 0.02);
+      if (c >= 4) { for (let s = 0; s < 8; s++) hat(t + s * e + e / 2, 0.01); [1, 3].forEach((q) => hit(t + q * b, { freq: 5000, level: 0.03, decay: 0.2 })); }   // the offbeat crashes
+      if (k % 24 === 23) for (let r = 0; r < 4; r++) snare(t + 3 * b + r * (b / 4), 0.02 + r * 0.008 + c * 0.004, 220);   // a little roll into the next time round
+      // he is still a robot: the odd glitchy bleep on the long notes
+      if (k % 4 === 3 && rand() < 0.6) blip(pickOne([83, 86, 90, 95]), t + (2.5 + Math.floor(rand() * 3) * 0.5) * b, { level: 0.022, dur: 0.06, to: rand() < 0.4 ? 102 : 0 });
     },
   });
 
@@ -798,8 +873,8 @@
 
   function tick() {
     const st = STATIONS[current]; if (!st) return;
-    const beat = 60 / (st.bpm * tempoMul);
     while (nextBarTime < ctx.currentTime + 0.6) {
+      const beat = 60 / ((st.tempo ? st.tempo(bar) : st.bpm) * tempoMul);   // a station can set its own speed bar by bar
       st.play(bar, nextBarTime, beat);
       nextBarTime += 4 * beat; bar++;
     }
@@ -994,14 +1069,14 @@
       if (ctx && timer) master.gain.setTargetAtTime(targetGain(), ctx.currentTime, 0.25);
     },
     // Renders a station to an AudioBuffer without playing it (used for testing).
-    async renderPreview(name, seconds = 20, sampleRate = 44100) {
+    async renderPreview(name, seconds = 20, sampleRate = 44100, startBar = 0) {
       const saved = { ctx, master, comp, wet, dry, delay, delayFb, delayOut, current, bar, nextBarTime };
       const off = new OfflineAudioContext(2, Math.ceil(sampleRate * seconds), sampleRate);
       setup(off);
-      const st = STATIONS[name]; const beat = 60 / st.bpm;
+      const st = STATIONS[name]; let beat = 60 / st.bpm;
       master.gain.setValueAtTime(0, 0); master.gain.linearRampToValueAtTime(volume * 1.4, 1.5);
       delay.delayTime.value = beat * 0.75; seed = 7;
-      for (let i = 0, t = 0.1; t < seconds; i++, t += 4 * beat) st.play(i, t, beat);
+      for (let i = startBar, t = 0.1; t < seconds; i++, t += 4 * beat) { beat = 60 / (st.tempo ? st.tempo(i) : st.bpm); st.play(i, t, beat); }
       const buf = await off.startRendering();
       ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, current, bar, nextBarTime } = saved);
       return buf;
