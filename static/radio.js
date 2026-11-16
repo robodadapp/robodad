@@ -849,6 +849,252 @@
     },
   });
 
+  // ---------- Tile Talk stations ----------
+  // One loop per dad for Tile Talk, played by key: RoboRadio.play("tiles-skater"). Like the chess loops they
+  // are hidden from the radio picker and are not used anywhere else, so each game has music of its own.
+  // Everything is made live from oscillators and noise. Two are RoboDad's own renditions of public-domain
+  // compositions (Bach's Prelude in C, 1722, and Joplin's "The Entertainer", 1902); the rest are original.
+  const tiles = (key, def) => { STATIONS["tiles-" + key] = Object.assign({ hidden: true }, def); };
+
+  function rhodes(n, t, dur, vel = 1) {                      // electric piano through a low-pass, drifting slightly off pitch like a worn tape
+    const c = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    const hz = mtof(n), wob = Math.sin(t * 2 * Math.PI * 0.45) * 9;
+    c.frequency.value = hz; m.frequency.value = hz; m.detune.value = wob;
+    c.detune.setValueAtTime(wob, t); c.detune.linearRampToValueAtTime(-wob, t + dur + 0.6);
+    mg.gain.setValueAtTime(hz * 0.9, t); mg.gain.exponentialRampToValueAtTime(hz * 0.04, t + 0.9);
+    m.connect(mg).connect(c.frequency);
+    f.type = "lowpass"; f.frequency.value = 1700;
+    env(g, t, 0.02, 0.1 * vel, 1.2, 0.025 * vel, 0.5, t + dur);
+    c.connect(f).connect(g); out(g);
+    c.start(t); m.start(t); c.stop(t + dur + 0.6); m.stop(t + dur + 0.6);
+  }
+  function crackle(t, dur, amount = 10, level = 0.012) {     // record-surface pops
+    for (let k = 0; k < amount; k++) hit(t + rand() * dur, { type: "highpass", freq: 2500 + rand() * 4500, level: level * (0.4 + rand()), decay: 0.012 });
+  }
+  function harpsi(n, t, level = 0.05, decay = 0.9) {         // harpsichord: a bright pluck with a quieter string an octave up
+    pluck(n, t, { type: "sawtooth", level, decay, cutoff: 5200 });
+    pluck(n + 12, t, { type: "square", level: level * 0.25, decay: decay * 0.6, cutoff: 6000 });
+  }
+  let gram = null;
+  function gramBus() {                                       // an old gramophone horn: no deep bass, no sparkle
+    if (!gram || gram.context !== ctx) {
+      const hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+      hp.type = "highpass"; hp.frequency.value = 380; lp.type = "lowpass"; lp.frequency.value = 2600; g.gain.value = 1.2;
+      hp.connect(lp).connect(g); g.connect(dry); g.connect(wet);
+      gram = hp;
+    }
+    return gram;
+  }
+  function tack(n, t, dur, level = 0.06) {                   // a slightly out-of-tune upright piano, heard through the horn
+    const wow = Math.sin(t * 2 * Math.PI * 0.6) * 7, g = ctx.createGain();
+    [[-9, "triangle", 1], [8, "square", 0.25]].forEach(([cents, type, amt]) => {
+      const o = ctx.createOscillator(), og = ctx.createGain();
+      o.type = type; o.frequency.value = mtof(n); o.detune.value = cents + wow; og.gain.value = amt;
+      o.connect(og).connect(g); o.start(t); o.stop(t + dur + 0.25);
+    });
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(level * 0.3, t + Math.min(dur, 0.25)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.2);
+    g.connect(gramBus());
+  }
+
+  // Modern Dad: lo-fi. Worn electric piano, lazy swung drums and record crackle (Fmaj7-Em7-Dm7-Cmaj7)
+  tiles("modern", {
+    name: "Sunday Crossword", bpm: 74,
+    bars: [
+      { root: 41, chord: [60, 64, 65, 69] },   // Fmaj7
+      { root: 40, chord: [59, 62, 64, 67] },   // Em7
+      { root: 38, chord: [57, 60, 62, 65] },   // Dm7
+      { root: 36, chord: [55, 59, 60, 64] },   // Cmaj7
+    ],
+    licks: [[76, 0, 79, 76, 0, 72, 0, 0], [74, 0, 0, 76, 72, 0, 69, 0], [72, 0, 77, 0, 76, 0, 72, 0], [0, 71, 72, 0, 76, 0, 0, 0]],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 4], lazy = b * 0.04, swing = b * 0.12;
+      chord.forEach((n, k) => rhodes(n, t + k * 0.025, 2.2 * b, 0.7));
+      chord.slice(1).forEach((n, k) => rhodes(n, t + 2.5 * b + lazy + k * 0.02, 1.2 * b, 0.4));
+      bass(root + 12, t, b * 1.6, { type: "triangle", level: 0.11, cutoff: 400 }); bass(root + 12, t + 2.5 * b, b * 0.9, { type: "triangle", level: 0.07, cutoff: 400 });
+      if (i % 8 >= 2) this.licks[(i + Math.floor(i / 8)) % 4].forEach((n, s) => { if (n) rhodes(n, t + s * b / 2 + (s % 2 ? swing : 0), b * 0.9, 0.5); });
+      softKick(t, 0.15); softKick(t + 2.5 * b, 0.11); if (i % 2) softKick(t + 3.5 * b + swing, 0.07);
+      [1, 3].forEach((q) => hit(t + q * b + lazy, { type: "bandpass", freq: 1700, q: 1.4, level: 0.045, decay: 0.09 }));   // rim click, a touch late
+      for (let s = 0; s < 8; s++) hat(t + s * b / 2 + (s % 2 ? swing : 0), s % 2 ? 0.01 : 0.016);
+      crackle(t, 4 * b);
+    },
+  });
+
+  // Skater Dad: liquid drum & bass. A two-step break, a warm pad and an echoing lead (Am7-Fmaj7-C-G, two bars each)
+  tiles("skater", {
+    name: "Kickflip Breaks", bpm: 168,
+    bars: [
+      { root: 45, chord: [57, 60, 64, 67] },   // Am7
+      { root: 41, chord: [57, 60, 64, 65] },   // Fmaj7
+      { root: 48, chord: [55, 60, 64, 67] },   // C
+      { root: 43, chord: [55, 59, 62, 67] },   // G
+    ],
+    lead: [[76, 0, 0, 79, 0, 76, 0, 0], [72, 0, 0, 76, 0, 72, 0, 69], [79, 0, 0, 76, 0, 72, 0, 0], [74, 0, 0, 79, 0, 74, 0, 71]],
+    play(i, t, b) {
+      const c = Math.floor(i / 2) % 4, { root, chord } = this.bars[c], first = i % 2 === 0, k = i % 32, full = k >= 4;
+      if (first) pad(chord, t, 8 * b, { type: "sawtooth", cutoff: 1200, level: 0.027 });
+      if (first) this.lead[c].forEach((n, s) => { if (n) pluck(n, t + s * b / 2, { type: "triangle", level: 0.07, decay: 0.8, cutoff: 3000, echo: true }); });
+      else if (k >= 16) this.lead[c].forEach((n, s) => { if (n && s % 3 === 0) pluck(n + 12, t + s * b / 2, { type: "sine", level: 0.03, decay: 0.6, cutoff: 4000, echo: true }); });
+      for (let s = 0; s < 8; s++) hat(t + s * b / 2, s % 2 ? 0.02 : 0.012);
+      if (!full) return;
+      bass(root, t, b * 1.4, { type: "sawtooth", level: 0.085, cutoff: 300 }); bass(root, t + 2.5 * b, b * 1.2, { type: "sawtooth", level: 0.075, cutoff: 300 });
+      bass(root + 12, t, b * 1.4, { type: "sine", level: 0.06, cutoff: 600 });
+      kick(t, 0.19); kick(t + 2.5 * b, 0.17);
+      snare(t + b, 0.065, 220); snare(t + 3 * b, 0.065, 220);
+      snare(t + 1.75 * b, 0.018, 260); if (!first) snare(t + 3.75 * b, 0.022, 260);                    // ghost notes
+      if (k === 31) [0, 0.25, 0.5, 0.75].forEach((p, j) => snare(t + (3 + p) * b, 0.03 + j * 0.01, 240));   // fill before it drops back to the intro
+    },
+  });
+
+  // Arcade Dad: bright 80s power-pop synth in D (D-Bm-G-A), gated snare, tom fills and a singing lead
+  tiles("eighties", {
+    name: "Neon Thesaurus", bpm: 104,
+    bars: [
+      { root: 50, chord: [62, 66, 69] },   // D
+      { root: 47, chord: [62, 66, 71] },   // Bm
+      { root: 43, chord: [62, 67, 71] },   // G
+      { root: 45, chord: [61, 64, 69] },   // A
+    ],
+    lead: [[78, 0, 81, 0, 86, 0, 85, 81], [78, 0, 0, 74, 78, 0, 0, 0], [79, 0, 83, 0, 86, 0, 88, 86], [85, 0, 0, 81, 76, 0, 81, 0]],
+    play(i, t, b) {
+      const { root, chord } = this.bars[i % 4], k = i % 16, chorus = k >= 8;
+      pad(chord, t, 4 * b, { type: "sawtooth", cutoff: 1300, level: 0.029 });
+      for (let s = 0; s < 8; s++) bass(root, t + s * b / 2, b * 0.4, { type: "sawtooth", level: s % 2 ? 0.065 : 0.09, cutoff: 600 });
+      if (k >= 4) this.lead[i % 4].forEach((n, s) => { if (n) pluck(n - (chorus ? 0 : 12), t + s * b / 2, { type: "sawtooth", level: 0.046, decay: 0.7, cutoff: 2600, echo: true }); });
+      kick(t, 0.18); kick(t + 2 * b, 0.18); if (chorus) kick(t + 3.5 * b, 0.1);
+      [1, 3].forEach((q) => { snare(t + q * b, 0.065, 200); hit(t + q * b, { type: "bandpass", freq: 1200, q: 0.5, level: 0.03, decay: 0.26 }); });   // the big gated snare
+      for (let s = 0; s < 8; s++) hat(t + s * b / 2, s % 2 ? 0.02 : 0.012, chorus && s === 7);
+      if (i % 8 === 7) [0, 1, 2, 3].forEach((q) => drum(t + (3 + q / 4) * b, 190 - q * 30, 0.1, 0.18));    // tom fill
+    },
+  });
+
+  // Gamer Dad: a half-time trap beat in F# minor: glassy bells, rolling hats and a sliding 808. Nothing sampled
+  tiles("gamer", {
+    name: "Lag Switch", bpm: 140,
+    bars: [
+      { root: 42, chord: [54, 57, 61] },   // F#m
+      { root: 38, chord: [54, 57, 62] },   // D
+      { root: 45, chord: [52, 57, 61] },   // A
+      { root: 40, chord: [52, 56, 59] },   // E
+    ],
+    bells: [
+      [85, 0, 0, 81, 0, 0, 78, 0, 0, 0, 81, 0, 80, 0, 78, 0],
+      [86, 0, 0, 81, 0, 0, 78, 0, 0, 0, 74, 0, 0, 0, 0, 0],
+      [85, 0, 0, 81, 0, 0, 76, 0, 0, 0, 81, 0, 85, 0, 88, 0],
+      [83, 0, 0, 80, 0, 0, 76, 0, 0, 0, 80, 0, 0, 0, 0, 0],
+    ],
+    play(i, t, b) {
+      const s16 = b / 4, k = i % 16, { root, chord } = this.bars[i % 4], full = k >= 4;
+      pad(chord, t, 4 * b, { type: "triangle", cutoff: 900, level: 0.03 });
+      this.bells[i % 4].forEach((n, s) => { if (n) pluck(n, t + s * s16, { type: "sine", level: 0.05, decay: 0.9, cutoff: 5000, echo: true }); });
+      for (let s = 0; s < 8; s++) hat(t + s * b / 2, s % 2 ? 0.012 : 0.018);
+      if (i % 2) for (let r = 0; r < 6; r++) hat(t + 2.5 * b + r * (b / 12), 0.008 + r * 0.002);         // trap roll
+      if (!full) return;
+      kick(t, 0.2); kick(t + 2.75 * b, 0.14); if (i % 2) kick(t + 1.5 * b, 0.12);
+      clap(t + 2 * b, 0.065);                                                                             // half-time: the clap lands on three
+      sub808(root, t, 2.6 * b, { level: 0.1 }); sub808(root, t + 2.75 * b, 1.2 * b, { level: 0.09, slideTo: i % 4 === 3 ? root + 7 : 0 });
+    },
+  });
+
+  // Coach Dad: a halftime-show drumline in B flat: snare cadences, tuned bass drums, a tuba line, brass hits and a whistle
+  tiles("coach", {
+    name: "Halftime Drumline", bpm: 100,
+    cadence: [                                   // 16 steps a bar: 2 = accent, 1 = tap
+      [2, 0, 1, 1, 2, 0, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0],
+      [2, 1, 1, 2, 1, 1, 2, 0, 1, 1, 2, 0, 2, 0, 2, 0],
+      [2, 0, 0, 1, 2, 0, 0, 1, 2, 1, 2, 1, 2, 1, 1, 1],
+      [2, 1, 1, 1, 2, 1, 1, 1, 2, 2, 0, 2, 2, 0, 2, 0],
+    ],
+    tuba: [[46, 0, 0, 46, 0, 0, 53, 0, 46, 0, 0, 46, 0, 53, 51, 0], [51, 0, 0, 51, 0, 0, 58, 0, 53, 0, 0, 53, 0, 48, 50, 0]],
+    play(i, t, b) {
+      const s16 = b / 4, k = i % 16;
+      this.cadence[i % 4].forEach((v, s) => { if (v) snare(t + s * s16, v === 2 ? 0.07 : 0.022, v === 2 ? 210 : 250); });
+      [0, 1.5, 2, 3].forEach((q, j) => drum(t + q * b, [62, 62, 78, 94][(j + i) % 4], 0.2, 0.3, 0.7));   // tuned bass drums
+      if (k >= 4) this.tuba[i % 2].forEach((n, s) => { if (n) bass(n, t + s * s16, s16 * 1.6, { type: "sawtooth", level: 0.1, cutoff: 380 }); });
+      if (k >= 8 && i % 2 === 0) { brass([65, 70, 74], t + 2 * b, b * 0.4); brass([65, 70, 74], t + 2.75 * b, b * 0.25); brass([67, 70, 75], t + 3.5 * b, b * 0.45, 0.05); }
+      if (k >= 8 && i % 2 === 1) brass([60, 65, 69, 72], t + 3 * b, b * 0.9, 0.05);
+      if (i % 4 === 0) hit(t, { freq: 5000, level: 0.05, decay: 0.28 });                                  // cymbal
+      if (i % 8 === 7) blip(96, t + 3 * b, { type: "sine", level: 0.04, dur: 0.5 * b, to: 98, echo: false });   // the coach's whistle
+    },
+  });
+
+  // Lab Dad: a patient little computer working something out. Sine arpeggios that shift each bar, bubbles and a theremin
+  tiles("labdad", {
+    name: "Periodic Table", bpm: 96,
+    bars: [
+      { root: 53, arp: [65, 69, 72, 76] },   // F (add the major 7th)
+      { root: 53, arp: [65, 69, 72, 79] },   // F
+      { root: 55, arp: [67, 71, 74, 79] },   // G
+      { root: 50, arp: [62, 65, 69, 72] },   // Dm
+    ],
+    order: [0, 2, 1, 3, 2, 0, 3, 1, 0, 3, 2, 1, 3, 2, 1, 0],
+    play(i, t, b) {
+      const s16 = b / 4, { root, arp } = this.bars[i % 4], k = i % 16;
+      pad(arp.slice(0, 3), t, 4 * b, { type: "triangle", cutoff: 1400, level: 0.026 });
+      for (let s = 0; s < 16; s++) if ((s * 7 + i * 3) % 5 !== 0) pluck(arp[this.order[s]] + (s % 5 === 4 ? 12 : 0), t + s * s16, { type: "sine", level: 0.05, decay: 0.4, cutoff: 4000, echo: s % 4 === 0 });
+      [0, 1.5, 2.5].forEach((q) => bass(root, t + q * b, b * 0.45, { type: "triangle", level: 0.1, cutoff: 500 }));
+      if (k >= 4) { softKick(t, 0.11); softKick(t + 2 * b, 0.09); [1, 3].forEach((q) => hit(t + q * b, { type: "bandpass", freq: 2600, q: 2, level: 0.028, decay: 0.05 })); }
+      for (let n = 0; n < 2; n++) if (rand() < 0.5) blip(72 + Math.floor(rand() * 12), t + Math.floor(rand() * 16) * s16, { type: "sine", level: 0.02, dur: 0.12, to: 96 });   // bubbles
+      if (k === 14) theremin([84, 88, 83, 86], t, b, 0.03);
+    },
+  });
+
+  // Professor Dad: J. S. Bach, Prelude in C major from The Well-Tempered Clavier (1722, public domain), bars 1 to 19,
+  // played on a harpsichord. Each bar is one broken chord: five notes, bottom to top, with the top three repeated.
+  tiles("professor", {
+    name: "Prelude in C", bpm: 66,
+    chords: [
+      [60, 64, 67, 72, 76], [60, 62, 69, 74, 77], [59, 62, 67, 74, 77], [60, 64, 67, 72, 76], [60, 64, 69, 76, 81],
+      [60, 62, 66, 69, 74], [59, 62, 67, 74, 79], [59, 60, 64, 67, 72], [57, 60, 64, 67, 72], [50, 57, 62, 66, 72],
+      [55, 59, 62, 67, 71], [55, 58, 64, 67, 73], [53, 57, 62, 69, 74], [53, 56, 62, 65, 71], [52, 55, 60, 67, 72],
+      [52, 53, 57, 60, 65], [50, 53, 57, 60, 65], [43, 50, 55, 59, 65], [48, 52, 55, 60, 64],
+    ],
+    play(i, t, b) {
+      const c = this.chords[i % 19], s16 = b / 4;
+      for (let h = 0; h < 2; h++) [0, 1, 2, 3, 4, 2, 3, 4].forEach((idx, s) => harpsi(c[idx], t + (h * 8 + s) * s16, idx < 2 ? 0.2 : 0.16, idx === 0 ? 2.2 : idx === 1 ? 1.6 : 0.8));
+    },
+  });
+
+  // Robo-Grandpa: Scott Joplin, "The Entertainer" (1902, public domain), the first strain, on a tinny upright piano
+  // heard through an old gramophone, crackle and all. The beat here is an eighth note, so each bar below is two of Joplin's.
+  const RAG = (() => {
+    const D4 = 62, Ds4 = 63, E4 = 64, Fs4 = 66, G4 = 67, A4 = 69, B4 = 71, C5 = 72, D5 = 74, Ds5 = 75, E5 = 76;
+    const open = [[E4, 1], [C5, 2], [E4, 1], [C5, 2], [E4, 1], [C5, 5]];                       // runs 12 sixteenths, into the next bar
+    const answer = [[E5, 1], [C5, 1], [D5, 1], [E5, 2], [B4, 1], [D5, 2]], turn = [[E5, 1], [C5, 1], [D5, 1], [E5, 2], [C5, 1], [D5, 1], [C5, 1]];
+    const home = [[C5, 6], [D4, 1], [Ds4, 1]];
+    const tune = [
+      ...open, [0, 1], [C5, 1], [D5, 1], [Ds5, 1], ...answer, ...home,
+      ...open, [0, 2], [A4, 1], [G4, 1], [Fs4, 1], [A4, 1], [C5, 1], [E5, 2], [D5, 1], [C5, 1], [A4, 1], [D5, 6], [D4, 1], [Ds4, 1],
+      ...open, [0, 1], [C5, 1], [D5, 1], [Ds5, 1], ...answer, [C5, 4], [0, 2], [C5, 1], [D5, 1],
+      ...turn, ...turn, ...answer, ...home,
+    ];
+    const notes = []; let at = 0; tune.forEach(([n, len]) => { if (n) notes.push([at, n, len]); at += len; });      // 128 sixteenths in all
+    const C = [55, 60, 64], C7 = [58, 60, 64], G7 = [53, 55, 59], D7 = [54, 57, 60], G = [55, 59, 62], F = [57, 60, 65], Fm = [56, 60, 65];
+    const left = [                                                                              // per bar: bass note then chord, twice
+      [48, C, 43, C], [48, C, 43, C], [43, C, 43, G7], [48, C, 43, G7],
+      [48, C, 43, C], [48, C, 43, C], [50, D7, 45, D7], [43, G, 43, G7],
+      [48, C, 43, C], [48, C, 43, C], [43, C, 43, G7], [48, C, 48, C],
+      [48, C, 46, C7], [45, F, 44, Fm], [43, C, 43, G7], [48, C, 43, G7],
+    ];
+    return { notes, left };
+  })();
+  tiles("grandpa", {
+    name: "The Entertainer", bpm: 140,
+    play(i, t, b) {
+      const s = b / 2, from = (i % 8) * 16;
+      RAG.notes.forEach(([at, n, len]) => { if (at >= from && at < from + 16) { tack(n, t + (at - from) * s, len * s * 0.95, 0.075); tack(n + 12, t + (at - from) * s, len * s * 0.8, 0.028); } });
+      for (let half = 0; half < 2; half++) {
+        const [b1, c1, b2, c2] = RAG.left[(i % 8) * 2 + half], o = t + half * 8 * s;
+        [[b1, c1, 0], [b2, c2, 4]].forEach(([bassNote, chord, off]) => {
+          tack(bassNote, o + off * s, b * 0.9, 0.07); tack(bassNote + 12, o + off * s, b * 0.6, 0.03);
+          chord.forEach((n) => tack(n, o + (off + 2) * s, b * 0.5, 0.032));
+        });
+      }
+      crackle(t, 4 * b, 14, 0.014);
+      hit(t + rand() * 2 * b, { type: "bandpass", freq: 3000, q: 0.4, level: 0.004, decay: 0.28 });      // a breath of surface hiss
+    },
+  });
+
   // Final Chapter: an original, tense-but-not-scary boss theme for Bookworm Dad in D minor.
   // Harpsichord-ish echoing arpeggios over a pulsing bass, like turning pages fast.
   STATIONS.boss = {
@@ -1025,6 +1271,7 @@
 
   const api = {
     stations: Object.fromEntries(Object.entries(STATIONS).filter(([, v]) => !v.hidden).map(([k, v]) => [k, v.name])),
+    names: Object.fromEntries(Object.entries(STATIONS).map(([k, v]) => [k, v.name])),   // every loop, the hidden game ones included
     get station() { return current; },
     get playing() { return !!timer; },
     onchange: null,
