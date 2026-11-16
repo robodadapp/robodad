@@ -593,11 +593,13 @@ button,textarea{font:inherit;color:inherit}
 #avHead.tilt,#avHero.tilt{transform:rotate(-7deg)}
 .bot.tilt .eye{transform:translateY(1.2px); transition:transform .25s ease}
 .avatar > .bot.hop,#avHero.hop{animation:rd-hop .55s cubic-bezier(.34,1.56,.64,1)}
+#avHero.poke-me{animation:rd-poke 1.4s ease-in-out 3}
+@keyframes rd-poke{15%{transform:rotate(-6deg)} 30%{transform:rotate(5deg)} 45%{transform:rotate(-3deg)} 60%{transform:none}}
 @keyframes rd-hop{30%{transform:translateY(-5px) scale(1.04, .97)} 60%{transform:translateY(0) scale(.98, 1.03)}}
 .bot.talking .mouth{transform-box:fill-box; transform-origin:center; animation:rd-talk .22s steps(2, end) infinite}
 @keyframes rd-talk{50%{transform:scale(1.15, 1.9)}}
 @media (prefers-reduced-motion: reduce){
-  :where(.bot) .body,.bot.blink .eye,.bot.dbl .eye,.bot.talking .mouth,.avatar > .bot.hop,#avHero.hop{animation:none}
+  :where(.bot) .body,.bot.blink .eye,.bot.dbl .eye,.bot.talking .mouth,.avatar > .bot.hop,#avHero.hop,#avHero.poke-me{animation:none}
   #avHead.tilt,#avHero.tilt{transform:none} #avHead,#avHero{transition:none}
 }
 .avatar.nod > .bot{animation:nod .7s ease-in-out 1}
@@ -1842,6 +1844,10 @@ textarea::placeholder{color:var(--muted)}
   <div class="card">
     <h2 id="menuTitle">Make it yours</h2>
     <p id="menuHint">Change how RoboDad looks and works.</p>
+    <div class="avpick">
+      <p class="coll-head" style="margin:0!important"><span>Pick your dad</span><small>Tap RoboDad any time to see a move</small></p>
+      <div class="avs" role="radiogroup" aria-label="Avatar" id="avPick"></div>
+    </div>
     <b id="themeLabel">Light or dark</b>
     <div class="theme-pick" role="radiogroup" aria-labelledby="themeLabel">
       <button type="button" role="radio" data-theme-pick="auto" aria-checked="true" title="Match your phone" aria-label="Auto: match your phone">📱 Auto</button>
@@ -1930,10 +1936,6 @@ textarea::placeholder{color:var(--muted)}
       </button>
     </div>
     <div class="row" style="justify-content:flex-start; margin-top:10px"><button class="ghost" id="shuffleMenu" type="button">✨ Shuffle theme</button></div>
-    <div class="avpick">
-      <p class="coll-head" style="margin:0!important"><span>Avatar</span><small>Tap RoboDad any time to see a move</small></p>
-      <div class="avs" role="radiogroup" aria-label="Avatar" id="avPick"></div>
-    </div>
     <div>
       <div class="setting" id="readRow" hidden><span>Read replies aloud</span>
         <button class="switch" id="readAloud" type="button" aria-pressed="false"><span class="sr">Read replies aloud</span></button></div>
@@ -2304,7 +2306,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=5"></script>
-<script src="/static/brain.js?v=7"></script>
+<script src="/static/brain.js?v=8"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=3"></script>
@@ -3312,6 +3314,7 @@ const PLAYERS = {
   // Easter egg: tap RoboDad 5 times quickly (or say "back in my day") to meet Robo-Grandpa
   let taps = [];
   function tapAvatar(){
+    setPref("robodad.poked", "1");
     const now = Date.now(); taps = taps.filter(t => now - t < 3000); taps.push(now);
     if (taps.length >= 5 && AV?.AVATARS.grandpa && !getPref("robodad.grandpa")) { taps = []; unlockGrandpa(); } else avPlay();
   }
@@ -4842,6 +4845,14 @@ const PLAYERS = {
     ["musicBtn", "voiceBtn"].forEach(id => { const b = $(id); b.classList.add("hint"); setTimeout(() => b.classList.remove("hint"), 3200); });
     showCap("", "Tap the bubbles: ♪ for music, 💬 for my voice");
     setTimeout(shuffleHintLater, 6000);   // the corner prop's "tap me" comes after, not at the same time
+    setTimeout(pokeHint, 14000);          // and last: Dad himself
+  }
+  // First visit: Dad tells you he can be poked, with a little move to prove it. Once you've poked him, never again.
+  function pokeHint(){
+    if (getPref("robodad.poked") || hello.hidden) return;
+    if (document.querySelector(".overlay:not([hidden])") || !$("bubCap").hidden || busy || input.value) { setTimeout(pokeHint, 4000); return; }
+    showCap("", "Psst. Poke me. I've got moves.");
+    $("avHero")?.classList.add("poke-me"); setTimeout(() => $("avHero")?.classList.remove("poke-me"), 4200);
   }
   setTimeout(bubbleHint, 2000);
   setDock(hello.hidden ? "head" : "hero"); setTimeout(() => { dockReady = true; }, 0);
@@ -5631,6 +5642,8 @@ const PLAYERS = {
   const TOUR_KEY = "robodad.toured";
   const TOUR = [
     ["chatTab", "Chat", "Ask Dad anything", "School, money, friends, cooking, or just “I need to talk.” Type it or tap the mic. Thumbs up, thumbs down or Report on any reply helps him get better."],
+    ["avHero", "Chat", "Poke Dad", "Tap him any time and he'll show you a move. Each dad has his own."],
+    ["shuffleSpot", "Chat", "Mix it up", "Tap the thing in the corner for a new look, a new dad and new music in one go. Change your mind in Me, under Looks."],
     ["playTab", "Play", "Games with Dad", "Chess against nine dads, Tile Talk word battles, brain teasers where Dad gives hints instead of answers, and a Daily Dad Challenge."],
     ["learnBtn", "Learn", "Your study corner", "French, Spanish, Hindi, Marathi and Bengali. Maths for Grades 7 to 10. Grammar and vocabulary games, a daily brain boost and Study Hall timers."],
     ["sideBtn", "Chill", "Take a breather", "Sleep sounds with a timer, the radio, and a countdown to the thing you're waiting for."],
@@ -5648,7 +5661,10 @@ const PLAYERS = {
     }
     tourRing.hidden = false;
     Object.assign(tourRing.style, { left:(r.left - 4) + "px", top:(r.top - 4) + "px", width:(r.width + 8) + "px", height:(r.height + 8) + "px" });
-    if (r.left > W / 2 && r.height > H / 2) {          // the Chill side panel: card to its left
+    if (r.bottom < H * 0.45 && r.height < H / 2) {    // something near the top (Dad, the shuffle corner): card below it
+      tourTip.style.left = Math.min(Math.max(12, r.left + r.width / 2 - tw / 2), W - tw - 12) + "px";
+      tourTip.style.top = Math.min(r.bottom + 16, H - th - 12) + "px";
+    } else if (r.left > W / 2 && r.height > H / 2) {          // the Chill side panel: card to its left
       tourTip.style.left = Math.max(12, r.left - tw - 16) + "px";
       tourTip.style.top = Math.max(12, (H - th) / 2) + "px";
     } else if (r.top > H / 2 || r.left > 100) {        // bottom tab bar: card sits above the tab
@@ -5661,7 +5677,7 @@ const PLAYERS = {
   }
   function tourShow(){
     const [, , title, text] = TOUR[tourI];
-    $("tourStep").textContent = `${tourI + 1} of ${TOUR.length} · ${TOUR[tourI][1]} tab`;
+    $("tourStep").textContent = `${tourI + 1} of ${TOUR.length} · ${TOUR[tourI][1]}${/Tab|Btn$/.test(TOUR[tourI][0]) ? " tab" : ""}`;
     $("tourTitle").textContent = title; $("tourText").textContent = text;
     $("tourDots").innerHTML = TOUR.map((_, i) => `<i class="${i === tourI ? "on" : ""}"></i>`).join("");
     $("tourNext").textContent = tourI === TOUR.length - 1 ? "Got it" : "Next";

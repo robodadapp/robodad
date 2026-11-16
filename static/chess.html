@@ -188,6 +188,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .tier[aria-checked="true"]{border-color:var(--gold)}
 .tier small{display:block; color:var(--muted); font-size:12px; font-weight:700}
 .tier[disabled]{opacity:.5; cursor:default}
+.tier{position:relative}
+.tier .sw{margin-left:auto; flex:none; width:24px; height:24px; border-radius:5px; border:2px solid; box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.tier[disabled] .sw{opacity:1; filter:none}
 .moves{width:100%; max-width:640px; color:var(--muted); font-size:.9rem; min-height:1.6em; word-spacing:4px}
 .foot{color:var(--muted); font-size:13px; text-align:center; max-width:640px}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
@@ -851,8 +854,20 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       const locked = t.secret && store.get(UNLOCK_KEY) !== "1";
       const label = locked ? "Locked. Find him in the Secret Vault." : (t.server ? `Tier ${t.tier} · online` : `Tier ${t.tier}`) + timeText(k, true);
       return `<button class="tier" type="button" role="radio" data-k="${k}" aria-checked="${k === tierKey}" ${locked ? "disabled" : ""}>
-        ${locked ? "" : avatarSVG(k, 36)}<span>${t.name}<small>${label}</small></span></button>`;
+        ${locked ? "" : avatarSVG(k, 36)}<span>${t.name}<small>${label}</small></span><i class="sw" aria-hidden="true" title="${t.name}'s board" style="${swatch(k)}"></i></button>`;
     }).join("");
+  }
+  // A tiny preview of each dad's board, read from the same skin colours the real board uses, so you can see what you're playing for.
+  const swCache = {};
+  function swatch(k) {
+    if (!(k in swCache)) {
+      const d = document.createElement("div"); d.className = "board"; d.dataset.skin = k;
+      d.style.cssText = "position:absolute; visibility:hidden; width:1px; pointer-events:none"; document.body.append(d);
+      const cs = getComputedStyle(d), v = (n) => cs.getPropertyValue(n).trim();
+      const L = v("--sq-light"), D = v("--sq-dark"), F = v("--frame") || D; d.remove();
+      swCache[k] = L && D ? `background:conic-gradient(${L} 25%, ${D} 0 50%, ${L} 0 75%, ${D} 0) 0 0/12px 12px; border-color:${F}` : "display:none";
+    }
+    return swCache[k];
   }
 
   function setOpponent() {

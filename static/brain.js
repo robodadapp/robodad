@@ -219,6 +219,13 @@
   }
 
   // ---------- hands-on ----------
+  // Little scene thumbnails for the Hands-on menu, so the drawn games look drawn before you open them.
+  const THUMBS = {
+    lights:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#1B2547"/><circle cx="78" cy="14" r="7" fill="#FFF3C4"/><circle cx="20" cy="10" r="1.2" fill="#fff"/><circle cx="44" cy="7" r="1" fill="#fff"/><path d="M20 30 L48 14 L76 30Z" fill="#3A4A7A"/><rect x="24" y="30" width="48" height="30" fill="#2B3866"/><g fill="#FFD866"><rect x="29" y="35" width="10" height="9" rx="1"/><rect x="57" y="35" width="10" height="9" rx="1"/><rect x="43" y="48" width="10" height="9" rx="1"/></g><g fill="#151C36"><rect x="43" y="35" width="10" height="9" rx="1"/><rect x="29" y="48" width="10" height="9" rx="1"/><rect x="57" y="48" width="10" height="9" rx="1"/></g></svg>`,
+    lock:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#5A6470"/><rect x="18" y="8" width="60" height="48" rx="6" fill="#8C97A3" stroke="#2C333B" stroke-width="2"/><circle cx="48" cy="32" r="14" fill="#C9D1D9" stroke="#2C333B" stroke-width="2"/><circle cx="48" cy="32" r="4" fill="#2C333B"/><path d="M48 19v5M48 40v5M35 32h5M56 32h5" stroke="#2C333B" stroke-width="2" stroke-linecap="round"/><rect x="68" y="26" width="5" height="12" rx="2" fill="#2C333B"/></svg>`,
+    river:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#8ED081"/><path d="M0 24 Q24 18 48 24 T96 24 V44 Q72 50 48 44 T0 44Z" fill="#3E8ED0"/><path d="M10 34 q6 -3 12 0 M58 30 q6 -3 12 0" stroke="#BFE3FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M34 32 h26 l-4 7 h-18z" fill="#8A5A2B" stroke="#3B2512" stroke-width="1.5"/><circle cx="44" cy="27" r="4" fill="#F2C29B"/><circle cx="54" cy="29" r="3" fill="#F2F2F2"/></svg>`,
+    tiles:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#2E2A4F"/><g font-family="system-ui,sans-serif" font-weight="900" font-size="12" text-anchor="middle"><rect x="26" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="18" fill="#2E2A4F">1</text><rect x="41" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="18" fill="#2E2A4F">2</text><rect x="56" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="18" fill="#2E2A4F">3</text><rect x="26" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="33" fill="#2E2A4F">4</text><rect x="41" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="33" fill="#2E2A4F">5</text><rect x="26" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="48" fill="#2E2A4F">7</text><rect x="56" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="48" fill="#2E2A4F">6</text><rect x="41" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="48" fill="#2E2A4F">8</text></g></svg>`,
+  };
   function handsMenu(){
     view = "handsMenu"; ctx = null;
     const s = S();
@@ -226,7 +233,7 @@
       bubble("No multiple choice here. Stars for doing it in few moves, and a hint if you get stuck."),
       h("div", { class:"bz-tiles" }, HKINDS.map((k, i) => { const H = D.hands[k];
         const b = btn("", "bz-tile" + (i ? "" : " bz-focus"), () => startHands(k, { mode:"hands" }));
-        b.append(...[h("span", { class:"bz-ic", "aria-hidden":"true" }, { lights:"💡", lock:"🔐", river:"🛶", tiles:"🧩" }[k]), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
+        b.append(...[h("span", { class:"bz-thumb", "aria-hidden":"true", html: THUMBS[k] }), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
           (s.handsStars || {})[k] ? h("small", { class:"bz-best", "aria-label":`Best: ${s.handsStars[k]} of 3 stars` }, "★".repeat(s.handsStars[k]) + "☆".repeat(3 - s.handsStars[k])) : null].filter(Boolean));
         return b; })));
     focusFirst();
@@ -708,6 +715,7 @@
   .bz-msg{font-weight:700}
   .bz-msg.ok{background:color-mix(in srgb, var(--denim) 14%, transparent); padding:10px 12px; border-radius:12px}
   .bz-opts{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin:10px 0}
+  .bz-thumb{display:block; width:100%; max-width:132px; margin-bottom:6px} .bz-thumb svg{display:block; width:100%; height:auto; border-radius:10px}
   .bz-opt{padding:12px; border-radius:14px; border:2px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-weight:800; cursor:pointer}
   .bz-opt:hover:not(:disabled){border-color:var(--denim)}
   .bz-opt.no{opacity:.45; text-decoration:line-through; animation:bzshake .3s}
