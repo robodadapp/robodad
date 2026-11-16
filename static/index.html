@@ -1252,6 +1252,10 @@ details.why[open] summary::before{content:"–"}
 .chip.lang-chip{border-style:dashed}
 .lang-card{width:min(560px, 100%)}
 .lang-top{display:flex; justify-content:space-between; align-items:center; gap:8px}
+/* Close stays on screen while a long lesson, topic or game scrolls underneath it */
+.lang-card > .lang-top{position:sticky; top:0; z-index:4; margin:-24px -24px 0; padding:20px 24px 10px; background:var(--surface); box-shadow:0 1px 0 var(--line); border-radius:22px 22px 0 0}
+/* Looks and Badges are very long: keep Done pinned to the bottom */
+#menuDlg .card > .row:last-child, #beltDlg .card > .row:last-child{position:sticky; bottom:0; z-index:4; margin:0 -24px -24px; padding:10px 24px 20px; background:var(--surface); box-shadow:0 -1px 0 var(--line); border-radius:0 0 22px 22px}
 .teach-h{display:flex; align-items:center; gap:10px} .teach-h svg{width:46px; height:46px; flex:none; overflow:visible} .teach-h small{display:block; font-size:.8rem; font-weight:700; color:var(--muted); font-family:"Nunito", sans-serif}
 .lang-tabs{display:flex; flex-wrap:wrap; gap:6px}
 .lang-tabs button{flex:1 1 30%; border:1.5px solid var(--line); background:transparent; color:var(--ink); border-radius:12px; padding:9px; font:inherit; font-weight:900; cursor:pointer}
@@ -3908,7 +3912,7 @@ const PLAYERS = {
       <p class="lang-sec"><span>Lesson ${i + 1}: ${esc(ls.title)}</span><small>Tap the speaker to hear it</small></p>
       <ul class="phrases">${ls.p.map(ph => `<li class="phrase"><div><span class="t" lang="${langCur}">${esc(ph.t)}</span>${ph.r ? `<span class="r">${esc(ph.r)}</span>` : ""}<span class="e">${esc(ph.e)}</span></div>${listenBtn(ph.t, ph.r || ph.t)}</li>`).join("")}</ul>
       <p class="dadtip"><b>Dad tip:</b> ${esc(ls.tip)}</p>
-      <div class="row"><button class="primary" type="button" data-act="quiz">Take the quiz</button><button class="ghost" type="button" data-act="home">Later</button></div>`;
+      <div class="row"><button class="primary" type="button" data-act="quiz">Take the quiz</button><button class="ghost" type="button" data-act="home">Back to lessons</button></div>`;
     langBody.querySelector("[data-act=quiz]").focus();
   }
   function startQuiz(){
@@ -4514,6 +4518,8 @@ const PLAYERS = {
   let guarded = false, skipPop = false;
   function closeTopLayer(){
     const ov = openOverlays().sort((a, b) => (+getComputedStyle(a).zIndex || 0) - (+getComputedStyle(b).zIndex || 0)).pop();
+    // a lesson, a maths topic or a Brain Teasers game is a screen inside its overlay: Back steps up one screen first
+    if (ov) { const up = ov.querySelector('[data-act="home"], .bz-back'); if (up && up.offsetParent !== null) { up.click(); return; } }
     if (ov) { const x = ov.querySelector('[data-sheet-close], button[id$="Close"]'); if (x) x.click(); if (!ov.hidden) ov.hidden = true; return; }
     if (side.classList.contains("open")) { side.classList.remove("open"); return; }
     if (!playBar.hidden) goTab("play");               // back from a joke opened in Play lands in Play
@@ -4530,6 +4536,15 @@ const PLAYERS = {
   });
   const guardWatch = new MutationObserver(syncGuard);
   [...layerEls, side, playBar].forEach(el => guardWatch.observe(el, { attributes:true, attributeFilter:["hidden", "class"] }));
+
+  // opening a lesson or topic (or going back to the list) starts at the top, where Close and "← All lessons" are
+  ["langBody", "mathBody"].forEach((id) => {
+    const body = $(id); if (!body) return; let had = false;
+    new MutationObserver(() => {
+      const has = !!body.querySelector('[data-act="home"]');
+      if (has !== had) { had = has; const card = body.closest(".card"); if (card) card.scrollTop = 0; }
+    }).observe(body, { childList:true });
+  });
 
   const tabWatch = new MutationObserver(syncTabs);
   [playDlg, learnDlg, meDlg, side].forEach(el => tabWatch.observe(el, { attributes:true, attributeFilter:["hidden", "class"] }));

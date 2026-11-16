@@ -91,7 +91,13 @@
         h("small", {}, next ? `${next[0] - s.xp} to ${next[1]}` : "Top level!")));
   }
   const bubble = (text, av) => h("div", { class:"bz-dad" }, dadSVG(av), h("p", { class:"bz-say", role:"status" }, text));
-  function paint(...nodes){ root.replaceChildren(...nodes); }
+  // replaceChildren and append turn a null into the text "null", so drop empty slots first
+  let paintedView = null;
+  function paint(...nodes){
+    root.replaceChildren(...nodes.filter(n => n != null && n !== false));
+    // a new screen starts at the top (so its Back button is in view); redrawing the same screen keeps the scroll
+    if (view !== paintedView) { paintedView = view; root.closest(".card")?.scrollTo?.(0, 0); }
+  }
   function focusFirst(sel){ (root.querySelector(sel || ".bz-focus") || root.querySelector("button"))?.focus(); }
 
   // ---------- hub ----------
@@ -220,8 +226,8 @@
       bubble("No multiple choice here. Stars for doing it in few moves, and a hint if you get stuck."),
       h("div", { class:"bz-tiles" }, HKINDS.map((k, i) => { const H = D.hands[k];
         const b = btn("", "bz-tile" + (i ? "" : " bz-focus"), () => startHands(k, { mode:"hands" }));
-        b.append(h("span", { class:"bz-ic", "aria-hidden":"true" }, { lights:"💡", lock:"🔐", river:"🛶", tiles:"🧩" }[k]), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
-          (s.handsStars || {})[k] ? h("small", { class:"bz-best", "aria-label":`Best: ${s.handsStars[k]} of 3 stars` }, "★".repeat(s.handsStars[k]) + "☆".repeat(3 - s.handsStars[k])) : null);
+        b.append(...[h("span", { class:"bz-ic", "aria-hidden":"true" }, { lights:"💡", lock:"🔐", river:"🛶", tiles:"🧩" }[k]), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
+          (s.handsStars || {})[k] ? h("small", { class:"bz-best", "aria-label":`Best: ${s.handsStars[k]} of 3 stars` }, "★".repeat(s.handsStars[k]) + "☆".repeat(3 - s.handsStars[k])) : null].filter(Boolean));
         return b; })));
     focusFirst();
   }
