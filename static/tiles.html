@@ -218,6 +218,13 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 
 /* ---- phones: your tiles and Dad's latest move stay pinned under the board, so you never scroll between them */
 .top h1{white-space:nowrap}
+.rd-hop{animation:rdhop .55s cubic-bezier(.34,1.56,.64,1)}
+@keyframes rdhop{30%{transform:translateY(-5px) rotate(-4deg)} 65%{transform:translateY(0) rotate(3deg)}}
+@media (prefers-reduced-motion: reduce){ .rd-hop{animation:none} }
+.dock-say{display:flex; gap:8px; align-items:center; width:100%}
+.dock-say .status{flex:1; min-width:0}
+#dockArt{display:none; flex:none}
+#dockArt svg{width:38px; height:38px; overflow:visible}
 .dock{width:100%; max-width:600px; display:flex; flex-direction:column; align-items:center; gap:8px}
 @media (max-width: 700px){
   body{padding-bottom:12px}
@@ -230,6 +237,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   .log,.tiers,.foot{order:2}
   .dock{position:sticky; bottom:0; z-index:6; padding:10px 0 calc(6px + env(safe-area-inset-bottom));
     background:linear-gradient(to bottom, transparent, var(--bg) 12px)}
+  #dockArt{display:block}
   .dock .status{max-height:5.4em; overflow:auto; padding:8px 10px; font-size:.92rem; min-height:0}
 }
 </style>
@@ -280,7 +288,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   <div class="rack" id="rack" role="group" aria-label="Your tiles. Drag to reorder or onto the board"></div>
   <button class="iconbtn" id="shuffleBtn" type="button" aria-label="Shuffle your tiles" title="Shuffle"><span aria-hidden="true">🔀</span></button>
 </div>
-<div class="status" id="status" aria-live="polite"><span class="loading">Dad is unpacking the dictionary<span class="dots" aria-hidden="true"></span></span></div>
+<div class="dock-say"><div id="dockArt" class="bot" aria-hidden="true"></div><div class="status" id="status" aria-live="polite"><span class="loading">Dad is unpacking the dictionary<span class="dots" aria-hidden="true"></span></span></div></div>
 </div>
 
 <section class="bonus" id="bonus" aria-live="polite" hidden></section>
@@ -435,11 +443,13 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   }
   const sayDad = (kind) => { const l = DAD().lines[kind]; if (talkOn && l && l.length) $("say").textContent = pick(l); };
   function celebrate(move) {
-    const el = $("oppArt");
     if (!move || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
-    void el.getBoundingClientRect(); el.classList.add("do-" + move);
-    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + move), 3300);
+    ["oppArt", "dockArt"].forEach((id) => {            // the dad at the top, and his mini copy beside your tiles on phones
+      const el = $(id); if (!el) return;
+      [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
+      void el.getBoundingClientRect(); el.classList.add("do-" + move);
+      clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + move), 3300);
+    });
   }
   function applyTheme() {
     const t = DAD().theme || {}, st = document.documentElement.style;
@@ -573,6 +583,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   function setOpponent() {
     $("oppArt").innerHTML = avatarSVG(tierKey, 52);
     $("oppArt").className = "bot";
+    $("dockArt").innerHTML = avatarSVG(tierKey, 38); $("dockArt").className = "bot";
     $("oppName").textContent = dadName();
     $("oppTier").textContent = (T.TIERS[tierKey].boss ? "The boss" : `Tier ${T.TIERS[tierKey].tier}`) + (DAD().era ? ` · ${DAD().era}` : "");
     const rec = record(tierKey);
@@ -1089,7 +1100,9 @@ img,svg{-webkit-user-drag:none; user-drag:none}
         else if (!common.has(ev.main)) teach = tierKey === "bookworm" ? " Bookworm Dad explains where it comes from below." : " Never heard of it? Tap it under Words played and Dad explains.";
         setStatus(`${twist}${sig}<strong>${dadName()}</strong> played <strong>${up(ev.main)}</strong> for ${ev.score}${ev.fullHouse ? ", Full House!" : "."}${teach} <span class="tally">You ${s.scores[0]} · Dad ${s.scores[1]}</span> <span class="sr">Your move.</span>`);
         // Bring Dad's new word into view if it landed off-screen (on phones the board can sit above the fold).
-        requestAnimationFrame(() => { const lastEl = document.querySelector("#board .tile.last");
+        requestAnimationFrame(() => { ["oppArt", "dockArt"].forEach((id) => { const el = $(id); if (!el || [...el.classList].some((c) => c.startsWith("do-"))) return;
+            el.classList.remove("rd-hop"); void el.offsetWidth; el.classList.add("rd-hop"); });
+          const lastEl = document.querySelector("#board .tile.last");
         if (lastEl) { const r = lastEl.getBoundingClientRect(), dockTop = $("dock").getBoundingClientRect().top;
           if (r.top < 0 || r.bottom > dockTop) lastEl.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); } });
         if (tierKey === "bookworm" && !note && !common.has(ev.main)) explainWord(ev.main, false);

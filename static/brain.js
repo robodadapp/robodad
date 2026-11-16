@@ -204,7 +204,7 @@
       c.wrong++; S().streak = 0; save();
       if (p.kind !== "type") (c.tried ||= []).push(val);
       c.say = pick(SAY.wrong); c.msg = p.kind === "type" ? `"${val}" isn't it. Try again, or take a hint.` : "";
-      renderPuzzle(); focusFirst(".bz-opt:not([disabled]), .bz-input"); return;
+      renderPuzzle(); focusFirst(".bz-opt:not([disabled]), .bz-input"); window.RDWin?.(root, false); return;
     }
     let pts = Math.max(10, 30 - 10 * c.hints);
     if (c.wrong) pts = Math.max(5, Math.round(pts / 2));
@@ -215,7 +215,7 @@
     c.done = true;
     c.say = [pick(c.wrong || c.hints > 1 ? SAY.slow : SAY.right), fast ? "Speed bonus!" : "", extra].filter(Boolean).join(" ");
     c.msg = p.why;
-    renderPuzzle(); focusFirst(".bz-focus");
+    renderPuzzle(); focusFirst(".bz-focus"); window.RDWin?.(root, true);
   }
 
   // ---------- hands-on ----------

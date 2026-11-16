@@ -202,6 +202,7 @@
     const q = R.qs[R.n], right = q.opts[k] === q.ok;
     box.querySelectorAll("[data-gpick]").forEach((b, i) => { b.disabled = true; if (q.opts[i] === q.ok) b.classList.add("ok"); else if (i === k) b.classList.add("bad"); });
     if (right) { R.score++; R.streak++; R.top = Math.max(R.top, R.streak); R.xp += 10 + Math.min(R.streak - 1, 5) * 2; } else R.streak = 0;
+    window.RDWin?.(box, right, `<span>Question ${R.n + 1} of ${R.qs.length}</span><span>✅ ${R.score}</span><span>🔥 ${R.streak}</span><span>⭐ +${R.xp}</span>`);
     box.querySelector("#gMsg").textContent = `${pick(right ? SAY.right : SAY.wrong)} ${q.why}`;
     const last = R.n + 1 >= R.qs.length;
     box.querySelector("#gNext").innerHTML = `<button class="primary" type="button" data-gact="next">${last ? "See results" : "Next"}</button>
