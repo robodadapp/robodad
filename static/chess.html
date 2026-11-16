@@ -1397,10 +1397,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       setStatus("Leaving ends this game (chess games aren't saved). Tap <strong>Tap again to leave</strong>, or keep playing.");
     }
   });
+  // (window.history on purpose: this file has its own history() for the FEN list)
   // Back / swipe-back gets the same guard as Exit: chess games aren't saved, so the first Back
   // mid-game asks "tap again" and a second Back within a few seconds leaves.
   let backGuard = false;
-  function armBackGuard() { if (!backGuard) { backGuard = true; try { history.pushState({ chessGuard: 1 }, ""); } catch { backGuard = false; } } }
+  function armBackGuard() { if (!backGuard) { backGuard = true; try { window.history.pushState({ chessGuard: 1 }, ""); } catch { backGuard = false; } } }
   window.addEventListener("popstate", () => {
     if (!backGuard) return;
     backGuard = false;                                  // the guard entry was just used up
@@ -1409,7 +1410,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       setStatus("Leaving ends this game (chess games aren't saved). Press <strong>Back</strong> again or tap <strong>Tap again to leave</strong>, or keep playing.");
       return;
     }
-    history.back();                                     // confirmed, or no game running: really leave
+    window.history.back();                              // confirmed, or no game running: really leave
   });
   // Chrome ignores history entries a page adds before the first tap, so arm on the first tap or key press
   ["click", "keydown"].forEach((ev) => window.addEventListener(ev, armBackGuard, { capture: true, once: true }));
