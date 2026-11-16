@@ -1252,10 +1252,10 @@ details.why[open] summary::before{content:"–"}
 .chip.lang-chip{border-style:dashed}
 .lang-card{width:min(560px, 100%)}
 .lang-top{display:flex; justify-content:space-between; align-items:center; gap:8px}
-/* Close stays on screen while a long lesson, topic or game scrolls underneath it */
-.lang-card > .lang-top{position:sticky; top:0; z-index:4; margin:-24px -24px 0; padding:20px 24px 10px; background:var(--surface); box-shadow:0 1px 0 var(--line); border-radius:22px 22px 0 0}
+/* Close stays on screen while a long lesson, topic or game scrolls underneath it (sticky offsets count from inside the card's 24px padding, hence -24px) */
+.lang-card > .lang-top{position:sticky; top:-24px; z-index:4; margin:-24px -24px 0; padding:20px 24px 10px; background:var(--surface); box-shadow:0 1px 0 var(--line); border-radius:22px 22px 0 0}
 /* Looks and Badges are very long: keep Done pinned to the bottom */
-#menuDlg .card > .row:last-child, #beltDlg .card > .row:last-child{position:sticky; bottom:0; z-index:4; margin:0 -24px -24px; padding:10px 24px 20px; background:var(--surface); box-shadow:0 -1px 0 var(--line); border-radius:0 0 22px 22px}
+#menuDlg .card > .row:last-child, #beltDlg .card > .row:last-child{position:sticky; bottom:-24px; z-index:4; margin:0 -24px -24px; padding:10px 24px 20px; background:var(--surface); box-shadow:0 -1px 0 var(--line); border-radius:0 0 22px 22px}
 .teach-h{display:flex; align-items:center; gap:10px} .teach-h svg{width:46px; height:46px; flex:none; overflow:visible} .teach-h small{display:block; font-size:.8rem; font-weight:700; color:var(--muted); font-family:"Nunito", sans-serif}
 .lang-tabs{display:flex; flex-wrap:wrap; gap:6px}
 .lang-tabs button{flex:1 1 30%; border:1.5px solid var(--line); background:transparent; color:var(--ink); border-radius:12px; padding:9px; font:inherit; font-weight:900; cursor:pointer}
