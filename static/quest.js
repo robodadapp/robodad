@@ -550,7 +550,7 @@
     obs = []; items = []; scen = []; parts = []; boss = null; power = 0; strength = 0; inv = 0; cp = null; roomHits = 0; dist = 0; passedGhost = false;
     resetDad();
     maxLives = mode === "daily" ? 4 : hard ? 3 : 5;
-    if (!keep) { score = 0; lives = maxLives; runItems = 0; meter = 0; found = { key: 0, remote: 0, sock: 0, specs: 0 }; runc = { items: 0, socks: 0, hops: 0, score: 0 }; }
+    if (!keep) { paidScore = 0; score = 0; lives = maxLives; runItems = 0; meter = 0; found = { key: 0, remote: 0, sock: 0, specs: 0 }; runc = { items: 0, socks: 0, hops: 0, score: 0 }; }
     lives = Math.min(keep && m === "story" ? lives + 1 : lives, maxLives);
     buildCourse(); snapStart(0); rec = []; loadGhost(); shareBlob = null; speed = curSpeed(); setState("play", true);
     say((twoP ? `Player ${twoP.turn}. ` : "") + (mode === "daily" ? "Daily Run" : mode === "endless" ? "Endless mode" : mode === "home" ? HOME.name : ROOMS[lv].name) + ". Go!");
@@ -746,7 +746,13 @@
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
 
   // ---------- update ----------
-  function endRun(){ runc.score = Math.floor(score); checkMissions(); saveMissions(); saveBest(); }
+  let paidScore = 0;                              // points already turned into arcade tickets this run
+  function payTickets(){
+    if (twoP || !window.RoboArcade) return;
+    const s = Math.floor(score), delta = s - paidScore;
+    if (delta > 0) { paidScore = s; RoboArcade.award("quest", { points: delta, daily: mode === "daily" }); }
+  }
+  function endRun(){ runc.score = Math.floor(score); checkMissions(); saveMissions(); saveBest(); payTickets(); }
   function hurt(){
     lives--; roomHits++; inv = 90; sfx.hit(); shake = 14; flash = 6; freeze = 5; buzz(lives <= 0 ? [60, 40, 120] : 70);
     burst(P.x + 7, P.y + 10, 12, ["#FF4D6D", "#FFF6D6"], 1.8, 1.4, 22);
