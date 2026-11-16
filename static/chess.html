@@ -1411,7 +1411,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     }
     history.back();                                     // confirmed, or no game running: really leave
   });
-  armBackGuard();
+  // Chrome ignores history entries a page adds before the first tap, so arm on the first tap or key press
+  ["click", "keydown"].forEach((ev) => window.addEventListener(ev, armBackGuard, { capture: true, once: true }));
   $("dailyBtn").addEventListener("click", startDaily);
   $("shareBtn").addEventListener("click", shareWin);
   $("undoBtn").addEventListener("click", undo);
