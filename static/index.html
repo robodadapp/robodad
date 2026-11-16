@@ -1246,6 +1246,8 @@ details.why[open] summary::before{content:"–"}
 .study-pill{position:fixed; z-index:15; left:50%; transform:translateX(-50%); top:calc(var(--header-h, 64px) + 8px); border:0; border-radius:999px; padding:8px 16px;
   background:var(--denim); color:var(--denim-ink, #fff); font:800 .95rem "Nunito", sans-serif; font-variant-numeric:tabular-nums; box-shadow:0 4px 14px rgba(0,0,0,.2); cursor:pointer}
 .study-pill.brk{background:var(--ok)}
+.study-pill.sleep-pill{background:#2A2B5E; color:#F3EFD8}
+#studyPill:not([hidden]) ~ #sleepPill{top:calc(var(--header-h, 64px) + 52px)}   /* sits under the study pill when both show */
 .math-learn{margin:0; padding-left:1.2em; display:flex; flex-direction:column; gap:6px}
 .math-ex{background:var(--sky, #E8EFF5); border:1px solid var(--line); border-radius:14px; padding:10px 14px}
 .math-ex ol{margin:6px 0 0; padding-left:1.3em}
@@ -1958,7 +1960,7 @@ textarea::placeholder{color:var(--muted)}
       <button class="tile" type="button" data-go="grammar"><span class="t-ico" aria-hidden="true">✍️</span><b>Grammar with Dad</b><small>Similes, analogies and Tense Trouble</small></button>
     </div>
     <p id="learnSoon" role="status" hidden></p>
-    <p><a href="/learn" style="font-weight:800">All subjects in Learn with Dad →</a></p>
+    <p><a href="/learn" style="font-weight:800">About Learn with Dad (for parents and teachers) →</a></p>
   </div>
 </div>
 
@@ -2038,6 +2040,7 @@ textarea::placeholder{color:var(--muted)}
   </div>
 </div>
 <button class="study-pill" id="studyPill" type="button" hidden></button>
+<button class="study-pill sleep-pill" id="sleepPill" type="button" hidden></button>
 
 <div class="overlay" id="mathDlg" role="dialog" aria-modal="true" aria-labelledby="mathTitle" hidden>
   <div class="card lang-card">
@@ -4253,7 +4256,7 @@ const PLAYERS = {
   function studyEnd(){
     const p = prog("study");
     toast(sRun.kind === "kitchen" ? "Timer stopped." : sRun.kind === "workout" ? `Workout ended in round ${sRun.round}. Showing up is the hard part. Nice work.`
-      : `Session ended. You've done ${p.sessions || 0} focus session${p.sessions === 1 ? "" : "s"} in total. Proud of you.`);
+      : (p.sessions ? `Session ended. You've done ${p.sessions} focus session${p.sessions === 1 ? "" : "s"} in total. Proud of you.` : "Session ended. Nothing counted this time, and that's fine. Start another whenever you're ready."));
     sRun = null; sSay = ""; saveSRun(); clearInterval(sTimer); wakeOff();
     if (sStartedMusic && window.RoboRadio && RoboRadio.station === "study") { try { RoboRadio.stop(); radioUI(); } catch {} }
     sStartedMusic = false; studyTick(); renderStudy();
@@ -4284,7 +4287,12 @@ const PLAYERS = {
       sRun.f += 60000; saveSRun(); studyTick();
     }
     else if (act === "skip") studyNext(true);
-    else if (act === "end") studyEnd();
+    else if (act === "end") {
+      if (!b.dataset.armed) {                          // a stray tap shouldn't throw away a session: first tap asks, second ends
+        b.dataset.armed = "1"; b.dataset.label = b.textContent; b.textContent = "Tap again to end";
+        setTimeout(() => { if (b.isConnected && b.dataset.armed) { delete b.dataset.armed; b.textContent = b.dataset.label; } }, 3500);
+      } else studyEnd();
+    }
   });
   $("studyClose").addEventListener("click", () => { closeStudy(); studyTick(); });
   studyDlg.addEventListener("click", (e) => { if (e.target === studyDlg) { closeStudy(); studyTick(); } });
@@ -4461,6 +4469,7 @@ const PLAYERS = {
 
   // ---------- tab bar: Chat · Play · Learn · Chill · Me ----------
   const playDlg = $("playDlg"), meDlg = $("meDlg"), SHEETS = { play: playDlg, learn: learnDlg, me: meDlg };
+  let sheetOrigin = null;          // the Play / Learn / Me sheet that launched the screen now open
   const tabNow = () => !playDlg.hidden ? "play" : !learnDlg.hidden ? "learn" : !meDlg.hidden ? "me" : side.classList.contains("open") ? "chill" : "chat";
   function syncTabs(){
     const on = tabNow();
@@ -4472,7 +4481,7 @@ const PLAYERS = {
   }
   const playBar = $("playBar");
   function goTab(name){
-    playBar.hidden = true;
+    sheetOrigin = null; playBar.hidden = true;
     const was = tabNow();
     playDlg.hidden = learnDlg.hidden = meDlg.hidden = true; side.classList.remove("open");
     if (name !== "chat" && name !== was) {
@@ -4502,6 +4511,17 @@ const PLAYERS = {
       if (e.target.closest("[data-open-lang],[data-open-math],[data-open-study],[data-close-sheet]")) dlg.hidden = true;   // the lesson opens on top
     });
   });
+  // Opening something from a sheet (a lesson, Brain Teasers, Looks...) hides the sheet. Remember it, so closing that
+  // screen drops you back in the sheet instead of on Chat. "Ask Dad" and the like aren't exits, so they don't count.
+  const EXIT_SEL = 'button[id$="Close"], button[id$="Done"], button[id$="Cancel"], [data-sheet-close]';
+  let exitIntent = false;
+  const markExit = () => { exitIntent = true; setTimeout(() => { exitIntent = false; }, 0); };
+  document.addEventListener("click", (e) => { if (e.target.closest?.(EXIT_SEL) || e.target.classList?.contains("overlay")) markExit(); }, true);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") markExit(); }, true);
+  Object.entries(SHEETS).forEach(([name, dlg]) => dlg.addEventListener("click", (e) => {
+    if (!dlg.hidden || !e.target.closest("[data-go],[data-open-lang],[data-open-math],[data-open-study]")) return;
+    sheetOrigin = layerEls.some(o => !o.hidden && !Object.values(SHEETS).includes(o)) ? name : null;
+  }));
   document.addEventListener("keydown", (e) => {          // Escape closes the open sheet, wherever the focus is
     const now = tabNow(); if (e.key !== "Escape" || !SHEETS[now]) return;
     SHEETS[now].hidden = true; document.querySelector(`.tab[data-tab="${now}"]`).focus();
@@ -4512,13 +4532,14 @@ const PLAYERS = {
   // ---------- the Back button / swipe-back closes the top layer instead of leaving the app ----------
   // Everything here is an overlay on one page, so without a history entry Back used to exit RoboDad.
   // While any layer is open we keep one extra history entry; Back pops it and closes the top layer.
-  const layerEls = [...document.querySelectorAll(".overlay")].filter(o => o.id !== "gate");
+  const layerEls = [...document.querySelectorAll(".overlay")].filter(o => o.id !== "gate").concat($("lightsOut") || []);
   const openOverlays = () => layerEls.filter(o => !o.hidden);
   const layerCount = () => openOverlays().length + (side.classList.contains("open") ? 1 : 0) + (playBar.hidden ? 0 : 1);
   let guarded = false, skipPop = false;
   function closeTopLayer(){
     const ov = openOverlays().sort((a, b) => (+getComputedStyle(a).zIndex || 0) - (+getComputedStyle(b).zIndex || 0)).pop();
     // a lesson, a maths topic or a Brain Teasers game is a screen inside its overlay: Back steps up one screen first
+    if (ov && ov.id === "lightsOut") { $("loBack").click(); return; }
     if (ov) { const up = ov.querySelector('[data-act="home"], .bz-back'); if (up && up.offsetParent !== null) { up.click(); return; } }
     if (ov) { const x = ov.querySelector('[data-sheet-close], button[id$="Close"]'); if (x) x.click(); if (!ov.hidden) ov.hidden = true; return; }
     if (side.classList.contains("open")) { side.classList.remove("open"); return; }
@@ -4545,6 +4566,14 @@ const PLAYERS = {
       if (has !== had) { had = has; const card = body.closest(".card"); if (card) card.scrollTop = 0; }
     }).observe(body, { childList:true });
   });
+
+  const screenLayers = layerEls.filter(o => !Object.values(SHEETS).includes(o));
+  const returnWatch = new MutationObserver(() => {
+    if (!sheetOrigin || screenLayers.some(o => !o.hidden)) return;      // nothing launched from a sheet, or a screen is still open
+    const name = sheetOrigin; sheetOrigin = null;
+    if (exitIntent && tabNow() === "chat") goTab(name);
+  });
+  screenLayers.forEach(el => returnWatch.observe(el, { attributes:true, attributeFilter:["hidden"] }));
 
   const tabWatch = new MutationObserver(syncTabs);
   [playDlg, learnDlg, meDlg, side].forEach(el => tabWatch.observe(el, { attributes:true, attributeFilter:["hidden", "class"] }));
@@ -5353,6 +5382,17 @@ const PLAYERS = {
     $("sleepNowSide").textContent = playing ? status : "Rain, noise, waves and more, with a sleep timer.";
     $("sleepOpenSide").textContent = playing ? "Open ▶" : "Open";
     $("sleepStop").hidden = !playing;
+    const pill = $("sleepPill");                       // like the Study Hall pill: sounds keep playing, so say so and make Stop easy to find
+    if (pill) {
+      const show = playing && $("sleepDlg").hidden && $("lightsOut").hidden;
+      pill.hidden = !show;
+      if (show) {
+        const names = SL.mix.filter(id => SL.isOn(id)).map(id => SL.sounds[id].name);
+        const when = SL.endsAt ? sleepFmt(left) : "no timer";
+        pill.textContent = `🌙 ${names[0]}${names.length > 1 ? ` +${names.length - 1}` : ""} · ${when}`;
+        pill.setAttribute("aria-label", `Sleep sounds playing: ${names.join(", ")}, ${SL.endsAt ? sleepFmt(left) + " left" : "no timer"}. Open sleep sounds`);
+      }
+    }
     if (kind !== "tick") {
       $("sleepGrid").querySelectorAll("[data-sl]").forEach(b => b.setAttribute("aria-pressed", String(SL.isOn(b.dataset.sl))));
       $("sleepTimer").querySelectorAll("[data-t]").forEach(b => b.setAttribute("aria-checked", String(+b.dataset.t === SL.timer)));
@@ -5380,7 +5420,7 @@ const PLAYERS = {
       `<button class="sl-tile" type="button" data-sl="${id}" aria-pressed="${SL.isOn(id)}"><span class="sl-ic" aria-hidden="true">${x.icon}</span><span class="sl-nm">${esc(x.name)}</span></button>`).join("");
     $("sleepDlg").hidden = false; sleepUI(); $("sleepGrid").querySelector("button").focus();
   }
-  function closeSleep(){ $("sleepDlg").hidden = true; if (sleepReturn && sleepReturn.focus) sleepReturn.focus(); }
+  function closeSleep(){ $("sleepDlg").hidden = true; sleepUI("tick"); if (sleepReturn && sleepReturn.focus) sleepReturn.focus(); }
   function lightsOut(){
     if (!SL.playing) { sleepStart(); SL.start(); }
     $("sleepDlg").hidden = true; $("lightsOut").hidden = false;
@@ -5393,7 +5433,7 @@ const PLAYERS = {
     }, 20000);
     sleepUI(); $("loBack").focus();
   }
-  function lightsOn(){ $("lightsOut").hidden = true; clearInterval(loTimer); if (sleepReturn && sleepReturn.focus) sleepReturn.focus(); }
+  function lightsOn(){ $("lightsOut").hidden = true; clearInterval(loTimer); $("sleepDlg").hidden = false; sleepUI(); $("sleepGrid").querySelector("button")?.focus(); }   // Back lands in the Sleep panel you came from
   if (SL) {
     SL.onchange = sleepUI;
     $("sleepGrid").addEventListener("click", (e) => {
@@ -5412,6 +5452,7 @@ const PLAYERS = {
     $("loBack").addEventListener("click", lightsOn);
     $("lightsOut").addEventListener("keydown", (e) => { if (e.key === "Escape") lightsOn(); });
     $("sleepCard").addEventListener("click", (e) => openSleep(e.currentTarget));
+    $("sleepPill").addEventListener("click", (e) => openSleep(e.currentTarget));
     $("sleepOpenSide").addEventListener("click", (e) => openSleep(e.currentTarget));
     if (window.RoboRadio) {                          // starting music stops the sleep sounds
       const play = RoboRadio.play.bind(RoboRadio);
