@@ -2250,8 +2250,8 @@ textarea::placeholder{color:var(--muted)}
 
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
-<script src="/static/brainteasers.js?v=3"></script>
-<script src="/static/brain.js?v=3"></script>
+<script src="/static/brainteasers.js?v=4"></script>
+<script src="/static/brain.js?v=4"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=1"></script>
@@ -3465,7 +3465,7 @@ const PLAYERS = {
     ["st600", "Ten-Hour Club", "study", "Focus for 10 hours in total in Study Hall", "Ten hours of focused study. That's dedication.", "epic", "St", (p) => (p.minutes || 0) >= 600],
     ["br1", "Lightbulb Moment", "brain", "Solve your first brain teaser", "Solved a first brain teaser. Ding!", "common", "?!", (p) => p.done.length >= 1],
     ["br5", "On a Roll", "brain", "Get a streak of 5 puzzles in a row", "Five puzzles in a row without a slip.", "rare", "?!", (p) => (p.best || 0) >= 5],
-    ["brhands", "Hands-On Hero", "brain", "Solve all four hands-on puzzles", "Lights Out, Code Lock, River Run and Slide Tiles, all done.", "rare", "?!", (p) => (p.handsDone || []).length >= 4],
+    ["brhands", "Hands-On Hero", "brain", "Solve all four hands-on puzzles", "Blackout, Crack Dad's Safe, Crossings and Scramble, all done.", "rare", "?!", (p) => (p.handsDone || []).length >= 4],
     ["bresc", "Garage Escape Artist", "brain", "Escape Dad's Garage", "Cracked all four rooms and got Dad out of the garage.", "epic", "?!", (p) => !!p.escaped],
     ["br30", "Big Brain Energy", "brain", "Solve 30 different brain teasers", "Thirty different brain teasers solved. Big brain energy.", "epic", "?!", (p) => p.done.length >= 30],
     ["vglow", "Glow Getter", "vocab", "Glow up your first sentence with Dad", "Glowed up a first sentence. Somewhere, an English teacher smiled and didn't know why.", "common", "Aa", (p) => (p.glow || 0) >= 1],

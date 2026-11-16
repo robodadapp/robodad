@@ -226,14 +226,14 @@
 
   // Hands-on puzzle types (the game builds a fresh one each time)
   const HANDS = {
-    lights: { name:"Lights Out", blurb:"Dad left every light in the garage on. Tap a light to flip it and its neighbours. Get them all off.",
-      coach:"Hands-on puzzle: Lights Out. It's a grid of lights. Tapping a light flips it and the lights directly above, below, left and right of it. The goal is to turn every light off." },
-    lock: { name:"Code Lock", blurb:"Crack the 3-digit code. Every digit is different. Read the clues, spin the dials, try your guess.",
-      coach:"Hands-on puzzle: a 3-digit code lock with Mastermind-style clues (how many digits are right and in the right place, and how many are right but in the wrong place). All three digits are different." },
-    river: { name:"River Run", blurb:"Get the puppy, the cat and the goldfish across the river. Dad's boat holds Dad plus one passenger.",
-      coach:"Hands-on puzzle: a river crossing. Dad must ferry a puppy, a cat and a goldfish across. The boat holds Dad plus one passenger. The puppy can't be left alone with the cat, and the cat can't be left alone with the goldfish." },
-    tiles: { name:"Slide Tiles", blurb:"Slide the tiles back into order, 1 to 8, with the gap at the bottom right.",
-      coach:"Hands-on puzzle: an 8-tile sliding puzzle on a 3 by 3 grid. Slide tiles into the gap until they read 1 to 8 with the gap in the bottom-right corner." },
+    lights: { name:"Blackout", blurb:"Every light in the house is on. Tap a window to flip it and its neighbours. Get them all off.",
+      coach:"Hands-on puzzle: Blackout, a Lights Out game drawn as a house at night. It's a grid of windows. Tapping a window flips its light and the lights directly above, below, left and right of it. The goal is to turn every light off in as few taps as possible. There are undo and hint buttons, and stars for finishing at or near par." },
+    lock: { name:"Crack Dad's Safe", blurb:"Crack the 3-digit code. Every digit is different. Read the notes on the door, set the dials, try your guess. Six tries.",
+      coach:"Hands-on puzzle: Crack Dad's Safe, a 3-digit code lock with Mastermind-style clues (how many digits are right and in the right place, and how many are right but in the wrong place). All three digits are different. The player gets six tries, a scratchpad to cross out digits, and each wrong try gives a new clue." },
+    river: { name:"Crossings", blurb:"Get the dog, the cat and the pizza across the river. Dad's boat holds Dad plus one.",
+      coach:"Hands-on puzzle: Crossings, a river crossing. Dad must ferry a dog, a cat and a pizza across. The boat holds Dad plus one passenger. The dog can't be left alone with the cat, and the dog can't be left alone with the pizza. The cat and the pizza are fine together. It can be done in 7 trips." },
+    tiles: { name:"Scramble", blurb:"Slide the picture tiles until Dad's arcade cabinet is back in one piece. The clock starts on your first move.",
+      coach:"Hands-on puzzle: Scramble, an 8-tile sliding picture puzzle on a 3 by 3 grid. Slide tiles into the gap until the picture is whole, with the gap in the bottom-right corner. Tiles can show numbers 1 to 8 as a guide. It is timed, and there are stars for solving it in few moves." },
   };
 
   // Escape Dad's Garage: four rooms, three puzzles each, one code digit per room.
