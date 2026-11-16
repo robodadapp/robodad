@@ -255,10 +255,13 @@
     if (c.won) {
       row.append(c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
         : c.mode === "run" ? btn("Next puzzle →", "primary bz-focus", startRun)
+        : c.kind === "river" ? (c.level + 1 < CROSSINGS.length
+            ? btn("Next crossing →", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level + 1 }))
+            : btn("Play again", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level })))
         : btn("Play another", "primary bz-focus", () => startHands(c.kind, { mode:"hands" })));
       if (c.mode !== "escape") row.append(btn("Menu", "ghost", () => hub()));
     } else {
-      row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step })),
+      row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step, level:c.level })),
         btn("Ask Dad", "ghost", () => bridge?.coach("hands-" + c.kind)));
     }
     nodes.push(row); paint(...nodes);
@@ -394,73 +397,153 @@
     ];
   }
 
-  // ---------- Crossings (River Run): dog, cat, pizza. The boat holds Dad plus one. ----------
-  const RIVER = ["dog", "cat", "pizza"], RNAME = { dog:"Dog", cat:"Cat", pizza:"Pizza" };
-  const RICON = {
+  // ---------- Crossings (River Run): a pack of four crossing puzzles that share one engine ----------
+  // A level is: who has to cross (tokens), what a load may be (fits), what a trip costs, and what goes wrong (trouble).
+  const CICON = {
     dog:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 7C5 7 3 11 3 16c0 3 2 5 4 4l2-3v7a9 9 0 0018 0v-7l2 3c2 1 4-1 4-4 0-5-2-9-6-9z" style="fill:var(--n-lit)"/><circle cx="14" cy="17" r="1.9" style="fill:var(--n-off)"/><circle cx="22" cy="17" r="1.9" style="fill:var(--n-off)"/><ellipse cx="18" cy="23.5" rx="3.2" ry="2.3" style="fill:var(--n-off)"/></svg>`,
     cat:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M6 4l6 7h12l6-7v16a12 12 0 01-24 0z" style="fill:var(--n-lit)"/><circle cx="13" cy="19" r="1.9" style="fill:var(--n-off)"/><circle cx="23" cy="19" r="1.9" style="fill:var(--n-off)"/><path d="M16.3 23h3.4l-1.7 2.2z" style="fill:var(--n-off)"/><path d="M3 22l6 1M3 26l6-1M33 22l-6 1M33 26l-6-1" style="stroke:var(--n-off);stroke-width:1.3;stroke-linecap:round"/></svg>`,
     pizza:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 33L4 8a30 30 0 0128 0z" style="fill:var(--n-lit)"/><path d="M4 8a30 30 0 0128 0" style="fill:none;stroke:var(--n-sil);stroke-width:4;stroke-linecap:round"/><circle cx="14.5" cy="15" r="2.6" style="fill:var(--n-sil)"/><circle cx="21.5" cy="18" r="2.6" style="fill:var(--n-sil)"/><circle cx="17.5" cy="24" r="2.1" style="fill:var(--n-sil)"/></svg>`,
+    dad:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 3v5" style="stroke:var(--n-lit);stroke-width:2.4;stroke-linecap:round"/><circle cx="18" cy="3.5" r="2.4" style="fill:var(--n-lit)"/><rect x="6" y="8" width="24" height="24" rx="7" style="fill:var(--n-lit)"/><rect x="10" y="14" width="6" height="5" rx="2" style="fill:var(--n-off)"/><rect x="20" y="14" width="6" height="5" rx="2" style="fill:var(--n-off)"/><path d="M10.5 26q3.7-3.6 7.5 0 3.8-3.6 7.5 0-3.7 2.6-7.5.5-3.8 2.1-7.5-.500z" style="fill:var(--n-off)"/></svg>`,
+    zombie:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M6 13l4-6 3 4 5-6 5 6 3-4 4 6v12a7 7 0 01-7 7H13a7 7 0 01-7-7z" style="fill:var(--n-ink)"/><path d="M10.5 15l5 5M15.5 15l-5 5M20.5 15l5 5M25.5 15l-5 5" style="stroke:var(--n-off);stroke-width:2.2;stroke-linecap:round"/><path d="M11 27l2.3-2.5 2.4 2.5 2.3-2.5 2.3 2.5 2.4-2.5 2.3 2.5" style="fill:none;stroke:var(--n-off);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/></svg>`,
+    kid:`<svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="21" r="10" style="fill:var(--n-lit)"/><path d="M8 17a10 10 0 0120 0h5v3H8z" style="fill:var(--n-sil)"/><circle cx="14.5" cy="22" r="1.7" style="fill:var(--n-off)"/><circle cx="21.5" cy="22" r="1.7" style="fill:var(--n-off)"/><path d="M14.5 26.500q3.5 2.5 7 0" style="fill:none;stroke:var(--n-off);stroke-width:1.8;stroke-linecap:round"/></svg>`,
   };
-  // who gets into trouble on `bank` once the boat leaves (the dog can't be left with the cat or the pizza)
-  const riverTrouble = (pos, bank, carried) => { const there = (k) => k !== carried && pos[k] === bank;
-    return there("dog") && there("cat") ? "cat" : there("dog") && there("pizza") ? "pizza" : ""; };
-  // shortest way home from any position: returns the next thing to carry ("empty" for nobody)
-  function riverNext(pos, boat){
-    const key = (p, b) => "" + p.dog + p.cat + p.pizza + b, seen = new Set([key(pos, boat)]), q = [{ p:pos, b:boat, first:null }];
-    while (q.length) { const n = q.shift();
-      if (n.p.dog && n.p.cat && n.p.pizza) return n.first;
-      for (const carry of [null, ...RIVER.filter(k => n.p[k] === n.b)]) {
-        if (riverTrouble(n.p, n.b, carry)) continue;
-        const p = { ...n.p }, b = 1 - n.b; if (carry) p[carry] = b;
-        if (seen.has(key(p, b))) continue; seen.add(key(p, b));
-        q.push({ p, b, first: n.first || carry || "empty" }); } }
+  const sideCount = (L, pos, side, type) => L.tokens.filter(t => t.type === type && pos[t.id] === side).length;
+  const CROSSINGS = [
+    { id:"classic", name:"Dog, cat, pizza", seats:1, rower:true, par:7, unit:"Trips", far:"Far bank · the party", near:"Near bank · home",
+      tokens:[{ id:"dog", type:"dog", label:"Dog" }, { id:"cat", type:"cat", label:"Cat" }, { id:"pizza", type:"pizza", label:"Pizza" }],
+      intro:"Dog, cat, pizza. The boat fits me plus one. Never leave the dog alone with the cat or the pizza.",
+      fits:(load) => load.length <= 1 ? "" : "The boat fits me plus one. Put one back.",
+      cost:() => 1,
+      // I'm wherever the boat is, so only the other bank can go wrong
+      trouble:(pos, boat) => { const there = (k) => pos[k] === 1 - boat;
+        return there("dog") && there("cat") ? { bad:["dog", "cat"], say:"You left the dog alone with the cat. The cat is now on the roof. Undo that." }
+          : there("dog") && there("pizza") ? { bad:["dog", "pizza"], gone:"pizza", say:"You left the dog alone with the pizza. There is no more pizza. Undo that." } : null; },
+      win:(n) => n <= 7 ? `Everyone across in ${n} trips, pizza intact. Textbook.` : `Everyone made it in ${n} trips. It can be done in 7, just saying.` },
+    { id:"bridge", name:"The bridge at night", seats:2, par:17, limit:17, unit:"Minutes", bridge:true, far:"Far side · safe", near:"Near side · in the dark",
+      tokens:[{ id:"m1", type:"mins", mins:1, label:"The sprinter, 1 minute" }, { id:"m2", type:"mins", mins:2, label:"Dad, 2 minutes" }, { id:"m5", type:"mins", mins:5, label:"Uncle, 5 minutes" }, { id:"m10", type:"mins", mins:10, label:"Grandpa, 10 minutes" }],
+      intro:"Four of us, one rickety bridge, one flashlight with 17 minutes of battery. Two at most cross together, at the slower one's pace, and the flashlight has to come back each time.",
+      fits:(load) => load.length <= 2 ? "" : "The bridge holds two at a time. Send one back.",
+      empty:"Someone has to carry the flashlight. Pick who's walking.",
+      cost:(load) => Math.max(...load.map(t => t.mins)),
+      trouble:() => null,
+      late:(n, done) => done ? `Everyone's across, but that took ${n} minutes and the flashlight died at 17. There is a faster way. Undo and find it.`
+        : `That's ${n} minutes gone. The flashlight died at 17 and someone is standing in the dark. Undo that.`,
+      win:() => "Seventeen minutes on the dot. Most people swear it takes nineteen. You're not most people." },
+    { id:"zombies", name:"Dads and zombies", seats:2, par:11, unit:"Trips", far:"Far bank · safe", near:"Near bank · not safe",
+      tokens:[{ id:"d1", type:"dad", label:"Dad 1" }, { id:"d2", type:"dad", label:"Dad 2" }, { id:"d3", type:"dad", label:"Dad 3" }, { id:"z1", type:"zombie", label:"Zombie 1" }, { id:"z2", type:"zombie", label:"Zombie 2" }, { id:"z3", type:"zombie", label:"Zombie 3" }],
+      intro:"Three dads, three zombies, one boat for two. Zombies can row, oddly. If zombies ever outnumber the dads on a bank, those dads are lunch.",
+      fits:(load) => load.length <= 2 ? "" : "The boat holds two. Put one back.",
+      empty:"The boat won't row itself. Put someone in it.",
+      cost:() => 1,
+      trouble(pos){ for (const side of [0, 1]) { const d = sideCount(this, pos, side, "dad"), z = sideCount(this, pos, side, "zombie");
+        if (d && z > d) return { bad:this.tokens.filter(t => pos[t.id] === side).map(t => t.id), say:`${z} zombies, ${d === 1 ? "one dad" : d + " dads"} on the ${side ? "far" : "near"} bank. That's lunch. Undo that.` }; }
+        return null; },
+      win:(n) => n <= 11 ? `All six across in ${n} trips and nobody got eaten. I'm impressed, and slightly worried.` : `Everyone survived in ${n} trips. Eleven is possible, but alive is alive.` },
+    { id:"gig", name:"Load-in at the gig", seats:2, par:9, unit:"Trips", far:"Far bank · the gig", near:"Near bank · the van",
+      tokens:[{ id:"g1", type:"dad", wt:2, label:"Dad, heavy" }, { id:"g2", type:"dad", wt:2, label:"The drummer, heavy" }, { id:"k1", type:"kid", wt:1, label:"Roadie kid 1, light" }, { id:"k2", type:"kid", wt:1, label:"Roadie kid 2, light" }],
+      intro:"My band has a gig across the river. The boat holds one grown-up or two kids, never more. Everyone can row.",
+      fits:(load) => load.reduce((n, t) => n + t.wt, 0) <= 2 ? "" : "Too heavy. One grown-up or two kids, that's the boat's limit.",
+      empty:"The boat won't row itself. Put someone in it.",
+      cost:() => 1,
+      trouble:() => null,
+      win:(n) => n <= 9 ? `Whole band across in ${n} trips. The kids did most of the rowing. As it should be.` : `We made the gig in ${n} trips. Nine would have left time for a soundcheck.` },
+  ];
+  // cheapest way home from any position (Dijkstra; at most 128 positions). Returns { load:[ids], total } or null if there's no way.
+  function crossNext(L, pos, boat){
+    const ids = L.tokens.map(t => t.id), key = (p, b) => ids.map(i => p[i]).join("") + b;
+    const best = new Map([[key(pos, boat), 0]]), open = [{ p:pos, b:boat, cost:0, first:null }];
+    while (open.length) {
+      open.sort((x, y) => x.cost - y.cost); const n = open.shift();
+      if (n.cost > best.get(key(n.p, n.b))) continue;
+      if (ids.every(i => n.p[i] === 1)) return { load:n.first || [], total:n.cost };
+      const here = L.tokens.filter(t => n.p[t.id] === n.b), loads = L.rower ? [[]] : [];
+      here.forEach((a, i) => { loads.push([a]); if (L.seats > 1) here.slice(i + 1).forEach(b2 => loads.push([a, b2])); });
+      for (const load of loads) {
+        if (L.fits(load)) continue;
+        const p = { ...n.p }, b = 1 - n.b; load.forEach(t => { p[t.id] = b; });
+        if (L.trouble(p, b)) continue;
+        const cost = n.cost + (load.length ? L.cost(load) : 1), k = key(p, b);
+        if (best.has(k) && best.get(k) <= cost) continue;
+        best.set(k, cost); open.push({ p, b, cost, first: n.first || load.map(t => t.id) });
+      }
+    }
     return null;
   }
+  const crossOpen = (s) => Math.min(CROSSINGS.length - 1, CROSSINGS.filter(L => (s.crossStars || {})[L.id]).length);   // highest level you may play
   function initRiver(){
-    Object.assign(ctx, { pos:{ dog:0, cat:0, pizza:0 }, boat:0, load:null, trips:0, fail:"", past:[], hint:null, slide:null,
-      say:"Dog, cat, pizza. The boat fits me plus one. Never leave the dog alone with the cat or the pizza." });
+    const s = S(), top = crossOpen(s);
+    const level = ctx.mode !== "hands" ? 0 : Math.min(ctx.level ?? top, top), L = CROSSINGS[level];
+    Object.assign(ctx, { level, pos:Object.fromEntries(L.tokens.map(t => [t.id, 0])), boat:0, load:[], used:0, fail:null, past:[], hint:null, slide:null, say:L.intro });
   }
-  const riverStars = (c) => capStars(c, c.trips <= 7 ? 3 : c.trips <= 9 ? 2 : 1);
+  const riverStars = (c, L) => capStars(c, c.used <= L.par ? 3 : c.used <= L.par + 2 ? 2 : 1);
   function drawRiver(){
-    const c = ctx, live = !c.won && !c.fail;
-    const token = (k, onBoat) => btn("", "bz-tok" + (c.fail && !onBoat && (k === "dog" || k === c.fail) ? " flag" : "") + (live && c.hint === k ? " hint" : "") + (c.fail === "pizza" && k === "pizza" ? " gone" : ""), () => {
+    const c = ctx, s = S(), L = CROSSINGS[c.level], live = !c.won && !c.fail, small = L.tokens.length > 3, sz = small ? " sm" : "";
+    const loaded = (t) => c.load.includes(t.id);
+    const face = (t) => t.type === "mins" ? `<span class="bz-mins" aria-hidden="true"><b>${t.mins}</b><small>min</small></span>` : CICON[t.type] + (t.wt ? `<i class="bz-wt" aria-hidden="true">${t.wt === 2 ? "heavy" : "light"}</i>` : "");
+    const token = (t, onBoat) => btn("", "bz-tok" + sz + (c.fail && c.fail.bad.includes(t.id) ? " flag" : "") + (live && c.hint && c.hint.includes(t.id) && !onBoat ? " hint" : "") + (c.fail && c.fail.gone === t.id ? " gone" : ""), () => {
       if (!live) return; c.hint = null;
-      if (onBoat) c.load = null;
-      else if (c.pos[k] !== c.boat) c.say = `The boat is on the other bank. I'm not swimming back for the ${k}.`;
-      else c.load = k;
+      if (onBoat) c.load = c.load.filter(id => id !== t.id);
+      else if (c.pos[t.id] !== c.boat) c.say = L.bridge ? "The flashlight is on the other side. Nobody walks that bridge in the dark." : "The boat is on the other bank. Nobody's swimming.";
+      else { const why = L.fits(L.tokens.filter(x => loaded(x) || x === t)); if (why) c.say = why; else c.load.push(t.id); }
       renderHands();
-    }, { html:RICON[k], "data-fk":"t-" + k, "aria-label": onBoat ? `${RNAME[k]}, in the boat. Tap to put back` : `${RNAME[k]}, on the ${c.pos[k] ? "far" : "near"} bank` + (c.pos[k] === c.boat ? ". Tap to load into the boat" : "") });
-    const slot = (k, side) => c.pos[k] === side && c.load !== k ? h("span", { class:"bz-slot" }, token(k, false)) : h("span", { class:"bz-slot empty", "aria-hidden":"true" });
-    const bank = (side) => h("div", { class:"bz-bank2" }, h("small", {}, side ? "Far bank · the party" : "Near bank · home"), h("div", { class:"bz-slots" }, RIVER.map(k => slot(k, side))));
+    }, { html:face(t), "data-fk":"t-" + t.id, "aria-label": onBoat ? `${t.label}, ${L.bridge ? "about to cross" : "in the boat"}. Tap to take back` : `${t.label}, on the ${c.pos[t.id] ? "far" : "near"} side` + (c.pos[t.id] === c.boat ? `. Tap to ${L.bridge ? "send across" : "load into the boat"}` : "") });
+    const slotCls = "bz-slot" + sz;
+    const bank = (side) => h("div", { class:"bz-bank2" }, h("small", {}, side ? L.far : L.near),
+      h("div", { class:"bz-slots" + (L.tokens.length > 4 ? " six" : small ? " many" : "") }, L.tokens.map(t => c.pos[t.id] === side && !loaded(t) ? h("span", { class:slotCls }, token(t, false)) : h("span", { class:slotCls + " empty", "aria-hidden":"true" }))));
     const cross = () => {
       if (!live) return;
-      c.past.push({ pos:{ ...c.pos }, boat:c.boat, trips:c.trips });
-      const from = c.boat, fail = riverTrouble(c.pos, from, c.load);
-      if (c.load) c.pos[c.load] = 1 - from;
-      c.boat = 1 - from; c.load = null; c.trips++; c.hint = null; c.slide = from;
-      if (fail) { c.fail = fail; buzz(120);
-        c.say = fail === "cat" ? "You left the dog alone with the cat. The cat is now on the roof. Undo that." : "You left the dog alone with the pizza. There is no more pizza. Undo that."; return renderHands(); }
-      if (RIVER.every(k => c.pos[k] === 1)) return handsWon(riverStars(c), c.trips <= 7 ? `Everyone across in ${c.trips} trips, pizza intact. Textbook.` : `Everyone made it in ${c.trips} trips. It can be done in 7, just saying.`);
-      c.say = pick(["Rowing, rowing. Think about who gets left behind.", "My arms are getting tired. Robot arms, but still.", "Made it across. Who's next?"]);
+      const load = L.tokens.filter(loaded);
+      if (!load.length && !L.rower) { c.say = L.empty; return renderHands(); }
+      c.past.push({ pos:{ ...c.pos }, boat:c.boat, used:c.used });
+      const from = c.boat; load.forEach(t => { c.pos[t.id] = 1 - from; });
+      c.boat = 1 - from; c.used += load.length ? L.cost(load) : 1; c.load = []; c.hint = null; c.slide = from;
+      const done = L.tokens.every(t => c.pos[t.id] === 1);
+      const bad = L.trouble(c.pos, c.boat) || (L.limit && c.used > L.limit ? { bad:[], say:L.late(c.used, done) } : null);
+      if (bad) { c.fail = bad; c.say = bad.say; buzz(120); return renderHands(); }
+      if (done) { const st = riverStars(c, L);
+        if (c.mode === "hands") { s.crossStars ||= {}; s.crossStars[L.id] = Math.max(s.crossStars[L.id] || 0, st); }
+        return handsWon(st, L.win(c.used)); }
+      c.say = L.limit ? `${c.used} of ${L.limit} minutes used. The battery is not getting any younger.`
+        : pick(["Made it across. Think about who gets left behind.", "Rowing, rowing. Robot arms, but still.", "Across. Who's next?"]);
       renderHands();
     };
-    const undo = () => { const p = c.past.pop(); if (!p) return; Object.assign(c, { pos:p.pos, boat:p.boat, trips:p.trips, load:null, fail:"", hint:null, slide:null }); c.say = "Trip undone. We never speak of it."; renderHands(); };
+    const undo = () => { const p = c.past.pop(); if (!p) return; Object.assign(c, { pos:p.pos, boat:p.boat, used:p.used, load:[], fail:null, hint:null, slide:null }); c.say = "Trip undone. We never speak of it."; renderHands(); };
+    const hint = () => {
+      const next = crossNext(L, c.pos, c.boat);
+      if (!next || (L.limit && c.used + next.total > L.limit)) { c.say = L.limit ? "From here the battery can't last. Undo a trip or two, then ask me again." : "No way home from here. Undo a trip, then ask me again."; return renderHands(); }
+      c.hinted = true; c.hint = next.load; c.load = c.load.filter(id => next.load.includes(id));
+      const names = next.load.map(id => L.tokens.find(t => t.id === id).label.split(",")[0].toLowerCase());
+      c.say = (names.length ? `Hint: send ${names.join(" and ")} across.` : "Hint: row back with an empty boat.") + " A hint caps this one at 2 stars."; renderHands();
+    };
     // draw the boat where it was, then let it glide to where it is now
     const startAt = c.slide == null ? c.boat : c.slide; c.slide = null;
+    const seats = Array.from({ length:L.seats }, (_, i) => { const t = L.tokens.filter(loaded)[i]; return t ? h("span", { class:slotCls }, token(t, true)) : h("span", { class:slotCls + " empty", "aria-hidden":"true" }); });
     const boat = h("div", { class:"bz-boat2" + (startAt ? "" : " near") },
-      h("span", { class:"bz-hull", "aria-hidden":"true", html:`<svg viewBox="0 0 184 84"><path d="M6 20h172q0 44-30 58H36Q6 64 6 20z" style="fill:var(--n-roof);stroke:var(--n-roof-edge);stroke-width:3;stroke-linejoin:round"/><path d="M20 34h144" style="stroke:var(--n-roof-edge);stroke-width:3;stroke-linecap:round"/></svg>` }),
-      h("div", { class:"bz-crew" }, dadSVG("gamer"), c.load ? h("span", { class:"bz-slot" }, token(c.load, true)) : h("span", { class:"bz-slot empty", "aria-hidden":"true" })));
+      h("span", { class:"bz-hull", "aria-hidden":"true", html: L.bridge
+        ? `<svg viewBox="0 0 184 84"><ellipse cx="92" cy="42" rx="88" ry="40" style="fill:var(--n-lit);opacity:.16"/><ellipse cx="92" cy="42" rx="60" ry="30" style="fill:var(--n-lit);opacity:.14"/></svg>`
+        : `<svg viewBox="0 0 184 84"><path d="M6 20h172q0 44-30 58H36Q6 64 6 20z" style="fill:var(--n-roof);stroke:var(--n-roof-edge);stroke-width:3;stroke-linejoin:round"/><path d="M20 34h144" style="stroke:var(--n-roof-edge);stroke-width:3;stroke-linecap:round"/></svg>` }),
+      h("div", { class:"bz-crew" }, L.rower ? dadSVG("gamer") : null,
+        L.bridge ? h("span", { class:"bz-torch", "aria-hidden":"true", html:`<svg viewBox="0 0 24 24"><path d="M8 3h8l-1.5 6v10a2.5 2.5 0 01-5 0V9z" style="fill:var(--n-ink)"/><path d="M8 3h8" style="stroke:var(--n-lit);stroke-width:3;stroke-linecap:round"/></svg>` }) : null, seats));
     if (startAt !== c.boat) requestAnimationFrame(() => requestAnimationFrame(() => boat.classList.toggle("near", !c.boat)));
+    const top = crossOpen(s);
     return [
-      h("div", { class:"bz-hud" }, stat(String(c.trips), "Trips · par 7"), starsEl(c.won ? c.stars : riverStars(c), c.won), stat(c.boat ? "Far" : "Near", "Boat is on")),
-      h("div", { class:"bz-cross" }, bank(1),
-        h("div", { class:"bz-river2" }, h("span", { "aria-hidden":"true", html:`<svg class="bz-waves" viewBox="0 0 318 186" preserveAspectRatio="none"><path d="M10 34q12-8 24 0t24 0M200 52q12-8 24 0t24 0M60 96q12-8 24 0t24 0M236 118q12-8 24 0t24 0M24 152q12-8 24 0t24 0M150 160q12-8 24 0t24 0" style="fill:none;stroke:var(--n-wave);stroke-width:2.5;stroke-linecap:round"/></svg>` }), boat),
+      c.mode !== "hands" ? null : h("div", { class:"bz-levels", role:"group", "aria-label":"Choose a crossing" }, CROSSINGS.map((X, i) => {
+        const got = (s.crossStars || {})[X.id] || 0;
+        return btn("", "bz-lvl" + (i === c.level ? " on" : ""), () => startHands("river", { mode:"hands", level:i }),
+          { disabled:i > top, ...(i === c.level ? { "aria-current":"true" } : {}), "data-fk":"lvl" + i,
+            "aria-label":`Crossing ${i + 1}: ${X.name}` + (i > top ? ", locked. Finish the one before it first" : got ? `, best ${got} of 3 stars` : ""),
+            html:`<b>${i + 1}</b><small aria-hidden="true">${i > top ? "locked" : got ? "★".repeat(got) + "☆".repeat(3 - got) : "new"}</small>` }); })),
+      h("div", { class:"bz-hud" }, stat(L.limit ? `${c.used} / ${L.limit}` : String(c.used), L.limit ? "Minutes of battery" : `Trips · par ${L.par}`), starsEl(c.won ? c.stars : riverStars(c, L), c.won),
+        stat(L.name, c.mode === "hands" ? `Crossing ${c.level + 1} of ${CROSSINGS.length}` : "Crossing", { class:"bz-stat bz-lname" })),
+      h("div", { class:"bz-cross" + (L.bridge ? " bridge" : "") }, bank(1),
+        h("div", { class:"bz-river2" }, h("span", { "aria-hidden":"true", html: L.bridge
+          ? `<svg class="bz-waves" viewBox="0 0 318 186" preserveAspectRatio="none"><path d="M96 0v186M222 0v186" style="stroke:var(--n-roof-edge);stroke-width:4"/><path d="M96 14h126M96 40h126M96 66h126M96 92h126M96 118h126M96 144h126M96 170h126" style="stroke:var(--n-roof);stroke-width:12"/></svg>`
+          : `<svg class="bz-waves" viewBox="0 0 318 186" preserveAspectRatio="none"><path d="M10 34q12-8 24 0t24 0M200 52q12-8 24 0t24 0M60 96q12-8 24 0t24 0M236 118q12-8 24 0t24 0M24 152q12-8 24 0t24 0M150 160q12-8 24 0t24 0" style="fill:none;stroke:var(--n-wave);stroke-width:2.5;stroke-linecap:round"/></svg>` }), boat),
         bank(0)),
       c.won ? null : c.fail ? h("div", { class:"bz-ctl two" }, sbtn("Undo that trip", "go", undo, { "data-fk":"undo" }))
         : h("div", { class:"bz-ctl" },
           sbtn("Undo", "", undo, { disabled:!c.past.length, "data-fk":"undo" }),
-          sbtn("Hint", "hintb", () => { const next = riverNext(c.pos, c.boat); if (!next) return; c.hinted = true; c.hint = next;
-            c.say = (next === "empty" ? "Hint: row back with an empty boat." : `Hint: take the ${next} across.`) + " A hint caps this one at 2 stars."; if (c.load && c.load !== next) c.load = null; renderHands(); }, { "data-fk":"hint" }),
+          sbtn("Hint", "hintb", hint, { "data-fk":"hint" }),
           sbtn("Cross", "go", cross, { "data-fk":"cross" })),
     ];
   }
@@ -765,6 +848,19 @@
   .bz-slot.empty{border:2px dashed var(--n-dim); border-radius:50%}
   .bz-tok{width:60px; height:60px; padding:0; box-sizing:border-box; border:3px solid var(--n-frame); border-radius:50%; background:var(--n-off); cursor:pointer; display:grid; place-items:center}
   .bz-tok svg{width:38px; height:38px; display:block}
+  .bz-tok{position:relative} .bz-tok.sm,.bz-slot.sm{width:48px; height:48px} .bz-tok.sm svg{width:30px; height:30px}
+  .bz-slots.many{max-width:none; flex-wrap:wrap; gap:8px 4px}
+  .bz-slots.six{display:grid; grid-template-columns:repeat(3, 48px); gap:8px 22px; justify-content:center; max-width:none}
+  .bz-scene .bz-river2{height:150px} .bz-scene .bz-boat2.near{transform:translateY(54px)}
+  .bz-wt{position:absolute; left:50%; bottom:-8px; transform:translateX(-50%); padding:0 5px; border:1px solid var(--n-line); border-radius:999px; background:var(--n-sky); color:var(--n-ink); font-style:normal; font-size:.58rem; font-weight:800; line-height:13px}
+  .bz-mins{display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--n-lit)} .bz-mins b{font-size:1.15rem; font-weight:900} .bz-mins small{font-size:.58rem; font-weight:800}
+  .bz-cross.bridge .bz-river2{background:var(--n-off)}
+  .bz-torch svg{display:block; width:30px; height:30px}
+  .bz-levels{display:grid; grid-template-columns:repeat(4, 1fr); gap:6px}
+  .bz-lvl{min-height:44px; padding:3px; border:1px solid var(--n-line); border-radius:12px; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer}
+  .bz-lvl b{font-size:.95rem; font-weight:900; line-height:1} .bz-lvl small{font-size:.62rem; line-height:1; color:var(--n-muted); letter-spacing:.04em}
+  .bz-lvl.on{border-color:var(--n-accent); box-shadow:inset 0 0 0 1px var(--n-accent)} .bz-lvl:disabled{opacity:.45; cursor:default}
+  .bz-scene .bz-lname b{font-size:.78rem; line-height:1.15}
   .bz-tok.flag{outline:3px dashed var(--n-ink); outline-offset:4px}
   .bz-tok.hint{outline:3px solid var(--n-hint); outline-offset:4px}
   .bz-tok.gone svg{opacity:.3}
