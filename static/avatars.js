@@ -17,6 +17,36 @@
   const smile = `<path class="mouth" d="M25.5 39.5 Q32 43 38.5 39.5" fill="none" stroke="${FACE}" stroke-width="2.4" stroke-linecap="round"/>`;
   const eyes = `<g class="eye eye-l"><circle cx="23" cy="30" r="3.2" fill="${FACE}"/><circle cx="24.1" cy="28.9" r="1" fill="#fff"/></g>
     <g class="eye eye-r"><circle cx="41" cy="30" r="3.2" fill="${FACE}"/><circle cx="42.1" cy="28.9" r="1" fill="#fff"/></g>`;
+  // ---------- Faces ----------
+  // Each dad has his own eyes, brows and mouth, so he reads as a person and not a costume.
+  // Class names are what the moves and expressions animate: eye / eye-l / eye-r, brow / brow-l / brow-r, mouth.
+  const eye = (side, cx, o = {}) => {
+    const cy = o.cy ?? 30, r = o.r ?? 3.2;
+    let inner;
+    if (o.happy) inner = `<path d="M${cx - 3.3} ${cy + 1.3} Q${cx} ${cy - 3.6} ${cx + 3.3} ${cy + 1.3}" fill="none" stroke="${FACE}" stroke-width="2.3" stroke-linecap="round"/>`;
+    else {
+      inner = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${FACE}"/><circle cx="${cx + 1.1}" cy="${cy - 1.1}" r="${o.hl ?? 1}" fill="#fff"/>`;
+      if (o.lid) {                               // a relaxed upper lid covering the top part of the eye
+        const top = cy - r - .7, h = 2 * r * o.lid + .7;
+        inner += `<rect x="${cx - r - .7}" y="${top}" width="${2 * r + 1.4}" height="${h}" fill="${SKIN}"/><path d="M${cx - r - .5} ${top + h} H${cx + r + .5}" stroke="${FACE}" stroke-width="1.3" stroke-linecap="round"/>`;
+      }
+    }
+    return `<g class="eye eye-${side}">${inner}</g>`;
+  };
+  const eyesOf = (o = {}) => eye("l", 23, o.l || o) + eye("r", 41, o.r || o);
+  const brows = (l, r, w = 1.7) => `<path class="brow brow-l" d="${l}" fill="none" stroke="${FACE}" stroke-width="${w}" stroke-linecap="round"/><path class="brow brow-r" d="${r}" fill="none" stroke="${FACE}" stroke-width="${w}" stroke-linecap="round"/>`;
+  const softBrows = brows("M19.5 24.7 Q23 22.9 26.5 24.5", "M37.5 24.5 Q41 22.9 44.5 24.7");
+  const line = (d, w = 2.4) => `<path class="mouth" d="${d}" fill="none" stroke="${FACE}" stroke-width="${w}" stroke-linecap="round"/>`;
+  const MOUTH = {
+    smirk: line("M25.8 40.2 Q32 43.6 38.8 38.2"),                // one corner up
+    side: line("M26.2 39.9 Q32 44.2 38.6 38.8"),
+    lopsided: line("M25 38.9 Q29.5 45 39 39.7", 2.6),
+    wide: line("M24.5 39 Q32 44.6 39.5 39"),
+    gentle: line("M27 40 Q32 42.5 37 40", 2.2),
+    cosy: line("M27.2 39.6 Q32 43.6 36.8 39.6"),
+    grin: `<path class="mouth" d="M25.2 38.6 H38.8 Q38.4 44.8 32 44.8 Q25.6 44.8 25.2 38.6Z" fill="#fff" stroke="${FACE}" stroke-width="1.8" stroke-linejoin="round"/>`,
+  };
+
   const torso = (fill) => `<path d="M3 64 C5 55 12 50.5 21 49.5 L32 51 L43 49.5 C52 50.5 59 55 61 64 Z" fill="${fill}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`;
   const spark = (x, y, s = 1) => `<path transform="translate(${x} ${y}) scale(${s})" d="M0 -3.6 L1 -1 L3.6 0 L1 1 L0 3.6 L-1 1 L-3.6 0 L-1 -1Z" fill="#fff" stroke="#F2B533" stroke-width=".6"/>`;
 
@@ -32,10 +62,11 @@
       <g class="hd">${head}
         <path d="M14 25 C12.5 17 15 10.5 21 7.5 C24 2.5 31 0.8 37 3 C43 2.2 49.5 6 50.5 13.5 L50 27 C49 22.5 46 20 41 20 C37.5 20 35 20.8 32 23 C29 20.8 26.5 20 23 20 C18 20 15 22.5 14 27 Z" fill="var(--hair)" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
         <path class="hair-shine" d="M20.5 12 C25 7.5 32 6 38.5 8 C43 9.2 46.5 11.5 48.5 15 M23.5 16 C29.5 12.5 38 12.5 46 16.5 M25 7 C29 4.8 33.5 4.5 37 5.5" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".4"/>
-        <path d="M16 26.5 H30 Q30.5 34 23 34 Q16 34 16 26.5Z M48 26.5 H34 Q33.5 34 41 34 Q48 34 48 26.5Z" fill="var(--lens)"/>
+        ${eyesOf({ r:2.6, hl:.8 })}${brows("M18.5 24.9 Q23 23.7 27.5 24.7", "M36.5 24.2 Q41 21.8 45.5 23.8")}
+        <path fill-opacity=".5" d="M16 26.5 H30 Q30.5 34 23 34 Q16 34 16 26.5Z M48 26.5 H34 Q33.5 34 41 34 Q48 34 48 26.5Z" fill="var(--lens)"/>
         <path d="M30 27.5 H34" stroke="var(--lens)" stroke-width="2"/>
         <path class="glint" d="M19 28.5 L23 28.5 M37 28.5 L41 28.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".75"/>
-        ${smile}
+        ${MOUTH.smirk}
         <g class="mv mv-spark" opacity="0">${spark(45.5, 26, 1.1)}</g>
         <g class="mv mv-comb" opacity="0"><rect x="0" y="0" width="13" height="3.2" rx="1.2" fill="#D7263D" stroke="${INK}" stroke-width="1"/>
           <path d="M1.6 3.2v2.4M3.8 3.2v2.4M6 3.2v2.4M8.2 3.2v2.4M10.4 3.2v2.4" stroke="#D7263D" stroke-width="1.1"/></g>
@@ -52,7 +83,7 @@
       <g class="hd">${head}
         <path d="M14 26.5 C12.5 18 17.5 11 26 10 C31 7.8 40 8.2 45 11.2 C49.5 14 51.2 19.5 50 26.5 C48.5 22 45.5 19.6 40.5 19.6 L26 19.6 C20 19.6 15.5 22 14 26.5Z" fill="#6B4A32" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
         <path d="M25 11.5 C29 15 36 16.4 45 15.5" fill="none" stroke="#fff" stroke-width="1.2" opacity=".35" stroke-linecap="round"/>
-        ${eyes}${smile}
+        <path d="M13.6 35 Q15 44.6 23 44.9 H41 Q49 44.6 50.4 35 Q46 41.6 38.5 42.3 Q32 44.8 25.5 42.3 Q18 41.6 13.6 35Z" fill="${FACE}" opacity=".12"/>${softBrows}${eyes}${smile}
       </g>
       <g class="mv mv-mug" opacity="0"><path d="M35 36 h10 v8 a3 3 0 0 1 -3 3 h-4 a3 3 0 0 1 -3 -3z" fill="#fff" stroke="${INK}" stroke-width="1.6"/>
         <path d="M45 38 h1.5 a2.2 2.2 0 0 1 0 4.4 H45" fill="none" stroke="${INK}" stroke-width="1.6"/><rect x="37" y="39.5" width="6" height="2" fill="#D7263D"/>
@@ -77,7 +108,7 @@
         <path d="M9.5 27 C8 1.5 56 1.5 54.5 27" fill="none" stroke="#3A3A44" stroke-width="2.2"/>
         <rect x="5.5" y="24.5" width="7" height="11" rx="3.5" fill="#FF8C1A" stroke="${INK}" stroke-width="1.6"/>
         <rect x="51.5" y="24.5" width="7" height="11" rx="3.5" fill="#FF8C1A" stroke="${INK}" stroke-width="1.6"/>
-        ${eyes}${smile}
+        ${eyesOf({ r:3.6, hl:1.3 })}${MOUTH.grin}
         <g class="mv mv-shades" opacity="0"><path d="M15.5 26 H30.5 L29.5 32.5 Q23 35 17 32.5Z M48.5 26 H33.5 L34.5 32.5 Q41 35 47 32.5Z" fill="#111" stroke="#111" stroke-width="1"/>
           <path d="M30.5 27.5 H33.5" stroke="#111" stroke-width="2"/><path d="M18 28 L22 28 M36 28 L40 28" stroke="#FF3EA5" stroke-width="1.2" stroke-linecap="round"/></g>
       </g>
@@ -100,7 +131,7 @@
           <path d="M22 8.5 C26 15 27 19 26.5 23.5 M42 8.5 C38 15 37 19 37.5 23.5" stroke="#1E3F8F" stroke-width="1.1" fill="none"/>
           <path d="M26.5 23.5 Q32 17.5 37.5 23.5" fill="${SKIN}" stroke="${INK}" stroke-width="1.6"/>
           <circle cx="32" cy="6.8" r="1.6" fill="#1E3F8F" stroke="${INK}" stroke-width="1"/></g>
-        ${eyes}${smile}
+        ${eyesOf({ lid:.4 })}${MOUTH.smirk}
       </g>
       <g class="mv mv-buzz" opacity="0"><path d="M42 57 l-2 -1 M42 60.5 l-2 1 M54.5 57 l2 -1 M54.5 60.5 l2 1" stroke="${INK}" stroke-width="1.2" stroke-linecap="round"/></g>`,
     },
@@ -116,7 +147,7 @@
           <path d="M20.5 22.5 C20.5 12.5 25.5 7.5 32 7.5 C38.5 7.5 43.5 12.5 43.5 22.5Z" fill="#fff" stroke="${INK}" stroke-width="1.6"/>
           <circle cx="32" cy="15.5" r="3.6" fill="#FF8C1A" stroke="${INK}" stroke-width="1"/><path d="M30.2 15.5 h3.6 M32 13.7 v3.6" stroke="#fff" stroke-width="1"/>
           <path d="M9 24 C16 19 48 19 55 24 C48 27 16 27 9 24Z" fill="#E8572A" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></g>
-        ${eyes}${smile}
+        ${eyes}${MOUTH.lopsided}
         <circle cx="10.5" cy="32" r="1.8" fill="#fff" stroke="${INK}" stroke-width=".8"/><circle cx="53.5" cy="32" r="1.8" fill="#fff" stroke="${INK}" stroke-width=".8"/>
         <path d="M10.5 33.8 C11 42 14 46 17 48 M53.5 33.8 C53 42 50 46 47 48" fill="none" stroke="#fff" stroke-width="1.3"/>
       </g>
@@ -134,7 +165,7 @@
       <path d="M18.5 50.5 C22 55.5 42 55.5 45.5 50.5 L43.5 48 C40 52 24 52 20.5 48Z" fill="#646E7A" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
       <g class="hd">${head}
         <path d="M13 24 C12 28 13 31 15 33 L17 24Z M51 24 C52 28 51 31 49 33 L47 24Z" fill="#6B4A32" stroke="${INK}" stroke-width="1.2"/>
-        ${eyes}${smile}
+        ${eyesOf({ lid:.34 })}${MOUTH.side}
         <g class="beanie"><path d="M12.5 21 C11 9 20 3.5 32 3.5 C44 3.5 53 9 51.5 21Z" fill="#C23B3B" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
           <path d="M22 6 C24 12 25 16 25 20 M32 4 V20 M42 6 C40 12 39 16 39 20" stroke="#9E2B2B" stroke-width="1.2" fill="none"/>
           <rect x="11" y="19" width="42" height="6.5" rx="3" fill="#9E2B2B" stroke="${INK}" stroke-width="1.8"/>
@@ -156,7 +187,7 @@
         <path d="M8.5 27 C7 4 57 4 55.5 27" fill="none" stroke="#2A2E36" stroke-width="3"/>
         <rect x="4.5" y="23.5" width="9" height="13" rx="4" fill="#2A2E36" stroke="${INK}" stroke-width="1.6"/><rect x="50.5" y="23.5" width="9" height="13" rx="4" fill="#2A2E36" stroke="${INK}" stroke-width="1.6"/>
         <path class="cup-led" d="M7 30 h4 M53 30 h4" stroke="#39FF88" stroke-width="1.6" stroke-linecap="round"/>
-        ${eyes}${smile}
+        ${brows("M19.5 24 L26.8 24.9", "M44.5 24 L37.2 24.9")}${eyes}${MOUTH.smirk}
         <g class="mic"><path d="M10 35.5 C11 42 17 44.5 23 43" fill="none" stroke="#2A2E36" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="42.8" r="2" fill="#2A2E36" stroke="#39FF88" stroke-width="1"/></g>
       </g>
       <text class="mv mv-gg" opacity="0" x="46" y="13" text-anchor="middle" font-family="Nunito, sans-serif" font-size="10" font-weight="900" fill="#39FF88" stroke="#111" stroke-width="1" paint-order="stroke">GG!</text>
@@ -179,7 +210,7 @@
         <g class="bucket"><path d="M15 20 C15 10 22 5.5 32 5.5 C42 5.5 49 10 49 20Z" fill="#4E7FB8" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
           <path d="M16 15 H48" stroke="#3B6696" stroke-width="1.2"/>
           <path d="M8 24 C14 18.5 50 18.5 56 24 L53.5 27.5 C46 23.5 18 23.5 10.5 27.5Z" fill="#5B8EC8" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></g>
-        ${eyes}${smile}
+        ${eyesOf({ happy:true })}${MOUTH.grin}
       </g>`,
     },
     dracula: {
@@ -194,7 +225,7 @@
       <g class="hd">${head}
         <path d="M13 25 C12 15 19 8.5 32 8 C45 8.5 52 15 51 25 C49 21 45 19.5 40 19.5 C37 19.5 34.5 20.5 32 24.5 C29.5 20.5 27 19.5 24 19.5 C19 19.5 15 21 13 25Z" fill="#15121C" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
         <path d="M19 14 C24 10.5 30 10 33 11 M36 11.5 C40 11 44 12.5 46.5 15" fill="none" stroke="#fff" stroke-width="1.2" opacity=".35" stroke-linecap="round"/>
-        <path d="M17.5 25.8 L27 24 M37 24 L46.5 25.8" stroke="${FACE}" stroke-width="2" stroke-linecap="round"/>
+        ${brows("M18 25.4 Q22.5 23 27 25", "M37 24.2 Q41.5 21.2 46 24", 2)}
         ${eyes}${smile}
         <path class="fangs" d="M28.3 40.5 L29.4 43.6 L30.5 40.9 Z M33.5 40.9 L34.6 43.6 L35.7 40.5 Z" fill="#fff" stroke="${FACE}" stroke-width=".8" stroke-linejoin="round"/>
       </g>
@@ -212,7 +243,8 @@
         <path d="M13.5 25 L13.5 34 L16.5 34 L16.5 24Z M50.5 25 L50.5 34 L47.5 34 L47.5 24Z" fill="#2A1A12"/>
         <g class="hair-f"><path d="M12.5 26 C9 17 14 6 25 5 C29 2.5 37 2.5 41 5 C52 6 56 16 51.5 26 C50 21 46 18.6 41 19 C38 15.5 34 15 31 17.5 C27.5 15 22 15.5 20 19.5 C16.5 20 14 22.5 12.5 26Z" fill="#2A1A12" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
           <path d="M19 11 C23 8 28 7.5 32 9 M35 9.5 C39 8 44 9.5 47 13" fill="none" stroke="#fff" stroke-width="1.3" opacity=".3" stroke-linecap="round"/></g>
-        ${eyes}${smile}
+        ${brows("M18.5 25 Q23 21.8 27.5 24.4", "M36.5 24.4 Q41 21.8 45.5 25", 2.4)}${eyes}
+        <path d="M24.5 37.5 Q28.5 34.6 32 36.6 Q35.5 34.6 39.5 37.5 Q35.5 39.6 32 38.4 Q28.5 39.6 24.5 37.5Z" fill="#2A1A12" stroke="${FACE}" stroke-width="1" stroke-linejoin="round"/>${line("M27 41 Q32 44 37 41", 2.2)}
       </g>
       <g class="mv mv-wind" opacity="0" stroke="#F2B533" stroke-width="1.4" stroke-linecap="round" fill="none"><path d="M1 12 h9 M0 18 h12 M2 24 h8"/></g>
       <g class="mv mv-punch" opacity="0"><rect x="49" y="40" width="12" height="10" rx="3.5" fill="${SKIN}" stroke="${INK}" stroke-width="1.8"/>
@@ -231,7 +263,7 @@
       </g>${neck}
       <g class="hd">${head}
         <path d="M14 26 C12.5 17 18 10.5 26 10 C31 7.5 40 8 45 11 C49.5 13.8 51.3 19.3 50 26 C48.5 21.5 45.5 19.6 40.5 19.6 L26 19.6 C20 19.6 15.5 21.8 14 26Z" fill="#2A1A12" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
-        ${eyes}${smile}
+        ${softBrows}${eyes}${MOUTH.wide}
       </g>
       <g class="mv mv-diya" opacity="0"><path d="M22 54 Q32 62 42 54 Q37 52 32 52 Q27 52 22 54Z" fill="#C2410C" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
         <path d="M24.5 54.3 Q32 52.6 39.5 54.3" stroke="#FFD27A" stroke-width="1" fill="none"/>
@@ -255,7 +287,7 @@
           <path d="M18 12 h28 M15.5 16.5 h33" stroke="#fff" stroke-width="2.2" opacity=".9"/>
           <rect x="11.5" y="19.5" width="41" height="6" rx="3" fill="#fff" stroke="${INK}" stroke-width="1.6"/>
           <circle class="pom" cx="32" cy="4.5" r="4" fill="#fff" stroke="${INK}" stroke-width="1.6"/></g>
-        ${eyes}${smile}
+        <circle cx="17.6" cy="35.6" r="2.6" fill="#FF8FA3" opacity=".55"/><circle cx="46.4" cy="35.6" r="2.6" fill="#FF8FA3" opacity=".55"/>${eyes}${MOUTH.cosy}
       </g>
       <g class="mv mv-mug" opacity="0"><path d="M35 36 h10 v8 a3 3 0 0 1 -3 3 h-4 a3 3 0 0 1 -3 -3z" fill="#E84855" stroke="${INK}" stroke-width="1.6"/>
         <path d="M45 38 h1.5 a2.2 2.2 0 0 1 0 4.4 H45" fill="none" stroke="${INK}" stroke-width="1.6"/><path d="M36.5 39.5 h7" stroke="#fff" stroke-width="1.2"/>
@@ -272,7 +304,7 @@
       </g>${neck}
       <g class="hd">${head}
         <path d="M14 26 C12.5 17 18 10.5 26 10 C31 7.5 40 8 45 11 C49.5 13.8 51.3 19.3 50 26 C48.5 21.5 45.5 19.6 40.5 19.6 L26 19.6 C20 19.6 15.5 21.8 14 26Z" fill="#1E1A18" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
-        ${eyes}${smile}
+        ${brows("M19.5 24.3 Q23 22.2 26.5 24", "M37.5 24 Q41 22.2 44.5 24.3")}${eyes}${MOUTH.grin}
       </g>
       <g class="mv mv-lantern" opacity="0"><path d="M54 30 V34" stroke="#F5C04A" stroke-width="1"/>
         <ellipse cx="54" cy="41" rx="6" ry="7" fill="#E8262E" stroke="${INK}" stroke-width="1.4"/>
@@ -292,7 +324,7 @@
       </g>${neck}
       <g class="hd">${head}
         <path d="M14 26 C12.5 17 18 10.5 26 10 C31 7.5 40 8 45 11 C49.5 13.8 51.3 19.3 50 26 C48.5 21.5 45.5 19.6 40.5 19.6 L26 19.6 C20 19.6 15.5 21.8 14 26Z" fill="#2A1A12" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
-        ${eyes}${smile}
+        ${brows("M19.5 24.4 Q23 22.4 26.5 24.2", "M37.5 24.2 Q41 22.4 44.5 24.4")}${eyes}${MOUTH.wide}
       </g>
       <g class="mv mv-hand" opacity="0"><rect x="51.5" y="49" width="7" height="17" rx="2" fill="#127C7A" stroke="${INK}" stroke-width="1.6"/>
         <rect x="50.5" y="40" width="9" height="10.5" rx="3.5" fill="${SKIN}" stroke="${INK}" stroke-width="1.8"/>
@@ -316,8 +348,8 @@
       <g class="hd">${head}
         <path d="M19.5 20 Q25 17.3 30.5 18.2" stroke="#fff" stroke-width="1.7" opacity=".65" fill="none" stroke-linecap="round"/>
         <path d="M12.5 21.5 C8.5 20.5 7.2 24.6 9.4 26.8 C7.3 28.3 8.6 32.4 12.4 31.4Z M51.5 21.5 C55.5 20.5 56.8 24.6 54.6 26.8 C56.7 28.3 55.4 32.4 51.6 31.4Z" fill="#EEF1F4" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>
-        <path d="M17.8 24.6 C20 22.4 25 22.4 27.6 24.6 M36.4 24.6 C39 22.4 44 22.4 46.2 24.6" stroke="${FACE}" stroke-width="4.4" stroke-linecap="round" fill="none"/>
-        <path d="M17.8 24.6 C20 22.4 25 22.4 27.6 24.6 M36.4 24.6 C39 22.4 44 22.4 46.2 24.6" stroke="#EEF1F4" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+        <g class="brow"><path d="M17.8 24.6 C20 22.4 25 22.4 27.6 24.6 M36.4 24.6 C39 22.4 44 22.4 46.2 24.6" stroke="${FACE}" stroke-width="4.4" stroke-linecap="round" fill="none"/>
+        <path d="M17.8 24.6 C20 22.4 25 22.4 27.6 24.6 M36.4 24.6 C39 22.4 44 22.4 46.2 24.6" stroke="#EEF1F4" stroke-width="2.8" stroke-linecap="round" fill="none"/></g>
         ${eyes}
         <g class="specs"><circle cx="23" cy="31" r="5.2" fill="#fff" fill-opacity=".18" stroke="#8A6A2E" stroke-width="1.5"/><circle cx="41" cy="31" r="5.2" fill="#fff" fill-opacity=".18" stroke="#8A6A2E" stroke-width="1.5"/>
           <path d="M28.2 31 Q32 29 35.8 31" fill="none" stroke="#8A6A2E" stroke-width="1.5"/></g>
@@ -347,12 +379,12 @@
         <path d="M27.5 12.2 C27.2 14.4 27.3 16 27.5 17.2" stroke="#2E3238" stroke-width="1.2" fill="none" stroke-linecap="round"/>
         <path d="M13.6 25.6 C13.2 22.6 14 20.8 15.6 19.6 M50.4 25.6 C50.6 22.6 49.8 20.6 48 19.6" stroke="#C9CED6" stroke-width="1.8" fill="none" stroke-linecap="round"/>
         <path d="M33 13 C38 13 43 14.2 46 17" stroke="#8A9099" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-        <path d="M18 24.2 L27.5 23 M36.5 23 L46 24.2" stroke="#3B2A1E" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        <path class="brow brow-l" d="M18 24.2 L27.5 23" stroke="#3B2A1E" stroke-width="2.6" stroke-linecap="round" fill="none"/><path class="brow brow-r" d="M36.5 23 L46 24.2" stroke="#3B2A1E" stroke-width="2.6" stroke-linecap="round" fill="none"/>
         ${eyes}
         <g class="pspecs"><rect x="17" y="26.6" width="12" height="8.2" rx="2" fill="#fff" fill-opacity=".15" stroke="#262B33" stroke-width="2"/><rect x="35" y="26.6" width="12" height="8.2" rx="2" fill="#fff" fill-opacity=".15" stroke="#262B33" stroke-width="2"/>
           <path d="M29 29.6 Q32 28 35 29.6" fill="none" stroke="#262B33" stroke-width="1.8"/>
           <path class="glint" d="M19.2 29.2 L21.2 27.8 M37.2 29.2 L39.2 27.8" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/></g>
-        ${smile}
+        ${MOUTH.gentle}
       </g>
       <g class="mv mv-chalk" opacity="0"><text x="3" y="15" font-family="'Gochi Hand', cursive" font-size="15" fill="#F7D54A" stroke="${INK}" stroke-width=".5">π</text>
         <rect x="52" y="36" width="9" height="3.2" rx="1" fill="#fff" stroke="${INK}" stroke-width="1" transform="rotate(-35 56.5 37.6)"/></g>
@@ -370,7 +402,7 @@
       </g>${neck}
       <g class="hd">${head}
         <path d="M13 25 L8.5 18.5 L14.5 19 L12 11 L19.5 14 L20 5.5 L26.5 11 L32 2.5 L37.5 11 L44 5.5 L44.5 14 L52 11 L49.5 19 L55.5 18.5 L51 25 C48 21.2 44.5 19.6 40.5 19.6 L23.5 19.6 C19.5 19.6 16 21.2 13 25Z" fill="#F2F2F2" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>
-        ${eyes}${smile}
+        ${eyesOf({ l:{ r:3.8, hl:1.3 }, r:{ r:2.7, hl:.8 } })}${MOUTH.grin}
         <g class="goggles"><path d="M11.5 21 H52.5" stroke="#12B5A0" stroke-width="3"/>
           <rect x="16.5" y="15.5" width="13" height="10" rx="4.5" fill="#BDF3EC" fill-opacity=".8" stroke="${INK}" stroke-width="1.6"/>
           <rect x="34.5" y="15.5" width="13" height="10" rx="4.5" fill="#BDF3EC" fill-opacity=".8" stroke="${INK}" stroke-width="1.6"/>
@@ -422,7 +454,7 @@
         <path d="M15 24 C14 28 14.5 30.5 16 32 L18 24Z M49 24 C50 28 49.5 30.5 48 32 L46 24Z" fill="#5A3A22" stroke="${INK}" stroke-width="1.1"/>
         ${eyes}
         <path d="M24.5 37.5 Q28.5 34.6 32 36.6 Q35.5 34.6 39.5 37.5 Q35.5 39.6 32 38.4 Q28.5 39.6 24.5 37.5Z" fill="#5A3A22" stroke="${FACE}" stroke-width="1" stroke-linejoin="round"/>
-        <path class="mouth" d="M27 41 Q32 44 37 41" fill="none" stroke="${FACE}" stroke-width="2.2" stroke-linecap="round"/>
+        <path class="mouth" d="M26.4 40.4 H37.6 Q37.2 45 32 45 Q26.8 45 26.4 40.4Z" fill="#fff" stroke="${FACE}" stroke-width="1.7" stroke-linejoin="round"/>
         <g class="ccap"><path d="M12.5 23 C11.5 10.5 20 4.5 32 4.5 C44 4.5 52.5 10.5 51.5 23Z" fill="#C8102E" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
           <path d="M32 4.5 C30 10 29.5 16 30 23 M32 4.5 C34 10 34.5 16 34 23" stroke="#9E0C24" stroke-width="1.1" fill="none"/>
           <path d="M11.5 22.5 Q32 26.5 52.5 22.5 L52 25.5 Q32 29.5 12 25.5Z" fill="#9E0C24" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>
