@@ -58,6 +58,8 @@
     return s;
   };
   const save = () => { if (bridge) bridge.save(); };
+  let run = null;              // the Puzzle Run in progress: five stops, three hearts, a boss at the end
+  const RUN_LEN = 5;
   const level = (xp) => { let i = 0; LEVELS.forEach(([n], k) => { if (xp >= n) i = k; }); return i; };
 
   function award(points, opts = {}){
@@ -121,7 +123,7 @@
       topBar("Brain Teasers"),
       bubble(say || sayText || pick(SAY.hello)),
       h("div", { class:"bz-tiles" },
-        mk("⚡", "Puzzle Run", "Riddles, logic and hands-on puzzles. Keep your streak alive.", () => startRun(), "bz-focus"),
+        mk("⚡", "Puzzle Run", s.runs ? `Five stops, three hearts, one boss. Best: ${s.runBest || 0} of ${RUN_LEN} stops.` : "Five stops, three hearts, one boss puzzle at the end.", () => startRun(true), "bz-focus"),
         (() => { const no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null, done = d && (d.won || d.lost);
           return mk(done ? (d.won ? "🔓" : "🔒") : "🔐", `Dad's Safe #${no}`,
             done ? (d.won ? `Cracked in ${d.tries.length + 1}. A new safe at midnight.` : "Stayed shut today. A new safe at midnight.")
@@ -154,12 +156,47 @@
   }
 
   // ---------- Puzzle Run ----------
-  function startRun(){
-    runCount++;
-    if (runCount % 4 === 0) { const k = pick(HKINDS); return startHands(k, { mode:"run" }); }
-    const s = S(), fresh = P.filter(p => !s.done.includes(p.id) && p !== lastRun);
-    const p = pick(fresh.length ? fresh : P.filter(p => p !== lastRun));
-    lastRun = p; startPuzzle(p, { mode:"run" });
+  function newRun(){
+    const s = S(), fresh = shuffle(P.filter(p => !s.done.includes(p.id))), pool = fresh.length >= 5 ? fresh : shuffle(P);
+    const boss = pool.find(p => p.type === "logic") || pool[0], rest = pool.filter(p => p !== boss).slice(0, 3);
+    run = { stop:0, hearts:3, solved:0, xp0:s.xp,
+      steps:[{ p:rest[0] }, { p:rest[1] }, { hands:pick(HKINDS) }, { p:rest[2] }, { p:boss, boss:true }] };
+  }
+  function startRun(fresh){
+    if (fresh || !run || run.hearts <= 0 || run.stop >= RUN_LEN) newRun();
+    const st = run.steps[run.stop];
+    if (st.hands) return startHands(st.hands, { mode:"run" });
+    startPuzzle(st.p, { mode:"run", boss:!!st.boss });
+  }
+  const runNextLabel = () => !run ? "Next puzzle →" : run.hearts <= 0 ? "See results →" : run.stop + 1 >= RUN_LEN ? "Finish the run →" : "Next stop →";
+  function runAdvance(){
+    if (!run) return startRun(true);
+    if (run.hearts <= 0) return runResult();
+    run.stop++;
+    if (run.stop >= RUN_LEN) return runResult();
+    startRun();
+  }
+  // the road along the top: five stops (the hand is the hands-on one, the star is the boss) and your hearts
+  const runBar = () => !run ? null : h("div", { class:"bz-runbar", role:"img", "aria-label":`Stop ${Math.min(run.stop + 1, RUN_LEN)} of ${RUN_LEN}, ${run.hearts} of 3 hearts left` },
+    h("div", { class:"bz-road", "aria-hidden":"true" }, run.steps.map((st, i) => h("span", { class:"bz-stop" + (i < run.stop ? " done" : i === run.stop ? " now" : "") + (st.boss ? " boss" : "") }, i < run.stop ? "✓" : st.boss ? "★" : st.hands ? "✋" : String(i + 1)))),
+    h("div", { class:"bz-hearts", "aria-hidden":"true" }, [0, 1, 2].map(i => h("span", { class:"bz-heart" + (i < run.hearts ? "" : " lost") }, "♥"))));
+  function runResult(){
+    view = "runresult"; ctx = null;
+    const s = S(), r = run, won = r.hearts > 0 && r.stop >= RUN_LEN;
+    const extra = won ? award(50, { keepStreak:true }) : "";
+    s.runs = (s.runs || 0) + 1; s.runBest = Math.max(s.runBest || 0, r.solved); if (won) s.runWins = (s.runWins || 0) + 1; save();
+    const pts = s.xp - r.xp0;
+    paint(topBar("Puzzle Run", { fn: () => hub() }),
+      bubble(won ? (r.hearts === 3 ? "FLAWLESS. Not a single heart lost. I'm framing this." : "Boss down! You made it to the end of the road.") + (extra ? " " + extra : "") : r.solved >= 3 ? "Out of hearts, but what a run. So close." : "Out of hearts. The road's long. Go again?"),
+      h("div", { class:"bz-runres" + (won ? " win" : "") },
+        h("b", {}, won ? "RUN COMPLETE" : "RUN OVER"),
+        h("div", { class:"bz-runstats" },
+          h("div", {}, h("b", {}, `${r.solved}/${RUN_LEN}`), h("small", {}, "stops cleared")),
+          h("div", {}, h("b", {}, [0, 1, 2].map(i => i < r.hearts ? "♥" : "♡").join("")), h("small", {}, "hearts left")),
+          h("div", {}, h("b", {}, "+" + (pts)), h("small", {}, "points")))),
+      h("p", { class:"bz-foot" }, `Best run: ${s.runBest} of ${RUN_LEN} stops · ${s.runWins || 0} complete`),
+      h("div", { class:"bz-row" }, btn("New run", "primary bz-focus", () => startRun(true)), btn("Menu", "ghost", () => hub())));
+    focusFirst();
   }
 
   // ---------- multiple choice and type-in puzzles ----------
@@ -172,10 +209,26 @@
   const backFor = () => ctx && ctx.mode === "escape" ? { label:"Room", fn: () => roomView(ctx.room) } : ctx && ctx.mode === "notebook" ? { label:"Notebook", fn: () => notebookMenu() } : { fn: () => hub() };
   // Sends the question (never the answer) to a friend as a picture. Not offered in the escape room, where puzzles guard clues.
   const challengeBtn = (p) => bridge?.share && ctx.mode !== "escape" ? btn("Challenge a friend", "ghost", () => bridge.share(p.q)) : null;
+
+  // ---------- puzzle scenes: each kind of puzzle gets its own prop, drawn once and used for every puzzle of that kind ----------
+  const SCENE = {
+    riddle:{ label:"Voicemail from Dad", art:`<svg viewBox="0 0 96 56" aria-hidden="true"><rect x="6" y="14" width="64" height="36" rx="6" fill="#4B4F6B" stroke="#1B1D2B" stroke-width="2"/><circle cx="26" cy="30" r="9" fill="#1B1D2B"/><circle cx="26" cy="30" r="3.5" fill="#C9D1D9"/><circle cx="50" cy="30" r="9" fill="#1B1D2B"/><circle cx="50" cy="30" r="3.5" fill="#C9D1D9"/><rect x="18" y="42" width="40" height="4" rx="2" fill="#2B2E44"/><circle class="bz-blink" cx="62" cy="21" r="3" fill="#FF5C5C"/><path d="M78 20q6 8 0 16M84 15q10 13 0 26" fill="none" stroke="#FFD866" stroke-width="2.5" stroke-linecap="round"/></svg>`, bg:"#2A2D45" },
+    logic:{ label:"Dad's case board", art:`<svg viewBox="0 0 96 56" aria-hidden="true"><rect x="4" y="6" width="88" height="46" rx="5" fill="#B98B55" stroke="#6B4A25" stroke-width="3"/><rect x="12" y="14" width="22" height="18" fill="#FFF7DC" transform="rotate(-4 23 23)"/><rect x="58" y="12" width="24" height="18" fill="#FFF7DC" transform="rotate(5 70 21)"/><rect x="34" y="34" width="24" height="14" fill="#FFF7DC" transform="rotate(-2 46 41)"/><path d="M23 16 L70 14 L46 36 Z" fill="none" stroke="#D7263D" stroke-width="2"/><circle cx="23" cy="16" r="3" fill="#D7263D"/><circle cx="70" cy="14" r="3" fill="#D7263D"/><circle cx="46" cy="36" r="3" fill="#D7263D"/></svg>`, bg:"#6B4A25" },
+    number:{ label:"Dad's calculator", art:`<svg viewBox="0 0 96 56" aria-hidden="true"><rect x="26" y="4" width="44" height="50" rx="6" fill="#C9D1D9" stroke="#2C333B" stroke-width="2"/><rect x="31" y="9" width="34" height="12" rx="2" fill="#9BE08A"/><text x="62" y="19" text-anchor="end" font-family="ui-monospace,monospace" font-weight="800" font-size="10" fill="#1E3A1E">= ?</text>${[0,1,2].map(r => [0,1,2,3].map(c => `<rect x="${31 + c * 9}" y="${26 + r * 8}" width="7" height="6" rx="1.5" fill="${c === 3 ? "#F5A623" : "#5A6470"}"/>`).join("")).join("")}</svg>`, bg:"#2C333B" },
+    pattern:{ label:"Spot the pattern", art:`<svg viewBox="0 0 96 56" aria-hidden="true">${["#FFD866","#6BE08C","#FFD866","#6BE08C"].map((c, i) => `<rect x="${6 + i * 18}" y="18" width="15" height="20" rx="3" fill="${c}" stroke="#1B1D2B" stroke-width="2"/>`).join("")}<rect x="78" y="18" width="15" height="20" rx="3" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="3 3"/><text x="85.5" y="33" text-anchor="middle" font-weight="900" font-size="14" fill="#fff">?</text></svg>`, bg:"#2B2A55" },
+  };
+  function puzzleCard(p, c){
+    const k = SCENE[p.type] ? p.type : "logic", sc = SCENE[k];
+    const tag = c.boss ? "BOSS PUZZLE · double points" : c.mode === "daily" ? `Today's case #${safeNo()} · double points` : c.mode === "notebook" ? "A page from Dev's notebook" : sc.label;
+    return h("div", { class:"bz-pcard bz-pk-" + k + (c.boss ? " boss" : "") + (c.mode === "daily" ? " daily" : ""), style:`--pbg:${sc.bg}` },
+      h("div", { class:"bz-phead" }, h("span", { class:"bz-part", "aria-hidden":"true", html:sc.art }), h("b", {}, tag)),
+      h("p", { class:"bz-q bz-paper" }, p.q),
+      c.done && c.mode === "daily" ? h("span", { class:"bz-stamp", "aria-hidden":"true" }, "CASE CLOSED") : null);
+  }
   function renderPuzzle(){
     const c = ctx, p = c.p;
-    const nodes = [topBar(c.mode === "daily" ? "Today's puzzle" : c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "notebook" ? "Dev's Notebook" : "Puzzle Run", backFor()), bubble(c.say)];
-    nodes.push(h("p", { class:"bz-q" }, p.q));
+    const nodes = [topBar(c.mode === "daily" ? "Today's puzzle" : c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "notebook" ? "Dev's Notebook" : "Puzzle Run", backFor()), c.mode === "run" ? runBar() : null, bubble(c.say)];
+    nodes.push(puzzleCard(p, c));
     p.hints.slice(0, c.hints).forEach((t, i) => nodes.push(h("p", { class:"bz-hint" }, `Hint ${i + 1}: ${t}`)));
     if (c.msg) nodes.push(h("p", { class:"bz-msg" + (c.done ? " ok" : "") }, c.msg));
     if (!c.done) {
@@ -193,7 +246,7 @@
         btn("Ask Dad", "ghost", () => bridge?.coach(p.id)),
         challengeBtn(p),
         btn("Show the answer", "ghost", () => {
-          c.done = true; const s = S(); s.streak = 0; if (c.mode === "daily") s.daily = today(); save();
+          c.done = true; const s = S(); s.streak = 0; if (c.mode === "daily") s.daily = today(); if (c.mode === "run" && run) run.hearts--; save();
           c.say = pick(SAY.reveal); c.msg = `The answer is ${p.kind === "type" ? p.answer : p.ok}. ${p.why}`;
           if (c.mode === "escape") c.say += " That still counts for the room.";
           renderPuzzle();
@@ -202,7 +255,7 @@
       nodes.push(h("div", { class:"bz-row" }, c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
         : c.mode === "daily" ? btn("Back to the menu", "primary bz-focus", () => hub())
         : c.mode === "notebook" ? btn("Back to the notebook →", "primary bz-focus", () => notebookMenu())
-        : btn("Next puzzle →", "primary bz-focus", startRun)));
+        : btn(runNextLabel(), "primary bz-focus", runAdvance)));
       if (c.mode === "run") nodes[nodes.length - 1].append(btn("Menu", "ghost", () => hub()));
       const ch = challengeBtn(p); if (ch) nodes[nodes.length - 1].append(ch);
     }
@@ -215,12 +268,15 @@
       c.wrong++; S().streak = 0; save();
       if (p.kind !== "type") (c.tried ||= []).push(val);
       c.say = pick(SAY.wrong); c.msg = p.kind === "type" ? `"${val}" isn't it. Try again, or take a hint.` : "";
+      if (c.mode === "run" && run) { run.hearts--; c.say += " That's a heart."; if (run.hearts <= 0) { c.done = true; c.say = "Out of hearts. That's the run."; c.msg = `The answer is ${p.kind === "type" ? p.answer : p.ok}. ${p.why}`; } }
       renderPuzzle(); focusFirst(".bz-opt:not([disabled]), .bz-input"); window.RDWin?.(root, false); return;
     }
     let pts = Math.max(10, 30 - 10 * c.hints);
     if (c.wrong) pts = Math.max(5, Math.round(pts / 2));
     const fast = !c.wrong && !c.hints && Date.now() - c.t0 < 30000;
     if (fast) pts += 10;
+    if (c.mode === "run" && c.boss) pts *= 2;
+    if (c.mode === "run" && run) run.solved++;
     if (c.mode === "daily") { pts *= 2; const s = S(); if (s.daily !== today()) { s.daily = today(); s.dailies++; } }
     const extra = award(pts, { id:p.id, keepStreak: !c.wrong });
     c.done = true;
@@ -258,7 +314,7 @@
   function handsWon(stars, line){
     const c = ctx, s = S(); c.won = true; c.stars = stars;
     s.handsStars ||= {}; s.handsStars[c.kind] = Math.max(s.handsStars[c.kind] || 0, stars);
-    if (c.mode === "daily") finishSafe(c, true); else if (c.mode === "hands") ping("hands_win");
+    if (c.mode === "daily") finishSafe(c, true); else if (c.mode === "hands") ping("hands_win"); else if (c.mode === "run" && run) run.solved++;
     const extra = award([30, 30, 40, 50][stars], { hands:c.kind, keepStreak:true });
     c.say = [line || pick(SAY.hands), extra].filter(Boolean).join(" "); buzz([30, 40, 30]);
     renderHands(); focusFirst(".bz-focus");
@@ -269,7 +325,7 @@
     const fk = root.contains(document.activeElement) ? document.activeElement.getAttribute("data-fk") : null;
     const label = c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "daily" ? `Dad's Safe #${c.no}` : H.name;
     const back = c.mode === "hands" ? { label:"Hands-on", fn: handsMenu } : c.mode === "daily" ? { fn: () => hub() } : backFor();
-    const nodes = [topBar(label, back), bubble(c.say, "gamer")];
+    const nodes = [topBar(label, back), c.mode === "run" ? runBar() : null, bubble(c.say, "gamer")];
     nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind }, ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
     const row = h("div", { class:"bz-row" }), over = c.won || c.lost;
     if (c.mode === "daily") {
@@ -278,7 +334,7 @@
       else row.append(btn("Ask Dad", "ghost", () => bridge?.coach("hands-lock")));
     } else if (c.won) {
       row.append(c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
-        : c.mode === "run" ? btn("Next puzzle →", "primary bz-focus", startRun)
+        : c.mode === "run" ? btn(runNextLabel(), "primary bz-focus", runAdvance)
         : c.kind === "river" ? (c.level + 1 < CROSSINGS.length
             ? btn("Next crossing →", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level + 1 }))
             : btn("Play again", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level })))
@@ -813,6 +869,28 @@
   .bz-rooms{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px}
   .bz-foot,.bz-meta{color:var(--muted); font-size:.85rem; text-align:center}
   .bz-q{font-weight:800; font-size:1.08rem}
+  .bz-pcard{position:relative; margin:8px 0 12px; border-radius:16px; overflow:hidden; background:var(--pbg,#2A2D45); border:2px solid rgba(0,0,0,.35); box-shadow:0 5px 0 rgba(0,0,0,.25)}
+  .bz-phead{display:flex; align-items:center; gap:10px; padding:8px 12px; color:#F6F1FF}
+  .bz-phead b{font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; font-weight:900; line-height:1.2}
+  .bz-part{width:64px; flex:none} .bz-part svg{display:block; width:100%; height:auto}
+  .bz-paper{margin:0 10px 10px; padding:12px 14px; border-radius:10px; background:#FFF7DC; color:#2A1B14; box-shadow:inset 0 -3px 0 rgba(0,0,0,.08)}
+  .bz-pk-number .bz-paper{font-family:ui-monospace,"Courier New",monospace; background:#F1F5E8}
+  .bz-pk-riddle .bz-paper{font-style:italic}
+  .bz-pcard.daily{border-color:#E9B949} .bz-pcard.daily .bz-phead{background:linear-gradient(90deg, rgba(233,185,73,.35), transparent)}
+  .bz-pcard.boss{border-color:#D7263D; box-shadow:0 0 0 2px rgba(215,38,61,.35), 0 5px 0 rgba(0,0,0,.25)} .bz-pcard.boss .bz-phead{background:linear-gradient(90deg, rgba(215,38,61,.5), transparent)}
+  .bz-stamp{position:absolute; right:14px; top:42px; padding:2px 10px; border:3px solid #2E8B57; border-radius:6px; color:#2E8B57; font-weight:900; letter-spacing:.1em; font-size:.95rem; background:rgba(255,255,255,.9); transform:rotate(-10deg); animation:bz-stamp .35s cubic-bezier(.3,1.6,.5,1)}
+  @keyframes bz-stamp{from{transform:rotate(-10deg) scale(2); opacity:0} to{transform:rotate(-10deg) scale(1); opacity:1}}
+  .bz-blink{animation:bz-blink 1.2s steps(2) infinite} @keyframes bz-blink{50%{opacity:.15}}
+  .bz-runbar{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 12px; margin:4px 0 6px; border-radius:14px; background:#241F4A; color:#F6F1FF}
+  .bz-road{display:flex; align-items:center; gap:6px}
+  .bz-stop{display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; border:2px solid #5B4FB3; font-size:.78rem; font-weight:900; color:#B9B1F0}
+  .bz-stop.done{background:#2FA85A; border-color:#2FA85A; color:#fff} .bz-stop.now{background:#FFD866; border-color:#FFD866; color:#2A1B14; transform:scale(1.15)}
+  .bz-stop.boss{border-color:#FF5C7A; color:#FF8FA3} .bz-stop.boss.now{background:#FF5C7A; border-color:#FF5C7A; color:#fff}
+  .bz-hearts{display:flex; gap:3px; font-size:1.25rem; line-height:1} .bz-heart{color:#FF5C7A} .bz-heart.lost{color:#4B4670}
+  .bz-runres{margin:10px 0; padding:16px; border-radius:16px; background:#241F4A; color:#F6F1FF; text-align:center; border:2px solid #5B4FB3} .bz-runres.win{border-color:#FFD866}
+  .bz-runres>b{display:block; font-size:1.2rem; letter-spacing:.12em; color:#FFD866; margin-bottom:10px}
+  .bz-runstats{display:flex; justify-content:space-around; gap:8px} .bz-runstats b{display:block; font-size:1.5rem} .bz-runstats small{color:#B9B1F0}
+  @media (prefers-reduced-motion: reduce){ .bz-blink,.bz-stamp{animation:none} }
   .bz-hint{color:var(--muted); margin:4px 0}
   .bz-msg{font-weight:700}
   .bz-msg.ok{background:color-mix(in srgb, var(--denim) 14%, transparent); padding:10px 12px; border-radius:12px}
