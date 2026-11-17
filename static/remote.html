@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Remote Hunt · RoboDad</title>
+<meta name="description" content="Remote Hunt: Dad has lost the TV remote again. Search the living room, and listen for his warmer and colder hints.">
+<meta name="theme-color" content="#101821">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#101821; --panel:#1A2632; --edge:#2B3A49; --ink:#E5EDF5; --muted:#9AAABB; --gold:#F2B533; --gold-ink:#2A1E00; --ok:#5FBF93; --look:#F2B533}
+*{box-sizing:border-box}
+html,body{margin:0; min-height:100%; background:var(--bg); color:var(--ink); font:700 16px/1.4 "Nunito", ui-rounded, system-ui, sans-serif}
+body{display:flex; flex-direction:column; align-items:center; gap:10px; padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+.top{width:min(94vw, 480px); display:flex; justify-content:space-between; align-items:center; gap:8px}
+.top a{min-height:44px; display:inline-flex; align-items:center; color:var(--ink); border:2px solid var(--edge); border-radius:12px; padding:0 14px; font-size:14px; text-decoration:none}
+.top a:hover{border-color:var(--gold)}
+a:focus-visible,button:focus-visible{outline:3px solid #4C80B8; outline-offset:2px}
+h1{margin:0; font-size:1.15rem; font-weight:900}
+.stats{width:min(94vw, 480px); display:flex; justify-content:space-between; font-size:14px; color:var(--muted)}
+.stats b{color:var(--ink)}
+.room{position:relative; width:min(94vw, 480px); aspect-ratio:360/300; border:3px solid var(--edge); border-radius:16px; overflow:hidden; background:#1B2735}
+.room svg{position:absolute; inset:0; width:100%; height:100%}
+.spot{position:absolute; transform:translate(-50%,-50%); min-width:44px; min-height:44px; border-radius:14px; border:2px dashed rgba(242,181,51,.0); background:transparent; color:var(--ink); font:800 11px/1.15 "Nunito", system-ui, sans-serif; cursor:pointer; padding:2px 4px}
+.spot:hover,.spot:focus-visible{border-color:var(--gold); background:rgba(242,181,51,.12)}
+.spot.seen{border:2px solid var(--edge); background:rgba(16,24,33,.82); cursor:default}
+.spot.found{border-color:var(--ok); background:rgba(95,191,147,.9); color:#06210F}
+.dad{width:min(94vw, 480px); min-height:64px; padding:12px 14px; border-radius:16px; background:var(--panel); border:1.5px solid var(--edge); font-size:15px}
+.dad b{display:block; font-size:12px; letter-spacing:.08em; color:var(--gold)}
+.row{width:min(94vw, 480px); display:flex; gap:10px}
+.btn{flex:1; min-height:52px; border:0; border-radius:14px; background:var(--gold); color:var(--gold-ink); font:900 17px/1 "Nunito", system-ui, sans-serif; cursor:pointer}
+.btn.alt{background:transparent; color:var(--ink); border:2px solid var(--edge)}
+.help{width:min(94vw, 480px); margin:0; color:var(--muted); font-size:13px; text-align:center}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+  <div class="top">
+    <a href="/" aria-label="Exit the game and go back to RoboDad">← Exit</a>
+    <h1>Remote Hunt</h1>
+    <span style="width:70px" aria-hidden="true"></span>
+  </div>
+  <div class="stats"><span>Round <b id="rnd">1</b> of 5</span><span>Looks left <b id="left">4</b></span><span>Found <b id="got">0</b></span></div>
+  <div class="room" id="room">
+    <svg viewBox="0 0 360 300" aria-hidden="true" focusable="false">
+      <rect width="360" height="300" fill="#1B2735"/>
+      <rect y="210" width="360" height="90" fill="#243447"/>
+      <rect x="130" y="40" width="100" height="62" rx="6" fill="#0B1119" stroke="#3B4D5E" stroke-width="4"/>
+      <rect x="138" y="48" width="84" height="46" rx="3" fill="#16324A"/>
+      <rect x="150" y="102" width="60" height="10" fill="#3B4D5E"/>
+      <rect x="14" y="30" width="86" height="140" rx="4" fill="#4A3828"/>
+      <rect x="20" y="40" width="74" height="20" fill="#6B523A"/><rect x="20" y="70" width="74" height="20" fill="#6B523A"/><rect x="20" y="100" width="74" height="20" fill="#6B523A"/><rect x="20" y="130" width="74" height="20" fill="#6B523A"/>
+      <rect x="238" y="120" width="12" height="90" fill="#8C97A3"/><path d="M226 120h36l-6-30h-24z" fill="#F2B533"/>
+      <rect x="270" y="150" width="76" height="62" rx="6" fill="#5A3E2B"/><rect x="276" y="158" width="64" height="12" rx="3" fill="#7A5A40"/>
+      <rect x="40" y="168" width="170" height="52" rx="14" fill="#3C6E9C"/>
+      <rect x="48" y="150" width="154" height="30" rx="12" fill="#4C80B8"/>
+      <line x1="125" y1="150" x2="125" y2="195" stroke="#2E5C8A" stroke-width="3"/>
+      <rect x="84" y="244" width="150" height="14" rx="5" fill="#7A5A40"/><rect x="92" y="258" width="8" height="22" fill="#5A3E2B"/><rect x="218" y="258" width="8" height="22" fill="#5A3E2B"/>
+      <rect x="296" y="228" width="32" height="38" rx="4" fill="#B56A4C"/><path d="M312 228c-14-26 0-46 14-52-2 22 12 26 2 52z" fill="#5FBF93"/>
+      <rect x="18" y="236" width="48" height="34" rx="6" fill="#7C6AA8"/>
+      <rect x="248" y="268" width="62" height="24" rx="3" fill="#C9A24A"/>
+      <rect x="150" y="214" width="70" height="26" rx="12" fill="#8C97A3" opacity=".55"/>
+    </svg>
+  </div>
+  <div class="dad" id="dad" role="status" aria-live="polite"><b>DAD</b><span id="say">Somebody moved the remote again. Start looking.</span></div>
+  <div class="row"><button class="btn" id="again" type="button" hidden>Play again</button><button class="btn alt" id="nextBtn" type="button" hidden>Next round</button></div>
+  <p class="help">Tap a spot to look there. Dad tells you if you are getting warmer or colder. You get four looks per round, five rounds per game.</p>
+  <script src="/static/game-look.js?v=1"></script>
+  <script src="/static/arcade.js?v=5"></script>
+  <script src="/static/remote.js?v=2"></script>
+</body>
+</html>

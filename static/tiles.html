@@ -322,6 +322,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 
 <script src="/static/radio.js?v=3"></script>
 <script src="/static/avatars.js?v=42"></script>
+<script src="/static/arcade.js?v=5"></script>
 <script src="/static/words.js"></script>
 <script src="/static/glowup.js"></script>
 <script src="/static/tenses.js"></script>
@@ -1173,6 +1174,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     setStatus(`${theEnd}<strong>${headline}</strong> ${you} to ${dad}. ${how} Tap <strong>New game</strong> for a rematch.`);
     if (o.winner === 0) sayDad("lose"); else if (o.winner === 1) sayDad("win"); else talk("draw");
     celebrate(o.winner === 1 ? DAD().move : (tierKey === "grandpa" ? "kids" : null));
+    if (window.RoboArcade && !o.resigned) RoboArcade.award("tiles", { result: o.winner === 0 ? "win" : o.winner === 1 ? "lose" : "draw", tier: T.TIERS[tierKey].tier || 0, bonus: T.TIERS[tierKey].boss ? 10 : 0 });
     const bossWasLocked = isLocked("bookworm");
     bumpStats((st) => {
       st.games = (st.games || 0) + 1;
