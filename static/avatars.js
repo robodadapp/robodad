@@ -502,25 +502,33 @@
     cozy:1, lucky:1, eiddad:1, grandpa:0, professor:4, labdad:1, bookworm:2, coach:1 };
   const HAIRS = { drawn:"As drawn", bald:"Bald", grey:"Grey temples", curls:"Curls" };
   const HATTED = new Set(["nineties", "y2k", "skater", "bucket", "cozy", "coach"]);   // their hat sits on top, so curls only show at the sides
-  // Curls: one curly silhouette with a scalloped hairline and a few curl marks, sitting close to the head like a short curly cut.
-  // Hat dads only get the tufts that show at the sides under the brim.
-  const CURLS_TOP = "M11.7 24.8 Q9.3 22.4 11.1 20 Q9.8 17.2 12.7 15.3 Q12.7 12.3 16.5 11.2 Q17.7 8.3 21.9 8.3 Q24.3 5.6 28.5 6.7 Q32 4.6 35.5 6.7 Q39.7 5.6 42.1 8.3 Q46.3 8.3 47.5 11.2 Q51.3 12.3 51.3 15.3 Q54.2 17.2 52.9 20 Q54.7 22.4 52.3 24.8 L50.6 25.6 Q49 24.3 47.4 20.4 Q44 20.3 40.6 17.6 Q36.3 18.6 32 17 Q27.7 18.6 23.4 17.6 Q20 20.3 16.6 20.4 Q15 24.3 13.4 25.6 Z";
-  const CURLS_MARKS = "M18 12 A1.5 1.5 0 1 1 19.5 13.5 M25 9.2 A1.5 1.5 0 1 1 26.5 10.7 M33 9 A1.5 1.5 0 1 1 34.5 10.5 M40.3 11.6 A1.5 1.5 0 1 1 41.8 13.1 M14.1 18.6 A1.5 1.5 0 1 1 15.6 20.1 M46.5 18.4 A1.5 1.5 0 1 1 48 19.9 M21.9 14.6 A1.5 1.5 0 1 1 23.4 16.1 M29.1 13.2 A1.5 1.5 0 1 1 30.6 14.7 M36.5 14.4 A1.5 1.5 0 1 1 38 15.9";
-  const CURLS_SIDES = "M12.6 21.2 Q10.9 21.8 11 24.2 Q9.8 25.7 11.2 27.4 Q11.5 30 13.6 30.6 L16 29.6 Q15.2 25.4 16.8 21.6 Z M51.4 21.2 Q53.1 21.8 53 24.2 Q54.2 25.7 52.8 27.4 Q52.5 30 50.4 30.6 L48 29.6 Q48.8 25.4 47.2 21.6 Z";
-  const curlsOf = (c, hat) => `<g class="av-curls" display="var(--av-curls, none)">`
-    + (hat ? `<path d="${CURLS_SIDES}" fill="${c}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>`
-           : `<path d="${CURLS_TOP}" fill="${c}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>`
-             + `<path d="${CURLS_MARKS}" fill="none" stroke="#000" stroke-opacity=".3" stroke-width="1.1" stroke-linecap="round"/>`
-             + `<path d="M20 10.6 Q25 7.8 30 8.4" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.4" stroke-linecap="round"/>`)
-    + `</g>`;
+  // Curls: his own haircut, curled. The same outline gets a scalloped edge (round dots along it) and a ring of curl marks inside,
+  // so the hair keeps his silhouette instead of growing a new one. Hat dads' sideburns curl the same way.
+  const pathBox = (d) => {
+    const n = (d.match(/-?\d*\.?\d+/g) || []).map(Number), xs = [], ys = [];
+    for (let i = 0; i + 1 < n.length; i += 2) { xs.push(n[i]); ys.push(n[i + 1]); }
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  };
+  const curlsOf = (c, ds) => {
+    const d = ds.join(" "), b = pathBox(d), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+    const big = (b.x1 - b.x0) * (b.y1 - b.y0) > 150 && !/Z\s*M/i.test(d);   // one solid haircut, not two sideburns
+    return `<g class="av-curls" display="var(--av-curls, none)">`
+      + `<path d="${d}" fill="none" stroke="${INK}" stroke-width="4.4" stroke-dasharray="0 2.9" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${d}" fill="none" stroke="${c}" stroke-width="2.6" stroke-dasharray="0 2.9" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${d}" fill="${c}"/>`
+      + (big ? `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="2.4" stroke-dasharray="0 3.7" stroke-linecap="round" transform="translate(${cx} ${cy}) scale(.7) translate(${-cx} ${-cy})"/>`
+             + `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".16" stroke-width="3.2" stroke-dasharray="0 5.6" stroke-linecap="round" transform="translate(${cx} ${cy}) scale(.4) translate(${-cx} ${-cy})"/>` : "")
+      + `</g>`;
+  };
   const templesOf = () => `<path class="av-temples" display="var(--av-temples, none)" d="M12.7 19.6 Q12.2 27.4 14.2 33.2 L17.4 32.6 Q16 25.6 19.4 20 Q15.8 18.8 12.7 19.6Z M51.3 19.6 Q51.8 27.4 49.8 33.2 L46.6 32.6 Q48 25.6 44.6 20 Q48.2 18.8 51.3 19.6Z" fill="#DCE1E6" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>`;
   const baldOf = () => `<path class="av-bald" display="var(--av-bald, none)" d="M21.5 19.6 Q27 17.4 32.5 18" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>`;
-  // Beard: a short full beard that follows the jaw and leaves room round the mouth, with a light moustache for dads who don't already have one.
+  // Beard: shading in his hair colour over the lower face, kept inside the head outline (nothing hangs below the jaw),
+  // with the mouth area left clear so his smile reads, and a moustache for dads who don't already have one.
   const STACHED = new Set(["coach", "filmi", "grandpa"]);
   const beardOf = (c, stache) => `<g class="av-beard" display="var(--av-beard, none)">`
-    + `<path d="M12.8 30.4 C12.9 39 15.6 44.8 21 47.2 Q26.5 49 32 49 Q37.5 49 43 47.2 C48.4 44.8 51.1 39 51.2 30.4 L49.2 30.8 C48.8 37 46.4 41.6 41.6 43.8 Q37 45.7 32 45.7 Q27 45.7 22.4 43.8 C17.6 41.6 15.2 37 14.8 30.8 Z" fill="${c}" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/>`
-    + `<path d="M19 42.6 l1.2 1.2 M24.6 46.3 l.9 1.1 M32 47.2 v1 M39.4 46.3 l-.9 1.1 M45 42.6 l-1.2 1.2" fill="none" stroke="#000" stroke-opacity=".28" stroke-width="1" stroke-linecap="round"/>`
-    + (stache ? "" : `<path d="M25.4 38.3 Q28.6 36 32 37.3 Q35.4 36 38.6 38.3 Q35.4 37.9 32 38.7 Q28.6 37.9 25.4 38.3Z" fill="${c}" stroke="${INK}" stroke-width="1.1" stroke-linejoin="round"/>`)
+    + `<path d="M13.3 29.6 L13.3 35 A9.7 9.7 0 0 0 23 44.7 L41 44.7 A9.7 9.7 0 0 0 50.7 35 L50.7 29.6 Q48.6 34.6 43 36 Q37.5 36.9 32 36.3 Q26.5 36.9 21 36 Q15.4 34.6 13.3 29.6 Z M24.4 40.9 A7.6 3.1 0 1 0 39.6 40.9 A7.6 3.1 0 1 0 24.4 40.9 Z" fill="${c}" fill-opacity=".82" fill-rule="evenodd"/>`
+    + `<path d="M16.4 37.6 l.8 1 M19.6 41.2 l.8 .9 M44.4 41.2 l-.8 .9 M47.6 37.6 l-.8 1 M27 44 h1.2 M35.8 44 h1.2" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".9" stroke-linecap="round"/>`
+    + (stache ? "" : `<path d="M25.6 38.4 Q28.7 35.9 32 37.3 Q35.3 35.9 38.4 38.4 Q35.3 37.8 32 38.7 Q28.7 37.8 25.6 38.4Z" fill="${c}"/>`)
     + `</g>`;
   function elEnd(svg, i){
     if (svg.startsWith("<g", i)) return gEnd(svg, i);
@@ -536,16 +544,20 @@
     const hs = svg.indexOf('<g class="hd">'); if (hs < 0) return svg;
     const at = svg.indexOf(head, hs); if (at < 0) return svg;
     const afterHead = at + head.length;
-    let i = afterHead, parts = "", firstFill = null;
+    let i = afterHead, parts = "", firstFill = null; const hairDs = [];
     for (let n = 0; n < (HAIR_PARTS[key] || 0); n++) {
       while (/\s/.test(svg[i])) i++;
       const e = elEnd(svg, i); if (e < 0) return svg;
       const el = svg.slice(i, e);
       if (!firstFill) firstFill = (/fill="([^"]+)"/.exec(el) || [])[1];
+      for (const m of el.matchAll(/<path\b[^>]*>/g)) {   // filled hair shapes only, not shine strokes
+        const f = (/fill="([^"]+)"/.exec(m[0]) || [])[1], d = (/\bd="([^"]+)"/.exec(m[0]) || [])[1];
+        if (d && f && f !== "none") hairDs.push(d);
+      }
       parts += tagHair(el); i = e;
     }
     const c = key === "grandpa" ? "#EEF1F4" : (firstFill && firstFill !== "none" ? firstFill : "#3A2A1E");
-    const extra = HAIR_PARTS[key] ? curlsOf(c, HATTED.has(key)) + templesOf() : "";
+    const extra = HAIR_PARTS[key] && hairDs.length ? curlsOf(c, hairDs) + templesOf() : (HAIR_PARTS[key] ? templesOf() : "");
     return svg.slice(0, afterHead) + beardOf(c, STACHED.has(key)) + (HAIR_PARTS[key] ? baldOf() : "") + parts + extra + svg.slice(i);
   }
   for (const [k, a] of Object.entries(AVATARS)) a.svg = hairUp(k, a.svg);
