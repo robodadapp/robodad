@@ -641,9 +641,6 @@
     },
   });
 
-  // Gamer Dad: drift phonk in E, written from scratch for this game. Every sound is made here from
-  // oscillators and noise: a cowbell riff, a distorted 808-style bass, claps and rolling hats.
-  // No samples and no vocal chops, so there is nothing borrowed from anyone's recording.
   function cowbell(n, t, level = 0.05, decay = 0.22) {       // two detuned squares through a band-pass: the 808 cowbell, tuned to a note
     const f = ctx.createBiquadFilter(), g = ctx.createGain();
     f.type = "bandpass"; f.frequency.value = Math.min(6000, mtof(n) * 2); f.Q.value = 2.5;
@@ -662,6 +659,34 @@
     o.connect(pre).connect(ws).connect(f).connect(g); g.connect(dry); o.start(t); o.stop(t + dur + 0.05);
   }
   const clap = (t, level = 0.06) => { [0, 0.012, 0.026].forEach((d, k) => hit(t + d, { type: "bandpass", freq: 1500, q: 1.1, level: level * (k === 2 ? 1 : 0.6), decay: k === 2 ? 0.16 : 0.03 })); };
+  // a rising noise sweep: the riser into a drop (its own two-second noise bed, so the loop never buzzes)
+  let swBuf = null;
+  function sweep(t, dur, level = 0.04, from = 300, to = 7500) {
+    if (!swBuf || swBuf.sampleRate !== ctx.sampleRate) {
+      swBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+      const d = swBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = swBuf; n.loop = true; f.type = "bandpass"; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(from, t); f.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + dur * 0.95); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.04);
+    n.connect(f).connect(g); out(g); n.start(t); n.stop(t + dur + 0.1);
+  }
+  // a growly detuned saw pair pushed into distortion: gives the bass body a phone speaker can actually play
+  function reese(n, t, dur, level = 0.045) {
+    const pre = ctx.createGain(), ws = crunch(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    pre.gain.value = 1.4; f.type = "lowpass"; f.frequency.value = 1000; f.Q.value = 0.8;
+    [-11, 11].forEach((c) => { const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = mtof(n); o.detune.value = c; o.connect(pre); o.start(t); o.stop(t + dur + 0.05); });
+    pre.connect(ws).connect(f).connect(g);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(level, t + 0.01);
+    g.gain.setValueAtTime(level, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(dry);
+  }
+
+  // Gamer Dad: drift phonk in E, written from scratch for this game. Every sound is made here from oscillators and noise
+  // (no samples, no vocal chops). It opens straight on the weight (bass, pad and the cowbell hook, never a thin tinkle), builds
+  // for one bar, then runs a 16-bar loop: eight bars of drop, a four-bar breakdown ending in a snare roll and riser, and
+  // a four-bar second drop with a counter-line and a crash. The intro plays once; after that the loop never goes quiet.
   chess("gamer", {
     name: "Gamer Dad", bpm: 132,
     roots: [40, 40, 41, 40, 40, 40, 43, 41],                 // E E F E | E E G F: the flat second gives it the dark drift feel
@@ -672,20 +697,47 @@
       [76, 0, 76, 79, 0, 76, 0, 77, 83, 81, 79, 77, 76, 0, 74, 0],
     ],
     play(i, t, b) {
-      const s16 = b / 4, k = i % 16, intro = k < 4, root = this.roots[i % 8], riff = this.riffs[i % 4];
-      riff.forEach((n, s) => { if (n) cowbell(n, t + s * s16, intro ? 0.032 : 0.042, s16 * 1.9); });
+      const s16 = b / 4, intro = i < 2, j = intro ? i : (i - 2) % 16;
+      const root = this.roots[j % 8], riff = this.riffs[j % 4];
+      const sect = intro ? "intro" : j < 8 ? "a" : j < 12 ? "break" : "b";
+      const soft = sect === "intro" || sect === "break";
+      const roll = (t0, n, span, from, to) => { for (let r = 0; r < n; r++) snare(t0 + r * span / n, from + (to - from) * r / (n - 1), 260 + r * 12); };
+      // the hook
+      riff.forEach((n, s) => { if (n) cowbell(n, t + s * s16, intro ? 0.05 : soft ? 0.04 : 0.058, s16 * 1.9); });
+      if (sect === "b") riff.forEach((n, s) => { if (n && s % 4 === 2) blip(n + 12, t + s * s16, { type: "square", level: 0.014, dur: s16 }); });
+      // hats
       for (let s = 0; s < 16; s++) {
+        if (sect === "break") { if (s % 4 === 0) hat(t + s * s16, 0.014); continue; }
         if (s % 2 === 0) hat(t + s * s16, 0.02);
-        else if (!intro && (s === 7 || s === 15 || i % 2)) hat(t + s * s16, 0.012);
+        else if (!intro && (s === 7 || s === 15 || j % 2)) hat(t + s * s16, 0.012);
       }
-      if (i % 4 === 3) for (let r = 0; r < 6; r++) hat(t + 3.5 * b + r * (b / 12), 0.01 + r * 0.003);      // hat roll into the next phrase
-      if (intro) { if (k === 3) blip(88, t + 2 * b, { type: "sawtooth", level: 0.03, dur: 2 * b, to: 40, echo: false }); return; }   // riser before the drop
+      if (sect !== "break" && (intro ? i === 1 : j % 4 === 3)) for (let r = 0; r < 6; r++) hat(t + 3.5 * b + r * (b / 12), 0.01 + r * 0.003);
+      // intro: weight first, then a one-bar build
+      if (intro) {
+        if (i === 0) {
+          sub808(root, t, 12 * s16, { level: 0.11 }); reese(root + 12, t, 12 * s16, 0.06);
+          pad([root + 12, root + 15, root + 19], t, 8 * b, { type: "sawtooth", cutoff: 700, level: 0.03 });
+        } else {
+          sweep(t, 4 * b, 0.04); roll(t + 2 * b, 12, 2 * b, 0.018, 0.075); kick(t + 14 * s16, 0.17);
+        }
+        return;
+      }
+      // breakdown: no kick or claps, a held bass, a wide pad, and a snare roll plus riser in its last bar
+      if (sect === "break") {
+        if (j % 2 === 0) { sub808(root, t, 8 * s16, { level: 0.09 }); reese(root + 12, t, 8 * s16, 0.05); }
+        if (j % 4 === 0) pad([root + 12, root + 15, root + 19, root + 24], t, 8 * b, { type: "sawtooth", cutoff: 600, level: 0.024 });
+        if (j === 11) { sweep(t, 4 * b, 0.045); roll(t + 2 * b, 16, 2 * b, 0.02, 0.08); }
+        return;
+      }
+      // the drops
+      if (j === 0 || j === 12) hit(t, { type: "highpass", freq: 4500, level: 0.05, decay: 0.28 });          // crash
       [0, 6, 10].forEach((s) => kick(t + s * s16, 0.21));
-      clap(t + b); clap(t + 3 * b);
-      sub808(root, t, 5.5 * s16);
-      sub808(root, t + 6 * s16, 3.5 * s16);
-      sub808(root, t + 10 * s16, 5.5 * s16, { slideTo: i % 4 === 3 ? root + 12 : i % 2 ? root - 5 : 0 });
-      if (k % 4 === 0) pad([root + 12, root + 15, root + 19], t, 8 * b, { type: "sawtooth", cutoff: 520, level: 0.016 });
+      if (sect === "b" && j % 2) kick(t + 14 * s16, 0.15);
+      clap(t + b); clap(t + 3 * b); snare(t + b, 0.035); snare(t + 3 * b, 0.035);
+      const slide = j % 4 === 3 ? root + 12 : j % 2 ? root - 5 : 0;
+      sub808(root, t, 5.5 * s16, { level: 0.09 }); sub808(root, t + 6 * s16, 3.5 * s16, { level: 0.09 }); sub808(root, t + 10 * s16, 5.5 * s16, { level: 0.09, slideTo: slide });
+      reese(root + 12, t, 5.5 * s16, 0.075); reese(root + 12, t + 6 * s16, 3.5 * s16, 0.075); reese(slide ? slide + 12 : root + 12, t + 10 * s16, 5.5 * s16, 0.075);
+      if (j % 4 === 0) pad([root + 12, root + 15, root + 19], t, 8 * b, { type: "sawtooth", cutoff: 520, level: 0.016 });
     },
   });
 
@@ -871,9 +923,12 @@
   function crackle(t, dur, amount = 10, level = 0.012) {     // record-surface pops
     for (let k = 0; k < amount; k++) hit(t + rand() * dur, { type: "highpass", freq: 2500 + rand() * 4500, level: level * (0.4 + rand()), decay: 0.012 });
   }
-  function harpsi(n, t, level = 0.05, decay = 0.9) {         // harpsichord: a bright pluck with a quieter string an octave up
-    pluck(n, t, { type: "sawtooth", level, decay, cutoff: 5200 });
-    pluck(n + 12, t, { type: "square", level: level * 0.25, decay: decay * 0.6, cutoff: 6000 });
+  function harpsi(n, t, level = 0.05, decay = 0.9) {         // harpsichord: 8' and 4' strings, a hollow lute-stop reed, a jack click and a faint soundboard ring
+    pluck(n, t, { type: "sawtooth", level, decay, cutoff: 5000 });
+    pluck(n + 12, t, { type: "sawtooth", level: level * 0.42, decay: decay * 0.55, cutoff: 6500 });
+    pluck(n, t, { type: "square", level: level * 0.16, decay: decay * 0.35, cutoff: 1500 });
+    pluck(n, t, { type: "sine", level: level * 0.12, decay: decay * 2.2, cutoff: 3000 });
+    hit(t, { type: "bandpass", freq: 3200, q: 1.4, level: level * 0.22, decay: 0.012 });
   }
   let gram = null;
   function gramBus() {                                       // an old gramophone horn: no deep bass, no sparkle
@@ -1039,8 +1094,10 @@
     },
   });
 
-  // Professor Dad: J. S. Bach, Prelude in C major from The Well-Tempered Clavier (1722, public domain), bars 1 to 19,
-  // played on a harpsichord. Each bar is one broken chord: five notes, bottom to top, with the top three repeated.
+  // Prelude in C (Bach, BWV 846, bars 1 to 19, public domain), played as a harpsichordist would: a fuller instrument,
+  // a held pedal bass underneath, the top note leaning out of each arpeggio, a swell into the dark chords in the middle,
+  // a slowing last two bars, and a small change of colour on each pass so a long game never hears the same minute twice.
+  const PRELUDE_ARC = [0.9, 0.92, 0.95, 1, 1, 1.02, 1.05, 1.05, 1, 1.08, 1.1, 1.14, 1.16, 1.18, 1.1, 1, 0.98, 1.2, 0.86];
   tiles("professor", {
     name: "Prelude in C", bpm: 66,
     chords: [
@@ -1049,9 +1106,18 @@
       [55, 59, 62, 67, 71], [55, 58, 64, 67, 73], [53, 57, 62, 69, 74], [53, 56, 62, 65, 71], [52, 55, 60, 67, 72],
       [52, 53, 57, 60, 65], [50, 53, 57, 60, 65], [43, 50, 55, 59, 65], [48, 52, 55, 60, 64],
     ],
+    tempo(i) { const k = i % 19; return k === 17 ? 60 : k === 18 ? 50 : 66; },      // breathe out over the last two bars
     play(i, t, b) {
-      const c = this.chords[i % 19], s16 = b / 4;
-      for (let h = 0; h < 2; h++) [0, 1, 2, 3, 4, 2, 3, 4].forEach((idx, s) => harpsi(c[idx], t + (h * 8 + s) * s16, idx < 2 ? 0.2 : 0.16, idx === 0 ? 2.2 : idx === 1 ? 1.6 : 0.8));
+      const k = i % 19, pass = Math.floor(i / 19) % 3, c = this.chords[k], s16 = b / 4, m = PRELUDE_ARC[k];
+      // pedal bass: one long bowed-sounding note an octave under the bar's lowest note
+      bass(c[0] - 12, t, 4 * b, { type: "sawtooth", level: 0.05 * m, cutoff: 650 });
+      if (pass === 1) pad([c[2], c[3], c[4]], t, 4 * b, { type: "triangle", cutoff: 1300, level: 0.011 });
+      for (let h = 0; h < 2; h++) [0, 1, 2, 3, 4, 2, 3, 4].forEach((idx, s) => {
+        const at = t + (h * 8 + s) * s16 + (rand() - 0.5) * 0.012;                      // a human hand, never quite on the grid
+        const top = idx === 4, lvl = (top ? 0.15 : idx === 0 ? 0.13 : 0.1) * m;
+        harpsi(c[idx], at, lvl, idx === 0 ? 2.4 : idx === 1 ? 1.8 : 1.0);
+        if (pass === 2 && top && h === 1) pluck(c[idx] + 12, at, { type: "sine", level: 0.03 * m, decay: 1.6, cutoff: 4000 });
+      });
     },
   });
 
