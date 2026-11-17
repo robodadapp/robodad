@@ -1341,6 +1341,11 @@ svg.rd-no{animation:rd-no .5s ease-in-out}
 .brain-hint{color:var(--muted)}
 .brain-msg{font-weight:700}
 .toast .tbtns{display:flex; gap:6px; justify-content:center; margin-top:8px}
+/* after a shuffle: one slim line just above the message box, with Undo */
+.toast.snack{top:auto; display:flex; align-items:center; gap:10px; pointer-events:auto; padding:6px 6px 6px 14px; border-radius:999px;
+  font-size:.82rem; line-height:1.2; text-align:left; max-width:min(400px, calc(100vw - 24px))}
+.toast.snack .snack-txt{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.toast.snack button{flex:none; font:inherit; font-weight:800; padding:7px 14px; border-radius:999px; border:0; background:var(--sun, #FFC93C); color:#1a1a1a; cursor:pointer}
 .toast .tbtns button{pointer-events:auto; font:inherit; font-weight:800; font-size:.85rem; padding:6px 12px; border-radius:999px; border:1.5px solid currentColor; background:transparent; color:inherit; cursor:pointer}
 .toast:has(.tbtns){pointer-events:auto}
 .toast{position:fixed; left:50%; top:calc(14px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:40;
@@ -2492,7 +2497,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=5"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
-<script src="/static/radio.js?v=45"></script>
+<script src="/static/radio.js?v=46"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=49"></script>
 <script src="/static/hunt.js?v=3"></script>
@@ -3633,7 +3638,7 @@ const PLAYERS = {
 
   const LOOK_KEY = "robodad.look";
   const THEME_COLORS = { classic:"#2E5C8A", arcade:"#0D0A26", vhs:"#1C0E22", diner:"#D7263D", y2k:"#1A7FD6", skate:"#1C1C1C", gamer:"#0A0E14", summer:"#E2541F", halloween:"#160D26", bolly:"#C2185B", diwali:"#120B2E", winter:"#0E1F3A", lunar:"#7A0E14", chalk:"#22382E", lab:"#12B5A0", library:"#8C2F39", gym:"#C8102E", eid:"#0B2A33", cheat:"#0B0B0F" };
-  const LOOK_STATION = { diner:"jukebox", arcade:"drive", skate:"skate", gamer:"lobby", summer:"block", halloween:"haunt", bolly:"filmi", diwali:"diya", winter:"snow", lunar:"lantern", eid:"crescent", chalk:"study", library:"study", cheat:"drive" };
+  const LOOK_STATION = { diner:"jukebox", arcade:"drive", skate:"skate", gamer:"lobby", summer:"block", halloween:"haunt", bolly:"filmi", diwali:"diya", winter:"snow", lunar:"lantern", eid:"crescent", chalk:"study", library:"study", cheat:"drive", vhs:"drive", y2k:"block", gym:"block" };
   const WAKE_COPY = {
     diner: "Firing up the jukebox… RoboDad will be ready in about 30 seconds.",
     y2k: "Dialing up at 56k… RoboDad will be ready in about 30 seconds.",
@@ -3727,7 +3732,7 @@ const PLAYERS = {
   // ---------- toast ----------
   let toastTimer;
   function toast(msg){
-    const t = $("toast"); t.textContent = msg; t.hidden = false;
+    const t = $("toast"); t.textContent = msg; t.classList.remove("snack"); t.style.bottom = ""; t.hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, msg.length > 60 ? 6000 : 3200);
   }
 
@@ -5166,6 +5171,7 @@ const PLAYERS = {
   const RADIO_KEY = "robodad.radio";
   let radioPrefs = { st: "lounge", vol: 35 };
   try { radioPrefs = { ...radioPrefs, ...JSON.parse(localStorage.getItem(RADIO_KEY) || "{}") }; } catch {}
+  if (window.RoboRadio && !RoboRadio.stations[radioPrefs.st]) radioPrefs.st = "lounge";   // e.g. the boss music, which an old shuffle could pick
   const saveRadio = () => setPref(RADIO_KEY, JSON.stringify(radioPrefs));
   const radioW = $("radioW"), radioToggle = $("radioToggle"), radioVol = $("radioVol");
   radioVol.value = radioPrefs.vol;
@@ -5175,10 +5181,10 @@ const PLAYERS = {
     radioToggle.innerHTML = `<svg aria-hidden="true"><use href="#i-${on ? "pause" : "play"}"/></svg>`;
     radioToggle.setAttribute("aria-label", on ? "Pause music" : "Play music");
     $("stations").querySelectorAll("[data-st]").forEach(b => b.setAttribute("aria-checked", String(b.dataset.st === radioPrefs.st)));
-    $("radioNow").textContent = on ? `Now playing: ${R.stations[R.station]}` : `Off. ${R ? R.stations[radioPrefs.st] : ""} is ready.`;
+    $("radioNow").textContent = on ? `Now playing: ${R.names[R.station]}` : `Off. ${R ? R.stations[radioPrefs.st] : ""} is ready.`;
     $("musicBtn").setAttribute("aria-pressed", String(on));
     $("musicArt").classList.toggle("on", on); $("radioArt").classList.toggle("on", on);
-    $("musicBtn").title = on ? `Pause music (${R.stations[R.station]})` : "Play music";
+    $("musicBtn").title = on ? `Pause music (${R.names[R.station]})` : "Play music";
     $("musicLabel").textContent = $("musicBtn").title;
     quickUI();
   }
@@ -5188,6 +5194,7 @@ const PLAYERS = {
   }
   if (window.RoboRadio) {
     RoboRadio.onchange = radioUI;
+    RoboRadio.onstall = (kind) => ping(kind === "lag" ? "radio_lag" : "radio_stall");   // anonymous: tells us how often phones drop the music
     RoboRadio.setVolume(radioPrefs.vol / 100);
     radioToggle.addEventListener("click", () => { RoboRadio.playing ? RoboRadio.stop() : startMusic(); });
     $("musicBtn").addEventListener("click", () => {
@@ -5204,27 +5211,50 @@ const PLAYERS = {
   } else { radioW.hidden = true; $("qMusicWrap").hidden = true; }
   quickUI();
 
-  // Shuffle: tap the corner decoration (the rangoli at Diwali) for a random look, dad and station
+  // Shuffle: tap the corner decoration (the rangoli at Diwali) for a random look, dad and station.
+  // The three go together: the look's own dad and its own tune. The music switches the moment you
+  // tap (phones, the Android app above all, are happiest when sound starts inside the tap), and the
+  // picture follows a beat later.
   const pickNew = (list, cur) => { const pool = list.filter(x => x !== cur); const from = pool.length ? pool : list; return from[Math.floor(Math.random() * from.length)]; };
-  function shuffleAll(){
-    const looks = [...menuDlg.querySelectorAll(".look")].filter(b => !b.hidden).map(b => b.dataset.look);
-    const look = pickNew(looks, document.documentElement.dataset.look || "classic");
-    let dadName = "";
-    if (AV) {
-      const dads = Object.entries(AV.AVATARS).filter(([k, a]) => (!a.secret || getPref("robodad.grandpa")) && (!a.season || seasonActive(a.season))).map(([k]) => k);
-      avPref = pickNew(dads, avKind); setPref(AV_KEY, avPref); dadName = AV.AVATARS[avPref].name;
-    }
-    applyLook(look);
-    let tune = "";
-    const R = window.RoboRadio;
-    // the music matches the look when the look has its own tune (no more Gym Class with Diwali music)
-    if (R) { radioPrefs.st = (LOOK_STATION[look] && R.stations[LOOK_STATION[look]]) ? LOOK_STATION[look] : pickNew(Object.keys(R.stations), radioPrefs.st);
-      saveRadio(); R.play(radioPrefs.st); radioUI(); tune = R.stations[radioPrefs.st]; }
-    const tile = menuDlg.querySelector(`.look[data-look="${look}"] strong`);
-    const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : look;
-    hideCap(); shuffleToast("✨ " + [lookName, dadName, tune && "♪ " + tune].filter(Boolean).join(" · "));
+  // looks with dark backgrounds, so someone in dark mode isn't flashed into a bright look
+  const DARK_LOOKS = new Set(["arcade", "vhs", "gamer", "chalk", "diwali", "winter", "lunar", "eid", "halloween", "cheat"]);
+  // stations for looks without a tune of their own: year-round only, never the holiday ones
+  const ALL_YEAR = ["lounge", "canon", "drive", "jukebox", "skate", "lobby", "block", "filmi", "study"];
+  function wantDark(){
+    const t = document.documentElement.dataset.theme;
+    return t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches);
   }
-  // After a shuffle: Keep it, Undo back to what you had, or go Again.
+  function shufflePick(){
+    const cur = document.documentElement.dataset.look || "classic";
+    let looks = [...menuDlg.querySelectorAll(".look")].filter(b => !b.hidden).map(b => b.dataset.look);
+    const theme = document.documentElement.dataset.theme;
+    if (wantDark()) looks = looks.filter(l => l === "classic" || DARK_LOOKS.has(l));        // Classic follows dark mode itself
+    else if (theme === "light") looks = looks.filter(l => !DARK_LOOKS.has(l));
+    const look = pickNew(looks, cur);
+    let av = avPref;
+    if (AV) {
+      const ok = (k) => AV.AVATARS[k] && (!AV.AVATARS[k].secret || getPref("robodad.grandpa")) && (!AV.AVATARS[k].season || seasonActive(AV.AVATARS[k].season));
+      const own = AV.LOOK_AVATAR[look];
+      av = own && ok(own) ? own : pickNew(Object.keys(AV.AVATARS).filter(ok), avKind);
+    }
+    const R = window.RoboRadio;
+    let st = radioPrefs.st;
+    if (R) st = LOOK_STATION[look] && R.stations[LOOK_STATION[look]] ? LOOK_STATION[look] : pickNew(ALL_YEAR.filter(k => R.stations[k]), radioPrefs.st);
+    return { look, av, st };
+  }
+  function shuffleMusic(p){                  // runs inside the tap
+    const R = window.RoboRadio; if (!R) return;
+    radioPrefs.st = p.st; saveRadio(); R.play(p.st); radioUI();
+  }
+  function shuffleAll(p){
+    if (AV) { avPref = p.av; setPref(AV_KEY, avPref); }
+    applyLook(p.look);
+    const R = window.RoboRadio;
+    const tile = menuDlg.querySelector(`.look[data-look="${p.look}"] strong`);
+    const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : p.look;
+    hideCap(); shuffleToast(lookName, R ? R.stations[p.st] : "");
+  }
+  // After a shuffle: a small bar at the bottom with Undo. Tap the corner again for another one.
   let shufPrev = null;
   function shuffleSnapshot(){
     const R = window.RoboRadio;
@@ -5235,30 +5265,37 @@ const PLAYERS = {
     avPref = p.av; setPref(AV_KEY, avPref); applyLook(p.look);
     const R = window.RoboRadio;
     if (R) { radioPrefs.st = p.st; saveRadio(); if (p.playing) R.play(p.st); else R.stop(); radioUI(); }
-    $("toast").hidden = true; toast("Back to how it was.");
+    toast("Back to how it was.");
   }
-  function shuffleToast(msg){
+  function placeSnack(t){                     // just above the message box, clear of Dad and the header
+    const f = $("form"), top = f && f.offsetParent ? f.getBoundingClientRect().top : innerHeight - 140;
+    t.style.bottom = Math.max(12, innerHeight - top + 10) + "px";
+  }
+  function shuffleToast(look, tune){
     const t = $("toast");
-    t.innerHTML = `<span>${esc(msg)}</span><span class="tbtns"><button type="button" data-sh="keep">Keep</button><button type="button" data-sh="undo">Undo</button><button type="button" data-sh="again">Again</button></span>`;
-    t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; shufPrev = null; }, 7000);
+    const what = look + (tune && tune !== look ? ` · ♪ ${tune}` : "");    // the new dad is right there on screen
+    t.innerHTML = `<span class="snack-txt">✨ ${esc(what)}</span><button type="button" data-sh="undo">Undo</button>`;
+    t.classList.add("snack"); placeSnack(t);
+    t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; shufPrev = null; }, 4500);
   }
   $("toast").addEventListener("click", (e) => {
     const b = e.target.closest("[data-sh]"); if (!b) return;
-    if (b.dataset.sh === "keep") { shufPrev = null; $("toast").hidden = true; }
-    else if (b.dataset.sh === "undo") shuffleUndo();
-    else { $("toast").hidden = true; shuffleTap(); }
+    if (b.dataset.sh === "undo") shuffleUndo();
   });
   const SHUF_KEY = "robodad.shuffled";
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   let shuffling = false;
   function shuffleTap(){
     if (shuffling) return; shuffling = true;
-    if (!shufPrev) shuffleSnapshot();      // Undo goes back to what you had before your first shuffle in a row
+    if (!shufPrev || $("toast").hidden) shuffleSnapshot();      // Undo goes back to what you had before this run of shuffles
     if (!getPref(SHUF_KEY)) { setPref(SHUF_KEY, "1"); shuffleIdle(false); }
+    $("toast").hidden = true;
+    const pick = shufflePick();
+    shuffleMusic(pick);
     hello.classList.remove("prop-in"); hello.classList.add("prop-go");
     setTimeout(() => {
       hello.classList.remove("prop-go");
-      const swap = () => shuffleAll();
+      const swap = () => shuffleAll(pick);
       const vt = document.startViewTransition ? document.startViewTransition(swap) : (swap(), null);
       const settle = () => { if (!calm()) { void hello.offsetWidth; hello.classList.add("prop-in"); setTimeout(() => hello.classList.remove("prop-in"), 320); } setTimeout(() => avPlay(), 150); shuffling = false; };
       vt ? vt.finished.then(settle, settle) : settle();
