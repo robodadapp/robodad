@@ -750,7 +750,7 @@
   function payTickets(){
     if (twoP || !window.RoboArcade) return;
     const s = Math.floor(score), delta = s - paidScore;
-    if (delta > 0) { paidScore = s; RoboArcade.award("quest", { points: delta, daily: mode === "daily" }); }
+    if (delta > 0) { paidScore = s; RoboArcade.award("quest", { points: delta, daily: mode === "daily", runScore: s }); }
   }
   function endRun(){ runc.score = Math.floor(score); checkMissions(); saveMissions(); saveBest(); payTickets(); }
   function hurt(){
@@ -886,7 +886,7 @@
     if (level === 0 && !tutDone) { tutDone = true; store.set("robodad.dadquest.tut", "1"); }
     endRun();
     if (level >= ROOMS.length - 1) {
-      store.set("robodad.dadquest.cleared", "1"); reached = ROOMS.length - 1; unlockSkin("track"); setState("win", true); makeShare();
+      store.set("robodad.dadquest.cleared", "1"); if (window.RoboArcade) RoboArcade.fragment("quest2"); reached = ROOMS.length - 1; unlockSkin("track"); setState("win", true); makeShare();
       say("You found everything. You win!"); return;
     }
     if (level + 1 > reached) { reached = level + 1; store.set("robodad.dadquest.reached", String(reached)); }

@@ -30,6 +30,7 @@
     polaroid: '<rect x="8" y="6" width="32" height="36" rx="2" fill="#fff" stroke="#8C97A3" stroke-width="1.5"/><rect x="12" y="10" width="24" height="22" fill="#4C80B8"/>',
     pager: '<rect x="8" y="12" width="32" height="24" rx="4" fill="#B9C7D4"/><rect x="12" y="16" width="24" height="9" rx="1" fill="#5FBF93"/><circle cx="16" cy="31" r="2" fill="#4C80B8"/><circle cx="24" cy="31" r="2" fill="#4C80B8"/>',
     lava: '<path d="M16 6h16l4 36H12z" fill="#E07A66"/><circle cx="22" cy="28" r="5" fill="#F2B533"/><circle cx="28" cy="16" r="3" fill="#F2B533"/>',
+    token: '<circle cx="24" cy="24" r="16" fill="#F2B533" stroke="#C99A0C" stroke-width="3"/><circle cx="24" cy="24" r="9" fill="none" stroke="#C99A0C" stroke-width="2.5"/><path d="M24 18v12M20 22h8" stroke="#C99A0C" stroke-width="2.5" stroke-linecap="round"/>',
     cart: '<path d="M10 6h28v30l-4 6H14l-4-6z" fill="#8C97A3"/><rect x="15" y="10" width="18" height="13" rx="2" fill="#2DE2E6"/><path d="M16 38v3M21 38v3M27 38v3M32 38v3" stroke="#1B2A3A" stroke-width="2"/>',
   };
   const PRIZES = [
@@ -41,17 +42,32 @@
     { id: "polaroid", name: "Polaroid",    cost: 240, art: "polaroid", story: "Dad waved it around for a full minute. The picture had been ready the whole time." },
     { id: "pager",    name: "Pager",       cost: 320, art: "pager",    story: "Dad's version of a text. One beep meant call him. Two beeps meant call him now." },
     { id: "lava",     name: "Lava Lamp",   cost: 400, art: "lava",     story: "Takes forty minutes to warm up and a lifetime to stop watching." },
-    { id: "cart",     name: "Blown-On Cartridge", cost: 0, art: "cart", secret: true,
+    { id: "token",    name: "Golden Token", cost: 0, art: "token", secret: true, hint: "Find all six cartridge fragments to unlock",
+      story: "Six fragments, one shiny token. Dad says it is worth a quarter. Dad is wrong." },
+    { id: "cart",     name: "Blown-On Cartridge", cost: 0, art: "cart", secret: true, hint: "Solve The Lost Cartridge to unlock",
       story: "Yours for solving The Lost Cartridge. Blow on it anyway. That is how it works." },
   ];
   const BYID = Object.fromEntries(PRIZES.map((p) => [p.id, p]));
+
+  // ---------- Lost Cartridge fragments: two milestones per cabinet ----------
+  const FRAG_BONUS = 20;
+  const FRAGS = [
+    { id: "chess1", game: "chess", name: "Win a game of chess" },
+    { id: "chess2", game: "chess", name: "Beat one of the top dads at chess" },
+    { id: "tiles1", game: "tiles", name: "Win a game of Tile Talk" },
+    { id: "tiles2", game: "tiles", name: "Beat one of the top dads at Tile Talk" },
+    { id: "quest1", game: "quest", name: "Score 1,500 in one DAD QUEST run" },
+    { id: "quest2", game: "quest", name: "Clear every room in DAD QUEST" },
+  ];
+  const FBYID = Object.fromEntries(FRAGS.map((f) => [f.id, f]));
+  const TOP_TIER = 4;
   const huntSolved = () => !!lsGet("robodad.hunt.done");
   const questOpen = () => !!lsGet("robodad.egg.dadquest");
 
   // ---------- state ----------
   const pad = (n) => (n < 10 ? "0" : "") + n;
   const dayKey = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
-  const blank = () => ({ v: 1, tickets: 0, lifetime: 0, prizes: [], carry: {}, day: dayKey(), today: {}, dailyPaid: "" });
+  const blank = () => ({ v: 1, tickets: 0, lifetime: 0, prizes: [], frags: [], carry: {}, day: dayKey(), today: {}, dailyPaid: "" });
   function load() {
     let s;
     try { s = JSON.parse(lsGet(KEY) || "null"); } catch { s = null; }
@@ -59,10 +75,12 @@
     s.tickets = Math.max(0, Math.floor(+s.tickets || 0));
     s.lifetime = Math.max(0, Math.floor(+s.lifetime || 0));
     s.prizes = Array.isArray(s.prizes) ? s.prizes.filter((id) => BYID[id]) : [];
+    s.frags = Array.isArray(s.frags) ? s.frags.filter((id) => FBYID[id]) : [];
     s.carry = s.carry && typeof s.carry === "object" ? s.carry : {};
     s.today = s.today && typeof s.today === "object" ? s.today : {};
     if (s.day !== dayKey()) { s.day = dayKey(); s.today = {}; }
-    if (huntSolved() && !s.prizes.includes("cart")) s.prizes.push("cart");   // the secret prize is a gift, not a purchase
+    if (huntSolved() && !s.prizes.includes("cart")) s.prizes.push("cart");   // secret prizes are gifts, not purchases
+    if (s.frags.length === FRAGS.length && !s.prizes.includes("token")) s.prizes.push("token");
     return s;
   }
   const save = (s) => { lsSet(KEY, JSON.stringify(s)); try { window.dispatchEvent(new Event("robodad-arcade")); } catch {} };
@@ -97,7 +115,22 @@
     save(s);
     if (got > 0) toast("+" + got + " ticket" + (got === 1 ? "" : "s") + (wk ? " (2x week bonus)" : ""));
     else if (t > 0) toast("Ticket limit reached for this game today");
+    if ((game === "chess" || game === "tiles") && o.result === "win") {
+      fragment(game + "1");
+      if ((+o.tier || 0) >= TOP_TIER) fragment(game + "2");
+    }
+    if (game === "quest" && (+o.runScore || 0) >= 1500) fragment("quest1");
     return got;
+  }
+
+  // a cartridge fragment is found once; it pays a bonus that ignores the daily cap
+  function fragment(id) {
+    const f = FBYID[id], s = load();
+    if (!f || s.frags.includes(id)) return false;
+    s.frags.push(id); s.tickets += FRAG_BONUS; s.lifetime += FRAG_BONUS; save(s);
+    toast("Cartridge fragment found! +" + FRAG_BONUS + " tickets (" + s.frags.length + " of " + FRAGS.length + ")");
+    if (s.frags.length === FRAGS.length) toast("All six fragments! A Golden Token is waiting at the Prize Counter");
+    return true;
   }
 
   // ---------- spending ----------
@@ -109,8 +142,14 @@
   }
 
   // ---------- a small toast, shown on any page ----------
-  let toastEl = null, toastT = 0;
-  function toast(text) {
+  let toastEl = null, toastT = 0, toastBusy = false;
+  const toastQ = [];
+  function toast(text) { toastQ.push(text); if (!toastBusy) nextToast(); }
+  function nextToast() {
+    if (!toastQ.length) { toastBusy = false; return; }
+    toastBusy = true; showToast(toastQ.shift()); setTimeout(nextToast, 2600);
+  }
+  function showToast(text) {
     if (!document.body) return;
     if (!toastEl) {
       toastEl = document.createElement("div");
@@ -123,8 +162,8 @@
   }
 
   const api = {
-    award, buy, toast, weekGame, prizes: () => PRIZES.slice(),
-    state: () => { const s = load(); return { tickets: s.tickets, lifetime: s.lifetime, prizes: s.prizes.slice() }; },
+    award, buy, toast, weekGame, fragment, fragments: () => FRAGS.slice(), prizes: () => PRIZES.slice(),
+    state: () => { const s = load(); return { tickets: s.tickets, lifetime: s.lifetime, prizes: s.prizes.slice(), frags: s.frags.slice() }; },
   };
   window.RoboArcade = api;
 
@@ -147,6 +186,17 @@
 .arc-week b{display:block; font-size:19px; font-weight:900; line-height:1.15}
 .arc-week small{font-size:13px; font-weight:700}
 .arc-week a{display:inline-grid; place-items:center; min-height:44px; padding:0 20px; border-radius:14px; background:var(--mustard-ink); color:var(--mustard); font-weight:900; text-decoration:none}
+.arc-frags{border:1.5px solid var(--line); border-radius:16px; background:var(--surface); padding:10px 14px}
+.arc-frags summary{display:flex; align-items:center; gap:10px; min-height:32px; cursor:pointer; font-weight:900; font-size:14px; list-style:none}
+.arc-frags summary::-webkit-details-marker{display:none}
+.arc-frags summary:focus-visible{outline:3px solid var(--denim); outline-offset:2px; border-radius:8px}
+.arc-pips{display:inline-flex; gap:4px; margin-left:auto}
+.arc-pip{width:12px; height:16px; border-radius:3px; border:1.5px solid var(--mustard)}
+.arc-pip.on{background:var(--mustard)}
+.arc-frags ul{margin:8px 0 2px; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; font-size:13px; font-weight:700; color:var(--muted)}
+.arc-frags li{display:flex; gap:8px; align-items:flex-start}
+.arc-frags li b{color:var(--ink); font-weight:800}
+.arc-frags li.done b{color:var(--ok)}
 .arc-hint{margin:0; font-size:13px; font-weight:700; color:var(--muted)}
 .arc-2x{align-self:flex-start; margin-top:2px; padding:1px 8px; border-radius:999px; background:var(--mustard); color:var(--mustard-ink); font-size:11px; font-weight:900}
 .arc-sub{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 0 14px; font-weight:800; color:var(--muted); font-size:14px}
@@ -178,18 +228,31 @@
   const tilesEl = playDlg.querySelector(".tiles");
   if (tilesEl) tilesEl.parentNode.insertBefore(bar, tilesEl);
 
+  function fragHtml(s) {
+    const q = questOpen();
+    const pips = FRAGS.map((f) => '<span class="arc-pip' + (s.frags.includes(f.id) ? " on" : "") + '"></span>').join("");
+    const items = FRAGS.map((f) => {
+      const done = s.frags.includes(f.id);
+      const txt = f.game === "quest" && !q && !done ? "A hidden cabinet holds this one" : f.name;
+      return '<li class="' + (done ? "done" : "") + '"><span aria-hidden="true">' + (done ? "&#10003;" : "&#9675;") + '</span><span><b>' + esc(txt) + '</b>' + (done ? " (found)" : "") + '</span></li>';
+    }).join("");
+    return '<details class="arc-frags"><summary><span>The Lost Cartridge: ' + s.frags.length + ' of ' + FRAGS.length + ' fragments</span><span class="arc-pips" aria-hidden="true">' + pips + '</span></summary><ul>' + items + '</ul><p class="arc-hint" style="margin-top:8px">Each fragment pays ' + FRAG_BONUS + ' bonus tickets. Find all six for a Golden Token.</p></details>';
+  }
   function renderBar() {
     const s = load(), wk = weekGame(), g = GAMES[wk];
     const afford = PRIZES.filter((p) => !p.secret && !s.prizes.includes(p.id) && p.cost <= s.tickets).length;
     const sub = s.lifetime === 0 ? "Win a game to earn your first tickets" : afford ? afford + (afford === 1 ? " prize" : " prizes") + " you can afford" : "Keep playing to afford the next prize";
+    const wasOpen = !!bar.querySelector("details[open]");
     bar.innerHTML =
       '<div class="arc-row"><span class="arc-pill" role="img" aria-label="' + s.tickets + ' tickets">' + ICON_TICKET + s.tickets + '</span>' +
       '<button class="arc-open" id="arcOpen" type="button" aria-haspopup="dialog"><span>Prize Counter<small>' + esc(sub) + '</small></span><span aria-hidden="true" style="color:var(--mustard)">Open</span></button></div>' +
+      fragHtml(s) +
       '<div class="arc-week"><div><span class="arc-tag">CABINET OF THE WEEK</span><b>' + esc(g.name) + '</b><small>Double tickets until Sunday</small></div><a href="' + g.href + '" aria-label="Play ' + esc(g.name) + '">Play</a></div>';
     playDlg.querySelectorAll(".arc-2x").forEach((n) => n.remove());
     const tile = playDlg.querySelector('.tile[href="' + g.href + '"]');
     if (tile && !tile.hidden) { const m = document.createElement("span"); m.className = "arc-2x"; m.textContent = "2x tickets this week"; tile.appendChild(m); }
     bar.querySelector("#arcOpen").addEventListener("click", openPrizes);
+    if (wasOpen) bar.querySelector("details").open = true;
   }
 
   // ----- Prize Counter dialog -----
@@ -218,7 +281,7 @@
     const p = BYID[sel], o = own(sel);
     let act;
     if (o) act = '<button class="primary" type="button" disabled>On your shelf</button>';
-    else if (p.secret) act = '<button class="primary" type="button" disabled>Solve The Lost Cartridge to unlock</button>';
+    else if (p.secret) act = '<button class="primary" type="button" disabled>' + esc(p.hint || "Secret") + '</button>';
     else if (s.tickets >= p.cost) act = '<button class="primary" type="button" id="prizeBuy">Get it for ' + p.cost + ' tickets</button>';
     else act = '<button class="primary" type="button" disabled>Need ' + (p.cost - s.tickets) + ' more tickets</button>';
     document.getElementById("prizeDetail").innerHTML = '<h3>' + esc(o || !p.secret ? p.name : "Secret prize") + '</h3><p>' + esc(o || !p.secret ? p.story : "Something is waiting for whoever finishes the hunt.") + '</p>' + act;
