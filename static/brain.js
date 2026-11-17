@@ -787,19 +787,60 @@
     });
     return wrap;
   }
+
+  // ---------- Escape Dad's Garage: each room is drawn, with one object per puzzle. Tap the glowing one to start it. ----------
+  const OBJ = {
+    lamp:`<circle cx="32" cy="14" r="11" fill="#FFE98A" stroke="#1E1E24" stroke-width="2"/><rect x="26" y="25" width="12" height="6" fill="#8C97A3" stroke="#1E1E24" stroke-width="2"/><rect x="20" y="33" width="24" height="16" rx="3" fill="#E8E4D8" stroke="#1E1E24" stroke-width="2"/><rect x="29" y="37" width="6" height="8" rx="1.5" fill="#FFD866"/>`,
+    blueprint:`<rect x="6" y="6" width="52" height="40" fill="#2F6DB5" stroke="#1E1E24" stroke-width="2"/><path d="M14 38 L26 20 L38 32 L50 14" stroke="#BFE3FF" stroke-width="2.5" fill="none"/><circle cx="50" cy="14" r="3" fill="#BFE3FF"/>`,
+    pegboard:`<rect x="4" y="4" width="56" height="44" fill="#C8A26B" stroke="#1E1E24" stroke-width="2"/><path d="M14 12 v24 M14 12 h8 M34 14 l14 22" stroke="#4A4F5A" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="46" cy="14" r="5" fill="#D7263D" stroke="#1E1E24" stroke-width="2"/>`,
+    note:`<rect x="10" y="4" width="44" height="44" fill="#FFF3A8" stroke="#1E1E24" stroke-width="2" transform="rotate(-4 32 26)"/><path d="M18 18 h28 M18 26 h28 M18 34 h18" stroke="#8C7A2A" stroke-width="2.5" transform="rotate(-4 32 26)"/>`,
+    padlock:`<path d="M20 24 V16 a12 12 0 0 1 24 0 V24" fill="none" stroke="#C9D1D9" stroke-width="5"/><rect x="14" y="24" width="36" height="26" rx="5" fill="#F5C518" stroke="#1E1E24" stroke-width="2"/><circle cx="32" cy="35" r="4" fill="#1E1E24"/><rect x="30" y="37" width="4" height="8" fill="#1E1E24"/>`,
+    wrench:`<path d="M12 44 L40 16 a10 10 0 1 1 8 8 L20 52 Z" fill="#9AA5B1" stroke="#1E1E24" stroke-width="2.5" stroke-linejoin="round"/>`,
+    radio:`<rect x="6" y="14" width="52" height="34" rx="5" fill="#8A5A2B" stroke="#1E1E24" stroke-width="2"/><circle cx="22" cy="31" r="10" fill="#E8D9B0" stroke="#1E1E24" stroke-width="2"/><circle cx="22" cy="31" r="3" fill="#1E1E24"/><path d="M38 24 h14 M38 31 h14 M38 38 h14" stroke="#E8D9B0" stroke-width="2.5"/><path d="M48 14 L58 4" stroke="#1E1E24" stroke-width="2.5"/>`,
+    map:`<path d="M6 10 L22 6 L38 12 L58 6 V42 L38 48 L22 42 L6 46Z" fill="#F1E6BE" stroke="#1E1E24" stroke-width="2"/><path d="M22 6 V42 M38 12 V48" stroke="#B9A26A" stroke-width="1.5"/><path d="M10 34 q8 -14 20 -6 t24 -14" stroke="#3E8ED0" stroke-width="3" fill="none"/>`,
+    cassette:`<rect x="6" y="12" width="52" height="34" rx="4" fill="#2C333B" stroke="#1E1E24" stroke-width="2"/><rect x="12" y="16" width="40" height="14" fill="#F1E6BE"/><circle cx="22" cy="38" r="5" fill="#C9D1D9"/><circle cx="42" cy="38" r="5" fill="#C9D1D9"/>`,
+    lava:`<path d="M24 6 h16 l6 42 h-28 Z" fill="#7A3FB8" stroke="#1E1E24" stroke-width="2"/><circle cx="30" cy="34" r="6" fill="#FF8FB1"/><circle cx="36" cy="20" r="4" fill="#FF8FB1"/><rect x="18" y="46" width="28" height="5" rx="2" fill="#4A4F5A"/>`,
+    skate:`<path d="M6 30 q26 -14 52 0 q-26 8 -52 0Z" fill="#E8742A" stroke="#1E1E24" stroke-width="2"/><circle cx="18" cy="38" r="5" fill="#C9D1D9" stroke="#1E1E24" stroke-width="2"/><circle cx="46" cy="38" r="5" fill="#C9D1D9" stroke="#1E1E24" stroke-width="2"/>`,
+    box:`<rect x="6" y="14" width="52" height="34" fill="#C8A26B" stroke="#1E1E24" stroke-width="2"/><rect x="6" y="14" width="52" height="9" fill="#B58850" stroke="#1E1E24" stroke-width="2"/><rect x="14" y="30" width="36" height="10" fill="#D7263D"/><path d="M18 35 h28" stroke="#fff" stroke-width="2" stroke-dasharray="3 2"/>`,
+  };
+  const ROOM_ART = [
+    { objs:["lamp", "blueprint", "pegboard"], bg:`<rect width="320" height="170" fill="#3B4150"/><rect y="128" width="320" height="42" fill="#2A2D36"/><rect x="12" y="100" width="296" height="14" fill="#A0703A" stroke="#1E1E24" stroke-width="2"/><path d="M26 114 v46 M294 114 v46" stroke="#1E1E24" stroke-width="4"/>` },
+    { objs:["note", "padlock", "wrench"], bg:`<rect width="320" height="170" fill="#3B4150"/><rect y="128" width="320" height="42" fill="#2A2D36"/><rect x="40" y="96" width="240" height="56" rx="6" fill="#D7263D" stroke="#1E1E24" stroke-width="2.5"/><rect x="40" y="96" width="240" height="12" rx="4" fill="#B01E32"/><rect x="146" y="112" width="28" height="10" rx="3" fill="#C9D1D9" stroke="#1E1E24" stroke-width="2"/>` },
+    { objs:["radio", "map", "cassette"], bg:`<rect width="320" height="170" fill="#3B4150"/><rect y="132" width="320" height="38" fill="#2A2D36"/><path d="M10 150 Q14 112 52 106 L86 80 Q104 70 160 70 L234 74 Q274 84 292 112 Q312 118 310 150Z" fill="#3D7CB8" stroke="#1E1E24" stroke-width="2.5" opacity=".9"/><circle cx="70" cy="152" r="16" fill="#1E1E24"/><circle cx="250" cy="152" r="16" fill="#1E1E24"/>` },
+    { objs:["lava", "skate", "box"], bg:`<rect width="320" height="170" fill="#3B4150"/><rect y="132" width="320" height="38" fill="#2A2D36"/><rect x="10" y="62" width="300" height="8" fill="#7A5530" stroke="#1E1E24" stroke-width="2"/><rect x="10" y="118" width="300" height="8" fill="#7A5530" stroke="#1E1E24" stroke-width="2"/><path d="M20 70 v48 M300 70 v48" stroke="#5A3F22" stroke-width="5"/>` },
+  ];
+  const SLOTS = [[30, 24], [128, 24], [226, 24]];
+  function roomScene(i, st, r){
+    const A = ROOM_ART[i % ROOM_ART.length];
+    const objs = A.objs.map((name, k) => {
+      const [x, y] = SLOTS[k], state = k < st ? "done" : k === st ? "now" : "locked", yy = (i === 2 && k === 1) ? y + 34 : (i === 3 ? y + (k === 2 ? 66 : 4) : (i === 1 ? y + 22 : y + 36));
+      const ring = state === "now" ? `<rect class="gz-ring" x="${x - 4}" y="${yy - 4}" width="72" height="60" rx="10" fill="none" stroke="#FFD866" stroke-width="2.5" stroke-dasharray="6 4"/>` : "";
+      const badge = state === "done" ? `<g class="gz-badge"><circle cx="${x + 62}" cy="${yy + 4}" r="10" fill="#9BE08A" stroke="#1E1E24" stroke-width="2"/><path d="M${x + 57} ${yy + 4} l4 4 l7 -8" fill="none" stroke="#1E1E24" stroke-width="2.5" stroke-linecap="round"/></g>` : state === "locked" ? `<text x="${x + 32}" y="${yy + 34}" text-anchor="middle" font-size="18">🔒</text>` : "";
+      return `<g class="gz-spot gz-${state}" ${state === "now" ? 'data-go="1" tabindex="-1"' : ""}>${ring}<g transform="translate(${x} ${yy})" class="gz-art">${OBJ[name]}</g>${badge}<rect x="${x - 4}" y="${yy - 4}" width="72" height="60" fill="transparent"/></g>`;
+    }).join("");
+    const note = st >= 3 ? `<g class="gz-note"><rect x="132" y="6" width="56" height="40" fill="#FFF3A8" stroke="#1E1E24" stroke-width="2" transform="rotate(-5 160 26)"/><text x="160" y="38" text-anchor="middle" font-family="ui-monospace,monospace" font-weight="900" font-size="30" fill="#1E1E24" transform="rotate(-5 160 26)">${r.digit}</text></g>` : "";
+    return `<svg viewBox="0 0 320 170" role="img" aria-label="${r.name}. ${st} of 3 puzzles solved.">${A.bg}${objs}${note}</svg>`;
+  }
+  function doorScene(){
+    return `<svg viewBox="0 0 320 150" aria-hidden="true"><defs><linearGradient id="gzsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE9FF"/><stop offset="1" stop-color="#FFF1B8"/></linearGradient></defs>
+      <rect width="320" height="150" fill="#2A2D36"/><rect x="60" y="14" width="200" height="126" fill="url(#gzsky)"/><circle cx="214" cy="48" r="16" fill="#FFD866"/><rect x="60" y="112" width="200" height="28" fill="#8C97A3"/>
+      <g class="bz-doorup"><rect x="60" y="14" width="200" height="126" fill="#8C97A3" stroke="#1E1E24" stroke-width="2"/>${[0,1,2,3,4,5,6,7].map(k => `<path d="M60 ${30 + k * 15} H260" stroke="#6B7580" stroke-width="2"/>`).join("")}</g>
+      <rect x="54" y="8" width="212" height="8" fill="#1E1E24"/></svg>`;
+  }
   function roomView(i, say){
     view = "room"; ctx = null;
     const s = S(), r = D.escape.rooms[i], st = s.rooms[i] || 0;
     const stepName = (x) => x.hands ? D.hands[x.hands].name : ({ logic:"Logic puzzle", number:"Number trick", pattern:"Pattern", riddle:"Riddle" })[BYID[x.p]?.type] || "Puzzle";
+    const go = () => { const x = r.steps[st], c = { mode:"escape", room:i, step:st }; x.hands ? startHands(x.hands, c) : startPuzzle(BYID[x.p], c); };
     paint(topBar(r.name, { label:"Garage", fn: escapeMenu }),
       bubble(say || (st >= 3 ? r.done : r.story), "modern"),
+      (() => { const wrap = h("div", { class:"bz-garage bz-roomscene", html: roomScene(i, st, r) });
+        wrap.addEventListener("click", (e) => { if (st < 3 && e.target.closest("[data-go]")) go(); });
+        return wrap; })(),
       h("ol", { class:"bz-steps" }, r.steps.map((x, k) => h("li", { class: k < st ? "done" : k === st ? "now" : "" }, (k < st ? "✅ " : k === st ? "👉 " : "⬜ ") + stepName(x)))),
       st >= 3 ? h("p", { class:"bz-digitbig", "aria-label":`Code digit ${r.digit}` }, r.digit) : null,
       h("div", { class:"bz-row" }, st >= 3 ? btn("Back to the garage →", "primary bz-focus", escapeMenu)
-        : btn(st ? "Next puzzle →" : "Start →", "primary bz-focus", () => {
-          const x = r.steps[st], c = { mode:"escape", room:i, step:st };
-          x.hands ? startHands(x.hands, c) : startPuzzle(BYID[x.p], c);
-        })));
+        : btn(st ? "Next puzzle →" : "Start →", "primary bz-focus", go)));
     focusFirst();
   }
   function escapeStepDone(){
@@ -831,7 +872,7 @@
     s.escaped = true; save();
     const extra = award(first ? 200 : 50, { keepStreak:true });
     paint(topBar("Escaped!", { fn: () => hub() }), bubble([D.escape.win, extra].filter(Boolean).join(" "), "modern"),
-      h("div", { class:"bz-door", "aria-hidden":"true" }, "🚪✨"),
+      h("div", { class:"bz-garage bz-door", "aria-hidden":"true", html: doorScene() }),
       h("p", { class:"bz-q" }, D.escape.after),
       h("p", {}, first ? "+200 points for escaping the garage!" : "+50 points. Still got it."),
       h("div", { class:"bz-row" }, btn("Back to the menu", "primary bz-focus", () => hub())));
@@ -869,6 +910,12 @@
   .bz-rooms{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px}
   .bz-foot,.bz-meta{color:var(--muted); font-size:.85rem; text-align:center}
   .bz-q{font-weight:800; font-size:1.08rem}
+  .bz-roomscene svg{display:block; width:100%; height:auto; margin:0} .bz-roomscene{margin:8px 0 10px}
+  .bz-roomscene .gz-now{cursor:pointer} .bz-roomscene .gz-now .gz-art{animation:gz-bob 1.6s ease-in-out infinite} .bz-roomscene .gz-locked .gz-art{opacity:.4} .bz-roomscene .gz-done .gz-art{opacity:.85}
+  @keyframes gz-bob{50%{transform:translateY(-3px)}} .bz-roomscene .gz-note{animation:bz-stamp .4s cubic-bezier(.3,1.6,.5,1)}
+  .bz-doorup{animation:bz-rise 1.8s cubic-bezier(.5,0,.3,1) .3s forwards} @keyframes bz-rise{to{transform:translateY(-118px)}}
+  .bz-door{margin:6px 0} .bz-door svg{display:block; width:100%; height:auto}
+  @media (prefers-reduced-motion: reduce){ .bz-roomscene .gz-now .gz-art,.bz-roomscene .gz-note{animation:none} .bz-doorup{animation:none; transform:translateY(-118px)} }
   .bz-pcard{position:relative; margin:8px 0 12px; border-radius:16px; overflow:hidden; background:var(--pbg,#2A2D45); border:2px solid rgba(0,0,0,.35); box-shadow:0 5px 0 rgba(0,0,0,.25)}
   .bz-phead{display:flex; align-items:center; gap:10px; padding:8px 12px; color:#F6F1FF}
   .bz-phead b{font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; font-weight:900; line-height:1.2}

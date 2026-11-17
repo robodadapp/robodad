@@ -1017,7 +1017,17 @@ body.hunt-glitch .top h1{animation:hglitch 6s infinite steps(1)}
 .hunt-card .restored{margin:0; padding:8px 12px; border-radius:12px; background:color-mix(in srgb, var(--ok) 14%, transparent); font-weight:800}
 .hunt-meter{height:6px; border-radius:3px; background:var(--line); overflow:hidden} .hunt-meter i{display:block; height:100%; background:var(--mustard)}
 .hunt-board{background:#22382E; color:#F3F1E7; border-radius:14px; padding:12px 16px; border-bottom:8px solid #8B5A2B}
-.hunt-board p{color:#F3F1E7; margin:0} .hunt-board ol{margin:6px 0 0; padding-left:1.4em; font-size:1.1rem; line-height:1.7}
+.hunt-board p{color:#F3F1E7!important; margin:0} .hunt-board ol{margin:6px 0 0; padding-left:1.4em; font-size:1.1rem; line-height:1.7}
+.hunt-board{position:relative; font-family:"Segoe Print","Bradley Hand","Chalkboard SE","Comic Sans MS",cursive; box-shadow:inset 0 0 0 4px #5E3C1C, inset 0 0 40px rgba(0,0,0,.35); letter-spacing:.02em}
+.hunt-board::after{content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none; background:radial-gradient(60% 40% at 30% 20%, rgba(255,255,255,.08), transparent 70%)}
+.hunt-tray{display:flex; align-items:flex-end; gap:8px; height:12px; margin:-2px 8px 8px; padding:0 10px; background:#8B5A2B; border-radius:0 0 8px 8px; box-shadow:0 3px 0 #5E3C1C}
+.hunt-tray i{display:block; width:22px; height:7px; margin-top:-7px; border-radius:2px 2px 0 0; background:#F3F1E7} .hunt-tray i.chalk{width:14px; background:#F28CB1} .hunt-tray i.eraser{width:34px; height:10px; margin-top:-10px; margin-left:auto; background:#3A3F52; border-bottom:3px solid #C9D1D9}
+.hunt-decoder{background:var(--surface); border:1.5px dashed var(--line); border-radius:12px; padding:6px 12px} .hunt-decoder summary{cursor:pointer; font-weight:800}
+.hunt-dec{display:grid; grid-template-columns:repeat(9, 1fr); gap:4px; margin-top:6px}
+.hunt-dec button{padding:6px 0; border-radius:8px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-weight:900; cursor:pointer} .hunt-dec button.flip{background:#F5C518; border-color:#C9A00E; color:#2A1B14}
+.hunt-letter{position:relative; font-family:"Segoe Script","Bradley Hand","Snell Roundhand","Comic Sans MS",cursive; background:repeating-linear-gradient(#FFFBF2 0 27px, #E9DFC8 27px 28px)!important; padding-top:34px!important; box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.hunt-letter::before{content:""; position:absolute; left:0; right:0; top:0; height:22px; background:linear-gradient(135deg, #C9A86B 50%, transparent 50%) left/50% 100% no-repeat, linear-gradient(225deg, #C9A86B 50%, transparent 50%) right/50% 100% no-repeat; border-radius:10px 10px 0 0}
+.hunt-letter::after{content:"PAR AVION"; position:absolute; right:10px; top:2px; padding:1px 8px; border:2px solid #8C2F39; border-radius:4px; color:#8C2F39; font:900 .62rem/1.4 system-ui,sans-serif; letter-spacing:.12em; transform:rotate(4deg); background:#FFFBF2}
 .hunt-note{background:#FFFBF2; color:#2A1B14; border-left:6px solid #8C2F39; border-radius:10px; padding:10px 14px}
 .hunt-note p{color:#2A1B14; margin:0} .hunt-note summary{cursor:pointer; font-weight:800; margin-top:6px}
 .hunt-keys .keys{display:flex; gap:4px; margin:10px 0 4px}
@@ -2377,7 +2387,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=5"></script>
-<script src="/static/brain.js?v=10"></script>
+<script src="/static/brain.js?v=11"></script>
 <script src="/static/arcade.js?v=5"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
@@ -2386,7 +2396,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/radio.js?v=45"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=42"></script>
-<script src="/static/hunt.js?v=2"></script>
+<script src="/static/hunt.js?v=3"></script>
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -5527,6 +5537,11 @@ const PLAYERS = {
     $("huntHintBtn").hidden = false; $("huntHintBtn").textContent = "Need a hint?";
     $("huntDlg").hidden = false; $("huntInput").focus({ preventScroll:true });
   }
+  $("huntPuzzle").addEventListener("click", (e) => {           // Dad's letter decoder (Chapter 1): tap a number to flip it to its letter
+    const b = e.target.closest(".hunt-dec button"); if (!b) return;
+    const n = +b.dataset.n, on = b.classList.toggle("flip");
+    b.textContent = on ? String.fromCharCode(64 + n) : String(n);
+  });
   function huntUnlock(n, solver){
     const prev = huntProgress();
     if (n > prev) setPref(HUNT_KEY, String(n));

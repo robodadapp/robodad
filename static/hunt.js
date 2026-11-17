@@ -8,14 +8,16 @@ window.HUNT = {
       name: "Scrambled Memory", kicker: "Chapter 1 of 5", who: "Professor Dad's chalkboard",
       story: "Kiddo? It's me. Power surge. My memory chip's scrambled. I hid my favourite cartridge, DAD QUEST, and split the password into five pieces so nobody could steal it. Now I can't remember a single one. First piece is a maths problem. Of course it is.",
       puzzle: `<div class="hunt-board"><p>Solve for <i>x</i>. Then turn each answer into a letter: A&nbsp;=&nbsp;1, B&nbsp;=&nbsp;2, C&nbsp;=&nbsp;3…</p>
-        <ol><li>3x − 5 = 25</li><li>2x + 1 = 31</li><li>x ÷ 5 = 5</li><li>x² = 256 <small>(x is positive)</small></li><li>7x = 7</li><li>5x − 3 = 17</li></ol></div>`,
+        <ol><li>3x − 5 = 25</li><li>2x + 1 = 31</li><li>x ÷ 5 = 5</li><li>x² = 256 <small>(x is positive)</small></li><li>7x = 7</li><li>5x − 3 = 17</li></ol></div>
+        <div class="hunt-tray" aria-hidden="true"><i></i><i class="chalk"></i><i class="eraser"></i></div>
+        <details class="hunt-decoder"><summary>Dad's letter decoder</summary><p class="small">Tap a number to flip it into its letter.</p><div class="hunt-dec">${Array.from({ length: 26 }, (_, k) => `<button type="button" data-n="${k + 1}" aria-label="${k + 1}">${k + 1}</button>`).join("")}</div></details>`,
       hints: ["Word clue: the answer is a compound word. The first half is a synonym for elation; the second is something you press with your thumbs. Dad calls it vintage. You might call it obsolete.", "Solve each one for x, then count along the alphabet.", "The first answer is 10, which is J."],
       solved: "JOYPAD. That's it! The first memory's coming back…",
     },
     2: {
       name: "Up the Stairs", kicker: "Chapter 2 of 5", who: "Bookworm Dad's note",
       story: "Ah, the second piece. I wrote it in French so my brother couldn't read it. Smart. Too smart, apparently.",
-      puzzle: `<div class="hunt-note"><p lang="fr">« J'ai caché le deuxième morceau tout en haut de la maison, sous le toit, là où on range les vieilles boîtes et les décorations de Noël. Comment s'appelle cette pièce en anglais ? »</p>
+      puzzle: `<div class="hunt-note hunt-letter"><p lang="fr">« J'ai caché le deuxième morceau tout en haut de la maison, sous le toit, là où on range les vieilles boîtes et les décorations de Noël. Comment s'appelle cette pièce en anglais ? »</p>
         <details><summary>Prefer Spanish?</summary><p lang="es">«Escondí la segunda pieza en lo más alto de la casa, debajo del techo, donde guardamos las cajas viejas y los adornos de Navidad. ¿Cómo se llama ese cuarto en inglés?»</p></details></div>`,
       hints: ["Word clue: this room takes its name from Attica in ancient Greece, where buildings had a decorated top storey. Dad stores his nostalgia up there.", "“Le grenier” in French, “el desván” in Spanish. Now say it in English.", "Five letters, starts with A."],
       solved: "The attic! Of course. Who keeps a password in the attic? Me, apparently.",
