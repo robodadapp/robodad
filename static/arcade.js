@@ -139,6 +139,7 @@
     s.today[game] = used + got;
     s.tickets += got; s.lifetime += got;
     save(s);
+    if (got > 0) window.RoboSfx?.play("ticket");
     if (got > 0) toast("+" + got + " ticket" + (got === 1 ? "" : "s") + (wk ? " (2x week bonus)" : ""));
     else if (t > 0) toast("Ticket limit reached for this game today");
     if ((game === "chess" || game === "tiles") && o.result === "win") {
@@ -156,6 +157,7 @@
     GHOSTS.forEach((g) => { if (score >= g.score && !s.ghosts.includes(g.id)) { s.ghosts.push(g.id); s.tickets += g.bonus; s.lifetime += g.bonus; sum += g.bonus; won.push(g); } });
     if (!won.length) return 0;
     save(s);
+    window.RoboSfx?.play("ticket");
     if (quiet) toast("Your old DAD QUEST best beat " + won.length + (won.length === 1 ? " dad" : " dads") + ": +" + sum + " tickets");
     else won.forEach((g) => toast("You beat " + g.name + "'s high score! +" + g.bonus + " tickets"));
     return sum;
@@ -165,6 +167,7 @@
   function fragment(id) {
     const f = FBYID[id], s = load();
     if (!f || s.frags.includes(id)) return false;
+    window.RoboSfx?.play("prize");
     s.frags.push(id); s.tickets += FRAG_BONUS; s.lifetime += FRAG_BONUS; save(s);
     toast("Cartridge fragment found! +" + FRAG_BONUS + " tickets (" + s.frags.length + " of " + FRAGS.length + ")");
     if (s.frags.length === FRAGS.length) toast("All six fragments! A Golden Token is waiting at the Prize Counter");
@@ -176,6 +179,7 @@
     const p = BYID[id], s = load();
     if (!p || p.secret || s.prizes.includes(id) || s.tickets < p.cost) return false;
     s.tickets -= p.cost; s.prizes.push(id); save(s);
+    if (window.RoboSfx) { RoboSfx.play("counterBell"); setTimeout(() => RoboSfx.play("prize"), 260); }
     return true;
   }
 

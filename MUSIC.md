@@ -18,6 +18,10 @@ Everything in `static/radio.js` is synthesised live in the browser with the Web 
 | `tiles-grandpa` | Tile Talk vs Robo-Grandpa | "The Entertainer", Scott Joplin (1868-1917), published 1902. Public-domain composition, first strain, our own rendition with a gramophone effect |
 | Victory jingles | End of a won game | Original |
 
+## Sound effects
+
+`static/sfx.js` (RoboSfx) makes every game sound live with Web Audio: no files, no samples, no licences. 46 sounds (the Hands-on games keep their own set in brain.js, which this switch also mutes), several with 2 to 4 variants and a small random pitch shift so repeats differ. One shared channel with a limiter. Answers and pickups climb a pentatonic scale with the streak. Muted state is saved under `robodad.sfx`; the switch is in Looks and dads.
+
 ## Downloaded tracks
 
 None yet. For each one added, record: track title, author, page link, licence (CC0 or public domain preferred), date downloaded, and a saved screenshot of the licence on the track page.

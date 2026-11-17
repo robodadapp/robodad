@@ -37,7 +37,7 @@
 
   // ---------- sound: little synth blips made on the spot, no files. The switch lives on every Hands-on screen. ----------
   let ac = null;
-  const sfxOn = () => !S().sfxOff;
+  const sfxOn = () => !S().sfxOff && !window.RoboSfx?.muted;   // the app-wide "Game sound effects" switch mutes these too
   function audio(){
     if (!sfxOn()) return null;
     try { ac ||= new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac; } catch { return null; }
