@@ -493,6 +493,50 @@
     return `<g class="rig rig-${key}">` + svg.slice(0, bs) + `<g class="breath-body">` + svg.slice(bs, be) + `</g>` + svg.slice(be, hs)
       + `<g class="look-hd"><g class="breath-hd"><g class="idle-hd">` + svg.slice(hs, he) + `</g></g></g>` + svg.slice(he) + `</g>`;
   }
+  // ---------- Hair and beard ----------
+  // His own hair is tagged av-hair; Bald, Grey temples and Curls hide or overlay it, and Beard adds one in his hair colour.
+  // Shown and hidden through CSS variables on <html>, because those reach dads drawn from shared symbols (<use>) too, where class rules don't.
+  // Without the page's variables (share cards) the fallbacks keep him as drawn, unless toneSvg bakes the choice in.
+  // HAIR_PARTS: how many shapes right after the head are his hair. Robo-Grandpa keeps his own hair; he can still grow a beard.
+  const HAIR_PARTS = { fifties:2, modern:2, eighties:2, nineties:1, y2k:1, skater:1, gamer:1, bucket:1, dracula:2, filmi:2, festive:1,
+    cozy:1, lucky:1, eiddad:1, grandpa:0, professor:4, labdad:1, bookworm:2, coach:1 };
+  const HAIRS = { drawn:"As drawn", bald:"Bald", grey:"Grey temples", curls:"Curls" };
+  const HATTED = new Set(["nineties", "y2k", "skater", "bucket", "cozy", "coach"]);   // their hat sits on top, so curls only show at the sides
+  const curlsOf = (c, hat) => `<g class="av-curls" display="var(--av-curls, none)" fill="${c}" stroke="${INK}" stroke-width="1.5">`
+    + [[21,8.5,4.6],[29,6.4,4.8],[37,6.4,4.8],[44,9,4.6],[16.5,13.5,4.6],[24,12.4,4.8],[32,11.6,4.8],[40,12.4,4.8],[47.5,13.5,4.6],
+       [14.4,19,4.2],[21,17.6,4.2],[28,17,4.2],[36,17,4.2],[43,17.6,4.2],[49.6,19,4.2],[13.4,24.6,3.4],[50.6,24.6,3.4],[13.6,29.4,2.8],[50.4,29.4,2.8]]
+      .filter(([x, y]) => !hat || (y >= 19 && (x < 17 || x > 47)))
+      .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join("") + `</g>`;
+  const templesOf = () => `<path class="av-temples" display="var(--av-temples, none)" d="M12.7 19.6 Q12.2 27.4 14.2 33.2 L17.4 32.6 Q16 25.6 19.4 20 Q15.8 18.8 12.7 19.6Z M51.3 19.6 Q51.8 27.4 49.8 33.2 L46.6 32.6 Q48 25.6 44.6 20 Q48.2 18.8 51.3 19.6Z" fill="#DCE1E6" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>`;
+  const baldOf = () => `<path class="av-bald" display="var(--av-bald, none)" d="M21.5 19.6 Q27 17.4 32.5 18" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>`;
+  const beardOf = (c) => `<path class="av-beard" display="var(--av-beard, none)" d="M12.4 31 C12.4 40 15 46 20 48.2 Q26 50.6 32 50.6 Q38 50.6 44 48.2 C49 46 51.6 40 51.6 31 L48.4 32 C48 38 46 43 40.5 45.4 Q36 46.9 32 46.9 Q28 46.9 23.5 45.4 C18 43 16 38 15.6 32 Z" fill="${c}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  function elEnd(svg, i){
+    if (svg.startsWith("<g", i)) return gEnd(svg, i);
+    const e = svg.indexOf("/>", i); return e < 0 ? -1 : e + 2;
+  }
+  function tagHair(el){
+    const m = /^<([a-z]+)\b([^>]*)>/.exec(el); if (!m) return el;
+    const open = m[0], cls = /\bclass="/.test(open) ? open.replace(/\bclass="/, 'class="av-hair ') : open.replace(/^<([a-z]+)/, '<$1 class="av-hair"');
+    const tagged = cls.replace(/^<([a-z]+)/, '<$1 display="var(--av-hair, inline)"');
+    return tagged + el.slice(open.length);
+  }
+  function hairUp(key, svg){
+    const hs = svg.indexOf('<g class="hd">'); if (hs < 0) return svg;
+    const at = svg.indexOf(head, hs); if (at < 0) return svg;
+    const afterHead = at + head.length;
+    let i = afterHead, parts = "", firstFill = null;
+    for (let n = 0; n < (HAIR_PARTS[key] || 0); n++) {
+      while (/\s/.test(svg[i])) i++;
+      const e = elEnd(svg, i); if (e < 0) return svg;
+      const el = svg.slice(i, e);
+      if (!firstFill) firstFill = (/fill="([^"]+)"/.exec(el) || [])[1];
+      parts += tagHair(el); i = e;
+    }
+    const c = key === "grandpa" ? "#EEF1F4" : (firstFill && firstFill !== "none" ? firstFill : "#3A2A1E");
+    const extra = HAIR_PARTS[key] ? curlsOf(c, HATTED.has(key)) + templesOf() : "";
+    return svg.slice(0, afterHead) + beardOf(c) + (HAIR_PARTS[key] ? baldOf() : "") + parts + extra + svg.slice(i);
+  }
+  for (const [k, a] of Object.entries(AVATARS)) a.svg = hairUp(k, a.svg);
   for (const [k, a] of Object.entries(AVATARS)) a.svg = rigUp(k, a.svg);
 
   function installSymbols(sprite){
@@ -527,9 +571,28 @@
   }
   // For pictures drawn off-page (share cards, result cards): bake the tone into the markup, leaving plain var(--metal) / var(--ink) otherwise.
   function toneSvg(svg){
-    const hex = TONES[getSkin()];
-    return svg.split(SKIN).join(hex || "var(--metal)").split(FACE).join(hex ? FACE_INK : "var(--ink)");
+    const hex = TONES[getSkin()], h = getHair();
+    svg = svg.split(SKIN).join(hex || "var(--metal)").split(FACE).join(hex ? FACE_INK : "var(--ink)");
+    const on = { hair: h !== "bald" && h !== "curls", bald: h === "bald", temples: h === "grey", curls: h === "curls", beard: getBeard() };
+    return svg.replace(/display="var\(--av-([a-z]+), (?:none|inline)\)"/g, (_, k) => `display="${on[k] ? "inline" : "none"}"`);
   }
+  const HAIR_KEY = "robodad.hair", BEARD_KEY = "robodad.beard";
+  function getHair(){ let v = null; try { v = localStorage.getItem(HAIR_KEY); } catch {} return Object.hasOwn(HAIRS, v) ? v : "drawn"; }
+  function getBeard(){ try { return localStorage.getItem(BEARD_KEY) === "on"; } catch { return false; } }
+  function applyHair(){
+    const d = document.documentElement.dataset, h = getHair();
+    if (h === "drawn") delete d.hair; else d.hair = h;
+    if (getBeard()) d.beard = "on"; else delete d.beard;
+  }
+  function setHair(h){ if (!Object.hasOwn(HAIRS, h)) h = "drawn"; try { localStorage.setItem(HAIR_KEY, h); } catch {} applyHair(); return h; }
+  function setBeard(on){ try { localStorage.setItem(BEARD_KEY, on ? "on" : "off"); } catch {} applyHair(); return !!on; }
+  try {
+    const st = document.createElement("style"); st.id = "av-hair-style";
+    st.textContent = 'html[data-hair="bald"]{--av-hair:none;--av-bald:inline}html[data-hair="grey"]{--av-temples:inline}'
+      + 'html[data-hair="curls"]{--av-hair:none;--av-curls:inline}html[data-beard="on"]{--av-beard:inline}';
+    (document.head || document.documentElement).appendChild(st);
+  } catch {}
+  applyHair();
   applySkin(getSkin());
   // Looks and light/dark can change while the page is open, so Steel re-checks when they do.
   const resync = () => applySkin(getSkin());
@@ -538,5 +601,5 @@
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", resync);
     document.addEventListener("DOMContentLoaded", resync);
   } catch {}
-  window.RoboAvatars = { AVATARS, LOOK_AVATAR, installSymbols, TONES, TONE_NAMES, getSkin, setSkin, toneSvg };
+  window.RoboAvatars = { AVATARS, LOOK_AVATAR, installSymbols, TONES, TONE_NAMES, getSkin, setSkin, toneSvg, HAIRS, getHair, setHair, getBeard, setBeard };
 })();
