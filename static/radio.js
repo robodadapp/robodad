@@ -54,7 +54,9 @@
     ctx = useCtx || new (window.AudioContext || window.webkitAudioContext)();
     master = ctx.createGain(); master.gain.value = 0;
     comp = ctx.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3;
-    master.connect(comp).connect(ctx.destination);
+    // a 40 Hz high-pass clears rumble nobody can hear, so the compressor spends its headroom on what phones and laptops can play
+    const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 40; hp.Q.value = 0.7;
+    master.connect(hp).connect(comp).connect(ctx.destination);
 
     dryFx = ctx.createGain(); dryFx.gain.value = 0.8; dryFx.connect(master);
     const rev = ctx.createConvolver(); rev.buffer = impulse(2.8, 2.5);
@@ -1269,6 +1271,19 @@
     }
   }
 
+  let sleepT = 0, sleepFade = 0, sleepEnd = 0;
+  // lock-screen and headphone controls: shows the station name and lets play/pause work from the notification
+  function session() {
+    const ms = typeof navigator !== "undefined" && navigator.mediaSession; if (!ms) return;
+    try {
+      const st = STATIONS[current];
+      if (timer && st && !st.hidden) { ms.metadata = new MediaMetadata({ title: st.name, artist: "RoboDad Radio" }); }
+      ms.playbackState = timer ? "playing" : "paused";
+      ms.setActionHandler("play", () => { if (!timer) api.play(current || "lounge"); });
+      ms.setActionHandler("pause", () => api.stop());
+      ms.setActionHandler("stop", () => api.stop());
+    } catch (e) {}
+  }
   function targetGain() { return volume * 1.4 * (ducked ? 0.25 : 1); }
 
   // ---------------------------------------------------------------- Vocab Duel loops
@@ -1515,6 +1530,7 @@
       master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
       master.gain.linearRampToValueAtTime(targetGain(), ctx.currentTime + 1.5);
       tick(); timer = setInterval(tick, 50);
+      session();
       api.onchange && api.onchange(api);
     },
     stop() {
@@ -1525,8 +1541,20 @@
       master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
       master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
       setTimeout(() => { if (!timer && performance.now() > jingleUntil && ctx.state === "running") ctx.suspend(); if (!timer && performance.now() > jingleUntil && unlockEl) unlockEl.pause(); }, 4000);
+      session();
       api.onchange && api.onchange(api);
     },
+    // Sleep timer: fades out and stops after this many minutes. sleepIn(0) cancels it; sleepLeft() is minutes remaining (0 when off).
+    sleepIn(min) {
+      clearTimeout(sleepT); clearTimeout(sleepFade); sleepEnd = 0;
+      if (min > 0) {
+        sleepEnd = Date.now() + min * 60000;
+        sleepFade = setTimeout(() => { if (ctx && timer) master.gain.setTargetAtTime(0, ctx.currentTime, 2.5); }, Math.max(0, min * 60000 - 9000));
+        sleepT = setTimeout(() => { sleepEnd = 0; api.stop(); }, min * 60000);
+      }
+      api.onchange && api.onchange(api);
+    },
+    sleepLeft() { return sleepEnd ? Math.max(0, Math.ceil((sleepEnd - Date.now()) / 60000)) : 0; },
     setVolume(v) {
       volume = Math.min(1, Math.max(0, v));
       if (ctx && timer) master.gain.setTargetAtTime(targetGain(), ctx.currentTime, 0.1);
@@ -1561,7 +1589,8 @@
       unlockMediaPlayback();
       setup(); jsetup();
       if (ctx.state === "suspended") await ctx.resume();
-      jbus.gain.value = Math.min(1, Math.max(0, level)) * 1.5;
+      // jingles follow the music volume (0.35 is the Radio's usual setting), so a quiet game never gets a loud fanfare
+      jbus.gain.value = Math.min(1, Math.max(0, level)) * 1.5 * Math.max(0.3, Math.min(1.2, volume / 0.35));
       const len = (JINGLES[style] || JINGLES.gamer)(ctx.currentTime + 0.5);
       jingleUntil = performance.now() + (len + 2.5) * 1000;
       await new Promise((res) => setTimeout(res, (len + 0.5) * 1000));
