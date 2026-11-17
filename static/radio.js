@@ -30,6 +30,13 @@
   const pickOne = (a) => a[Math.floor(rand() * a.length)];
 
   let ctx, master, comp, wet, dry, delay, delayFb, delayOut;
+  // The effects (reverb, echo) are shared. Each time a station starts it gets its own fresh input bus
+  // (dry, wet, delay above), so the old station's already-scheduled notes can be faded out cleanly
+  // instead of playing on under the new one.
+  let dryFx, wetFx, delayNode;
+  // How far ahead notes are scheduled. A phone that freezes for a moment (a big redraw, a slow
+  // Android WebView) has this long before the music runs dry.
+  const LOOKAHEAD = 1.2;
   let timer = null, current = null, bar = 0, nextBarTime = 0;
   let volume = 0.35, ducked = false, tempoMul = 1, playToken = 0;
 
@@ -49,14 +56,18 @@
     comp = ctx.createDynamicsCompressor(); comp.threshold.value = -20; comp.ratio.value = 3;
     master.connect(comp).connect(ctx.destination);
 
-    dry = ctx.createGain(); dry.gain.value = 0.8; dry.connect(master);
+    dryFx = ctx.createGain(); dryFx.gain.value = 0.8; dryFx.connect(master);
     const rev = ctx.createConvolver(); rev.buffer = impulse(2.8, 2.5);
-    wet = ctx.createGain(); wet.gain.value = 0.35; wet.connect(rev).connect(master);
+    wetFx = ctx.createGain(); wetFx.gain.value = 0.35; wetFx.connect(rev).connect(master);
 
     // tempo-synced echo for the synthwave arpeggio
-    delay = ctx.createDelay(1.5); delayFb = ctx.createGain(); delayFb.gain.value = 0.35;
+    delayNode = ctx.createDelay(1.5); delayFb = ctx.createGain(); delayFb.gain.value = 0.35;
     delayOut = ctx.createGain(); delayOut.gain.value = 0.3;
-    delay.connect(delayFb).connect(delay); delay.connect(delayOut).connect(wet);
+    delayNode.connect(delayFb).connect(delayNode); delayNode.connect(delayOut).connect(wetFx);
+    newBus();
+    // Android can pause the audio engine on its own (another app, a call, a slow WebView).
+    // If that happens while a station is meant to be playing, ask for it back.
+    if (!useCtx) ctx.onstatechange = () => { if (timer && ctx.state !== "running") rescue("stall"); };
   }
 
   // iPhones mute Web Audio when the ring/silent switch is on, unless the page
@@ -75,6 +86,38 @@
     unlockEl.loop = true; unlockEl.volume = 0.01; unlockEl.setAttribute("playsinline", "");
     unlockEl.play().catch(() => {});
   }
+
+  function newBus() {
+    dry = ctx.createGain(); dry.connect(dryFx);
+    wet = ctx.createGain(); wet.connect(wetFx);
+    delay = ctx.createGain(); delay.connect(delayNode);
+  }
+  // fade the current bus out (its notes are still scheduled) and start a fresh one
+  function swapBus() {
+    const old = [dry, wet, delay], t = ctx.currentTime;
+    old.forEach(g => { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + 0.25); });
+    setTimeout(() => old.forEach(g => { try { g.disconnect(); } catch (e) {} }), (LOOKAHEAD + 5) * 1000);
+    newBus();
+  }
+
+  // Watchdog: while a station is on, the audio engine must be running and the notes must keep
+  // flowing. If either slips, put it right and tell the page (it counts it, anonymously).
+  let lastKick = 0;
+  const told = {};
+  function report(kind) {
+    const now = performance.now();
+    if (told[kind] && now - told[kind] < 60000) return;
+    told[kind] = now;
+    try { api.onstall && api.onstall(kind); } catch (e) {}
+  }
+  function rescue(kind) {
+    if (document.hidden) return;                       // the phone put us away; pick it up when we're back
+    const now = performance.now(); if (now - lastKick < 1500) return; lastKick = now;
+    report(kind);
+    unlockMediaPlayback();
+    ctx.resume().catch(() => {});
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && timer && ctx && ctx.state !== "running") rescue("stall"); });
 
   function out(node, sendDelay) {
     node.connect(dry); node.connect(wet);
@@ -1193,6 +1236,7 @@
   // Final Chapter: an original, tense-but-not-scary boss theme for Bookworm Dad in D minor.
   // Harpsichord-ish echoing arpeggios over a pulsing bass, like turning pages fast.
   STATIONS.boss = {
+    hidden: true,                                // the boss fight's music, not a radio station
     name: "Final Chapter", bpm: 112,
     bars: [
       { root: 38, chord: [62, 65, 69] },   // Dm
@@ -1214,7 +1258,11 @@
 
   function tick() {
     const st = STATIONS[current]; if (!st) return;
-    while (nextBarTime < ctx.currentTime + 0.6) {
+    if (ctx.state !== "running") { rescue("stall"); return; }
+    // fell behind (the page froze for longer than the lookahead): skip ahead rather than
+    // firing a pile of late notes at once
+    if (nextBarTime < ctx.currentTime) { report("lag"); nextBarTime = ctx.currentTime + 0.05; }
+    while (nextBarTime < ctx.currentTime + LOOKAHEAD) {
       const beat = 60 / ((st.tempo ? st.tempo(bar) : st.bpm) * tempoMul);   // a station can set its own speed bar by bar
       st.play(bar, nextBarTime, beat);
       nextBarTime += 4 * beat; bar++;
@@ -1370,6 +1418,7 @@
     get station() { return current; },
     get playing() { return !!timer; },
     onchange: null,
+    onstall: null,                               // called with "stall" or "lag" when the watchdog had to step in
     async play(name) {
       const mine = ++playToken;
       unlockMediaPlayback();
@@ -1378,8 +1427,9 @@
       if (mine !== playToken) return;            // stopped, or another station was asked for, while the browser was still waiting for a tap
       if (timer && name === current) return;
       if (timer) { clearInterval(timer); timer = null; }
+      swapBus();                                 // the old station's queued notes fade out instead of playing on
       current = STATIONS[name] ? name : "lounge";
-      delay.delayTime.value = (60 / (STATIONS[current].bpm * tempoMul)) * 0.75;
+      delayNode.delayTime.value = (60 / (STATIONS[current].bpm * tempoMul)) * 0.75;
       bar = 0; seed = 7; nextBarTime = ctx.currentTime + 0.15;
       master.gain.cancelScheduledValues(ctx.currentTime);
       master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
@@ -1404,7 +1454,7 @@
     // Speeds the current station up (1 = normal, 1.12 = a touch faster). It takes effect from the next bar.
     setTempo(mul) {
       tempoMul = Math.min(1.5, Math.max(0.75, +mul || 1));
-      if (ctx && timer && STATIONS[current]) delay.delayTime.setTargetAtTime((60 / (STATIONS[current].bpm * tempoMul)) * 0.75, ctx.currentTime, 0.5);
+      if (ctx && timer && STATIONS[current]) delayNode.delayTime.setTargetAtTime((60 / (STATIONS[current].bpm * tempoMul)) * 0.75, ctx.currentTime, 0.5);
     },
     duck(on) {
       ducked = !!on;
@@ -1412,15 +1462,15 @@
     },
     // Renders a station to an AudioBuffer without playing it (used for testing).
     async renderPreview(name, seconds = 20, sampleRate = 44100, startBar = 0) {
-      const saved = { ctx, master, comp, wet, dry, delay, delayFb, delayOut, current, bar, nextBarTime };
+      const saved = { ctx, master, comp, wet, dry, delay, delayFb, delayOut, dryFx, wetFx, delayNode, current, bar, nextBarTime };
       const off = new OfflineAudioContext(2, Math.ceil(sampleRate * seconds), sampleRate);
       setup(off);
       const st = STATIONS[name]; let beat = 60 / st.bpm;
       master.gain.setValueAtTime(0, 0); master.gain.linearRampToValueAtTime(volume * 1.4, 1.5);
-      delay.delayTime.value = beat * 0.75; seed = 7;
+      delayNode.delayTime.value = beat * 0.75; seed = 7;
       for (let i = startBar, t = 0.1; t < seconds; i++, t += 4 * beat) { beat = 60 / (st.tempo ? st.tempo(i) : st.bpm); st.play(i, t, beat); }
       const buf = await off.startRendering();
-      ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, current, bar, nextBarTime } = saved);
+      ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, dryFx, wetFx, delayNode, current, bar, nextBarTime } = saved);
       return buf;
     },
     // Stops the station and plays a short celebration tune. style: gamer, skater, arcade, coach, modern,
@@ -1439,12 +1489,12 @@
     },
     // Renders a jingle offline (used for testing).
     async renderJingle(style, sampleRate = 44100) {
-      const saved = { ctx, master, comp, wet, dry, delay, delayFb, delayOut, jbus, jrev };
+      const saved = { ctx, master, comp, wet, dry, delay, delayFb, delayOut, dryFx, wetFx, delayNode, jbus, jrev };
       const off = new OfflineAudioContext(2, sampleRate * 5, sampleRate);
       setup(off); jbus = null; jsetup();
       JINGLES[style](0.1);
       const buf = await off.startRendering();
-      ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, jbus, jrev } = saved);
+      ({ ctx, master, comp, wet, dry, delay, delayFb, delayOut, dryFx, wetFx, delayNode, jbus, jrev } = saved);
       return buf;
     },
     chime() {

@@ -745,6 +745,7 @@ EVENTS = {
     "tour_start", "tour_done", "tour_skip", "fb_sent",
     "safe_open", "safe_win", "safe_fail", "safe_share",
     "hands_win", "hands_again", "hands_retry", "hands_next",
+    "radio_stall", "radio_lag",
 }
 
 
