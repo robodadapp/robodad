@@ -3,6 +3,7 @@
    so the answer key is never made up on the fly.
    - Multiple choice: "ok" is the right answer, "no" holds exactly three wrong ones; the app shuffles them.
    - Type-in ("kind":"type"): "answer" is shown, "accept" lists what counts as right (case and spaces ignored).
+   - Optional "board" on ordering puzzles: a drag-and-tap scratchpad (items, slots, solution). It is only a thinking aid; the multiple choice stays the graded answer.
    - Hands-on puzzles (lights, lock, river, tiles) are built by brain.js; the code-lock clues below
      were checked by brute force to have exactly one answer.
    Hints are revealed one at a time; the answer and "why" only show after a pick or a reveal.
@@ -10,17 +11,17 @@
 (function(){
   const P = [
     // ---------- logic ----------
-    { id:"bt01", type:"logic", q:"Four friends sit in a row at the movies. Cal is on the far left. Ava isn't on either end. Ben sits directly to Ava's right. Dee doesn't sit next to Cal. Who is sitting next to Dee?",
+    { id:"bt01", type:"logic", board:{ title:"The row of seats, left to right", slots:["Seat 1","Seat 2","Seat 3","Seat 4"], items:["Cal","Ava","Ben","Dee"], solution:["Cal","Ava","Ben","Dee"] }, q:"Four friends sit in a row at the movies. Cal is on the far left. Ava isn't on either end. Ben sits directly to Ava's right. Dee doesn't sit next to Cal. Who is sitting next to Dee?",
       hints:["Draw four seats and put Cal in seat 1.", "Ava must be in seat 2 or 3. Which one leaves Dee away from Cal?", "If Ava is in seat 3, Dee has to sit in seat 2, right next to Cal. So Ava is in seat 2."],
       ok:"Ben", no:["Ava", "Cal", "Nobody"],
       why:"The seats go Cal, Ava, Ben, Dee. Dee is on the far right, next to Ben." },
 
-    { id:"bt02", type:"logic", q:"In the family group chat, Mum replies faster than Dad. Gran replies slower than Dad. Your brother replies faster than Mum. Who replies slowest?",
+    { id:"bt02", type:"logic", board:{ title:"Who replies first? Fastest to slowest", slots:["Fastest","2nd","3rd","Slowest"], items:["Your brother","Mum","Dad","Gran"], solution:["Your brother","Mum","Dad","Gran"] }, q:"In the family group chat, Mum replies faster than Dad. Gran replies slower than Dad. Your brother replies faster than Mum. Who replies slowest?",
       hints:["Line them up from fastest to slowest.", "Your brother beats Mum, and Mum beats Dad.", "Where does Gran go compared with Dad?"],
       ok:"Gran", no:["Dad", "Mum", "Your brother"],
       why:"Fastest to slowest: your brother, Mum, Dad, Gran." },
 
-    { id:"bt03", type:"logic", q:"Sam is taller than Jo. Jo is taller than Max. Max is taller than Lee. Who is the second shortest?",
+    { id:"bt03", type:"logic", board:{ title:"Line them up, tallest to shortest", slots:["Tallest","2nd","3rd","Shortest"], items:["Sam","Jo","Max","Lee"], solution:["Sam","Jo","Max","Lee"] }, q:"Sam is taller than Jo. Jo is taller than Max. Max is taller than Lee. Who is the second shortest?",
       hints:["Put them in order from tallest to shortest.", "Lee is the shortest of all.", "Who comes just above Lee?"],
       ok:"Max", no:["Jo", "Lee", "Sam"],
       why:"Tallest to shortest: Sam, Jo, Max, Lee. Second shortest is Max." },

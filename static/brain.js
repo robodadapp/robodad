@@ -225,10 +225,41 @@
       h("p", { class:"bz-q bz-paper" }, p.q),
       c.done && c.mode === "daily" ? h("span", { class:"bz-stamp", "aria-hidden":"true" }, "CASE CLOSED") : null);
   }
+
+  // ---------- the thinking board: drag (or tap) names into slots to work an ordering puzzle out. It never scores; it just glows when the order is right. ----------
+  function puzzleBoard(c){
+    const B = c.p.board; if (!B) return null;
+    c.bd ||= { slots: B.slots.map(() => null), sel: null, order: shuffle(B.items.map((_, i) => i)) };
+    const bd = c.bd, placed = new Set(bd.slots.filter(v => v != null));
+    const ok = bd.slots.every((v, i) => v != null && B.items[v] === B.solution[i]);
+    const place = (idx, slot) => { bd.slots = bd.slots.map(v => v === idx ? null : v); bd.slots[slot] = idx; bd.sel = null; renderPuzzle(); };
+    const slotBtn = (i) => { const v = bd.slots[i];
+      return h("button", { type:"button", class:"bz-tkslot" + (v != null ? " full" : "") + (bd.sel != null ? " ready" : ""), "data-slot":String(i),
+        "aria-label": `${B.slots[i]}: ${v != null ? B.items[v] + ", tap to take back" : "empty"}`,
+        on:{ click: () => { if (bd.sel != null) place(bd.sel, i); else if (v != null) { bd.slots[i] = null; renderPuzzle(); } } } },
+        h("small", {}, B.slots[i]), h("b", {}, v != null ? B.items[v] : "·")); };
+    const chip = (idx) => { const el = h("button", { type:"button", class:"bz-chip" + (bd.sel === idx ? " sel" : ""), "aria-pressed":String(bd.sel === idx) }, B.items[idx]);
+      let sx = 0, sy = 0, down = false, moved = false;
+      const slotAt = (x, y) => { el.style.pointerEvents = "none"; const t = document.elementFromPoint(x, y); el.style.pointerEvents = ""; return t && t.closest ? t.closest(".bz-tkslot") : null; };
+      el.addEventListener("pointerdown", (e) => { down = true; moved = false; sx = e.clientX; sy = e.clientY; el.setPointerCapture(e.pointerId); });
+      el.addEventListener("pointermove", (e) => { if (!down) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+        if (Math.abs(dx) + Math.abs(dy) > 8) { moved = true; el.classList.add("drag"); } if (moved) el.style.transform = `translate(${dx}px, ${dy}px)`; });
+      el.addEventListener("pointerup", (e) => { if (!down) return; down = false; el.classList.remove("drag"); el.style.transform = "";
+        if (moved) { const sl = slotAt(e.clientX, e.clientY); if (sl) place(idx, +sl.dataset.slot); } else { bd.sel = bd.sel === idx ? null : idx; renderPuzzle(); } });
+      el.addEventListener("pointercancel", () => { down = false; el.classList.remove("drag"); el.style.transform = ""; });
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); bd.sel = bd.sel === idx ? null : idx; renderPuzzle(); } });
+      return el; };
+    return h("div", { class:"bz-tkb" + (ok ? " ok" : "") },
+      h("p", { class:"bz-tkt" }, `${B.title} · drag a name into a slot, or tap one then tap a slot`),
+      h("div", { class:"bz-tkslots" }, B.slots.map((_, i) => slotBtn(i))),
+      h("div", { class:"bz-tray2" }, bd.order.filter(i => !placed.has(i)).map(chip)),
+      ok ? h("p", { class:"bz-tkok", role:"status" }, "✓ That's the order. Now pick your answer.") : null,
+      bd.slots.some(v => v != null) ? btn("Clear the board", "ghost bz-tkclr", () => { c.bd = null; renderPuzzle(); }) : null);
+  }
   function renderPuzzle(){
     const c = ctx, p = c.p;
     const nodes = [topBar(c.mode === "daily" ? "Today's puzzle" : c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "notebook" ? "Dev's Notebook" : "Puzzle Run", backFor()), c.mode === "run" ? runBar() : null, bubble(c.say)];
-    nodes.push(puzzleCard(p, c));
+    nodes.push(puzzleCard(p, c), puzzleBoard(c));
     p.hints.slice(0, c.hints).forEach((t, i) => nodes.push(h("p", { class:"bz-hint" }, `Hint ${i + 1}: ${t}`)));
     if (c.msg) nodes.push(h("p", { class:"bz-msg" + (c.done ? " ok" : "") }, c.msg));
     if (!c.done) {
@@ -910,6 +941,16 @@
   .bz-rooms{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px}
   .bz-foot,.bz-meta{color:var(--muted); font-size:.85rem; text-align:center}
   .bz-q{font-weight:800; font-size:1.08rem}
+  .bz-tkb{margin:0 0 10px; padding:10px; border-radius:14px; background:#E9EEF7; border:2px dashed #AFC0DD; color:#1C2438} .bz-tkb.ok{border-color:#2E8B57; background:#E4F4EA}
+  .bz-tkt{margin:0 0 8px; font-size:.8rem; font-weight:800; color:#4A5774}
+  .bz-tkslots{display:grid; grid-template-columns:repeat(4, 1fr); gap:6px}
+  .bz-tkslot{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:56px; padding:4px; border-radius:10px; border:2px solid #AFC0DD; background:#fff; color:#1C2438; font:inherit; cursor:pointer}
+  .bz-tkslot small{font-size:.66rem; font-weight:800; color:#6A7894; text-transform:uppercase; letter-spacing:.04em} .bz-tkslot b{font-size:.92rem; line-height:1.1; overflow-wrap:anywhere}
+  .bz-tkslot.full{background:#FFF7DC; border-color:#E9B949} .bz-tkslot.ready{border-style:dashed; border-color:#3E8ED0; box-shadow:0 0 0 2px rgba(62,142,208,.25)}
+  .bz-tray2{display:flex; flex-wrap:wrap; gap:8px; min-height:44px; margin-top:8px}
+  .bz-chip{padding:9px 14px; border-radius:999px; border:2px solid #1C2438; background:#FFD866; color:#1C2438; font:inherit; font-weight:900; cursor:grab; touch-action:none; user-select:none; box-shadow:0 3px 0 rgba(0,0,0,.25)}
+  .bz-chip.sel{background:#6BC3FF; transform:translateY(-2px)} .bz-chip.drag{cursor:grabbing; position:relative; z-index:6; box-shadow:0 10px 16px rgba(0,0,0,.35)}
+  .bz-tkok{margin:8px 0 0; font-weight:900; color:#1F7A47} .bz-tkclr{margin-top:8px}
   .bz-roomscene svg{display:block; width:100%; height:auto; margin:0} .bz-roomscene{margin:8px 0 10px}
   .bz-roomscene .gz-now{cursor:pointer} .bz-roomscene .gz-now .gz-art{animation:gz-bob 1.6s ease-in-out infinite} .bz-roomscene .gz-locked .gz-art{opacity:.4} .bz-roomscene .gz-done .gz-art{opacity:.85}
   @keyframes gz-bob{50%{transform:translateY(-3px)}} .bz-roomscene .gz-note{animation:bz-stamp .4s cubic-bezier(.3,1.6,.5,1)}
