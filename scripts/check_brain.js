@@ -21,6 +21,12 @@ for (const p of puzzles) {
     if (new Set(opts).size !== opts.length) fail(`${p.id} repeats an option`);
   }
 }
+for (const p of puzzles) if (p.board) {
+  const b = p.board;
+  if (new Set(b.items).size !== b.items.length) fail(`${p.id} board repeats an item`);
+  if (b.slots.length !== b.items.length || b.solution.length !== b.items.length) fail(`${p.id} board slots, items and solution differ in length`);
+  if ([...b.solution].sort().join("|") !== [...b.items].sort().join("|")) fail(`${p.id} board solution isn't a rearrangement of its items`);
+}
 const all = [];
 for (let a = 0; a < 10; a++) for (let b = 0; b < 10; b++) for (let c = 0; c < 10; c++) if (a !== b && b !== c && a !== c) all.push(`${a}${b}${c}`);
 const score = (s, g) => { let A = 0, B = 0; [...g].forEach((d, i) => { if (s[i] === d) A++; else if (s.includes(d)) B++; }); return [A, B]; };
