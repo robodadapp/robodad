@@ -11,6 +11,7 @@ Everything in `static/radio.js` is synthesised live in the browser with the Web 
 | RoboDad Radio stations | Chill > Radio | Original, except Canon in D (Pachelbel, public-domain composition, our own rendition) |
 | `chess-*` loops | Chess, one per dad | Original |
 | `chess-gamer` | Chess vs Gamer Dad | Original drift-phonk beat, reworked: opens on bass and the cowbell hook, then a 16-bar loop with a drop, a breakdown with snare roll and riser, and a second drop. Every sound is an oscillator or noise: no samples, no vocal chops |
+| `chess-gamer-b` | Chess vs Gamer Dad (alternates with `chess-gamer` game to game) | The first drift-phonk loop, kept as a second track. Its pre-drop riser is now a rising noise sweep. Original, no samples |
 | `chess-grandpa` | Chess vs Robo-Grandpa | "In the Hall of the Mountain King", Edvard Grieg (1843-1907), composed 1875. The composition is in the public domain. The 8-bit arrangement is RoboDad's own and no one else's recording, MIDI file or arrangement was used |
 | `tiles-*` loops | Tile Talk, one per dad (Bookworm Dad plays `boss`, "Final Chapter") | Original, except the two below |
 | `tiles-professor` | Tile Talk vs Professor Dad | Prelude in C major, BWV 846, J. S. Bach (1685-1750), published 1722. Public-domain composition, bars 1 to 19, our own harpsichord rendition with a pedal bass, phrasing and a slowing last two bars |

@@ -741,6 +741,35 @@
     },
   });
 
+  // Gamer Dad, second track: the original drift-phonk loop (4-bar quiet intro, then the drop), kept as a variation. Chess
+  // alternates it with the reworked track above from one game to the next. Same cowbell hook and 808, a different shape.
+  chess("gamer-b", {
+    name: "Gamer Dad", bpm: 132,
+    roots: [40, 40, 41, 40, 40, 40, 43, 41],                 // E E F E | E E G F: the flat second gives it the dark drift feel
+    riffs: [                                                 // cowbell melody, 16 steps a bar (0 = rest)
+      [76, 0, 76, 79, 0, 76, 0, 77, 76, 0, 76, 79, 0, 81, 79, 77],
+      [76, 0, 76, 79, 0, 76, 0, 77, 76, 0, 74, 76, 0, 0, 0, 0],
+      [77, 0, 77, 81, 0, 77, 0, 79, 77, 0, 77, 81, 0, 84, 81, 79],
+      [76, 0, 76, 79, 0, 76, 0, 77, 83, 81, 79, 77, 76, 0, 74, 0],
+    ],
+    play(i, t, b) {
+      const s16 = b / 4, k = i % 16, intro = k < 4, root = this.roots[i % 8], riff = this.riffs[i % 4];
+      riff.forEach((n, s) => { if (n) cowbell(n, t + s * s16, intro ? 0.032 : 0.042, s16 * 1.9); });
+      for (let s = 0; s < 16; s++) {
+        if (s % 2 === 0) hat(t + s * s16, 0.02);
+        else if (!intro && (s === 7 || s === 15 || i % 2)) hat(t + s * s16, 0.012);
+      }
+      if (i % 4 === 3) for (let r = 0; r < 6; r++) hat(t + 3.5 * b + r * (b / 12), 0.01 + r * 0.003);      // hat roll into the next phrase
+      if (intro) { if (k === 3) sweep(t, 4 * b, 0.04); return; }   // riser before the drop: a rising noise sweep (the first version slid a saw tone down, which sounded like a siren)
+      [0, 6, 10].forEach((s) => kick(t + s * s16, 0.21));
+      clap(t + b); clap(t + 3 * b);
+      sub808(root, t, 5.5 * s16);
+      sub808(root, t + 6 * s16, 3.5 * s16);
+      sub808(root, t + 10 * s16, 5.5 * s16, { slideTo: i % 4 === 3 ? root + 12 : i % 2 ? root - 5 : 0 });
+      if (k % 4 === 0) pad([root + 12, root + 15, root + 19], t, 8 * b, { type: "sawtooth", cutoff: 520, level: 0.016 });
+    },
+  });
+
   // Coach Dad: stadium march in C (C-F-G-C, then Am-F-G), brass stabs, snare cadence and a rally fanfare
   chess("coach", {
     name: "Coach Dad", bpm: 112,

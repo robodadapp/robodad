@@ -277,7 +277,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 <p class="foot">Tap a piece, then tap where it goes. When a pawn reaches the far side you pick what it becomes. Every dad plays on a clock set by how tough he is. It starts after your first move, and the Clock button turns it off for a relaxed game. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
 
 <script src="/static/avatars.js?v=42"></script>
-<script src="/static/radio.js?v=44"></script>
+<script src="/static/radio.js?v=45"></script>
 <script src="/static/chess-engine.js"></script>
 <script src="/static/chess-puzzles.js"></script>
 <script>
@@ -417,12 +417,22 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   // ---- music: every dad has his own loop (RoboRadio's hidden "chess-<dad>" stations) ----
   let musicOn = store.get(MUSIC_KEY) !== "0";
   let tense = false;
+  // Some dads have more than one loop. Each new game moves on to the next one, so a dad doesn't sound the same every game.
+  const TUNES = { gamer: ["chess-gamer", "chess-gamer-b"] };
+  const tunePick = {};
+  function nextTune(key) {
+    const list = TUNES[key]; if (!list) return;
+    const last = parseInt(store.get("robodad.chess.tune." + key) || "-1", 10);
+    tunePick[key] = (isNaN(last) ? 0 : last + 1) % list.length;
+    store.set("robodad.chess.tune." + key, String(tunePick[key]));
+  }
+  const trackFor = (key) => (TUNES[key] && TUNES[key][tunePick[key] || 0]) || "chess-" + key;
   function musicSync() {
     const r = window.RoboRadio; if (!r) return;
     if (!musicOn || daily || over || document.hidden) { r.stop(); return; }
     r.setVolume(0.22);
     r.setTempo(tense ? 1.12 : 1);
-    Promise.resolve(r.play("chess-" + tierKey)).catch(() => {});   // starts on your first tap if the browser is still waiting for one
+    Promise.resolve(r.play(trackFor(tierKey))).catch(() => {});   // starts on your first tap if the browser is still waiting for one
   }
   function setTense(v) {
     if (v === tense) return;
@@ -1095,6 +1105,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     renderBoard();
     refreshStatus();
     talk("start");
+    nextTune(tierKey);
     musicSync();
   }
 
