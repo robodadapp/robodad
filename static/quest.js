@@ -73,14 +73,63 @@
     { name: "Attic Lullaby", wave: "triangle", mel: [74,0,78,0, 81,0,78,0, 76,0,79,0, 83,81,79,78],       bas: [50,50,57,57, 50,50,57,57, 52,52,59,59, 55,55,57,57] },
   ];
   const BOSS_TAPE = { wave: "square", mel: [69,72,76,72, 69,72,77,76, 68,71,76,71, 68,71,74,71], bas: [45,45,45,45, 41,41,41,41, 40,40,40,40, 40,40,44,44] };
+  // a theme for every room, 32 steps (two 16-step halves) so it takes longer to repeat. Built from a key, a scale,
+  // four chord roots (one per 8 steps), a bass pattern, a melody in scale steps (null is a rest) and a drum feel.
+  // Every fourth time round the drums drop out for 8 steps, so a long run never settles into one loop.
+  const mkTrack = (o) => {
+    const deg = (d) => { const n = o.sc.length, oct = Math.floor(d / n); return o.key + o.sc[((d % n) + n) % n] + 12 * oct; };
+    const bas = [];
+    for (let i = 0; i < 32; i++) {
+      const r = o.bk + o.ch[i >> 3], j = i % 8, f = r + 7;
+      bas.push({ pair: [r, r, f, f, r, r, f, f], slow: [r, r, r, r, f, f, f, f], pulse: [r, r, r, r, r, r, r, r], drive: [r, r + 12, r, r + 12, r, r + 12, r, r + 12], walk: [r, r, r + 4, r + 4, f, f, r + 12, r + 7] }[o.bass][j]);
+    }
+    if (o.mel.length !== 32) throw new Error("room track needs 32 melody steps");
+    return { wave: o.wave, drum: o.drum, mel: o.mel.map((d) => d === null ? 0 : deg(d)), bas };
+  };
+  const _ = null, MAJ = [0, 2, 4, 5, 7, 9, 11], PENT = [0, 2, 4, 7, 9], MINP = [0, 3, 5, 7, 10], MIXO = [0, 2, 4, 5, 7, 9, 10], PHRY = [0, 1, 3, 5, 7, 8, 10];
+  const ROOM_TRACKS = {
+    "Level 1: Home": mkTrack({ key: 72, sc: PENT, bk: 48, ch: [0, 9, 5, 7], bass: "slow", wave: "triangle", drum: "soft",
+      mel: [2,_,4,_, 3,_,2,_, 2,_,3,_, 1,_,0,_,  4,_,5,_, 4,_,3,_, 2,_,1,_, 0,_,_,_] }),
+    "Kitchen": mkTrack({ key: 72, sc: MAJ, bk: 48, ch: [0, 5, 7, 0], bass: "pair", wave: "square", drum: "bounce",
+      mel: [4,2,0,2, 4,4,4,_, 3,1,-1,1, 3,3,3,_,  5,4,2,4, 5,5,5,_, 4,2,1,-1, 0,_,_,_] }),
+    "Living Room": mkTrack({ key: 65, sc: MAJ, bk: 41, ch: [0, 9, 5, 7], bass: "slow", wave: "triangle", drum: "soft",
+      mel: [4,_,2,_, 0,_,2,_, 5,_,4,_, 2,_,_,_,  3,_,1,_, -1,_,1,_, 4,_,2,_, 0,_,_,_] }),
+    "Garage": mkTrack({ key: 64, sc: MINP, bk: 40, ch: [0, 0, 5, 7], bass: "drive", wave: "sawtooth", drum: "rock",
+      mel: [0,_,2,3, 4,_,3,2, 0,_,2,3, 5,4,3,2,  0,_,2,3, 4,_,5,6, 7,_,5,4, 3,2,0,_] }),
+    "Backyard": mkTrack({ key: 67, sc: MAJ, bk: 43, ch: [0, 5, 7, 0], bass: "pair", wave: "square", drum: "bounce",
+      mel: [0,2,4,2, 5,4,2,4, 3,5,7,5, 4,2,1,_,  0,2,4,2, 5,7,5,4, 3,4,2,1, 0,_,_,_] }),
+    "Road Trip": mkTrack({ key: 69, sc: MIXO, bk: 45, ch: [0, -2, -5, 0], bass: "pulse", wave: "square", drum: "four",
+      mel: [4,_,4,2, 4,_,5,4, 2,_,2,0, 2,_,4,_,  4,_,4,2, 5,_,6,5, 4,2,0,-1, 0,_,_,_] }),
+    "Mall Arcade": mkTrack({ key: 74, sc: MAJ, bk: 38, ch: [0, 7, 9, 5], bass: "walk", wave: "square", drum: "chip",
+      mel: [0,2,4,7, 4,2,0,2, 4,6,8,6, 4,2,4,_,  5,7,9,7, 5,4,2,4, 6,5,4,2, 0,_,_,_] }),
+    "Attic": mkTrack({ key: 62, sc: PHRY, bk: 38, ch: [0, 0, 8, 7], bass: "slow", wave: "triangle", drum: "sparse",
+      mel: [0,_,_,1, _,_,2,_, 4,_,_,3, _,_,1,_,  0,_,_,1, _,_,5,_, 4,_,3,_, 2,_,1,_] }),
+  };
+  let roomMusic = store.get("robodad.dadquest.rm") !== "0";
+  function roomDrums(kind, i, t0, q){
+    const j = i % 16;
+    if (kind === "soft") { if (j % 8 === 0) kick(t0); if (j % 4 === 2) noise(t0, 0.03, 0.012, 7000); }
+    else if (kind === "bounce") { if ([0, 3, 8, 11].includes(j)) kick(t0); else if (j % 2) noise(t0, 0.04, 0.02, 6000); if (j % 8 === 4) noise(t0, 0.1, 0.035, 1800); }
+    else if (kind === "rock") { if ([0, 6, 8, 10].includes(j)) kick(t0); if (j % 8 === 4) noise(t0, 0.12, 0.045, 1500); if (j % 2) noise(t0, 0.03, 0.014, 7000); }
+    else if (kind === "four") { if (j % 2 === 0) kick(t0); else noise(t0, 0.04, 0.02, 6000); if (j % 8 === 4) noise(t0, 0.1, 0.035, 1800); }
+    else if (kind === "chip") { if (j % 8 === 0) kick(t0); noise(t0, 0.03, j % 2 ? 0.016 : 0.01, 7000); if (j % 8 === 4) noise(t0, 0.09, 0.035, 2000); }
+    else if (kind === "sparse") { if (j % 8 === 0) kick(t0); }
+  }
   let tapesOwned = clamp(parseInt(store.get("robodad.dadquest.tapes") || "1", 10) || 1, 1, TAPES.length);
   let tape = clamp(parseInt(store.get("robodad.dadquest.tape") || "0", 10) || 0, 0, tapesOwned - 1);
   // the music is driven by the game clock, so obstacles reach Dad exactly on the beat
   function musicStep(){
     if (!ac || muted || ["locked", "boot", "paused"].includes(state)) return;
     const playing = state === "play" || state === "bonus";
-    const tk = boss && boss.phase !== "dead" ? BOSS_TAPE : TAPES[tape], i = (mt / BEAT) % 16, t0 = ac.currentTime + 0.02, q = playing ? 1 : 0.55;
+    const onBoss = boss && boss.phase !== "dead", rk = !onBoss && roomMusic && ROOM_TRACKS[(room() || {}).name];
+    const tk = onBoss ? BOSS_TAPE : rk || TAPES[tape], step = mt / BEAT, i = rk ? step % 32 : step % 16, t0 = ac.currentTime + 0.02, q = playing ? 1 : 0.55;
     const m = tk.mel[i];
+    if (rk) {
+      if (m) { tone(N(m), t0, 0.16, tk.wave, (tk.wave === "sawtooth" ? 0.016 : 0.024) * q); if (strength > 0) tone(N(m + 12), t0 + 0.1, 0.08, "square", 0.014); }
+      tone(N(tk.bas[i]), t0, 0.2, "triangle", 0.045 * q);
+      if (playing && !(Math.floor(step / 32) % 4 === 3 && i < 8)) roomDrums(tk.drum, i, t0, q);
+      return;
+    }
     if (m) { tone(N(m), t0, 0.16, tk.wave, (tk.wave === "sawtooth" ? 0.016 : 0.024) * q); if (strength > 0) tone(N(m + 12), t0 + 0.1, 0.08, "square", 0.014); }
     tone(N(tk.bas[i]), t0, 0.2, "triangle", 0.045 * q);
     if (playing) { if (i % 2 === 0) kick(t0); else noise(t0, 0.04, 0.02, 6000); if (i % 8 === 4) noise(t0, 0.1, 0.035, 1800); }
@@ -1229,7 +1278,10 @@
         { label: "DAD: " + SKINS[skin].name.toUpperCase(), act: () => setState("skins") },
         { label: `MISSIONS ${mdone.length}/${MISSIONS.length}`, act: () => setState("missions") },
         { label: `PHOTO ALBUM ${treasureCount()}/${TREASURES.length}`, act: () => { albumSel = 0; setState("album"); } },
-        { label: "TAPE: " + TAPES[tape].name.toUpperCase(), act: () => { if (tapesOwned < 2) showToast("FIND MIXTAPES IN THE ROOMS TO GET MORE MUSIC", "#FFF6D6"); else { tape = (tape + 1) % tapesOwned; store.set("robodad.dadquest.tape", String(tape)); } } },
+        { label: "TAPE: " + (roomMusic ? "ROOM MUSIC" : TAPES[tape].name.toUpperCase()), act: () => {
+          if (roomMusic) { roomMusic = false; tape = 0; } else if (tape + 1 < tapesOwned) tape++; else roomMusic = true;
+          store.set("robodad.dadquest.rm", roomMusic ? "1" : "0"); store.set("robodad.dadquest.tape", String(tape));
+          if (tapesOwned < 2 && !roomMusic) showToast("FIND MIXTAPES IN THE ROOMS TO GET MORE MUSIC", "#FFF6D6"); } },
         { label: bonusOpen ? "BONUS ROOMS" : "BONUS ROOMS 🔒", lock: !bonusOpen, act: () => bonusOpen ? setState("bonusPick") : showToast("BEAT THE ROGUE ROOMBA TO OPEN BONUS ROOMS", "#FFF6D6") },
         { label: hard ? "DAD MODE: HARD" : "DAD MODE: CHILL", act: () => { hard = !hard; store.set("robodad.dadquest.hard", hard ? "1" : "0"); showToast(hard ? "HARD: 3 HEARTS, FASTER, TIGHTER" : "CHILL: 5 HEARTS, MORE ROOM TO BREATHE", "#FFF6D6"); } },
         { label: "CRT SCREEN: " + (crt ? "ON" : "OFF"), act: () => { crt = !crt; store.set("robodad.dadquest.crt", crt ? "1" : "0"); } },

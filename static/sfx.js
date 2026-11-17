@@ -153,6 +153,22 @@
     counterBell: { n: 1, jit: 0, fn: (k, t) => { k.bell(mtof(96), t, 0.12, 1.4); k.bell(mtof(103), t + 0.02, 0.05, 1); } },
     prize:       { n: 1, jit: 0, gap: 500, fn: (k, t) => { k.bell(mtof(96), t, 0.1, 1.2); [84, 88, 91, 96, 100].forEach((m, i) => k.tone(mtof(m), t + 0.1 + i * 0.07, 0.3, { type: "triangle", vol: 0.09, keep: true })); } },
 
+    // ---- The Lost Cartridge: a hunt told through a glitchy old console
+    huntOpen:  { n: 2, jit: 0.04, gap: 600, fn: (k, t, o) => { k.noise(t, 0.3, { freq: 600, to: 5000, q: 1.2, vol: 0.06 }); [[76, 83, 88], [79, 74, 86]][o.v].forEach((m, i) => k.tone(mtof(m), t + 0.12 + i * 0.07, 0.07, { type: "square", vol: 0.07, keep: true })); } },
+    huntWrong: { n: 2, jit: 0, fn: (k, t, o) => { [0, 0.09, 0.18].forEach((d, i) => k.tone(mtof([52, 50][o.v] - i * 2), t + d, 0.08, { type: "square", vol: 0.1, keep: true, lp: 900 })); k.noise(t, 0.2, { freq: 3000, to: 300, q: 0.7, vol: 0.06 }); } },
+    huntSolve: { n: 1, jit: 0, gap: 600, fn: (k, t, o) => {            // chapter n lights n+2 notes; the last one rings like a console booting
+      const ch = Math.max(1, Math.min(5, o.ch || 1)), base = 67 + ch * 2, steps = [0, 4, 7, 12, 16, 19, 24].slice(0, ch + 2);
+      steps.forEach((s, i) => k.tone(mtof(base + s), t + i * 0.075, 0.14, { type: "square", vol: 0.09, keep: true }));
+      const e = t + steps.length * 0.075; k.bell(mtof(base + 24), e, 0.09, 1.2); k.noise(e, 0.4, { freq: 7000, q: 0.5, type: "highpass", vol: 0.04 });
+    } },
+    huntFinale: { n: 1, jit: 0, gap: 2000, fn: (k, t) => {
+      k.noise(t, 0.4, { freq: 1200, q: 0.6, vol: 0.12 });                                           // blowing on the cartridge
+      k.tone(mtof(48), t + 0.45, 0.12, { type: "square", vol: 0.1, to: mtof(72), keep: true });       // the console wakes
+      [72, 76, 79, 84, 79, 84, 88, 91, 96].forEach((m, i) => { k.tone(mtof(m), t + 0.7 + i * 0.1, 0.22, { type: "square", vol: 0.09, keep: true }); k.tone(mtof(m - 12), t + 0.7 + i * 0.1, 0.22, { type: "triangle", vol: 0.1, keep: true }); });
+      [60, 67, 76].forEach((m) => k.tone(mtof(m), t + 1.7, 1.4, { type: "triangle", vol: 0.1, keep: true }));
+      k.bell(mtof(103), t + 1.75, 0.1, 2); k.noise(t + 1.7, 1.2, { freq: 6000, q: 0.5, type: "highpass", vol: 0.05 });
+    } },
+
     // ---- Remote Hunt
     rummage: { n: 3, jit: 0.08, fn: (k, t, o) => { for (let i = 0; i < 3; i++) k.noise(t + i * 0.07 + Math.random() * 0.03, 0.08, { freq: [900, 1100, 750][o.v] + i * 150, q: 0.9, vol: 0.09 }); } },
     warm:    { n: 1, jit: 0, fn: (k, t) => { k.tone(mtof(79), t, 0.08, { type: "triangle", vol: 0.09, keep: true }); k.tone(mtof(84), t + 0.09, 0.14, { type: "triangle", vol: 0.1, keep: true }); } },
