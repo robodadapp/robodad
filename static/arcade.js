@@ -15,9 +15,11 @@
     chess: { name: "Beat Dad at chess", href: "/chess" },
     tiles: { name: "Tile Talk", href: "/tiles" },
     quest: { name: "DAD QUEST", href: "/quest" },
+    stack: { name: "Garage Stack", href: "/stack" },
+    remote: { name: "Remote Hunt", href: "/remote" },
   };
   const BASE_CAP = 60, WEEK_CAP = 100;          // tickets per game per day
-  const QUEST_POINTS_PER_TICKET = 150;
+  const QUEST_POINTS_PER_TICKET = 150, STACK_LAYERS_PER_TICKET = 2;
   const DAILY_RUN_BONUS = 8;
 
   // ---------- the Prize Counter ----------
@@ -99,7 +101,7 @@
 
   // ---------- Cabinet of the Week: one cabinet pays double, rotating every Monday ----------
   function weekGame() {
-    const list = ["chess", "tiles"].concat(questOpen() ? ["quest"] : []);
+    const list = ["chess", "tiles", "stack", "remote"].concat(questOpen() ? ["quest"] : []);
     const week = Math.floor((Date.now() / 864e5 + 3) / 7);         // weeks start on Monday
     return list[((week % list.length) + list.length) % list.length];
   }
@@ -115,6 +117,12 @@
       t = Math.floor(pts / QUEST_POINTS_PER_TICKET);
       s.carry.quest = pts - t * QUEST_POINTS_PER_TICKET;
       if (o.daily && s.dailyPaid !== dayKey()) { s.dailyPaid = dayKey(); t += DAILY_RUN_BONUS; }
+    } else if (game === "stack") {
+      const pts = Math.max(0, Math.floor(+o.points || 0)) + (+s.carry.stack || 0);
+      t = Math.floor(pts / STACK_LAYERS_PER_TICKET);
+      s.carry.stack = pts - t * STACK_LAYERS_PER_TICKET;
+    } else if (game === "remote") {
+      t = Math.max(0, Math.min(14, Math.floor((+o.points || 0) / 2)));   // a perfect game is 25 points, 12 tickets
     } else {
       t = o.result === "win" ? 12 + Math.max(0, Math.floor(+o.bonus || 0)) : o.result === "draw" ? 4 : 0;
     }

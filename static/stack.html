@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Garage Stack · RoboDad</title>
+<meta name="description" content="Garage Stack: RoboDad's one-tap shelf-stacking game. Drop each shelf on the one below and see how high Dad's garage can go.">
+<meta name="theme-color" content="#101821">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#101821; --panel:#1A2632; --edge:#2B3A49; --ink:#E5EDF5; --muted:#9AAABB; --gold:#F2B533; --gold-ink:#2A1E00; --look:#F2B533}
+*{box-sizing:border-box}
+html,body{margin:0; min-height:100%; background:var(--bg); color:var(--ink); font:700 16px/1.4 "Nunito", ui-rounded, system-ui, sans-serif; overscroll-behavior:none}
+body{display:flex; flex-direction:column; align-items:center; gap:10px; padding:12px 16px calc(16px + env(safe-area-inset-bottom))}
+.top{width:min(92vw, 360px); display:flex; justify-content:space-between; align-items:center; gap:8px}
+.top a,.top button{min-height:44px; display:inline-flex; align-items:center; color:var(--ink); background:transparent; border:2px solid var(--edge); border-radius:12px; padding:0 14px; font:inherit; font-size:14px; text-decoration:none; cursor:pointer}
+.top a:hover,.top button:hover{border-color:var(--gold)}
+.top a:focus-visible,.top button:focus-visible,.drop:focus-visible{outline:3px solid #4C80B8; outline-offset:2px}
+h1{margin:0; font-size:1.15rem; font-weight:900}
+.wrap{position:relative; width:min(92vw, 360px); aspect-ratio:3/4; border:3px solid var(--edge); border-radius:16px; overflow:hidden; background:#0B1119; touch-action:manipulation; user-select:none; -webkit-user-select:none}
+canvas{display:block; width:100%; height:100%}
+.drop{width:min(92vw, 360px); min-height:60px; border:0; border-radius:16px; background:var(--gold); color:var(--gold-ink); font:900 20px/1 "Nunito", system-ui, sans-serif; cursor:pointer}
+.drop:active{transform:scale(.98)}
+.help{width:min(92vw, 360px); margin:0; color:var(--muted); font-size:13px; text-align:center}
+.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+  <div class="top">
+    <a href="/" aria-label="Exit the game and go back to RoboDad">← Exit</a>
+    <h1>Garage Stack</h1>
+    <button id="muteBtn" type="button" aria-pressed="false">Sound: on</button>
+  </div>
+  <div class="wrap" id="wrap">
+    <canvas id="game" width="300" height="400" aria-label="Garage Stack game screen. Press Space or the Drop button to drop the moving shelf."></canvas>
+    <p class="sr" id="live" aria-live="polite"></p>
+  </div>
+  <button class="drop" id="dropBtn" type="button">Tap to drop the shelf</button>
+  <p class="help">Tap the screen, press Space, or use the button. Line each shelf up with the one below. Nail it dead-centre three times in a row and the shelf grows back.</p>
+  <script src="/static/game-look.js?v=1"></script>
+  <script src="/static/arcade.js?v=5"></script>
+  <script src="/static/stack.js?v=1"></script>
+</body>
+</html>

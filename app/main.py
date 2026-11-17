@@ -551,6 +551,16 @@ async def quest_page():
     return FileResponse(os.path.join(STATIC_DIR, "quest.html"), headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/stack")
+async def stack_page():
+    return FileResponse(os.path.join(STATIC_DIR, "stack.html"), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/remote")
+async def remote_page():
+    return FileResponse(os.path.join(STATIC_DIR, "remote.html"), headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/chess")
 async def chess_page():
     return FileResponse(os.path.join(STATIC_DIR, "chess.html"), headers={"Cache-Control": "no-cache"})
