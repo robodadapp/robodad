@@ -170,9 +170,9 @@
 
   // ---------- rounds: 8 multiple-choice questions ----------
   function questions(kind){
-    if (kind === "spot") return shuffle(SPOT).slice(0, 8).map(([t, k, why]) => ({ head: "Simile, metaphor or analogy?", prompt: t, opts: ["Simile", "Metaphor", "Analogy"], ok: KIND_NAME[k], why, keep: true }));
+    if (kind === "spot") return shuffle(SPOT).slice(0, 8).map(([t, k, why]) => ({ head: "Simile, metaphor or analogy?", prompt: t, opts: ["Simile", "Metaphor", "Analogy"], ok: KIND_NAME[k], why, keep: true, view: "bins" }));
     if (kind === "finish") return shuffle(FINISH).slice(0, 8).map(([t, ok, no, why]) => ({ head: "Finish the analogy", prompt: t, opts: shuffle([ok, ...no]), ok, why: `${ok[0].toUpperCase() + ok.slice(1)}. The link: ${why.charAt(0).toLowerCase() + why.slice(1)}` }));
-    if (kind === "pairs") return shuffle(PAIRS).slice(0, 8).map(p => ({ head: p.sit, prompt: p.q, opts: p.s, ok: p.s[p.ok], why: p.why, keep: true, sentences: true }));
+    if (kind === "pairs") return shuffle(PAIRS).slice(0, 8).map(p => ({ head: p.sit, prompt: p.q, opts: p.s, ok: p.s[p.ok], why: p.why, keep: true, sentences: true, view: "chat", sit: p.sit }));
     // time machine
     return Array.from({ length: 8 }, (_, i) => {
       const subj = pick(TM_SUBJECTS), V = pick(TM_VERBS), obj = pick(TM_OBJECTS), T = TARGETS[i % TARGETS.length];
@@ -188,14 +188,50 @@
     });
   }
   function startRound(kind){ round = { kind, qs: questions(kind), n: 0, score: 0, streak: 0, top: 0, xp: 0, done: false }; ask(); }
+  // Tense Trouble is a text thread: the situation arrives as a message and your answer is the reply you send.
+  // Simile, metaphor or analogy is a sorting game: the sentence rides in on a belt and you drop it in a bin.
+  const BIN_HINT = { Simile: "uses like or as", Metaphor: "says it IS", Analogy: "explains how" };
+  const sitParts = (sit) => { const m = String(sit).match(/^([A-Za-z ]{2,20}): ?["\u201C](.*)["\u201D]$/); return m ? { who: cap(m[1]), text: m[2] } : { who: "", text: String(sit) }; };
   function ask(){
     const R = round, q = R.qs[R.n]; R.done = false;
-    box.innerHTML = `<div class="v-stats"><span>Question ${R.n + 1} of ${R.qs.length}</span><span>✅ ${R.score}</span><span>🔥 ${R.streak}</span><span>⭐ +${R.xp}</span></div>
-      <p class="g-head">${esc(q.head)}</p><p class="brain-q">${esc(q.prompt)}</p>
-      <div class="v-opts${q.sentences ? " g-wide" : ""}">${q.opts.map((o, k) => `<button type="button" data-gpick="${k}">${esc(o)}</button>`).join("")}</div>
-      <p id="gMsg" class="brain-msg" role="status" aria-live="polite"></p>
+    const stats = `<div class="v-stats"><span>Question ${R.n + 1} of ${R.qs.length}</span><span>✅ ${R.score}</span><span>🔥 ${R.streak}</span><span>⭐ +${R.xp}</span></div>`;
+    const foot = `<p id="gMsg" class="brain-msg" role="status" aria-live="polite"></p>
       <div class="row" id="gNext"><button class="ghost" type="button" data-gact="quit">Back</button></div>`;
+    if (q.view === "chat") {
+      const { who, text } = sitParts(q.sit);
+      box.innerHTML = `${stats}<div class="g-chat">
+        ${who ? `<div class="g-msg in"><small>${esc(who)}</small><p>${esc(text)}</p></div>` : `<p class="g-scene">${esc(text)}</p>`}
+        <p class="g-ask">${esc(q.prompt)} <span>Tap the reply you'd send.</span></p>
+        <div class="g-replies">${q.opts.map((o, k) => `<button type="button" class="g-msg out" data-gpick="${k}">${esc(o)}</button>`).join("")}</div>
+        <div class="g-react" id="gReact" aria-live="polite"></div></div>${foot}`;
+    } else if (q.view === "bins") {
+      box.innerHTML = `${stats}<p class="g-head">${esc(q.head)}</p>
+        <div class="g-belt"><div class="g-card" id="gCard">${esc(q.prompt)}</div></div>
+        <p class="g-hintline">Drag the sentence into a bin, or tap a bin.</p>
+        <div class="g-bins">${q.opts.map((o, k) => `<button type="button" class="g-bin g-bin-${o.toLowerCase()}" data-gpick="${k}"><span class="g-bin-ic" aria-hidden="true">${o === "Simile" ? "≈" : o === "Metaphor" ? "=" : "⚙"}</span><b>${o}</b><small>${BIN_HINT[o]}</small></button>`).join("")}</div>${foot}`;
+      wireDrag();
+    } else {
+      box.innerHTML = `${stats}
+        <p class="g-head">${esc(q.head)}</p><p class="brain-q">${esc(q.prompt)}</p>
+        <div class="v-opts${q.sentences ? " g-wide" : ""}">${q.opts.map((o, k) => `<button type="button" data-gpick="${k}">${esc(o)}</button>`).join("")}</div>${foot}`;
+    }
     box.querySelector("[data-gpick]")?.focus();
+  }
+  function wireDrag(){
+    const card = box.querySelector("#gCard"); if (!card) return;
+    let sx = 0, sy = 0, on = false, over = null;
+    const binAt = (x, y) => { card.style.pointerEvents = "none"; const el = document.elementFromPoint(x, y); card.style.pointerEvents = ""; return el && el.closest ? el.closest(".g-bin") : null; };
+    card.addEventListener("pointerdown", (e) => { if (round?.done) return; on = true; sx = e.clientX; sy = e.clientY; card.setPointerCapture(e.pointerId); card.classList.add("drag"); });
+    card.addEventListener("pointermove", (e) => {
+      if (!on) return; card.style.transform = `translate(${e.clientX - sx}px, ${e.clientY - sy}px) rotate(${(e.clientX - sx) / 20}deg)`;
+      const b = binAt(e.clientX, e.clientY); if (b !== over) { over?.classList.remove("over"); over = b; over?.classList.add("over"); }
+    });
+    const end = (e) => {
+      if (!on) return; on = false; card.classList.remove("drag"); over?.classList.remove("over");
+      const b = binAt(e.clientX, e.clientY); card.style.transform = "";
+      if (b && !b.disabled) b.click();
+    };
+    card.addEventListener("pointerup", end); card.addEventListener("pointercancel", () => { on = false; card.classList.remove("drag"); card.style.transform = ""; });
   }
   function answer(k){
     const R = round; if (!R || R.done) return; R.done = true;
@@ -203,6 +239,12 @@
     box.querySelectorAll("[data-gpick]").forEach((b, i) => { b.disabled = true; if (q.opts[i] === q.ok) b.classList.add("ok"); else if (i === k) b.classList.add("bad"); });
     if (right) { R.score++; R.streak++; R.top = Math.max(R.top, R.streak); R.xp += 10 + Math.min(R.streak - 1, 5) * 2; } else R.streak = 0;
     window.RDWin?.(box, right, `<span>Question ${R.n + 1} of ${R.qs.length}</span><span>✅ ${R.score}</span><span>🔥 ${R.streak}</span><span>⭐ +${R.xp}</span>`);
+    if (q.view === "chat") {
+      const { who } = sitParts(q.sit), name = who || "They";
+      box.querySelectorAll(".g-replies .g-msg")[k]?.classList.add("sent");
+      const r = box.querySelector("#gReact");
+      if (r) r.innerHTML = `<div class="g-msg in"><small>${esc(name)}</small><p>${esc(pick(right ? ["Got it, thanks! 👍", "Perfect, that's what I needed to know.", "Ahh, that makes sense."] : ["Wait... that's not what I meant. 🤨", "Hmm. That changes things.", "Um. Did you read my message?"]))}</p></div>`;
+    } else if (q.view === "bins") box.querySelector("#gCard")?.classList.add(right ? "in-ok" : "in-bad");
     box.querySelector("#gMsg").textContent = `${pick(right ? SAY.right : SAY.wrong)} ${q.why}`;
     const last = R.n + 1 >= R.qs.length;
     box.querySelector("#gNext").innerHTML = `<button class="primary" type="button" data-gact="next">${last ? "See results" : "Next"}</button>
