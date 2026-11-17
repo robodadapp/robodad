@@ -449,10 +449,20 @@
   // The chosen tone is saved on the device and applied to <html>, so every dad on every page follows it.
   const SKIN_KEY = "robodad.skin";
   function getSkin(){ let v = null; try { v = localStorage.getItem(SKIN_KEY); } catch {} return Object.hasOwn(TONES, v) ? v : "steel"; }
+  // Steel in a dark look (light outlines) used to get light eyes and a light smile on a dim face plate, which read as a negative.
+  // There he now gets a lighter plate and the same dark features as the light looks. Light looks are untouched.
+  const STEEL_NIGHT_INK = "#1A2230", STEEL_NIGHT_PLATE = "color-mix(in srgb, var(--metal) 55%, #fff)";
+  function darkLook(){
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(getComputedStyle(document.documentElement).getPropertyValue("--ink").trim());
+    if (!m) return false;
+    const h = m[1].length === 3 ? m[1].replace(/./g, "$&$&") : m[1], n = parseInt(h, 16);
+    return .299 * (n >> 16) + .587 * ((n >> 8) & 255) + .114 * (n & 255) > 128;   // light ink means a dark page
+  }
   function applySkin(tone){
     const st = document.documentElement.style, hex = TONES[tone];
+    st.removeProperty("--skin"); st.removeProperty("--face-ink");   // clear first so darkLook() reads the look's own ink
     if (hex) { st.setProperty("--skin", hex); st.setProperty("--face-ink", FACE_INK); }
-    else { st.removeProperty("--skin"); st.removeProperty("--face-ink"); }
+    else if (darkLook()) { st.setProperty("--skin", STEEL_NIGHT_PLATE); st.setProperty("--face-ink", STEEL_NIGHT_INK); }
   }
   function setSkin(tone){
     if (!Object.hasOwn(TONES, tone)) tone = "steel";
@@ -465,5 +475,12 @@
     return svg.split(SKIN).join(hex || "var(--metal)").split(FACE).join(hex ? FACE_INK : "var(--ink)");
   }
   applySkin(getSkin());
+  // Looks and light/dark can change while the page is open, so Steel re-checks when they do.
+  const resync = () => applySkin(getSkin());
+  try {
+    new MutationObserver(resync).observe(document.documentElement, { attributes:true, attributeFilter:["data-look", "data-theme", "class"] });
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", resync);
+    document.addEventListener("DOMContentLoaded", resync);
+  } catch {}
   window.RoboAvatars = { AVATARS, LOOK_AVATAR, installSymbols, TONES, TONE_NAMES, getSkin, setSkin, toneSvg };
 })();
