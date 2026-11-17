@@ -17,6 +17,10 @@
     quest: { name: "DAD QUEST", href: "/quest" },
     stack: { name: "Garage Stack", href: "/stack" },
     remote: { name: "Remote Hunt", href: "/remote" },
+    // the learning cabinets: they pay a fixed number of tickets per finished game (passed in as o.tickets) and never take part in Cabinet of the Week
+    brain: { name: "Brain Teasers", href: "" },
+    duel: { name: "Vocab Duel", href: "" },
+    grammar: { name: "Grammar with Dad", href: "" },
   };
   const BASE_CAP = 60, WEEK_CAP = 100;          // tickets per game per day
   const QUEST_POINTS_PER_TICKET = 150, STACK_LAYERS_PER_TICKET = 2;
@@ -123,6 +127,8 @@
       s.carry.stack = pts - t * STACK_LAYERS_PER_TICKET;
     } else if (game === "remote") {
       t = Math.max(0, Math.min(14, Math.floor((+o.points || 0) / 2)));   // a perfect game is 25 points, 12 tickets
+    } else if (game === "brain" || game === "duel" || game === "grammar") {
+      t = Math.max(0, Math.min(20, Math.floor(+o.tickets || 0)));
     } else {
       t = o.result === "win" ? 12 + Math.max(0, Math.floor(+o.bonus || 0)) : o.result === "draw" ? 4 : 0;
     }

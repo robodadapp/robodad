@@ -2393,11 +2393,11 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=6"></script>
-<script src="/static/brain.js?v=12"></script>
-<script src="/static/arcade.js?v=5"></script>
+<script src="/static/brain.js?v=13"></script>
+<script src="/static/arcade.js?v=6"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
-<script src="/static/grammar.js?v=4"></script>
+<script src="/static/grammar.js?v=5"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
 <script src="/static/radio.js?v=45"></script>
 <script src="/static/sleep.js?v=1"></script>
@@ -3031,6 +3031,7 @@ textarea::placeholder{color:var(--muted)}
     save: () => { saveLp(); checkLangBadges(); },
     coach: (id) => { brainDlg.hidden = true; startPractice("brain", id); },
     ping: (name) => ping(name),
+    arcade: (n) => { try { window.RoboArcade?.award("brain", { tickets: n }); } catch {} },   // Prize Counter tickets
     // plain text, so it pastes into any group chat: the share sheet where there is one, otherwise the clipboard
     shareText: async (text, title) => {
       const body = `${text}\n${SHARE_LINK}`;
@@ -3184,6 +3185,7 @@ textarea::placeholder{color:var(--muted)}
     d.best[L.id] = Math.max(d.best[L.id] || 0, D.score);
     if (won && !d.beaten.includes(L.id)) d.beaten.push(L.id);
     saveDuel(d); vDuel = null;
+    try { window.RoboArcade?.award("duel", { tickets: won ? Math.min(20, 8 + 2 * L.tier) : 2 }); } catch {}
     vbump(p => { p.beaten = d.beaten.slice(); if (D.score === 8) p.perfect = true; });
     const next = V.DUEL[D.i + 1];
     let msg = `<div class="duel-end"><div class="duel-face ${won ? "flinch" : "taunt"}">${avSvg(L.av)}</div><p class="duel-say"><b>${esc(L.name)}:</b> ${esc(duelLine(L, won ? "win" : "lose"))}</p></div>
@@ -3231,6 +3233,7 @@ textarea::placeholder{color:var(--muted)}
   // ---------- Grammar with Dad: the games live in /static/grammar.js ----------
   const grammarDlg = $("grammarDlg"), grammarBody = $("grammarBody");
   const GRAMMAR_BRIDGE = {
+    arcade: (n) => { try { window.RoboArcade?.award("grammar", { tickets: n }); } catch {} },
     ask: (text) => { grammarDlg.hidden = true; input.value = text.slice(0, 300); autosize(); input.focus(); },
     record: (ev, kind, score) => {                   // badge progress (Learning badges)
       const p = prog("gram");
