@@ -255,6 +255,7 @@
     const R = round, d = load();
     d.xp += R.xp; d.bestStreak = Math.max(d.bestStreak, R.top); d.best[R.kind] = Math.max(d.best[R.kind] || 0, R.score); save(d);
     bridge.record?.("round", R.kind, R.score);
+    bridge.arcade?.(R.score === 8 ? 10 : R.score >= 6 ? 6 : 2);
     const verdict = R.score === 8 ? "Perfect round! Your English teacher would frame this." : R.score >= 6 ? "Strong round. Dad's impressed." : R.score >= 4 ? "Not bad. One more round and it'll click." : "Tricky one. Read the time map, then try again.";
     box.innerHTML = `${stats()}<div class="v-card"><p class="brain-q">${R.score}/8 · +${R.xp} XP</p><p>${verdict}</p><p>Best streak this round: ${R.top} · your best here: ${d.best[R.kind]}/8</p></div>
       <div class="row"><button class="primary" type="button" data-gact="again">Play again</button><button class="ghost" type="button" data-gact="quit">Back</button></div>`;

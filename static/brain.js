@@ -185,7 +185,8 @@
     const s = S(), r = run, won = r.hearts > 0 && r.stop >= RUN_LEN;
     const extra = won ? award(50, { keepStreak:true }) : "";
     s.runs = (s.runs || 0) + 1; s.runBest = Math.max(s.runBest || 0, r.solved); if (won) s.runWins = (s.runWins || 0) + 1; save();
-    const pts = s.xp - r.xp0;
+    const pts = s.xp - r.xp0, tix = r.solved * 2 + (won ? 6 : 0) + (won && r.hearts === 3 ? 4 : 0);
+    bridge?.arcade?.(tix);
     paint(topBar("Puzzle Run", { fn: () => hub() }),
       bubble(won ? (r.hearts === 3 ? "FLAWLESS. Not a single heart lost. I'm framing this." : "Boss down! You made it to the end of the road.") + (extra ? " " + extra : "") : r.solved >= 3 ? "Out of hearts, but what a run. So close." : "Out of hearts. The road's long. Go again?"),
       h("div", { class:"bz-runres" + (won ? " win" : "") },
@@ -308,7 +309,7 @@
     if (fast) pts += 10;
     if (c.mode === "run" && c.boss) pts *= 2;
     if (c.mode === "run" && run) run.solved++;
-    if (c.mode === "daily") { pts *= 2; const s = S(); if (s.daily !== today()) { s.daily = today(); s.dailies++; } }
+    if (c.mode === "daily") { pts *= 2; const s = S(); if (s.daily !== today()) { s.daily = today(); s.dailies++; bridge?.arcade?.(8); } }
     const extra = award(pts, { id:p.id, keepStreak: !c.wrong });
     c.done = true;
     c.say = [pick(c.wrong || c.hints > 1 ? SAY.slow : SAY.right), fast ? "Speed bonus!" : "", extra].filter(Boolean).join(" ");
@@ -485,6 +486,7 @@
     st.played++; if (won) st.won++;
     st.run = st.last === c.no - 1 ? st.run + 1 : 1; st.last = c.no; st.bestRun = Math.max(st.bestRun, st.run);
     saveSafe(c); ping(won ? "safe_win" : "safe_fail");
+    if (won) bridge?.arcade?.(6);
   }
   function safeFoot(){
     const st = S().safeStats || {}, n = new Date(), mid = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
@@ -902,6 +904,7 @@
     const s = S(), first = !s.escaped;
     s.escaped = true; save();
     const extra = award(first ? 200 : 50, { keepStreak:true });
+    bridge?.arcade?.(first ? 15 : 5);
     paint(topBar("Escaped!", { fn: () => hub() }), bubble([D.escape.win, extra].filter(Boolean).join(" "), "modern"),
       h("div", { class:"bz-garage bz-door", "aria-hidden":"true", html: doorScene() }),
       h("p", { class:"bz-q" }, D.escape.after),
