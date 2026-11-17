@@ -1186,6 +1186,29 @@ svg.rd-no{animation:rd-no .5s ease-in-out}
 @media (prefers-reduced-motion: reduce){ .win-pop,.miss,.v-stats span.bump,svg.rd-yes,svg.rd-no{animation:none} }
 .v-opts button.bad{border-color:#C0392B; background:color-mix(in srgb, #C0392B 14%, var(--surface))}
 @media (max-width:480px){ .v-opts{grid-template-columns:1fr} }
+.duel-arena{position:sticky; top:0; z-index:3; display:grid; grid-template-columns:1fr auto 1fr; gap:4px 10px; align-items:center; padding:8px 12px; margin:4px 0 10px; border-radius:16px; color:#F6F1FF;
+  background:radial-gradient(120% 140% at 50% 0, #4A3F8F 0, #241F4A 60%, #17142E 100%); border:2px solid #5B4FB3; box-shadow:inset 0 -8px 0 rgba(0,0,0,.25)}
+.duel-side{display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0; text-align:center; font-size:.85rem}
+.duel-side b{font-weight:900; overflow-wrap:anywhere}
+.duel-side.you b{font-size:1rem}
+.duel-hearts{display:flex; gap:4px; font-size:1.5rem; line-height:1}
+.duel-heart{color:#FF5C7A; text-shadow:0 2px 0 rgba(0,0,0,.35)} .duel-heart.lost{color:#4B4670; text-shadow:none; transform:scale(.8)}
+.duel-vs{font-weight:900; font-size:1.3rem; letter-spacing:.06em; color:#FFD866; text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.duel-face{width:52px; height:52px} .duel-face svg{width:100%; height:100%; display:block}
+.duel-hp{position:relative; width:100%; max-width:150px; height:12px; border-radius:8px; background:#17142E; border:2px solid #0B0A18; overflow:visible}
+.duel-hp i{display:block; height:100%; border-radius:6px; background:linear-gradient(#6BE08C, #2FA85A); transition:width .35s ease}
+.duel-hp u{position:absolute; top:-3px; bottom:-3px; width:2px; background:#FFD866; opacity:.8}
+.duel-arena.wobble .duel-hp i{background:linear-gradient(#FFB347, #E8731A)}
+.duel-arena.wobble .duel-face{animation:duel-wob .8s ease-in-out infinite alternate}
+.duel-say{grid-column:1 / -1; margin:0; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,.12); color:#F6F1FF!important; font-weight:800; font-size:.9rem; line-height:1.25; text-align:center; min-height:2.5em; display:flex; align-items:center; justify-content:center}
+.duel-face.flinch{animation:duel-flinch .45s ease-out} .duel-face.taunt{animation:duel-taunt .6s ease-out}
+.duel-end{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; background:#241F4A; border:2px solid #5B4FB3}
+.duel-end .duel-face{flex:none} .duel-end .duel-say{flex:1; justify-content:flex-start; margin:0; text-align:left}
+@keyframes duel-flinch{0%{transform:none} 20%{transform:translateX(-9px) rotate(-8deg)} 45%{transform:translateX(7px) rotate(6deg)} 70%{transform:translateX(-4px)} 100%{transform:none}}
+@keyframes duel-taunt{0%{transform:none} 30%{transform:translateY(-12px) scale(1.06)} 55%{transform:translateY(0)} 75%{transform:translateY(-5px)} 100%{transform:none}}
+@keyframes duel-wob{from{transform:rotate(-4deg)} to{transform:rotate(4deg)}}
+@media (prefers-reduced-motion: reduce){ .duel-face,.duel-arena.wobble .duel-face{animation:none!important} .duel-hp i{transition:none} }
+@media (max-width:380px){ .duel-face{width:44px; height:44px} .duel-hearts{font-size:1.3rem} }
 .brain-q{font-weight:800; font-size:1.1rem}
 .brain-hint{color:var(--muted)}
 .brain-msg{font-weight:700}
@@ -3051,13 +3074,40 @@ textarea::placeholder{color:var(--muted)}
     const qm = vShuffle(L.m).slice(0, 5).map(([w, m]) => ({ kind: "m", prompt: `What does “${w}” mean?`, ok: m,
       opts: vShuffle([m, ...vShuffle(L.m.filter(x => x[0] !== w)).slice(0, 3).map(x => x[1])]), why: `“${w}” means ${m}.` }));
     const qu = vShuffle(L.u).slice(0, 3).map(u => ({ kind: "u", prompt: `Upgrade “${u.plain}”: ${u.ctx}`, ok: u.ok, opts: vShuffle([u.ok, ...u.no]), why: u.why }));
-    vDuel = { i, qs: vShuffle([...qm, ...qu]), n: 0, score: 0, streak: 0, top: 0, xp: 0, answered: false };
+    vDuel = { i, qs: vShuffle([...qm, ...qu]), n: 0, score: 0, streak: 0, top: 0, xp: 0, answered: false, hearts: 3, over: false, say: duelLine(L, "start") };
     duelQuestion();
   }
   function stopDuelTimer(){ if (vTimer) { clearInterval(vTimer); vTimer = null; } }
+  // ---------- Vocab Duel battle: you have 3 hearts, the dad has 8 health. A right answer lands a hit, a miss costs a heart.
+  // Six hits is still the win (same rule as before), so the 8 of 8 badge still works; three misses ends the duel early.
+  const DUEL_LINES = {
+    modern:    { start:["Everyday words. Don't be nervous, kiddo.", "Warm-up round. I'll go easy. Maybe."], hit:["Ow. Good word.", "Nice one. That one landed.", "Okay, you know your stuff."], miss:["Close, but not that word.", "Ooh. That one got away."], time:["Clock got you. Happens to me daily."], win:"You beat me fair and square. Proud dad moment.", lose:"I win this one. Rematch? I'll bring snacks." },
+    skater:    { start:["Sharp words only. No stiff ones.", "Let's see you land that trick."], hit:["Clean landing!", "Sick. That one was smooth.", "Okay, okay, I felt that."], miss:["Wipeout. Get back up.", "Bail! Shake it off."], time:["Too slow. The ramp waits for no one."], win:"You shredded that. Respect.", lose:"Wiped out this time. Go again." },
+    gamer:     { start:["Report-card words. Teachers love these.", "Ready? No respawns on hints."], hit:["Critical hit!", "That's a combo.", "My health bar felt that."], miss:["Missed! Lag?", "Dodged. Not your finest move."], time:["Timed out. AFK?"], win:"GG. You earned that victory.", lose:"GG. Queue up for a rematch." },
+    bookworm:  { start:["Essay and science words. Mind your footnotes.", "Shall we? I've been reading up."], hit:["A fine choice of word.", "Well put. That one stung.", "Precisely right."], miss:["Not quite the right word.", "A near miss. Consult the dictionary."], time:["Time's up. Even I'd have hurried."], win:"Splendidly done. I'm marking that A-plus.", lose:"Not today. The library is open all week." },
+    professor: { start:["The big-brain words. Concentrate.", "Top of the ladder, almost. Impressive that you're here."], hit:["Correct. Annoyingly so.", "Hm. I stand corrected.", "That was rather good."], miss:["That is incorrect.", "Not that one. Think again, next time."], time:["Time. Precision matters."], win:"Brilliant. I'm polishing my glasses in disbelief.", lose:"Not yet. Study, then return." },
+    grandpa:   { start:["Back in my day we had to look words up in a book.", "Old words, young one. Let's see if you keep up."], hit:["Hmph. Sharp as a tack.", "Well, I'll be. That was right.", "In my day that would've earned a medal."], miss:["Ha! Rusty, are we?", "That one's from before your time."], time:["You're moving slower than my dial-up."], win:"Hmph. I let you win. I did not.", lose:"Back to the books with you, kiddo." },
+  };
+  const duelLine = (L, kind) => { const set = DUEL_LINES[L.id] || DUEL_LINES.modern, v = set[kind]; return Array.isArray(v) ? v[Math.floor(Math.random() * v.length)] : v; };
+  const DUEL_HP = 8;
+  const heartsHtml = (n) => Array.from({ length: 3 }, (_, k) => `<span class="duel-heart${k < n ? "" : " lost"}" aria-hidden="true">♥</span>`).join("");
+  function duelArena(){
+    const D = vDuel, L = V.DUEL[D.i], left = Math.max(0, DUEL_HP - D.score), wob = D.score >= 6;
+    return `<div class="duel-arena${wob ? " wobble" : ""}" aria-label="Duel against ${esc(L.name)}">
+      <div class="duel-side you"><b>You</b><div class="duel-hearts" role="img" aria-label="${D.hearts} of 3 hearts left">${heartsHtml(D.hearts)}</div></div>
+      <div class="duel-vs" aria-hidden="true">VS</div>
+      <div class="duel-side dad"><div class="duel-face">${avSvg(L.av)}</div><b>${esc(L.name)}</b>
+        <div class="duel-hp" role="img" aria-label="${esc(L.name)} has ${left} of ${DUEL_HP} health left"><i style="width:${left / DUEL_HP * 100}%"></i><u style="left:${2 / DUEL_HP * 100}%"></u></div></div>
+      <p class="duel-say" role="status" aria-live="polite">${esc(D.say)}</p></div>`;
+  }
+  function duelReact(kind){                     // flinch when you land a hit, hop when you miss
+    const f = vocabBody.querySelector(".duel-face"); if (!f) return;
+    f.classList.remove("flinch", "taunt"); void f.offsetWidth; f.classList.add(kind);
+  }
   function duelQuestion(){
     const D = vDuel, q = D.qs[D.n], L = V.DUEL[D.i]; D.answered = false; D.t0 = Date.now();
-    vocabBody.innerHTML = `<div class="lang-top"><div class="teach-h">${avSvg(L.av)}<b>${esc(L.name)}</b></div><button class="ghost" type="button" data-vact="duel-quit">Quit duel</button></div>
+    vocabBody.innerHTML = `<div class="lang-top"><button class="ghost" type="button" data-vact="duel-quit">Quit duel</button></div>
+      ${duelArena()}
       <div class="v-stats"><span>Question ${D.n + 1} of ${D.qs.length}</span><span>✅ ${D.score}</span><span>🔥 ${D.streak}</span><span>⭐ +${D.xp}</span></div>
       <div class="v-timer" aria-hidden="true"><i id="vTimeBar" style="width:100%"></i></div>
       <p class="brain-q">${esc(q.prompt)}</p>
@@ -3075,11 +3125,15 @@ textarea::placeholder{color:var(--muted)}
     const D = vDuel; if (!D || D.answered) return; D.answered = true; stopDuelTimer();
     const q = D.qs[D.n], right = k >= 0 && q.opts[k] === q.ok, fast = Date.now() - D.t0 < 5000;
     vocabBody.querySelectorAll("[data-vpick]").forEach((b, idx) => { b.disabled = true; if (q.opts[idx] === q.ok) b.classList.add("ok"); else if (idx === k) b.classList.add("bad"); });
-    if (right) { D.score++; D.streak++; D.top = Math.max(D.top, D.streak); D.xp += 10 + Math.min(D.streak - 1, 5) * 2 + (fast ? 5 : 0); }
-    else D.streak = 0;
+    const L = V.DUEL[D.i];
+    if (right) { D.score++; D.streak++; D.top = Math.max(D.top, D.streak); D.xp += 10 + Math.min(D.streak - 1, 5) * 2 + (fast ? 5 : 0); D.say = (fast ? "CRITICAL HIT! " : "") + (D.score === 6 ? "He's wobbling! The win is yours. " : "") + duelLine(L, "hit"); }
+    else { D.streak = 0; D.hearts--; D.say = duelLine(L, k < 0 ? "time" : "miss"); if (D.hearts <= 0) { D.over = true; D.say += " That's three misses. The duel's over."; } }
+    const arena = vocabBody.querySelector(".duel-arena");
+    if (arena) { const tmp = document.createElement("div"); tmp.innerHTML = duelArena(); arena.replaceWith(tmp.firstElementChild); }
+    duelReact(right ? "flinch" : "taunt");
     answerMoment(vocabBody, right, `<span>Question ${D.n + 1} of ${D.qs.length}</span><span>✅ ${D.score}</span><span>🔥 ${D.streak}</span><span>⭐ +${D.xp}</span>`);
     $("vDuelMsg").textContent = (right ? (fast ? "Lightning fast! " : "Right! ") : k < 0 ? "Time's up. " : "Not quite. ") + q.why;
-    const last = D.n + 1 >= D.qs.length;
+    const last = D.over || D.n + 1 >= D.qs.length;
     $("vDuelNext").innerHTML = `<button class="primary" type="button" data-vact="duel-next">${last ? "See results" : "Next"}</button>`;
     $("vDuelNext").querySelector("button").focus();
   }
@@ -3091,9 +3145,10 @@ textarea::placeholder{color:var(--muted)}
     saveDuel(d); vDuel = null;
     vbump(p => { p.beaten = d.beaten.slice(); if (D.score === 8) p.perfect = true; });
     const next = V.DUEL[D.i + 1];
-    let msg = `<p class="brain-q">${won ? `You beat ${esc(L.name)}! ${D.score}/8` : `${esc(L.name)} wins this one. ${D.score}/8`}</p>
+    let msg = `<div class="duel-end"><div class="duel-face ${won ? "flinch" : "taunt"}">${avSvg(L.av)}</div><p class="duel-say"><b>${esc(L.name)}:</b> ${esc(duelLine(L, won ? "win" : "lose"))}</p></div>
+      <p class="brain-q">${won ? `You beat ${esc(L.name)}! ${D.score}/8` : `${esc(L.name)} wins this one. ${D.score}/8`}</p>
       <p>+${D.xp + (won ? 25 : 0)} XP${won ? " (including a 25 XP win bonus)" : ""} · best streak this duel: ${D.top}</p>`;
-    if (!won) msg += `<p>You need 6 to win. Rematch? The words get easier the second time.</p>`;
+    if (!won) msg += `<p>${D.over ? "Three misses ends a duel early. " : ""}You need 6 to win. Rematch? The words get easier the second time.</p>`;
     else if (first && next) msg += `<p>${next.secret ? "Something's stirring in the ladder… a secret challenger has appeared." : `${esc(next.name)} is unlocked.`}</p>`;
     if (won && L.id === "grandpa") msg += `<p><b>Robo-Grandpa says:</b> ${esc(V.GRANDPA_SECRET)}</p>`;
     msg += `<div class="row"><button class="primary" type="button" data-vlevel="${D.i}">Rematch</button>${won && next ? `<button class="ghost" type="button" data-vlevel="${D.i + 1}">Take on ${esc(next.secret && first ? "the challenger" : next.name)}</button>` : ""}</div>`;
@@ -3119,7 +3174,7 @@ textarea::placeholder{color:var(--muted)}
     else if (act === "origin-next") { vOrigin = (vOrigin + 1) % V.ORIGINS.length; renderVocab(); }
     else if (act === "origin-ask") vocabAskDad(`Tell me more about where the word "${V.ORIGINS[vOrigin].w}" comes from.`);
     else if (act === "origin-share") { const o = V.ORIGINS[vOrigin]; shareLine(`Word story: ${o.w}\n${o.story}`); }
-    else if (act === "duel-next") { vDuel.n++; vDuel.n >= vDuel.qs.length ? duelFinish() : duelQuestion(); }
+    else if (act === "duel-next") { vDuel.n++; vDuel.over || vDuel.n >= vDuel.qs.length ? duelFinish() : duelQuestion(); }
     else if (act === "duel-quit") { stopDuelTimer(); vDuel = null; renderDuelLadder(); }
   });
   vocabDlg.querySelector(".vocab-tabs").addEventListener("click", (e) => {
