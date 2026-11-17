@@ -829,6 +829,10 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 .avb{border:2px solid var(--line); border-radius:14px; background:transparent; color:var(--ink); padding:6px 4px; cursor:pointer; font:inherit; display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center}
 .avb[aria-checked="true"]{border-color:var(--mustard); box-shadow:0 0 0 3px color-mix(in srgb, var(--mustard) 35%, transparent)}
 .avb svg{width:40px; height:40px; display:block}
+.tones{display:flex; gap:10px; flex-wrap:wrap}
+.tone{width:44px; height:44px; border-radius:50%; border:2px solid var(--line); background:var(--tone, var(--metal)); cursor:pointer; padding:0; flex:none}
+.tone[aria-checked="true"]{border-color:var(--mustard); box-shadow:0 0 0 3px color-mix(in srgb, var(--mustard) 35%, transparent)}
+.tone:focus-visible{outline:3px solid var(--mustard); outline-offset:2px}
 .avb b{font-size:.78rem; line-height:1.15} .avb small{font-size:.7rem; color:var(--muted); line-height:1.1}
 .avb .auto{width:40px; height:40px; display:grid; place-items:center; font-weight:900; font-size:.72rem; border:2px dashed var(--line); border-radius:50%; color:var(--muted)}
 #avatar,#avHero{cursor:pointer} #avHead,#avHero{overflow:visible}
@@ -1886,6 +1890,8 @@ textarea::placeholder{color:var(--muted)}
     <div class="avpick">
       <p class="coll-head" style="margin:0!important"><span>Pick your dad</span><small>Tap RoboDad any time to see a move</small></p>
       <div class="avs" role="radiogroup" aria-label="Avatar" id="avPick"></div>
+      <p class="coll-head" style="margin:6px 0 0!important"><span id="toneLabel">Skin tone</span><small>Goes with every dad</small></p>
+      <div class="tones" role="radiogroup" aria-labelledby="toneLabel" id="tonePick"></div>
     </div>
     <b id="themeLabel">Light or dark</b>
     <div class="theme-pick" role="radiogroup" aria-labelledby="themeLabel">
@@ -2360,7 +2366,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/tiles-badges.js?v=3"></script>
 <script src="/static/radio.js?v=45"></script>
 <script src="/static/sleep.js?v=1"></script>
-<script src="/static/avatars.js?v=42"></script>
+<script src="/static/avatars.js?v=43"></script>
 <script src="/static/hunt.js?v=2"></script>
 <script>
 (() => {
@@ -3424,6 +3430,17 @@ const PLAYERS = {
     try { window.RoboRadio && RoboRadio.chime(); } catch {}
   }
   if (AV) {
+    // Skin tone: Steel (the robot he's always been) or one of four tones. One choice covers every dad on every page.
+    const tonePick = $("tonePick");
+    if (tonePick && AV.TONES) {
+      const markTone = () => tonePick.querySelectorAll(".tone").forEach(b => b.setAttribute("aria-checked", String(b.dataset.tone === AV.getSkin())));
+      tonePick.innerHTML = Object.entries(AV.TONES).map(([k, hex]) => `<button class="tone" type="button" role="radio" data-tone="${k}" title="${esc(AV.TONE_NAMES[k])}" aria-label="${esc(AV.TONE_NAMES[k])}"${hex ? ` style="--tone:${hex}"` : ""}></button>`).join("");
+      markTone();
+      tonePick.addEventListener("click", (e) => {
+        const b = e.target.closest(".tone"); if (!b) return;
+        AV.setSkin(b.dataset.tone); markTone(); dadHop();
+      });
+    }
     renderAvPick();
     $("avPick").addEventListener("click", (e) => {
       const b = e.target.closest(".avb"); if (!b) return;
@@ -3927,7 +3944,7 @@ const PLAYERS = {
   // ---------- shareable picture cards (dad jokes, facts, words, brain teasers) ----------
   const CARD_PALETTE = { ink:"#1B2A3A", metal:"#B9C7D4", jacket:"#2B211C", jacket2:"#3D2F27", hair:"#1B2A3A", lens:"#1B2A3A", muted:"#5A6B7E" };
   function avatarImage(px){                     // the current RoboDad as a picture, in fixed daytime colours
-    const markup = (AV ? AV.AVATARS[avKind].svg : document.getElementById("robodad").innerHTML)
+    const markup = (AV ? AV.toneSvg(AV.AVATARS[avKind].svg) : document.getElementById("robodad").innerHTML)
       .replace(/var\(--([a-z0-9]+)\)/g, (m, k) => CARD_PALETTE[k] || "#8896A5");
     const img = new Image();
     img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${px}" height="${px}">${markup}</svg>`);
