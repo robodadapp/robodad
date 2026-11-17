@@ -224,6 +224,12 @@
 .arc-week b{display:block; font-size:19px; font-weight:900; line-height:1.15}
 .arc-week small{font-size:13px; font-weight:700}
 .arc-week a{display:inline-grid; place-items:center; min-height:44px; padding:0 20px; border-radius:14px; background:var(--mustard-ink); color:var(--mustard); font-weight:900; text-decoration:none}
+.arc-next{padding:10px 14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface)}
+.arc-next div{display:flex; justify-content:space-between; gap:8px; font-weight:900; font-size:13px}
+.arc-next span+span{color:var(--muted)}
+.arc-meter{margin-top:8px; height:10px; border-radius:999px; background:var(--line); overflow:hidden}
+.arc-meter i{display:block; height:100%; border-radius:999px; background:var(--mustard)}
+.arc-pay{align-self:flex-start; margin-top:2px; padding:1px 8px; border-radius:999px; border:1.5px solid var(--mustard); font-size:11px; font-weight:800; color:var(--ink)}
 .arc-frags{border:1.5px solid var(--line); border-radius:16px; background:var(--surface); padding:10px 14px}
 .arc-frags summary{display:flex; align-items:center; gap:10px; min-height:32px; cursor:pointer; font-weight:900; font-size:14px; list-style:none}
 .arc-frags summary::-webkit-details-marker{display:none}
@@ -291,6 +297,21 @@
     const line = nxt ? "Your best: " + fmt(best) + ". " + (nxt.secret && !s.ghosts.includes("professor") ? "Keep climbing." : fmt(Math.max(0, nxt.score - best)) + " to beat " + esc(nxt.name) + ".") : "Your best: " + fmt(best) + ". You beat every dad.";
     return '<details class="arc-frags"><summary><span>DAD QUEST: beat the dads\' scores</span><span class="arc-pips" aria-hidden="true">' + GHOSTS.map((g) => '<span class="arc-pip' + (s.ghosts.includes(g.id) ? " on" : "") + '"></span>').join("") + '</span></summary><ul>' + rows + '</ul><div style="height:6px;border-radius:3px;background:var(--line);margin:10px 0 6px" aria-hidden="true"><div style="height:6px;border-radius:3px;background:var(--mustard);width:' + pct + '%"></div></div><p class="arc-hint">' + line + ' Each dad pays a one-time bonus.</p></details>';
   }
+  function nextHtml(s) {
+    const n = PRIZES.filter((p) => !p.secret && !s.prizes.includes(p.id)).sort((a, b) => a.cost - b.cost)[0];
+    if (!n) return "";
+    const left = Math.max(0, n.cost - s.tickets), pct = Math.min(100, Math.round(s.tickets / n.cost * 100));
+    return '<div class="arc-next"><div><span>Next prize: ' + esc(n.name) + '</span><span>' + (left ? left + " to go" : "Ready to get") + '</span></div><div class="arc-meter" role="img" aria-label="' + pct + ' percent of the way to ' + esc(n.name) + '"><i style="width:' + pct + '%"></i></div></div>';
+  }
+  const PAY = { "/chess": "up to 60", "/tiles": "up to 60", "/stack": "up to 60", "/remote": "up to 60", "/quest": "ghost bonuses", brain: "up to 36", vault: "6 a win" };
+  function payChips() {
+    playDlg.querySelectorAll(".arc-pay").forEach((n) => n.remove());
+    playDlg.querySelectorAll(".tile").forEach((t) => {
+      const k = t.getAttribute("href") || t.getAttribute("data-go"), v = PAY[k];
+      if (!v) return;
+      const m = document.createElement("span"); m.className = "arc-pay"; m.textContent = v + " tickets"; t.appendChild(m);
+    });
+  }
   function renderBar() {
     const s = load(), wk = weekGame(), g = GAMES[wk];
     const afford = PRIZES.filter((p) => !p.secret && !s.prizes.includes(p.id) && p.cost <= s.tickets).length;
@@ -299,11 +320,12 @@
     bar.innerHTML =
       '<div class="arc-row"><span class="arc-pill" role="img" aria-label="' + s.tickets + ' tickets">' + ICON_TICKET + s.tickets + '</span>' +
       '<button class="arc-open" id="arcOpen" type="button" aria-haspopup="dialog"><span>Prize Counter<small>' + esc(sub) + '</small></span><span aria-hidden="true" style="color:var(--mustard)">Open</span></button></div>' +
-      fragHtml(s) + ladderHtml(s) +
+      nextHtml(s) + fragHtml(s) + ladderHtml(s) +
       '<div class="arc-week"><div><span class="arc-tag">CABINET OF THE WEEK</span><b>' + esc(g.name) + '</b><small>Double tickets until Sunday</small></div><a href="' + g.href + '" aria-label="Play ' + esc(g.name) + '">Play</a></div>';
     playDlg.querySelectorAll(".arc-2x").forEach((n) => n.remove());
     const tile = playDlg.querySelector('.tile[href="' + g.href + '"]');
     if (tile && !tile.hidden) { const m = document.createElement("span"); m.className = "arc-2x"; m.textContent = "2x tickets this week"; tile.appendChild(m); }
+    payChips();
     bar.querySelector("#arcOpen").addEventListener("click", openPrizes);
     bar.querySelectorAll("details").forEach((d, i) => { if (openIdx[i]) d.open = true; });
   }
