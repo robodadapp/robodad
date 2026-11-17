@@ -320,7 +320,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 <p class="foot"><b>The clock:</b> your thinking time is capped for the whole game, and the tougher the dad, the less you get (15 minutes against Tier 1 down to 6 against the boss). It only runs on your turn. If it hits zero, the game ends and the higher score wins. Tap the clock to turn it off for a relaxed game.</p>
 <p class="foot"><b>Bonuses:</b> play a Glow-Up word (a classier word for an everyday one) for +10, and the day's Power Word for double points. Cover a ✦ Simile Square, play a verb, or every few turns, and Dad gives you a quick bonus round: a simile, a Tense Twist or a sentence.</p>
 
-<script src="/static/radio.js?v=3"></script>
+<script src="/static/radio.js?v=7"></script>
 <script src="/static/avatars.js?v=42"></script>
 <script src="/static/arcade.js?v=5"></script>
 <script src="/static/words.js"></script>
@@ -344,8 +344,9 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   const PREM_NAME = { dl: "double letter", tl: "triple letter", dw: "double word", tw: "triple word", sim: "Simile Square" };
   // Your thinking time for the whole game, in minutes: the tougher the dad, the tighter the clock.
   const CLOCK_MIN = { gamer: 15, skater: 15, eighties: 12, coach: 12, modern: 10, labdad: 10, professor: 8, grandpa: 8, bookworm: 6 };
-  // Each dad's background music (radio.js stations, all original or public domain, made live in the browser).
-  const MUSIC = { gamer: "lobby", skater: "skate", eighties: "drive", coach: "block", modern: "lounge", labdad: "study", professor: "canon", grandpa: "jukebox", bookworm: "boss" };
+  // Each dad's background music: loops written for Tile Talk only (radio.js "tiles-<dad>", hidden from the radio picker).
+  // All original or public-domain compositions, made live in the browser. Bookworm Dad keeps his boss theme.
+  const MUSIC = { gamer: "tiles-gamer", skater: "tiles-skater", eighties: "tiles-eighties", coach: "tiles-coach", modern: "tiles-modern", labdad: "tiles-labdad", professor: "tiles-professor", grandpa: "tiles-grandpa", bookworm: "boss" };
   const CLOCK_KEY = "robodad.tiles.clock", MUSIC_KEY = "robodad.tiles.music";
   const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -1496,7 +1497,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   // ---------------------------------------------------------------- music
   const RADIO = window.RoboRadio;
   function renderMusicBtn() {
-    const b = $("musicBtn"), name = RADIO && RADIO.stations[MUSIC[tierKey]];
+    const b = $("musicBtn"), name = RADIO && (RADIO.names || RADIO.stations)[MUSIC[tierKey]];
     b.textContent = musicOn ? "♪ On" : "♪ Off";
     b.setAttribute("aria-pressed", String(musicOn));
     b.setAttribute("aria-label", musicOn ? `Music on: ${name || "Dad's theme"}. Tap to turn off` : "Music off. Tap to turn on");
@@ -1506,7 +1507,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   function syncMusic() {
     renderMusicBtn();
     if (!RADIO) return;
-    if (musicOn && gestured && !document.hidden && !musicHold) { RADIO.setVolume(0.22); RADIO.play(MUSIC[tierKey] || "lounge"); }
+    if (musicOn && gestured && !document.hidden && !musicHold) { RADIO.setVolume(0.22); RADIO.play(MUSIC[tierKey] || "tiles-modern"); }
     else if (RADIO.playing) RADIO.stop();
   }
   const firstGesture = () => { if (gestured) return; gestured = true; syncMusic(); };
