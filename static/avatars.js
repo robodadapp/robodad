@@ -471,6 +471,30 @@
   };
   const LOOK_AVATAR = { classic: "modern", arcade: "eighties", vhs: "nineties", y2k: "y2k", diner: "fifties", skate: "skater", gamer: "gamer", summer: "bucket", halloween: "dracula", bolly: "filmi", diwali: "festive", winter: "cozy", lunar: "lucky", eid: "eiddad", chalk: "professor", lab: "labdad", library: "bookworm", gym: "coach", cheat: "eighties" };
 
+  // ---------- Rig ----------
+  // Each dad is wrapped in layers so his idle life and his moves stack instead of fighting:
+  //   rig (posture, sway)  >  breath-body > body        (moves animate .body inside the breath)
+  //                        >  look-hd (tilt while you type) > breath-hd (follows the chest) > idle-hd (his own head habit) > hd (moves)
+  // Moves only ever touch .body, .hd and the props, so they play on top of whatever the layers are doing.
+  function gEnd(svg, start){
+    let depth = 0, i = start;
+    const re = /<g\b[^>]*?(\/?)>|<\/g>/g; re.lastIndex = start;
+    for (let m; (m = re.exec(svg));) {
+      if (m[0] === "</g>") { if (--depth === 0) return re.lastIndex; }
+      else if (!m[1]) depth++;
+    }
+    return -1;
+  }
+  function rigUp(key, svg){
+    const bs = svg.indexOf('<g class="body">'), hs = svg.indexOf('<g class="hd">');
+    if (bs < 0 || hs < bs) return svg;
+    const be = gEnd(svg, bs), he = gEnd(svg, hs);
+    if (be < 0 || he < 0 || be > hs) return svg;
+    return `<g class="rig rig-${key}">` + svg.slice(0, bs) + `<g class="breath-body">` + svg.slice(bs, be) + `</g>` + svg.slice(be, hs)
+      + `<g class="look-hd"><g class="breath-hd"><g class="idle-hd">` + svg.slice(hs, he) + `</g></g></g>` + svg.slice(he) + `</g>`;
+  }
+  for (const [k, a] of Object.entries(AVATARS)) a.svg = rigUp(k, a.svg);
+
   function installSymbols(sprite){
     for (const [k, a] of Object.entries(AVATARS)) {
       if (document.getElementById("av-" + k)) continue;
