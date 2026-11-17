@@ -698,21 +698,16 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 .shuffle-spot{position:absolute; z-index:2; top:4px; right:-8px; width:130px; height:130px; padding:0; border:0; border-radius:50%; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent}
 .shuffle-spot:focus-visible{outline:3px solid var(--sun, #FFC93C); outline-offset:-4px}
 .hello:has(.shuffle-spot:hover) :is(.spinner), .hello:has(.shuffle-spot:hover)::before, .hello:has(.shuffle-spot:hover)::after{filter:brightness(1.15) saturate(1.15)}
-/* The prop's label, always there: "✨ Shuffle" at rest; after a tap it shows what you got, with Undo */
-.shuf-tag{position:absolute; z-index:3; top:124px; right:-8px; width:130px; display:flex; justify-content:center; pointer-events:none}
-.shuf-tag button, .shuf-tag .shuf-res{pointer-events:auto}
-.shuf-go{font:800 .74rem/1 var(--body, system-ui), sans-serif; letter-spacing:.02em; color:var(--ink); background:var(--surface, #fff); border:1.5px solid color-mix(in srgb, var(--ink) 35%, transparent);
-  padding:6px 11px; border-radius:999px; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.08); -webkit-tap-highlight-color:transparent}
-.shuf-go:focus-visible, .shuf-res button:focus-visible{outline:3px solid var(--sun, #FFC93C); outline-offset:2px}
-.shuf-tag.result{width:auto; max-width:min(236px, calc(100vw - 150px)); right:-4px; justify-content:flex-end}
-.shuf-res{display:flex; align-items:center; gap:8px; min-width:0; background:var(--ink); color:var(--surface, #fff); font:800 .74rem/1.2 var(--body, system-ui), sans-serif;
-  padding:5px 5px 5px 12px; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.22); animation:tagin .22s ease-out}
-.shuf-res .shuf-txt{min-width:0; display:flex; flex-direction:column}
-.shuf-res .shuf-txt > *{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-.shuf-res .shuf-tune{font-weight:700; opacity:.8}
-.shuf-res button{flex:none; font:inherit; padding:6px 12px; border-radius:999px; border:0; background:var(--sun, #FFC93C); color:#1a1a1a; cursor:pointer}
-.shuf-res.plain{padding:7px 12px; border-radius:999px; white-space:nowrap}
-@keyframes tagin{from{opacity:0; translate:0 -4px}}
+/* The prop wears the same little badge as Dad's music and voice bubbles: the app's sign for "tap me" */
+.shuffle-spot .snote{position:absolute; top:12%; right:12%; width:24px; height:24px; border-radius:50%; display:grid; place-items:center; background:var(--denim); color:var(--denim-ink);
+  box-shadow:0 0 0 2px var(--surface), 0 3px 8px rgba(0,0,0,.18); pointer-events:none; transition:transform .2s ease}
+.shuffle-spot .snote svg{width:14px; height:14px}
+.shuffle-spot:hover .snote, .shuffle-spot:focus-visible .snote{transform:scale(1.12)}
+.hello.prop-go .snote{transform:rotate(180deg) scale(.9)}
+.bubcap.shuf{border-radius:18px; white-space:nowrap}
+.bubcap.shuf .shuf-what{display:flex; flex-direction:column; line-height:1.25}
+.bubcap.shuf .shuf-tune{font-weight:700; opacity:.85}
+.herowrap .bubcap.shuf{top:84px}
 .shuffle-spot.idle::after{content:""; position:absolute; inset:14px; border-radius:50%; border:2px solid var(--sun, #FFC93C); opacity:0; animation:idlepulse 4s ease-out 1.5s infinite; pointer-events:none}
 @keyframes hintbob{50%{translate:-50% -4px}}
 @keyframes idlepulse{0%{opacity:.8; scale:.85} 30%,100%{opacity:0; scale:1.15}}
@@ -725,10 +720,10 @@ main{flex:1; overflow-y:auto; scroll-behavior:smooth}
 @keyframes proppop{40%{scale:1.2} 70%{scale:.95} 100%{scale:1}}
 @keyframes propin{from{opacity:0; scale:.7}}
 ::view-transition-old(root), ::view-transition-new(root){animation-duration:.25s}
-@media (max-width:420px){ .shuffle-spot{width:116px; height:116px} .shuf-tag{top:110px; width:116px} .shuf-tag.result{width:auto} .spinner, :root[data-look="diwali"] .hello::before{width:116px; height:116px}
+@media (max-width:420px){ .shuffle-spot{width:116px; height:116px} .spinner, :root[data-look="diwali"] .hello::before{width:116px; height:116px}
   .herowrap .bubcap{width:max-content; max-width:calc(100vw - 150px); white-space:normal; line-height:1.3} }
 @media (prefers-reduced-motion:reduce){ .hello.prop-go *, .hello.prop-go::before, .hello.prop-go::after, .hello.prop-in *, .hello.prop-in::before, .hello.prop-in::after{animation:none!important}
-  .shuf-res, .shuffle-spot.idle::after{animation:none} ::view-transition-old(root), ::view-transition-new(root){animation-duration:.15s} }
+  .shuffle-spot.idle::after{animation:none} ::view-transition-old(root), ::view-transition-new(root){animation-duration:.15s} }
 .hello h2{margin:0; font-family:var(--display); font-size:clamp(2rem, 6vw, 2.9rem); line-height:1.05; font-weight:900; letter-spacing:-.02em; max-width:14ch}
 :root[data-look="arcade"] .hello h2{font-weight:400; letter-spacing:0; font-size:clamp(1.7rem, 5.4vw, 2.5rem); line-height:1.12;
   text-shadow:0 0 18px var(--glow), 0 0 2px var(--denim)}
@@ -1824,8 +1819,7 @@ textarea::placeholder{color:var(--muted)}
   <div class="log" id="log" aria-live="polite">
     <section class="hello" id="hello">
       <div class="spinner" aria-hidden="true"></div>
-      <button class="shuffle-spot" id="shuffleSpot" type="button" aria-label="Shuffle theme: new look, new dad and new music" title="Tap for a new look, dad and music"></button>
-      <div class="shuf-tag" id="shufTag" aria-live="polite"></div>
+      <button class="shuffle-spot" id="shuffleSpot" type="button" aria-label="Shuffle: new look, new dad and new music" title="Tap for a new look, dad and music"><span class="snote" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M2 4.5h2.6c1.4 0 2.2.6 3 1.8l1.8 3.4c.8 1.2 1.6 1.8 3 1.8H14M2 11.5h2.6c1 0 1.7-.3 2.3-.9M14 4.5h-1.6c-1 0-1.7.3-2.3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 2.5l2 2-2 2M12 9.5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
       <div class="herowrap" id="herowrap">
         <svg class="bot" id="avHero" width="120" height="120" viewBox="0 0 64 64" aria-hidden="true"><use href="#robodad"/></svg>
         <span class="hero-bubs" id="heroBubs"></span>
@@ -5017,6 +5011,7 @@ const PLAYERS = {
   function hideCap(){ $("bubCap").hidden = true; clearTimeout(capTimer); }
   function showCap(kind, text){
     const cap = $("bubCap");
+    cap.classList.remove("shuf");
     cap.innerHTML = `<span>${esc(text)}</span>` + (kind ? `<button type="button" data-open="${kind}">Change</button>` : "");
     cap.hidden = false; clearTimeout(capTimer);
     capTimer = setTimeout(() => { if (!cap.matches(":hover") && !cap.contains(document.activeElement)) hideCap(); else capTimer = setTimeout(hideCap, 3000); }, 4500);
@@ -5263,26 +5258,17 @@ const PLAYERS = {
     const lookName = tile ? (tile.firstChild?.textContent || tile.textContent).trim() : p.look;
     hideCap(); tagResult(lookName, R ? R.stations[p.st] : "");
   }
-  // The label under the prop: "✨ Shuffle" at rest; after a tap it says what you got, with Undo, then goes back.
-  let shufPrev = null, tagTimer = null, tagUp = false;
-  const shufTag = $("shufTag");
-  function tagRest(){
-    clearTimeout(tagTimer); tagUp = false; shufPrev = null;
-    shufTag.classList.remove("result");
-    shufTag.innerHTML = `<button type="button" class="shuf-go" data-sh="go" aria-label="Shuffle: new look, dad and music">✨ Shuffle</button>`;
-  }
+  // After a shuffle, Dad says what you got in his own caption (the one the music bubble uses), with Undo.
+  let shufPrev = null;
+  const capShowing = () => !$("bubCap").hidden && $("bubCap").classList.contains("shuf");
   function tagResult(look, tune){
-    // two short lines under the prop, clear of Dad (the new dad is right there on screen, so no need to name him)
+    const cap = $("bubCap");
     const song = tune && tune !== look ? `<span class="shuf-tune">♪ ${esc(tune)}</span>` : "";
-    shufTag.classList.add("result");
-    shufTag.innerHTML = `<span class="shuf-res"><span class="shuf-txt"><span>${esc(look)}</span>${song}</span><button type="button" data-sh="undo">Undo</button></span>`;
-    tagUp = true; clearTimeout(tagTimer); tagTimer = setTimeout(tagRest, 4500);
+    cap.innerHTML = `<span class="shuf-what"><span>✨ ${esc(look)}</span>${song}</span><button type="button" data-sh="undo">Undo</button>`;
+    cap.classList.add("shuf"); cap.hidden = false; clearTimeout(capTimer);
+    capTimer = setTimeout(() => { if (cap.contains(document.activeElement) || cap.matches(":hover")) capTimer = setTimeout(endShufCap, 3000); else endShufCap(); }, 5000);
   }
-  function tagNote(text){
-    shufTag.classList.add("result");
-    shufTag.innerHTML = `<span class="shuf-res plain">${esc(text)}</span>`;
-    clearTimeout(tagTimer); tagTimer = setTimeout(tagRest, 1600);
-  }
+  function endShufCap(){ $("bubCap").classList.remove("shuf"); hideCap(); shufPrev = null; }
   function shuffleSnapshot(){
     const R = window.RoboRadio;
     shufPrev = { look: document.documentElement.dataset.look || "classic", av: avPref, st: radioPrefs.st, playing: !!R?.playing };
@@ -5292,19 +5278,15 @@ const PLAYERS = {
     avPref = p.av; setPref(AV_KEY, avPref); applyLook(p.look);
     const R = window.RoboRadio;
     if (R) { radioPrefs.st = p.st; saveRadio(); if (p.playing) R.play(p.st); else R.stop(); radioUI(); }
-    tagUp = false; shufPrev = null; tagNote("↩ Back to how it was");
+    shufPrev = null; $("bubCap").classList.remove("shuf"); showCap("", "↩ Back to how it was");
   }
-  shufTag.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-sh]"); if (!b) return;
-    if (b.dataset.sh === "undo") shuffleUndo(); else shuffleTap();
-  });
-  tagRest();
+  $("bubCap").addEventListener("click", (e) => { if (e.target.closest('[data-sh="undo"]')) shuffleUndo(); });
   const SHUF_KEY = "robodad.shuffled";
   const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   let shuffling = false;
   function shuffleTap(){
     if (shuffling) return; shuffling = true;
-    if (!shufPrev || !tagUp) shuffleSnapshot();      // Undo goes back to what you had before this run of shuffles
+    if (!shufPrev || !capShowing()) shuffleSnapshot();      // Undo goes back to what you had before this run of shuffles
     if (!getPref(SHUF_KEY)) { setPref(SHUF_KEY, "1"); shuffleIdle(false); }
     const pick = shufflePick();
     shuffleMusic(pick);
