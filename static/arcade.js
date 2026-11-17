@@ -61,13 +61,24 @@
   ];
   const FBYID = Object.fromEntries(FRAGS.map((f) => [f.id, f]));
   const TOP_TIER = 4;
+
+  // ---------- DAD QUEST high-score ladder: beat each dad's score once for a bonus ----------
+  const GHOSTS = [
+    { id: "modern",    name: "Modern Dad",    score: 1000,  bonus: 15 },
+    { id: "skater",    name: "Skater Dad",    score: 2500,  bonus: 15 },
+    { id: "gamer",     name: "Gamer Dad",     score: 4500,  bonus: 20 },
+    { id: "professor", name: "Professor Dad", score: 8000,  bonus: 25 },
+    { id: "grandpa",   name: "Robo-Grandpa",  score: 12000, bonus: 30, secret: true },
+  ];
+  const GBYID = Object.fromEntries(GHOSTS.map((g) => [g.id, g]));
+  const questBest = () => Math.max(0, parseInt(lsGet("robodad.dadquest.best") || "0", 10) || 0);
   const huntSolved = () => !!lsGet("robodad.hunt.done");
   const questOpen = () => !!lsGet("robodad.egg.dadquest");
 
   // ---------- state ----------
   const pad = (n) => (n < 10 ? "0" : "") + n;
   const dayKey = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
-  const blank = () => ({ v: 1, tickets: 0, lifetime: 0, prizes: [], frags: [], carry: {}, day: dayKey(), today: {}, dailyPaid: "" });
+  const blank = () => ({ v: 1, tickets: 0, lifetime: 0, prizes: [], frags: [], ghosts: [], carry: {}, day: dayKey(), today: {}, dailyPaid: "" });
   function load() {
     let s;
     try { s = JSON.parse(lsGet(KEY) || "null"); } catch { s = null; }
@@ -76,6 +87,7 @@
     s.lifetime = Math.max(0, Math.floor(+s.lifetime || 0));
     s.prizes = Array.isArray(s.prizes) ? s.prizes.filter((id) => BYID[id]) : [];
     s.frags = Array.isArray(s.frags) ? s.frags.filter((id) => FBYID[id]) : [];
+    s.ghosts = Array.isArray(s.ghosts) ? s.ghosts.filter((id) => GBYID[id]) : [];
     s.carry = s.carry && typeof s.carry === "object" ? s.carry : {};
     s.today = s.today && typeof s.today === "object" ? s.today : {};
     if (s.day !== dayKey()) { s.day = dayKey(); s.today = {}; }
@@ -120,7 +132,19 @@
       if ((+o.tier || 0) >= TOP_TIER) fragment(game + "2");
     }
     if (game === "quest" && (+o.runScore || 0) >= 1500) fragment("quest1");
+    if (game === "quest") beatGhosts(+o.runScore || 0, false);
     return got;
+  }
+
+  // beating a dad's DAD QUEST score pays once; quiet = no toast per dad (used to credit an old high score)
+  function beatGhosts(score, quiet) {
+    const s = load(); let sum = 0; const won = [];
+    GHOSTS.forEach((g) => { if (score >= g.score && !s.ghosts.includes(g.id)) { s.ghosts.push(g.id); s.tickets += g.bonus; s.lifetime += g.bonus; sum += g.bonus; won.push(g); } });
+    if (!won.length) return 0;
+    save(s);
+    if (quiet) toast("Your old DAD QUEST best beat " + won.length + (won.length === 1 ? " dad" : " dads") + ": +" + sum + " tickets");
+    else won.forEach((g) => toast("You beat " + g.name + "'s high score! +" + g.bonus + " tickets"));
+    return sum;
   }
 
   // a cartridge fragment is found once; it pays a bonus that ignores the daily cap
@@ -162,8 +186,8 @@
   }
 
   const api = {
-    award, buy, toast, weekGame, fragment, fragments: () => FRAGS.slice(), prizes: () => PRIZES.slice(),
-    state: () => { const s = load(); return { tickets: s.tickets, lifetime: s.lifetime, prizes: s.prizes.slice(), frags: s.frags.slice() }; },
+    award, buy, toast, weekGame, fragment, ladder: () => GHOSTS.slice(), fragments: () => FRAGS.slice(), prizes: () => PRIZES.slice(),
+    state: () => { const s = load(); return { tickets: s.tickets, lifetime: s.lifetime, prizes: s.prizes.slice(), frags: s.frags.slice(), ghosts: s.ghosts.slice() }; },
   };
   window.RoboArcade = api;
 
@@ -238,21 +262,36 @@
     }).join("");
     return '<details class="arc-frags"><summary><span>The Lost Cartridge: ' + s.frags.length + ' of ' + FRAGS.length + ' fragments</span><span class="arc-pips" aria-hidden="true">' + pips + '</span></summary><ul>' + items + '</ul><p class="arc-hint" style="margin-top:8px">Each fragment pays ' + FRAG_BONUS + ' bonus tickets. Find all six for a Golden Token.</p></details>';
   }
+  function ladderHtml(s) {
+    if (!questOpen()) return "";
+    const best = Math.max(questBest(), 0), fmt = (n) => n.toLocaleString("en-US");
+    const nextIdx = GHOSTS.findIndex((g) => !s.ghosts.includes(g.id));
+    const rows = GHOSTS.map((g, i) => {
+      const done = s.ghosts.includes(g.id);
+      const hide = g.secret && !done && !s.ghosts.includes("professor");
+      const status = done ? " (beaten)" : i === nextIdx ? " (next up)" : "";
+      return '<li class="' + (done ? "done" : "") + '"><span aria-hidden="true">' + (done ? "&#10003;" : "&#9675;") + '</span><span><b>' + (hide ? "???" : esc(g.name)) + '</b> ' + (hide ? "" : fmt(g.score) + " points") + status + '</span></li>';
+    }).join("");
+    const nxt = nextIdx >= 0 ? GHOSTS[nextIdx] : null;
+    const pct = nxt ? Math.min(100, Math.round(best / nxt.score * 100)) : 100;
+    const line = nxt ? "Your best: " + fmt(best) + ". " + (nxt.secret && !s.ghosts.includes("professor") ? "Keep climbing." : fmt(Math.max(0, nxt.score - best)) + " to beat " + esc(nxt.name) + ".") : "Your best: " + fmt(best) + ". You beat every dad.";
+    return '<details class="arc-frags"><summary><span>DAD QUEST: beat the dads\' scores</span><span class="arc-pips" aria-hidden="true">' + GHOSTS.map((g) => '<span class="arc-pip' + (s.ghosts.includes(g.id) ? " on" : "") + '"></span>').join("") + '</span></summary><ul>' + rows + '</ul><div style="height:6px;border-radius:3px;background:var(--line);margin:10px 0 6px" aria-hidden="true"><div style="height:6px;border-radius:3px;background:var(--mustard);width:' + pct + '%"></div></div><p class="arc-hint">' + line + ' Each dad pays a one-time bonus.</p></details>';
+  }
   function renderBar() {
     const s = load(), wk = weekGame(), g = GAMES[wk];
     const afford = PRIZES.filter((p) => !p.secret && !s.prizes.includes(p.id) && p.cost <= s.tickets).length;
     const sub = s.lifetime === 0 ? "Win a game to earn your first tickets" : afford ? afford + (afford === 1 ? " prize" : " prizes") + " you can afford" : "Keep playing to afford the next prize";
-    const wasOpen = !!bar.querySelector("details[open]");
+    const openIdx = Array.from(bar.querySelectorAll("details")).map((d) => d.open);
     bar.innerHTML =
       '<div class="arc-row"><span class="arc-pill" role="img" aria-label="' + s.tickets + ' tickets">' + ICON_TICKET + s.tickets + '</span>' +
       '<button class="arc-open" id="arcOpen" type="button" aria-haspopup="dialog"><span>Prize Counter<small>' + esc(sub) + '</small></span><span aria-hidden="true" style="color:var(--mustard)">Open</span></button></div>' +
-      fragHtml(s) +
+      fragHtml(s) + ladderHtml(s) +
       '<div class="arc-week"><div><span class="arc-tag">CABINET OF THE WEEK</span><b>' + esc(g.name) + '</b><small>Double tickets until Sunday</small></div><a href="' + g.href + '" aria-label="Play ' + esc(g.name) + '">Play</a></div>';
     playDlg.querySelectorAll(".arc-2x").forEach((n) => n.remove());
     const tile = playDlg.querySelector('.tile[href="' + g.href + '"]');
     if (tile && !tile.hidden) { const m = document.createElement("span"); m.className = "arc-2x"; m.textContent = "2x tickets this week"; tile.appendChild(m); }
     bar.querySelector("#arcOpen").addEventListener("click", openPrizes);
-    if (wasOpen) bar.querySelector("details").open = true;
+    bar.querySelectorAll("details").forEach((d, i) => { if (openIdx[i]) d.open = true; });
   }
 
   // ----- Prize Counter dialog -----
@@ -299,6 +338,7 @@
   });
   dlg.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); closePrizes(); } });
 
+  if (questOpen()) beatGhosts(questBest(), true);       // credit a high score from before the arcade opened
   renderBar();
   new MutationObserver(() => { if (!playDlg.hidden) renderBar(); }).observe(playDlg, { attributes: true, attributeFilter: ["hidden"] });
   window.addEventListener("robodad-arcade", () => { if (!playDlg.hidden) renderBar(); });
