@@ -502,14 +502,34 @@
     cozy:1, lucky:1, eiddad:1, grandpa:0, professor:4, labdad:1, bookworm:2, coach:1 };
   const HAIRS = { drawn:"As drawn", bald:"Bald", grey:"Grey temples", curls:"Curls" };
   const HATTED = new Set(["nineties", "y2k", "skater", "bucket", "cozy", "coach"]);   // their hat sits on top, so curls only show at the sides
-  const curlsOf = (c, hat) => `<g class="av-curls" display="var(--av-curls, none)" fill="${c}" stroke="${INK}" stroke-width="1.5">`
-    + [[21,8.5,4.6],[29,6.4,4.8],[37,6.4,4.8],[44,9,4.6],[16.5,13.5,4.6],[24,12.4,4.8],[32,11.6,4.8],[40,12.4,4.8],[47.5,13.5,4.6],
-       [14.4,19,4.2],[21,17.6,4.2],[28,17,4.2],[36,17,4.2],[43,17.6,4.2],[49.6,19,4.2],[13.4,24.6,3.4],[50.6,24.6,3.4],[13.6,29.4,2.8],[50.4,29.4,2.8]]
-      .filter(([x, y]) => !hat || (y >= 19 && (x < 17 || x > 47)))
-      .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join("") + `</g>`;
+  // Curls: his own haircut, curled. The same outline gets a scalloped edge (round dots along it) and a ring of curl marks inside,
+  // so the hair keeps his silhouette instead of growing a new one. Hat dads' sideburns curl the same way.
+  const pathBox = (d) => {
+    const n = (d.match(/-?\d*\.?\d+/g) || []).map(Number), xs = [], ys = [];
+    for (let i = 0; i + 1 < n.length; i += 2) { xs.push(n[i]); ys.push(n[i + 1]); }
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  };
+  const curlsOf = (c, ds) => {
+    const d = ds.join(" "), b = pathBox(d), cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
+    const big = (b.x1 - b.x0) * (b.y1 - b.y0) > 150 && !/Z\s*M/i.test(d);   // one solid haircut, not two sideburns
+    return `<g class="av-curls" display="var(--av-curls, none)">`
+      + `<path d="${d}" fill="none" stroke="${INK}" stroke-width="4.4" stroke-dasharray="0 2.9" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${d}" fill="none" stroke="${c}" stroke-width="2.6" stroke-dasharray="0 2.9" stroke-linecap="round" stroke-linejoin="round"/>`
+      + `<path d="${d}" fill="${c}"/>`
+      + (big ? `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".2" stroke-width="2.4" stroke-dasharray="0 3.7" stroke-linecap="round" transform="translate(${cx} ${cy}) scale(.7) translate(${-cx} ${-cy})"/>`
+             + `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".16" stroke-width="3.2" stroke-dasharray="0 5.6" stroke-linecap="round" transform="translate(${cx} ${cy}) scale(.4) translate(${-cx} ${-cy})"/>` : "")
+      + `</g>`;
+  };
   const templesOf = () => `<path class="av-temples" display="var(--av-temples, none)" d="M12.7 19.6 Q12.2 27.4 14.2 33.2 L17.4 32.6 Q16 25.6 19.4 20 Q15.8 18.8 12.7 19.6Z M51.3 19.6 Q51.8 27.4 49.8 33.2 L46.6 32.6 Q48 25.6 44.6 20 Q48.2 18.8 51.3 19.6Z" fill="#DCE1E6" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>`;
   const baldOf = () => `<path class="av-bald" display="var(--av-bald, none)" d="M21.5 19.6 Q27 17.4 32.5 18" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>`;
-  const beardOf = (c) => `<path class="av-beard" display="var(--av-beard, none)" d="M12.4 31 C12.4 40 15 46 20 48.2 Q26 50.6 32 50.6 Q38 50.6 44 48.2 C49 46 51.6 40 51.6 31 L48.4 32 C48 38 46 43 40.5 45.4 Q36 46.9 32 46.9 Q28 46.9 23.5 45.4 C18 43 16 38 15.6 32 Z" fill="${c}" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  // Beard: shading in his hair colour over the lower face, kept inside the head outline (nothing hangs below the jaw),
+  // with the mouth area left clear so his smile reads, and a moustache for dads who don't already have one.
+  const STACHED = new Set(["coach", "filmi", "grandpa"]);
+  const beardOf = (c, stache) => `<g class="av-beard" display="var(--av-beard, none)">`
+    + `<path d="M13.3 29.6 L13.3 35 A9.7 9.7 0 0 0 23 44.7 L41 44.7 A9.7 9.7 0 0 0 50.7 35 L50.7 29.6 Q48.6 34.6 43 36 Q37.5 36.9 32 36.3 Q26.5 36.9 21 36 Q15.4 34.6 13.3 29.6 Z M24.4 40.9 A7.6 3.1 0 1 0 39.6 40.9 A7.6 3.1 0 1 0 24.4 40.9 Z" fill="${c}" fill-opacity=".82" fill-rule="evenodd"/>`
+    + `<path d="M16.4 37.6 l.8 1 M19.6 41.2 l.8 .9 M44.4 41.2 l-.8 .9 M47.6 37.6 l-.8 1 M27 44 h1.2 M35.8 44 h1.2" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".9" stroke-linecap="round"/>`
+    + (stache ? "" : `<path d="M25.6 38.4 Q28.7 35.9 32 37.3 Q35.3 35.9 38.4 38.4 Q35.3 37.8 32 38.7 Q28.7 37.8 25.6 38.4Z" fill="${c}"/>`)
+    + `</g>`;
   function elEnd(svg, i){
     if (svg.startsWith("<g", i)) return gEnd(svg, i);
     const e = svg.indexOf("/>", i); return e < 0 ? -1 : e + 2;
@@ -524,17 +544,21 @@
     const hs = svg.indexOf('<g class="hd">'); if (hs < 0) return svg;
     const at = svg.indexOf(head, hs); if (at < 0) return svg;
     const afterHead = at + head.length;
-    let i = afterHead, parts = "", firstFill = null;
+    let i = afterHead, parts = "", firstFill = null; const hairDs = [];
     for (let n = 0; n < (HAIR_PARTS[key] || 0); n++) {
       while (/\s/.test(svg[i])) i++;
       const e = elEnd(svg, i); if (e < 0) return svg;
       const el = svg.slice(i, e);
       if (!firstFill) firstFill = (/fill="([^"]+)"/.exec(el) || [])[1];
+      for (const m of el.matchAll(/<path\b[^>]*>/g)) {   // filled hair shapes only, not shine strokes
+        const f = (/fill="([^"]+)"/.exec(m[0]) || [])[1], d = (/\bd="([^"]+)"/.exec(m[0]) || [])[1];
+        if (d && f && f !== "none") hairDs.push(d);
+      }
       parts += tagHair(el); i = e;
     }
     const c = key === "grandpa" ? "#EEF1F4" : (firstFill && firstFill !== "none" ? firstFill : "#3A2A1E");
-    const extra = HAIR_PARTS[key] ? curlsOf(c, HATTED.has(key)) + templesOf() : "";
-    return svg.slice(0, afterHead) + beardOf(c) + (HAIR_PARTS[key] ? baldOf() : "") + parts + extra + svg.slice(i);
+    const extra = HAIR_PARTS[key] && hairDs.length ? curlsOf(c, hairDs) + templesOf() : (HAIR_PARTS[key] ? templesOf() : "");
+    return svg.slice(0, afterHead) + beardOf(c, STACHED.has(key)) + (HAIR_PARTS[key] ? baldOf() : "") + parts + extra + svg.slice(i);
   }
   for (const [k, a] of Object.entries(AVATARS)) a.svg = hairUp(k, a.svg);
   for (const [k, a] of Object.entries(AVATARS)) a.svg = rigUp(k, a.svg);
