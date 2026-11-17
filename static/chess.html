@@ -282,7 +282,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
 <p class="foot">Tap a piece, then tap where it goes. When a pawn reaches the far side you pick what it becomes. Every dad plays on a clock set by how tough he is. It starts after your first move, and the Clock button turns it off for a relaxed game. Lower dads play in your browser; Professor Dad and Robo-Grandpa need a connection.</p>
 
-<script src="/static/avatars.js?v=42"></script>
+<script src="/static/avatars.js?v=44"></script>
 <script src="/static/radio.js?v=45"></script>
 <script src="/static/arcade.js?v=5"></script>
 <script src="/static/chess-engine.js"></script>
@@ -1092,7 +1092,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       const a = AV && AV.AVATARS[tierKey];
       if (a) {                                   // the avatar's colours come from the page; the picture uses fixed daytime ones
         const PAL = { ink: "#1B2A3A", metal: "#B9C7D4", jacket: "#3D7CB8", jacket2: "#1B2A3A", hair: "#3A2A1E", lens: "#1B2A3A" };
-        const svg = a.svg.replace(/var\(--([a-z0-9-]+)\)/g, (m, k) => PAL[k] || "#8896A5");
+        const svg = RoboAvatars.toneSvg(a.svg).replace(/var\(--([a-z0-9-]+)\)/g, (m, k) => PAL[k] || "#8896A5");
         const img = new Image();
         img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="480" height="480">${svg}</svg>`);
         await img.decode();
