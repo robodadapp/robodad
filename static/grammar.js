@@ -147,22 +147,22 @@
     if (!spin) newSpin();
     const { subj, q, img } = spin;
     box.innerHTML = `${stats()}
-      <div class="v-card"><span class="v-k">🎰 The Comparison Machine</span>
+      <div class="v-card g-card-spin"><span class="v-k">🎰 The Comparison Machine</span>
         <div class="g-reels"><span>${esc(cap(subj))}</span><span>${esc(q)}</span><span>${esc(img)}</span></div>
-        <p><b>Simile:</b> ${esc(cap(subj))} is <mark>as</mark> ${esc(q)} <mark>as</mark> ${esc(img)}.</p>
-        <p><b>Metaphor:</b> ${esc(cap(subj))} <mark>is</mark> ${esc(img)}.</p>
+        <div class="g-result"><p><b>Simile:</b> ${esc(cap(subj))} is <mark>as</mark> ${esc(q)} <mark>as</mark> ${esc(img)}.</p>
+        <p><b>Metaphor:</b> ${esc(cap(subj))} <mark>is</mark> ${esc(img)}.</p></div>
         <p class="small">See it? The simile needs "as… as". The metaphor drops it and just says it <i>is</i>. Neither one explains anything, so neither is an analogy.</p>
         <div class="row"><button class="primary" type="button" data-gact="spin">🎰 Spin again</button>
           <button class="ghost" type="button" data-gact="mine">Write my own, Dad checks it</button></div></div>
-      <div class="row"><button class="primary" type="button" data-gact="play-spot">Play: Simile, metaphor or analogy?</button>
-        <button class="ghost" type="button" data-gact="play-finish">Play: Finish the analogy</button></div>
+      <div class="g-plays"><button class="primary" type="button" data-gact="play-spot">Play: Simile, metaphor or analogy?</button>
+        <button class="primary" type="button" data-gact="play-finish">Play: Finish the analogy</button></div>
       <details class="v-card g-guide"><summary class="v-k">Dad's quick guide: simile vs metaphor vs analogy</summary>${COMPARE_LESSON.map(([n, d, ex]) => `<p><b>${n}:</b> ${d}<br><i>${esc(ex)}</i></p>`).join("")}</details>`;
   }
   function newSpin(){ const q = pick(Object.keys(QUALITIES)); spin = { subj: pick(SUBJECTS), q, img: pick(QUALITIES[q]) }; }
   function renderTense(){
     box.innerHTML = `${stats()}
-      <div class="row"><button class="primary" type="button" data-gact="play-pairs">Play: Tense Trouble</button>
-        <button class="primary" type="button" data-gact="play-tm">Play: Silly Sentence Time Machine</button></div>
+      <div class="g-plays"><button class="primary" type="button" data-gact="play-pairs">Play: Tense Trouble</button>
+        <button class="primary" type="button" data-gact="play-tm">Play: Time Machine</button></div>
       <p class="small">Tense Trouble: one tiny tense change, a totally different meaning. Time Machine: Dad spins a silly sentence, and you send it through time.</p>
       <details class="v-card g-guide" open><summary class="v-k">Dad's time map: six tenses</summary>
         <div class="g-tenses">${TENSE_LESSON.map(([n, f, use, ex]) => `<div><b>${n}</b> · <mark>${esc(f)}</mark><br><small>${esc(use)}</small><br><i>${esc(ex)}</i></div>`).join("")}</div></details>`;
@@ -202,6 +202,7 @@
     const q = R.qs[R.n], right = q.opts[k] === q.ok;
     box.querySelectorAll("[data-gpick]").forEach((b, i) => { b.disabled = true; if (q.opts[i] === q.ok) b.classList.add("ok"); else if (i === k) b.classList.add("bad"); });
     if (right) { R.score++; R.streak++; R.top = Math.max(R.top, R.streak); R.xp += 10 + Math.min(R.streak - 1, 5) * 2; } else R.streak = 0;
+    window.RDWin?.(box, right, `<span>Question ${R.n + 1} of ${R.qs.length}</span><span>✅ ${R.score}</span><span>🔥 ${R.streak}</span><span>⭐ +${R.xp}</span>`);
     box.querySelector("#gMsg").textContent = `${pick(right ? SAY.right : SAY.wrong)} ${q.why}`;
     const last = R.n + 1 >= R.qs.length;
     box.querySelector("#gNext").innerHTML = `<button class="primary" type="button" data-gact="next">${last ? "See results" : "Next"}</button>
@@ -222,7 +223,7 @@
     const t = e.target.closest("button"); if (!t || !box.contains(t)) return;
     if (t.dataset.gpick !== undefined) return answer(+t.dataset.gpick);
     const a = t.dataset.gact;
-    if (a === "spin") { bridge.record?.("spin"); newSpin(); renderCompare(); box.querySelector(".g-reels")?.classList.add("spinning"); }
+    if (a === "spin") { bridge.record?.("spin"); newSpin(); renderCompare(); box.querySelector(".g-card-spin")?.classList.add("spinning"); }
     else if (a === "mine") bridge.ask("Is this a simile, a metaphor or an analogy? Check mine and tell me how to make it better: ");
     else if (a?.startsWith("play-")) startRound(a.slice(5));
     else if (a === "next") { round.n++; round.n >= round.qs.length ? finish() : ask(); }

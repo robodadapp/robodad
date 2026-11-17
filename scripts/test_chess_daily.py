@@ -4,7 +4,7 @@
 """
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -81,7 +81,13 @@ for have, want in [(1, 2), (2, 3), (3, 4), (4, 5)]:
     check(f"retro with chapter {have} opens {want} early", r.status_code == 200 and r.json() == {"kind": "hunt", "chapter": want}, r.text)
 check("retro with no progress opens nothing", code("retro", 0).status_code == 404)
 check("retro at chapter 5 does not skip to the finale", code("retro", 5).status_code == 404)
-check("existing hunt code still waits on the calendar", code("joypad", 0).json().get("kind") == "hunt_wait")
+# Chapters 1 and 2 are open straight away (HUNT_OPEN_THROUGH), so the calendar is checked with a
+# chapter-3 code and a start date in the future, which keeps this test true whatever day it runs.
+real_start = main.ARG_START
+main.ARG_START = (date.today() + timedelta(days=30)).isoformat()
+check("an early hunt chapter is open straight away", code("joypad", 0).json().get("kind") == "hunt")
+check("a later hunt code still waits on the calendar", code("attic", 0).json().get("kind") == "hunt_wait")
+main.ARG_START = real_start
 
 print("\nall Daily Board checks passed" if not failed else f"\n{failed} failed")
 sys.exit(1 if failed else 0)

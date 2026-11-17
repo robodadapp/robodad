@@ -54,6 +54,7 @@ h1{margin:0; font-size:1.5rem; font-weight:900; letter-spacing:-.01em}
 .rtile:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
 .status{background:var(--panel); border:2px solid var(--edge); border-radius:14px; padding:10px 12px; min-height:3em; font-size:.96rem}
 .status strong{color:var(--gold)}
+.status .tally{display:inline-block; margin-left:4px; padding:1px 8px; border-radius:999px; background:var(--edge); color:var(--ink); font-size:.85em; font-weight:800; white-space:nowrap}
 .letters{display:grid; grid-template-columns:repeat(9,1fr); gap:4px; margin-top:6px}
 .letters button{padding:6px 0; font:900 15px/1 "Nunito", ui-rounded, system-ui, sans-serif; border-radius:8px; border:2px solid var(--edge); background:var(--tile); color:var(--tile-ink); cursor:pointer; text-transform:uppercase}
 .controls{display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
@@ -214,7 +215,33 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   .tile.pop,.tile.dealt,.tile.commit,.rtile.deal,.score b.bump,.status,.bonus,.explain,.iconbtn.spin span,.clock.crit b{animation:none}
   .rtile{transition:none}
 }
+
+/* ---- phones: your tiles and Dad's latest move stay pinned under the board, so you never scroll between them */
+.top h1{white-space:nowrap}
+.rd-hop{animation:rdhop .55s cubic-bezier(.34,1.56,.64,1)}
+@keyframes rdhop{30%{transform:translateY(-5px) rotate(-4deg)} 65%{transform:translateY(0) rotate(3deg)}}
+@media (prefers-reduced-motion: reduce){ .rd-hop{animation:none} }
+.dock-say{display:flex; gap:8px; align-items:center; width:100%}
+.dock-say .status{flex:1; min-width:0}
+#dockArt{display:none; flex:none}
+#dockArt svg{width:38px; height:38px; overflow:visible}
+.dock{width:100%; max-width:600px; display:flex; flex-direction:column; align-items:center; gap:8px}
+@media (max-width: 700px){
+  body{padding-bottom:12px}
+  .top{gap:6px}
+  .top h1{font-size:clamp(1.1rem, 5.2vw, 1.5rem)}
+  .top a,.top .btn{padding:6px 8px; font-size:13px; white-space:nowrap}
+  .opp{padding:6px 10px}
+  .opp svg{width:40px; height:40px}
+  .key,.skin-row{order:1}
+  .log,.tiers,.foot{order:2}
+  .dock{position:sticky; bottom:0; z-index:6; padding:10px 0 calc(6px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom, transparent, var(--bg) 12px)}
+  #dockArt{display:block}
+  .dock .status{max-height:5.4em; overflow:auto; padding:8px 10px; font-size:.92rem; min-height:0}
+}
 </style>
+<script src="/static/game-look.js?v=1"></script>
 </head>
 <body>
 <div class="top">
@@ -222,7 +249,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   <h1>Tile Talk</h1>
   <div style="display:flex; gap:6px">
     <button class="btn" id="musicBtn" type="button" aria-pressed="false" aria-label="Background music">♪ Off</button>
-    <button class="btn" id="talkBtn" type="button" aria-pressed="true">Trash talk: on</button>
+    <button class="btn" id="talkBtn" type="button" aria-pressed="true" aria-label="Trash talk">Talk: on</button>
   </div>
 </div>
 
@@ -257,14 +284,15 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   <span id="skinNote"></span>
 </div>
 
+<div class="dock" id="dock">
 <div class="rackbar">
   <div class="rack" id="rack" role="group" aria-label="Your tiles. Drag to reorder or onto the board"></div>
   <button class="iconbtn" id="shuffleBtn" type="button" aria-label="Shuffle your tiles" title="Shuffle"><span aria-hidden="true">🔀</span></button>
 </div>
+<div class="dock-say"><div id="dockArt" class="bot" aria-hidden="true"></div><div class="status" id="status" aria-live="polite"><span class="loading">Dad is unpacking the dictionary<span class="dots" aria-hidden="true"></span></span></div></div>
+</div>
 
 <section class="bonus" id="bonus" aria-live="polite" hidden></section>
-
-<div class="status" id="status" aria-live="polite"><span class="loading">Dad is unpacking the dictionary<span class="dots" aria-hidden="true"></span></span></div>
 
 <div class="controls">
   <button class="btn primary" id="playBtn" type="button">Play word</button>
@@ -294,6 +322,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 
 <script src="/static/radio.js?v=7"></script>
 <script src="/static/avatars.js?v=42"></script>
+<script src="/static/arcade.js?v=5"></script>
 <script src="/static/words.js"></script>
 <script src="/static/glowup.js"></script>
 <script src="/static/tenses.js"></script>
@@ -380,6 +409,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   let cursorTips = 0;
   let timerOn = store.get(CLOCK_KEY) !== "0", clockMs = 0, warned = false;
   let musicOn = store.get(MUSIC_KEY) !== "0", gestured = false;
+  let clockArmed = false;             // the clock waits until you touch your tiles, the board or a button
   // Animation bookkeeping. Kept by time, so a re-render mid-animation carries on smoothly instead of restarting.
   const fx = new Map();               // board square -> { cls, t0, delay, dur }
   let rackDeal = null;                // { from, t0 }: rack tiles from this index were just dealt
@@ -416,11 +446,13 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   }
   const sayDad = (kind) => { const l = DAD().lines[kind]; if (talkOn && l && l.length) $("say").textContent = pick(l); };
   function celebrate(move) {
-    const el = $("oppArt");
     if (!move || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
-    void el.getBoundingClientRect(); el.classList.add("do-" + move);
-    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + move), 3300);
+    ["oppArt", "dockArt"].forEach((id) => {            // the dad at the top, and his mini copy beside your tiles on phones
+      const el = $(id); if (!el) return;
+      [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
+      void el.getBoundingClientRect(); el.classList.add("do-" + move);
+      clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + move), 3300);
+    });
   }
   function applyTheme() {
     const t = DAD().theme || {}, st = document.documentElement.style;
@@ -554,6 +586,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   function setOpponent() {
     $("oppArt").innerHTML = avatarSVG(tierKey, 52);
     $("oppArt").className = "bot";
+    $("dockArt").innerHTML = avatarSVG(tierKey, 38); $("dockArt").className = "bot";
     $("oppName").textContent = dadName();
     $("oppTier").textContent = (T.TIERS[tierKey].boss ? "The boss" : `Tier ${T.TIERS[tierKey].tier}`) + (DAD().era ? ` · ${DAD().era}` : "");
     const rec = record(tierKey);
@@ -1068,7 +1101,13 @@ img,svg{-webkit-user-drag:none; user-drag:none}
         else if (tierKey === "professor" && affixNote(ev.main)) teach = ` <em>Word parts:</em> ${esc(affixNote(ev.main))}`;
         else if (FANCY.get(ev.main)) teach = ` That's a Glow-Up word: it means ${esc(FANCY.get(ev.main).means)}.`;
         else if (!common.has(ev.main)) teach = tierKey === "bookworm" ? " Bookworm Dad explains where it comes from below." : " Never heard of it? Tap it under Words played and Dad explains.";
-        setStatus(`${twist}${sig}<strong>${dadName()}</strong> played <strong>${up(ev.main)}</strong> for ${ev.score}${ev.fullHouse ? ", Full House!" : "."}${teach} <span class="sr">Your move.</span>`);
+        setStatus(`${twist}${sig}<strong>${dadName()}</strong> played <strong>${up(ev.main)}</strong> for ${ev.score}${ev.fullHouse ? ", Full House!" : "."}${teach} <span class="tally">You ${s.scores[0]} · Dad ${s.scores[1]}</span> <span class="sr">Your move.</span>`);
+        // Bring Dad's new word into view if it landed off-screen (on phones the board can sit above the fold).
+        requestAnimationFrame(() => { ["oppArt", "dockArt"].forEach((id) => { const el = $(id); if (!el || [...el.classList].some((c) => c.startsWith("do-"))) return;
+            el.classList.remove("rd-hop"); void el.offsetWidth; el.classList.add("rd-hop"); });
+          const lastEl = document.querySelector("#board .tile.last");
+        if (lastEl) { const r = lastEl.getBoundingClientRect(), dockTop = $("dock").getBoundingClientRect().top;
+          if (r.top < 0 || r.bottom > dockTop) lastEl.scrollIntoView({ block: "center", behavior: reduced() ? "auto" : "smooth" }); } });
         if (tierKey === "bookworm" && !note && !common.has(ev.main)) explainWord(ev.main, false);
         if (tierKey === "grandpa") checkBadges();
         save(); renderAll();
@@ -1136,6 +1175,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     setStatus(`${theEnd}<strong>${headline}</strong> ${you} to ${dad}. ${how} Tap <strong>New game</strong> for a rematch.`);
     if (o.winner === 0) sayDad("lose"); else if (o.winner === 1) sayDad("win"); else talk("draw");
     celebrate(o.winner === 1 ? DAD().move : (tierKey === "grandpa" ? "kids" : null));
+    if (window.RoboArcade && !o.resigned) RoboArcade.award("tiles", { result: o.winner === 0 ? "win" : o.winner === 1 ? "lose" : "draw", tier: T.TIERS[tierKey].tier || 0, bonus: T.TIERS[tierKey].boss ? 10 : 0 });
     const bossWasLocked = isLocked("bookworm");
     bumpStats((st) => {
       st.games = (st.games || 0) + 1;
@@ -1406,7 +1446,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   // Only your thinking time counts, and only while it's your move: not while Dad thinks, not during
   // bonus rounds or quizzes, not while the boss card is up, and not while the app is in the background.
   const capMs = () => (CLOCK_MIN[tierKey] || 10) * 60000;
-  const clockLive = () => timerOn && !!s && !s.over && !!dict && s.turn === 0 && !busy && !document.hidden && !document.querySelector(".boss-wrap");
+  const clockLive = () => clockArmed && timerOn && !!s && !s.over && !!dict && s.turn === 0 && !busy && !document.hidden && !document.querySelector(".boss-wrap");
   const fmtClock = (ms) => { const t = Math.ceil(ms / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`; };
   let clockShown = "";
   function renderClock() {
@@ -1427,6 +1467,11 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     renderClock();
   }, 250);
   setInterval(() => { if (clockLive()) save(); }, 5000);
+  // Arm the clock on your first real move, not on page load, so you always see your tiles first.
+  const armClock = (e) => { if (clockArmed) return; if (e.type === "keydown" || (e.target.closest && e.target.closest("#rack, #board, .controls, #shuffleBtn"))) { clockArmed = true; lastTick = performance.now(); } };
+  document.addEventListener("pointerdown", armClock, true);
+  document.addEventListener("keydown", armClock, true);
+
   // Ending a game early: Dad takes the win, the scores stand as they are, and it goes on the record as a loss.
   function resign() {
     if (busy || !inProgress()) return;
@@ -1605,11 +1650,11 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   $("talkBtn").addEventListener("click", () => {
     talkOn = !talkOn;
     store.set(TALK_KEY, talkOn ? "1" : "0");
-    $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
+    $("talkBtn").textContent = `Talk: ${talkOn ? "on" : "off"}`;
     $("talkBtn").setAttribute("aria-pressed", String(talkOn));
     if (!talkOn) $("say").textContent = "";
   });
-  $("talkBtn").textContent = `Trash talk: ${talkOn ? "on" : "off"}`;
+  $("talkBtn").textContent = `Talk: ${talkOn ? "on" : "off"}`;
   $("talkBtn").setAttribute("aria-pressed", String(talkOn));
   $("musicBtn").addEventListener("click", () => {
     musicOn = !musicOn; gestured = true; musicHold = false;

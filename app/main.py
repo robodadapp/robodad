@@ -275,6 +275,9 @@ async def not_found(request: Request, exc):
 # ---------------------------------------------------------------- rate limits
 _max_hits, _window = (int(x) for x in RATE_LIMIT.split("/"))
 _hits: dict[str, deque] = defaultdict(deque)
+# the anonymous counters get their own allowance, so playing puzzles never uses up chat messages
+_ev_hits: dict[str, deque] = defaultdict(deque)
+_EV_MAX_HITS = 120
 _daily = {"day": date.today(), "count": 0}
 
 
@@ -300,13 +303,15 @@ def _prune(store: dict[str, deque], window: float, now: float) -> None:
             del store[k]
 
 
-def _rate_limited(ip: str) -> bool:
+def _rate_limited(ip: str, store: dict[str, deque] | None = None, max_hits: int | None = None) -> bool:
+    store = _hits if store is None else store
+    max_hits = _max_hits if max_hits is None else max_hits
     now = time.monotonic()
-    _prune(_hits, _window, now)
-    q = _hits[ip]
+    _prune(store, _window, now)
+    q = store[ip]
     while q and now - q[0] > _window:
         q.popleft()
-    if len(q) >= _max_hits:
+    if len(q) >= max_hits:
         return True
     q.append(now)
     return False
@@ -546,6 +551,16 @@ async def quest_page():
     return FileResponse(os.path.join(STATIC_DIR, "quest.html"), headers={"Cache-Control": "no-cache"})
 
 
+@app.get("/stack")
+async def stack_page():
+    return FileResponse(os.path.join(STATIC_DIR, "stack.html"), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/remote")
+async def remote_page():
+    return FileResponse(os.path.join(STATIC_DIR, "remote.html"), headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/chess")
 async def chess_page():
     return FileResponse(os.path.join(STATIC_DIR, "chess.html"), headers={"Cache-Control": "no-cache"})
@@ -728,6 +743,8 @@ EVENTS = {
     "streak_3", "streak_7", "streak_14", "streak_30",
     "tab_play", "tab_learn", "tab_chill", "tab_me", "rate_shown", "rate_tap",
     "tour_start", "tour_done", "tour_skip", "fb_sent",
+    "safe_open", "safe_win", "safe_fail", "safe_share",
+    "hands_win", "hands_again", "hands_retry", "hands_next",
 }
 
 
@@ -740,7 +757,7 @@ async def event(e: EventIn, request: Request):
     """One anonymous count for a named event. Unknown names are rejected; nothing identifies the visitor."""
     if e.name not in EVENTS:
         raise HTTPException(400, "Unknown event.")
-    if _rate_limited(_client_ip(request)):
+    if _rate_limited(_client_ip(request), _ev_hits, _EV_MAX_HITS):
         return JSONResponse({"error": "Too many tries."}, status_code=429)
     await _count("event", e.name, request, dedupe=False)
     return {"ok": True}

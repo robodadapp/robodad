@@ -26,6 +26,12 @@
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const today = () => new Date().toLocaleDateString("en-CA");
+  // a repeatable random sequence from a number (mulberry32), so everyone gets the same daily safe
+  const seeded = (seed) => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  // Dad's Safe number: #1 was 16 November 2026, counted in the player's own calendar days
+  const safeNo = () => { const n = new Date(); return Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(2026, 10, 16)) / 86400000) + 1; };
+  // anonymous counters (a fixed list of names, checked by the server); does nothing without the app around it
+  const ping = (name) => { try { bridge?.ping?.(name); } catch {} };
   const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
 
   // ---------- tiny DOM helper ----------
@@ -116,6 +122,11 @@
       bubble(say || sayText || pick(SAY.hello)),
       h("div", { class:"bz-tiles" },
         mk("⚡", "Puzzle Run", "Riddles, logic and hands-on puzzles. Keep your streak alive.", () => startRun(), "bz-focus"),
+        (() => { const no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null, done = d && (d.won || d.lost);
+          return mk(done ? (d.won ? "🔓" : "🔒") : "🔐", `Dad's Safe #${no}`,
+            done ? (d.won ? `Cracked in ${d.tries.length + 1}. A new safe at midnight.` : "Stayed shut today. A new safe at midnight.")
+              : d && d.tries.length ? `${d.tries.length} of 6 tries used. Pick up where you left off.` : "Today's safe. Same code for everyone, six tries.",
+            () => startHands("lock", { mode:"daily" })); })(),
         mk(dailyDone ? "✅" : "📅", "Today's puzzle", dailyDone ? "Done! A new one tomorrow." : "Double points, once a day.", () => dailyDone ? hub("You already cracked today's puzzle. Come back tomorrow for a new one!") : startPuzzle(dailyPuzzle(), { mode:"daily" })),
         mk("🧩", "Hands-on", "Blackout, Crack Dad's Safe, Crossings and Scramble.", handsMenu),
         notebookOpen() ? mk("📓", "Dev's Notebook", `${NB.filter(p => s.done.includes(p.id)).length} of ${NB.length} puzzles solved.`, notebookMenu) : null,
@@ -204,7 +215,7 @@
       c.wrong++; S().streak = 0; save();
       if (p.kind !== "type") (c.tried ||= []).push(val);
       c.say = pick(SAY.wrong); c.msg = p.kind === "type" ? `"${val}" isn't it. Try again, or take a hint.` : "";
-      renderPuzzle(); focusFirst(".bz-opt:not([disabled]), .bz-input"); return;
+      renderPuzzle(); focusFirst(".bz-opt:not([disabled]), .bz-input"); window.RDWin?.(root, false); return;
     }
     let pts = Math.max(10, 30 - 10 * c.hints);
     if (c.wrong) pts = Math.max(5, Math.round(pts / 2));
@@ -215,10 +226,17 @@
     c.done = true;
     c.say = [pick(c.wrong || c.hints > 1 ? SAY.slow : SAY.right), fast ? "Speed bonus!" : "", extra].filter(Boolean).join(" ");
     c.msg = p.why;
-    renderPuzzle(); focusFirst(".bz-focus");
+    renderPuzzle(); focusFirst(".bz-focus"); window.RDWin?.(root, true);
   }
 
   // ---------- hands-on ----------
+  // Little scene thumbnails for the Hands-on menu, so the drawn games look drawn before you open them.
+  const THUMBS = {
+    lights:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#1B2547"/><circle cx="78" cy="14" r="7" fill="#FFF3C4"/><circle cx="20" cy="10" r="1.2" fill="#fff"/><circle cx="44" cy="7" r="1" fill="#fff"/><path d="M20 30 L48 14 L76 30Z" fill="#3A4A7A"/><rect x="24" y="30" width="48" height="30" fill="#2B3866"/><g fill="#FFD866"><rect x="29" y="35" width="10" height="9" rx="1"/><rect x="57" y="35" width="10" height="9" rx="1"/><rect x="43" y="48" width="10" height="9" rx="1"/></g><g fill="#151C36"><rect x="43" y="35" width="10" height="9" rx="1"/><rect x="29" y="48" width="10" height="9" rx="1"/><rect x="57" y="48" width="10" height="9" rx="1"/></g></svg>`,
+    lock:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#5A6470"/><rect x="18" y="8" width="60" height="48" rx="6" fill="#8C97A3" stroke="#2C333B" stroke-width="2"/><circle cx="48" cy="32" r="14" fill="#C9D1D9" stroke="#2C333B" stroke-width="2"/><circle cx="48" cy="32" r="4" fill="#2C333B"/><path d="M48 19v5M48 40v5M35 32h5M56 32h5" stroke="#2C333B" stroke-width="2" stroke-linecap="round"/><rect x="68" y="26" width="5" height="12" rx="2" fill="#2C333B"/></svg>`,
+    river:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#8ED081"/><path d="M0 24 Q24 18 48 24 T96 24 V44 Q72 50 48 44 T0 44Z" fill="#3E8ED0"/><path d="M10 34 q6 -3 12 0 M58 30 q6 -3 12 0" stroke="#BFE3FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M34 32 h26 l-4 7 h-18z" fill="#8A5A2B" stroke="#3B2512" stroke-width="1.5"/><circle cx="44" cy="27" r="4" fill="#F2C29B"/><circle cx="54" cy="29" r="3" fill="#F2F2F2"/></svg>`,
+    tiles:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#2E2A4F"/><g font-family="system-ui,sans-serif" font-weight="900" font-size="12" text-anchor="middle"><rect x="26" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="18" fill="#2E2A4F">1</text><rect x="41" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="18" fill="#2E2A4F">2</text><rect x="56" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="18" fill="#2E2A4F">3</text><rect x="26" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="33" fill="#2E2A4F">4</text><rect x="41" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="33" fill="#2E2A4F">5</text><rect x="26" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="48" fill="#2E2A4F">7</text><rect x="56" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="48" fill="#2E2A4F">6</text><rect x="41" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="48" fill="#2E2A4F">8</text></g></svg>`,
+  };
   function handsMenu(){
     view = "handsMenu"; ctx = null;
     const s = S();
@@ -226,7 +244,7 @@
       bubble("No multiple choice here. Stars for doing it in few moves, and a hint if you get stuck."),
       h("div", { class:"bz-tiles" }, HKINDS.map((k, i) => { const H = D.hands[k];
         const b = btn("", "bz-tile" + (i ? "" : " bz-focus"), () => startHands(k, { mode:"hands" }));
-        b.append(...[h("span", { class:"bz-ic", "aria-hidden":"true" }, { lights:"💡", lock:"🔐", river:"🛶", tiles:"🧩" }[k]), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
+        b.append(...[h("span", { class:"bz-thumb", "aria-hidden":"true", html: THUMBS[k] }), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
           (s.handsStars || {})[k] ? h("small", { class:"bz-best", "aria-label":`Best: ${s.handsStars[k]} of 3 stars` }, "★".repeat(s.handsStars[k]) + "☆".repeat(3 - s.handsStars[k])) : null].filter(Boolean));
         return b; })));
     focusFirst();
@@ -240,6 +258,7 @@
   function handsWon(stars, line){
     const c = ctx, s = S(); c.won = true; c.stars = stars;
     s.handsStars ||= {}; s.handsStars[c.kind] = Math.max(s.handsStars[c.kind] || 0, stars);
+    if (c.mode === "daily") finishSafe(c, true); else if (c.mode === "hands") ping("hands_win");
     const extra = award([30, 30, 40, 50][stars], { hands:c.kind, keepStreak:true });
     c.say = [line || pick(SAY.hands), extra].filter(Boolean).join(" "); buzz([30, 40, 30]);
     renderHands(); focusFirst(".bz-focus");
@@ -248,20 +267,30 @@
     const c = ctx, H = D.hands[c.kind];
     // redrawing replaces every button, so remember which one had the keyboard focus and give it back
     const fk = root.contains(document.activeElement) ? document.activeElement.getAttribute("data-fk") : null;
-    const label = c.mode === "escape" ? D.escape.rooms[c.room].name : H.name;
-    const nodes = [topBar(label, c.mode === "hands" ? { label:"Hands-on", fn: handsMenu } : backFor()), bubble(c.say, "gamer")];
+    const label = c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "daily" ? `Dad's Safe #${c.no}` : H.name;
+    const back = c.mode === "hands" ? { label:"Hands-on", fn: handsMenu } : c.mode === "daily" ? { fn: () => hub() } : backFor();
+    const nodes = [topBar(label, back), bubble(c.say, "gamer")];
     nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind }, ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
-    const row = h("div", { class:"bz-row" });
-    if (c.won) {
+    const row = h("div", { class:"bz-row" }), over = c.won || c.lost;
+    if (c.mode === "daily") {
+      // one safe a day: no "new puzzle" here, just share it or go back
+      if (over) row.append(btn("Share result", "primary bz-focus", () => shareSafe(c)), btn("Menu", "ghost", () => hub()));
+      else row.append(btn("Ask Dad", "ghost", () => bridge?.coach("hands-lock")));
+    } else if (c.won) {
       row.append(c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
         : c.mode === "run" ? btn("Next puzzle →", "primary bz-focus", startRun)
+        : c.kind === "river" ? (c.level + 1 < CROSSINGS.length
+            ? btn("Next crossing →", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level + 1 }))
+            : btn("Play again", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level })))
         : btn("Play another", "primary bz-focus", () => startHands(c.kind, { mode:"hands" })));
       if (c.mode !== "escape") row.append(btn("Menu", "ghost", () => hub()));
     } else {
-      row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step })),
+      row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step, level:c.level })),
         btn("Ask Dad", "ghost", () => bridge?.coach("hands-" + c.kind)));
     }
-    nodes.push(row); paint(...nodes);
+    // count what people do after a hands-on win: replay after 3 stars, retry after fewer, or go to the next crossing
+    if (c.won && c.mode === "hands") row.firstChild.addEventListener("click", () => ping(c.kind === "river" && c.level + 1 < CROSSINGS.length ? "hands_next" : c.stars < 3 ? "hands_retry" : "hands_again"));
+    nodes.push(row, c.mode === "daily" && over ? safeFoot() : null); paint(...nodes);
     if (fk) { const el = root.querySelector(`[data-fk="${fk}"]`); if (el && !el.disabled) el.focus(); else focusFirst(".bz-sbtn:not(:disabled)"); }
   }
 
@@ -326,13 +355,14 @@
      B ? `${B === 1 ? "one digit is" : B === 2 ? "two digits are" : "all three are"} right but in the wrong place` : ""].filter(Boolean).join(", and ").replace(/^./, m => m.toUpperCase());
   function score(code, guess){ let A = 0, B = 0; [...guess].forEach((d, i) => { if (code[i] === d) A++; else if (code.includes(d)) B++; }); return [A, B]; }
   const fitsClue = (s, [g, A, B]) => { const [x, y] = score(s, g); return x === A && y === B; };
-  function makeLock(){
+  function makeLock(rand = Math.random){
+    const any = (a) => a[Math.floor(rand() * a.length)];
     for (let attempt = 0; attempt < 200; attempt++) {
-      const code = pick(ALL_CODES), clues = []; let fits = ALL_CODES;
+      const code = any(ALL_CODES), clues = []; let fits = ALL_CODES;
       while (fits.length > 1 && clues.length < 5) {
         let best = null;
         for (let k = 0; k < 10; k++) {
-          const g = pick(ALL_CODES), [A, B] = score(code, g);
+          const g = any(ALL_CODES), [A, B] = score(code, g);
           if (g === code || A + B === 3 || clues.some(x => x[0] === g)) continue;   // never hand over all three digits
           const left = fits.filter(s => fitsClue(s, [g, A, B])).length;
           if (left < fits.length && (!best || left < best.left)) best = { clue:[g, A, B], left };
@@ -345,8 +375,46 @@
     return { code:"316", clues:[["210", 1, 0], ["902", 0, 0], ["362", 1, 1], ["493", 0, 1]] };   // hand-checked fallback
   }
   function initLock(){
-    Object.assign(ctx, { lock:makeLock(), dial:[0, 0, 0], tries:[], crossed:new Set(), max:6, lost:false,
+    Object.assign(ctx, { dial:[0, 0, 0], tries:[], crossed:new Set(), max:6, lost:false,
       say:"Three digits, all different. The notes on the door are all you get." });
+    if (ctx.mode !== "daily") { ctx.lock = makeLock(); return; }
+    // Dad's Safe: the same code and clues for everyone today. Progress is kept, so closing it can't reroll the safe.
+    const s = S(), no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null;
+    Object.assign(ctx, { no, lock:makeLock(seeded(no * 7919 + 13)) });
+    if (!d) { ctx.say = "Today's safe. Everyone gets the same code, and you get six tries. " + ctx.say; saveSafe(ctx); ping("safe_open"); return; }
+    Object.assign(ctx, { tries:d.tries.map(t => t.slice()), crossed:new Set(d.crossed || []), hinted:!!d.hinted, lost:!!d.lost, won:!!d.won, stars:d.stars || 0 });
+    ctx.say = d.won ? `You cracked today's safe in ${d.tries.length + 1}. A new one opens at midnight.`
+      : d.lost ? `Today's safe beat you. The code was ${ctx.lock.code}. A new one opens at midnight.`
+      : d.tries.length ? "Picking up where you left off. Same safe, same clues." : ctx.say;
+  }
+  function saveSafe(c){
+    if (c.mode !== "daily") return;
+    S().safeDay = { no:c.no, tries:c.tries, crossed:[...c.crossed], hinted:!!c.hinted, won:!!c.won, lost:!!c.lost, stars:c.stars || 0 }; save();
+  }
+  // days in a row counts days you finished the safe, won or lost. A missed day just starts it again, without a word.
+  function finishSafe(c, won){
+    const s = S(), st = (s.safeStats ||= { played:0, won:0, run:0, bestRun:0, last:0 });
+    if (st.last === c.no) return;
+    st.played++; if (won) st.won++;
+    st.run = st.last === c.no - 1 ? st.run + 1 : 1; st.last = c.no; st.bestRun = Math.max(st.bestRun, st.run);
+    saveSafe(c); ping(won ? "safe_win" : "safe_fail");
+  }
+  function safeFoot(){
+    const st = S().safeStats || {}, n = new Date(), mid = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+    const mins = Math.max(1, Math.ceil((mid - n) / 60000));
+    return h("p", { class:"bz-foot" }, `Safes cracked: ${st.won || 0} of ${st.played || 0}` + (st.run > 1 ? ` · ${st.run} days in a row` : "")
+      + ` · Next safe in ${Math.floor(mins / 60)}h ${mins % 60}m`);
+  }
+  // a spoiler-free result for the group chat: one row per try, never the digits
+  function shareSafe(c){
+    const rows = c.tries.map(([, A, B]) => "🟢".repeat(A) + "🟡".repeat(B) + "⚫".repeat(3 - A - B));
+    if (c.won) rows.push("🟢🟢🟢");
+    const head = `🔐 Dad's Safe #${c.no} · ${c.won ? c.tries.length + 1 : "X"}/${c.max}`
+      + (c.won ? " " + "★".repeat(c.stars) + "☆".repeat(3 - c.stars) : "") + (c.hinted ? " 💡" : "");
+    ping("safe_share");
+    const text = [head, ...rows].join("\n");
+    if (bridge?.shareText) bridge.shareText(text, "Dad's Safe");
+    else navigator.clipboard?.writeText(text).catch(() => {});
   }
   const lockStars = (c, used) => capStars(c, used <= 2 ? 3 : used <= 4 ? 2 : 1);
   const pegs = (A, B) => h("span", { class:"bz-pegs", "aria-hidden":"true" }, [0, 1, 2].map(i => h("i", { class:"bz-peg" + (i < A ? "" : i < A + B ? " ring" : " dash") })));
@@ -370,8 +438,9 @@
       if (g === c.lock.code) { const n = c.tries.length + 1;
         return handsWon(lockStars(c, n), n <= 2 ? `Cracked in ${n}. Should I be worried about my wallet?` : `Open in ${n} tries. The golden cartridge is yours. Don't sell it.`); }
       const [A, B] = score(c.lock.code, g); c.tries.push([g, A, B]);
-      if (c.tries.length >= c.max) { c.lost = true; buzz(120); c.say = `Six tries and it's still shut. The code was ${c.lock.code}. The safe and I are both disappointed.`; }
-      else c.say = c.tries.length === c.max - 1 ? "One try left. No pressure. Some pressure." : "Not it. But the safe just told you something. Read the row.";
+      if (c.tries.length >= c.max) { c.lost = true; buzz(120); c.say = `Six tries and it's still shut. The code was ${c.lock.code}. The safe and I are both disappointed.`;
+        if (c.mode === "daily") { c.say += " Same time tomorrow?"; finishSafe(c, false); } }
+      else { c.say = c.tries.length === c.max - 1 ? "One try left. No pressure. Some pressure." : "Not it. But the safe just told you something. Read the row."; saveSafe(c); }
       renderHands();
     };
     return [hudRow,
@@ -381,86 +450,166 @@
         h("div", { class:"bz-dials" }, h("div", { class:"bz-tumblers" }, dial(0), dial(1), dial(2)),
           h("span", { class:"bz-handle", "aria-hidden":"true", html:`<svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" style="fill:none;stroke:var(--n-dim);stroke-width:6"/><path d="M42 8v68M8 42h68M18 18l48 48M66 18L18 66" style="stroke:var(--n-dim);stroke-width:5;stroke-linecap:round"/><circle cx="42" cy="42" r="12" style="fill:var(--n-accent)"/><circle cx="42" cy="42" r="4" style="fill:var(--n-accent-ink)"/></svg>` })),
         h("div", { class:"bz-pad", role:"group", "aria-label":"Scratchpad: cross out digits you have ruled out" }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d =>
-          btn(String(d), c.crossed.has(d) ? "x" : "", () => { if (c.crossed.has(d)) c.crossed.delete(d); else c.crossed.add(d); renderHands(); },
+          btn(String(d), c.crossed.has(d) ? "x" : "", () => { if (c.crossed.has(d)) c.crossed.delete(d); else c.crossed.add(d); saveSafe(c); renderHands(); },
             { "aria-pressed":String(c.crossed.has(d)), "aria-label":`${d}${c.crossed.has(d) ? ", crossed out" : ""}`, "data-fk":"p" + d }))),
         h("ol", { class:"bz-tries", "aria-label":"Your tries" }, Array.from({ length:c.max }, (_, i) => { const t = c.tries[i];
           return h("li", { class:"bz-try" + (t ? " used" : ""), "aria-label": t ? `Try ${i + 1}: ${t[0]}, ${clueText(t[1], t[2])}` : `Try ${i + 1}: not used` }, t ? [h("span", { "aria-hidden":"true" }, t[0]), pegs(t[1], t[2])] : null); }))),
       c.lost ? null : h("div", { class:"bz-ctl" },
         sbtn("Hint", "hintb", () => { const free = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(d => !c.lock.code.includes(String(d)) && !c.crossed.has(d));
           if (!free.length) { c.say = "Every wrong digit is crossed out. The rest is on you."; return renderHands(); }
-          c.hinted = true; c.crossed.add(free[0]); c.say = `Fine. ${free[0]} isn't in the code, so I crossed it out. A hint caps this one at 2 stars.`; renderHands(); }, { "data-fk":"hint" }),
-        sbtn("Clear", "", () => { c.crossed.clear(); renderHands(); }, { disabled:!c.crossed.size, "data-fk":"clear" }),
+          c.hinted = true; c.crossed.add(free[0]); c.say = `Fine. ${free[0]} isn't in the code, so I crossed it out. A hint caps this one at 2 stars.`; saveSafe(c); renderHands(); }, { "data-fk":"hint" }),
+        sbtn("Clear", "", () => { c.crossed.clear(); saveSafe(c); renderHands(); }, { disabled:!c.crossed.size, "data-fk":"clear" }),
         sbtn("Try code", "go", tryIt, { "data-fk":"try" })),
     ];
   }
 
-  // ---------- Crossings (River Run): dog, cat, pizza. The boat holds Dad plus one. ----------
-  const RIVER = ["dog", "cat", "pizza"], RNAME = { dog:"Dog", cat:"Cat", pizza:"Pizza" };
-  const RICON = {
+  // ---------- Crossings (River Run): a pack of four crossing puzzles that share one engine ----------
+  // A level is: who has to cross (tokens), what a load may be (fits), what a trip costs, and what goes wrong (trouble).
+  const CICON = {
     dog:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M9 7C5 7 3 11 3 16c0 3 2 5 4 4l2-3v7a9 9 0 0018 0v-7l2 3c2 1 4-1 4-4 0-5-2-9-6-9z" style="fill:var(--n-lit)"/><circle cx="14" cy="17" r="1.9" style="fill:var(--n-off)"/><circle cx="22" cy="17" r="1.9" style="fill:var(--n-off)"/><ellipse cx="18" cy="23.5" rx="3.2" ry="2.3" style="fill:var(--n-off)"/></svg>`,
     cat:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M6 4l6 7h12l6-7v16a12 12 0 01-24 0z" style="fill:var(--n-lit)"/><circle cx="13" cy="19" r="1.9" style="fill:var(--n-off)"/><circle cx="23" cy="19" r="1.9" style="fill:var(--n-off)"/><path d="M16.3 23h3.4l-1.7 2.2z" style="fill:var(--n-off)"/><path d="M3 22l6 1M3 26l6-1M33 22l-6 1M33 26l-6-1" style="stroke:var(--n-off);stroke-width:1.3;stroke-linecap:round"/></svg>`,
     pizza:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 33L4 8a30 30 0 0128 0z" style="fill:var(--n-lit)"/><path d="M4 8a30 30 0 0128 0" style="fill:none;stroke:var(--n-sil);stroke-width:4;stroke-linecap:round"/><circle cx="14.5" cy="15" r="2.6" style="fill:var(--n-sil)"/><circle cx="21.5" cy="18" r="2.6" style="fill:var(--n-sil)"/><circle cx="17.5" cy="24" r="2.1" style="fill:var(--n-sil)"/></svg>`,
+    dad:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M18 3v5" style="stroke:var(--n-lit);stroke-width:2.4;stroke-linecap:round"/><circle cx="18" cy="3.5" r="2.4" style="fill:var(--n-lit)"/><rect x="6" y="8" width="24" height="24" rx="7" style="fill:var(--n-lit)"/><rect x="10" y="14" width="6" height="5" rx="2" style="fill:var(--n-off)"/><rect x="20" y="14" width="6" height="5" rx="2" style="fill:var(--n-off)"/><path d="M10.5 26q3.7-3.6 7.5 0 3.8-3.6 7.5 0-3.7 2.6-7.5.5-3.8 2.1-7.5-.500z" style="fill:var(--n-off)"/></svg>`,
+    zombie:`<svg viewBox="0 0 36 36" aria-hidden="true"><path d="M6 13l4-6 3 4 5-6 5 6 3-4 4 6v12a7 7 0 01-7 7H13a7 7 0 01-7-7z" style="fill:var(--n-ink)"/><path d="M10.5 15l5 5M15.5 15l-5 5M20.5 15l5 5M25.5 15l-5 5" style="stroke:var(--n-off);stroke-width:2.2;stroke-linecap:round"/><path d="M11 27l2.3-2.5 2.4 2.5 2.3-2.5 2.3 2.5 2.4-2.5 2.3 2.5" style="fill:none;stroke:var(--n-off);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/></svg>`,
+    kid:`<svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="21" r="10" style="fill:var(--n-lit)"/><path d="M8 17a10 10 0 0120 0h5v3H8z" style="fill:var(--n-sil)"/><circle cx="14.5" cy="22" r="1.7" style="fill:var(--n-off)"/><circle cx="21.5" cy="22" r="1.7" style="fill:var(--n-off)"/><path d="M14.5 26.500q3.5 2.5 7 0" style="fill:none;stroke:var(--n-off);stroke-width:1.8;stroke-linecap:round"/></svg>`,
   };
-  // who gets into trouble on `bank` once the boat leaves (the dog can't be left with the cat or the pizza)
-  const riverTrouble = (pos, bank, carried) => { const there = (k) => k !== carried && pos[k] === bank;
-    return there("dog") && there("cat") ? "cat" : there("dog") && there("pizza") ? "pizza" : ""; };
-  // shortest way home from any position: returns the next thing to carry ("empty" for nobody)
-  function riverNext(pos, boat){
-    const key = (p, b) => "" + p.dog + p.cat + p.pizza + b, seen = new Set([key(pos, boat)]), q = [{ p:pos, b:boat, first:null }];
-    while (q.length) { const n = q.shift();
-      if (n.p.dog && n.p.cat && n.p.pizza) return n.first;
-      for (const carry of [null, ...RIVER.filter(k => n.p[k] === n.b)]) {
-        if (riverTrouble(n.p, n.b, carry)) continue;
-        const p = { ...n.p }, b = 1 - n.b; if (carry) p[carry] = b;
-        if (seen.has(key(p, b))) continue; seen.add(key(p, b));
-        q.push({ p, b, first: n.first || carry || "empty" }); } }
+  const sideCount = (L, pos, side, type) => L.tokens.filter(t => t.type === type && pos[t.id] === side).length;
+  const CROSSINGS = [
+    { id:"classic", name:"Dog, cat, pizza", seats:1, rower:true, par:7, unit:"Trips", far:"Far bank · the party", near:"Near bank · home",
+      tokens:[{ id:"dog", type:"dog", label:"Dog" }, { id:"cat", type:"cat", label:"Cat" }, { id:"pizza", type:"pizza", label:"Pizza" }],
+      intro:"Dog, cat, pizza. The boat fits me plus one. Never leave the dog alone with the cat or the pizza.",
+      fits:(load) => load.length <= 1 ? "" : "The boat fits me plus one. Put one back.",
+      cost:() => 1,
+      // I'm wherever the boat is, so only the other bank can go wrong
+      trouble:(pos, boat) => { const there = (k) => pos[k] === 1 - boat;
+        return there("dog") && there("cat") ? { bad:["dog", "cat"], say:"You left the dog alone with the cat. The cat is now on the roof. Undo that." }
+          : there("dog") && there("pizza") ? { bad:["dog", "pizza"], gone:"pizza", say:"You left the dog alone with the pizza. There is no more pizza. Undo that." } : null; },
+      win:(n) => n <= 7 ? `Everyone across in ${n} trips, pizza intact. Textbook.` : `Everyone made it in ${n} trips. It can be done in 7, just saying.` },
+    { id:"bridge", name:"The bridge at night", seats:2, par:17, limit:17, unit:"Minutes", bridge:true, far:"Far side · safe", near:"Near side · in the dark",
+      tokens:[{ id:"m1", type:"mins", mins:1, label:"The sprinter, 1 minute" }, { id:"m2", type:"mins", mins:2, label:"Dad, 2 minutes" }, { id:"m5", type:"mins", mins:5, label:"Uncle, 5 minutes" }, { id:"m10", type:"mins", mins:10, label:"Grandpa, 10 minutes" }],
+      intro:"Four of us, one rickety bridge, one flashlight with 17 minutes of battery. Two at most cross together, at the slower one's pace, and the flashlight has to come back each time.",
+      fits:(load) => load.length <= 2 ? "" : "The bridge holds two at a time. Send one back.",
+      empty:"Someone has to carry the flashlight. Pick who's walking.",
+      cost:(load) => Math.max(...load.map(t => t.mins)),
+      trouble:() => null,
+      late:(n, done) => done ? `Everyone's across, but that took ${n} minutes and the flashlight died at 17. There is a faster way. Undo and find it.`
+        : `That's ${n} minutes gone. The flashlight died at 17 and someone is standing in the dark. Undo that.`,
+      win:() => "Seventeen minutes on the dot. Most people swear it takes nineteen. You're not most people." },
+    { id:"zombies", name:"Dads and zombies", seats:2, par:11, unit:"Trips", far:"Far bank · safe", near:"Near bank · not safe",
+      tokens:[{ id:"d1", type:"dad", label:"Dad 1" }, { id:"d2", type:"dad", label:"Dad 2" }, { id:"d3", type:"dad", label:"Dad 3" }, { id:"z1", type:"zombie", label:"Zombie 1" }, { id:"z2", type:"zombie", label:"Zombie 2" }, { id:"z3", type:"zombie", label:"Zombie 3" }],
+      intro:"Three dads, three zombies, one boat for two. Zombies can row, oddly. If zombies ever outnumber the dads on a bank, those dads are lunch.",
+      fits:(load) => load.length <= 2 ? "" : "The boat holds two. Put one back.",
+      empty:"The boat won't row itself. Put someone in it.",
+      cost:() => 1,
+      trouble(pos){ for (const side of [0, 1]) { const d = sideCount(this, pos, side, "dad"), z = sideCount(this, pos, side, "zombie");
+        if (d && z > d) return { bad:this.tokens.filter(t => pos[t.id] === side).map(t => t.id), say:`${z} zombies, ${d === 1 ? "one dad" : d + " dads"} on the ${side ? "far" : "near"} bank. That's lunch. Undo that.` }; }
+        return null; },
+      win:(n) => n <= 11 ? `All six across in ${n} trips and nobody got eaten. I'm impressed, and slightly worried.` : `Everyone survived in ${n} trips. Eleven is possible, but alive is alive.` },
+    { id:"gig", name:"Load-in at the gig", seats:2, par:9, unit:"Trips", far:"Far bank · the gig", near:"Near bank · the van",
+      tokens:[{ id:"g1", type:"dad", wt:2, label:"Dad, heavy" }, { id:"g2", type:"dad", wt:2, label:"The drummer, heavy" }, { id:"k1", type:"kid", wt:1, label:"Roadie kid 1, light" }, { id:"k2", type:"kid", wt:1, label:"Roadie kid 2, light" }],
+      intro:"My band has a gig across the river. The boat holds one grown-up or two kids, never more. Everyone can row.",
+      fits:(load) => load.reduce((n, t) => n + t.wt, 0) <= 2 ? "" : "Too heavy. One grown-up or two kids, that's the boat's limit.",
+      empty:"The boat won't row itself. Put someone in it.",
+      cost:() => 1,
+      trouble:() => null,
+      win:(n) => n <= 9 ? `Whole band across in ${n} trips. The kids did most of the rowing. As it should be.` : `We made the gig in ${n} trips. Nine would have left time for a soundcheck.` },
+  ];
+  // cheapest way home from any position (Dijkstra; at most 128 positions). Returns { load:[ids], total } or null if there's no way.
+  function crossNext(L, pos, boat){
+    const ids = L.tokens.map(t => t.id), key = (p, b) => ids.map(i => p[i]).join("") + b;
+    const best = new Map([[key(pos, boat), 0]]), open = [{ p:pos, b:boat, cost:0, first:null }];
+    while (open.length) {
+      open.sort((x, y) => x.cost - y.cost); const n = open.shift();
+      if (n.cost > best.get(key(n.p, n.b))) continue;
+      if (ids.every(i => n.p[i] === 1)) return { load:n.first || [], total:n.cost };
+      const here = L.tokens.filter(t => n.p[t.id] === n.b), loads = L.rower ? [[]] : [];
+      here.forEach((a, i) => { loads.push([a]); if (L.seats > 1) here.slice(i + 1).forEach(b2 => loads.push([a, b2])); });
+      for (const load of loads) {
+        if (L.fits(load)) continue;
+        const p = { ...n.p }, b = 1 - n.b; load.forEach(t => { p[t.id] = b; });
+        if (L.trouble(p, b)) continue;
+        const cost = n.cost + (load.length ? L.cost(load) : 1), k = key(p, b);
+        if (best.has(k) && best.get(k) <= cost) continue;
+        best.set(k, cost); open.push({ p, b, cost, first: n.first || load.map(t => t.id) });
+      }
+    }
     return null;
   }
+  const crossOpen = (s) => Math.min(CROSSINGS.length - 1, CROSSINGS.filter(L => (s.crossStars || {})[L.id]).length);   // highest level you may play
   function initRiver(){
-    Object.assign(ctx, { pos:{ dog:0, cat:0, pizza:0 }, boat:0, load:null, trips:0, fail:"", past:[], hint:null, slide:null,
-      say:"Dog, cat, pizza. The boat fits me plus one. Never leave the dog alone with the cat or the pizza." });
+    const s = S(), top = crossOpen(s);
+    const level = ctx.mode !== "hands" ? 0 : Math.min(ctx.level ?? top, top), L = CROSSINGS[level];
+    Object.assign(ctx, { level, pos:Object.fromEntries(L.tokens.map(t => [t.id, 0])), boat:0, load:[], used:0, fail:null, past:[], hint:null, slide:null, say:L.intro });
   }
-  const riverStars = (c) => capStars(c, c.trips <= 7 ? 3 : c.trips <= 9 ? 2 : 1);
+  const riverStars = (c, L) => capStars(c, c.used <= L.par ? 3 : c.used <= L.par + 2 ? 2 : 1);
   function drawRiver(){
-    const c = ctx, live = !c.won && !c.fail;
-    const token = (k, onBoat) => btn("", "bz-tok" + (c.fail && !onBoat && (k === "dog" || k === c.fail) ? " flag" : "") + (live && c.hint === k ? " hint" : "") + (c.fail === "pizza" && k === "pizza" ? " gone" : ""), () => {
+    const c = ctx, s = S(), L = CROSSINGS[c.level], live = !c.won && !c.fail, small = L.tokens.length > 3, sz = small ? " sm" : "";
+    const loaded = (t) => c.load.includes(t.id);
+    const face = (t) => t.type === "mins" ? `<span class="bz-mins" aria-hidden="true"><b>${t.mins}</b><small>min</small></span>` : CICON[t.type] + (t.wt ? `<i class="bz-wt" aria-hidden="true">${t.wt === 2 ? "heavy" : "light"}</i>` : "");
+    const token = (t, onBoat) => btn("", "bz-tok" + sz + (c.fail && c.fail.bad.includes(t.id) ? " flag" : "") + (live && c.hint && c.hint.includes(t.id) && !onBoat ? " hint" : "") + (c.fail && c.fail.gone === t.id ? " gone" : ""), () => {
       if (!live) return; c.hint = null;
-      if (onBoat) c.load = null;
-      else if (c.pos[k] !== c.boat) c.say = `The boat is on the other bank. I'm not swimming back for the ${k}.`;
-      else c.load = k;
+      if (onBoat) c.load = c.load.filter(id => id !== t.id);
+      else if (c.pos[t.id] !== c.boat) c.say = L.bridge ? "The flashlight is on the other side. Nobody walks that bridge in the dark." : "The boat is on the other bank. Nobody's swimming.";
+      else { const why = L.fits(L.tokens.filter(x => loaded(x) || x === t)); if (why) c.say = why; else c.load.push(t.id); }
       renderHands();
-    }, { html:RICON[k], "data-fk":"t-" + k, "aria-label": onBoat ? `${RNAME[k]}, in the boat. Tap to put back` : `${RNAME[k]}, on the ${c.pos[k] ? "far" : "near"} bank` + (c.pos[k] === c.boat ? ". Tap to load into the boat" : "") });
-    const slot = (k, side) => c.pos[k] === side && c.load !== k ? h("span", { class:"bz-slot" }, token(k, false)) : h("span", { class:"bz-slot empty", "aria-hidden":"true" });
-    const bank = (side) => h("div", { class:"bz-bank2" }, h("small", {}, side ? "Far bank · the party" : "Near bank · home"), h("div", { class:"bz-slots" }, RIVER.map(k => slot(k, side))));
+    }, { html:face(t), "data-fk":"t-" + t.id, "aria-label": onBoat ? `${t.label}, ${L.bridge ? "about to cross" : "in the boat"}. Tap to take back` : `${t.label}, on the ${c.pos[t.id] ? "far" : "near"} side` + (c.pos[t.id] === c.boat ? `. Tap to ${L.bridge ? "send across" : "load into the boat"}` : "") });
+    const slotCls = "bz-slot" + sz;
+    const bank = (side) => h("div", { class:"bz-bank2" }, h("small", {}, side ? L.far : L.near),
+      h("div", { class:"bz-slots" + (L.tokens.length > 4 ? " six" : small ? " many" : "") }, L.tokens.map(t => c.pos[t.id] === side && !loaded(t) ? h("span", { class:slotCls }, token(t, false)) : h("span", { class:slotCls + " empty", "aria-hidden":"true" }))));
     const cross = () => {
       if (!live) return;
-      c.past.push({ pos:{ ...c.pos }, boat:c.boat, trips:c.trips });
-      const from = c.boat, fail = riverTrouble(c.pos, from, c.load);
-      if (c.load) c.pos[c.load] = 1 - from;
-      c.boat = 1 - from; c.load = null; c.trips++; c.hint = null; c.slide = from;
-      if (fail) { c.fail = fail; buzz(120);
-        c.say = fail === "cat" ? "You left the dog alone with the cat. The cat is now on the roof. Undo that." : "You left the dog alone with the pizza. There is no more pizza. Undo that."; return renderHands(); }
-      if (RIVER.every(k => c.pos[k] === 1)) return handsWon(riverStars(c), c.trips <= 7 ? `Everyone across in ${c.trips} trips, pizza intact. Textbook.` : `Everyone made it in ${c.trips} trips. It can be done in 7, just saying.`);
-      c.say = pick(["Rowing, rowing. Think about who gets left behind.", "My arms are getting tired. Robot arms, but still.", "Made it across. Who's next?"]);
+      const load = L.tokens.filter(loaded);
+      if (!load.length && !L.rower) { c.say = L.empty; return renderHands(); }
+      c.past.push({ pos:{ ...c.pos }, boat:c.boat, used:c.used });
+      const from = c.boat; load.forEach(t => { c.pos[t.id] = 1 - from; });
+      c.boat = 1 - from; c.used += load.length ? L.cost(load) : 1; c.load = []; c.hint = null; c.slide = from;
+      const done = L.tokens.every(t => c.pos[t.id] === 1);
+      const bad = L.trouble(c.pos, c.boat) || (L.limit && c.used > L.limit ? { bad:[], say:L.late(c.used, done) } : null);
+      if (bad) { c.fail = bad; c.say = bad.say; buzz(120); return renderHands(); }
+      if (done) { const st = riverStars(c, L);
+        if (c.mode === "hands") { s.crossStars ||= {}; s.crossStars[L.id] = Math.max(s.crossStars[L.id] || 0, st); }
+        return handsWon(st, L.win(c.used)); }
+      c.say = L.limit ? `${c.used} of ${L.limit} minutes used. The battery is not getting any younger.`
+        : pick(["Made it across. Think about who gets left behind.", "Rowing, rowing. Robot arms, but still.", "Across. Who's next?"]);
       renderHands();
     };
-    const undo = () => { const p = c.past.pop(); if (!p) return; Object.assign(c, { pos:p.pos, boat:p.boat, trips:p.trips, load:null, fail:"", hint:null, slide:null }); c.say = "Trip undone. We never speak of it."; renderHands(); };
+    const undo = () => { const p = c.past.pop(); if (!p) return; Object.assign(c, { pos:p.pos, boat:p.boat, used:p.used, load:[], fail:null, hint:null, slide:null }); c.say = "Trip undone. We never speak of it."; renderHands(); };
+    const hint = () => {
+      const next = crossNext(L, c.pos, c.boat);
+      if (!next || (L.limit && c.used + next.total > L.limit)) { c.say = L.limit ? "From here the battery can't last. Undo a trip or two, then ask me again." : "No way home from here. Undo a trip, then ask me again."; return renderHands(); }
+      c.hinted = true; c.hint = next.load; c.load = c.load.filter(id => next.load.includes(id));
+      const names = next.load.map(id => L.tokens.find(t => t.id === id).label.split(",")[0].toLowerCase());
+      c.say = (names.length ? `Hint: send ${names.join(" and ")} across.` : "Hint: row back with an empty boat.") + " A hint caps this one at 2 stars."; renderHands();
+    };
     // draw the boat where it was, then let it glide to where it is now
     const startAt = c.slide == null ? c.boat : c.slide; c.slide = null;
+    const seats = Array.from({ length:L.seats }, (_, i) => { const t = L.tokens.filter(loaded)[i]; return t ? h("span", { class:slotCls }, token(t, true)) : h("span", { class:slotCls + " empty", "aria-hidden":"true" }); });
     const boat = h("div", { class:"bz-boat2" + (startAt ? "" : " near") },
-      h("span", { class:"bz-hull", "aria-hidden":"true", html:`<svg viewBox="0 0 184 84"><path d="M6 20h172q0 44-30 58H36Q6 64 6 20z" style="fill:var(--n-roof);stroke:var(--n-roof-edge);stroke-width:3;stroke-linejoin:round"/><path d="M20 34h144" style="stroke:var(--n-roof-edge);stroke-width:3;stroke-linecap:round"/></svg>` }),
-      h("div", { class:"bz-crew" }, dadSVG("gamer"), c.load ? h("span", { class:"bz-slot" }, token(c.load, true)) : h("span", { class:"bz-slot empty", "aria-hidden":"true" })));
+      h("span", { class:"bz-hull", "aria-hidden":"true", html: L.bridge
+        ? `<svg viewBox="0 0 184 84"><ellipse cx="92" cy="42" rx="88" ry="40" style="fill:var(--n-lit);opacity:.16"/><ellipse cx="92" cy="42" rx="60" ry="30" style="fill:var(--n-lit);opacity:.14"/></svg>`
+        : `<svg viewBox="0 0 184 84"><path d="M6 20h172q0 44-30 58H36Q6 64 6 20z" style="fill:var(--n-roof);stroke:var(--n-roof-edge);stroke-width:3;stroke-linejoin:round"/><path d="M20 34h144" style="stroke:var(--n-roof-edge);stroke-width:3;stroke-linecap:round"/></svg>` }),
+      h("div", { class:"bz-crew" }, L.rower ? dadSVG("gamer") : null,
+        L.bridge ? h("span", { class:"bz-torch", "aria-hidden":"true", html:`<svg viewBox="0 0 24 24"><path d="M8 3h8l-1.5 6v10a2.5 2.5 0 01-5 0V9z" style="fill:var(--n-ink)"/><path d="M8 3h8" style="stroke:var(--n-lit);stroke-width:3;stroke-linecap:round"/></svg>` }) : null, seats));
     if (startAt !== c.boat) requestAnimationFrame(() => requestAnimationFrame(() => boat.classList.toggle("near", !c.boat)));
+    const top = crossOpen(s);
     return [
-      h("div", { class:"bz-hud" }, stat(String(c.trips), "Trips · par 7"), starsEl(c.won ? c.stars : riverStars(c), c.won), stat(c.boat ? "Far" : "Near", "Boat is on")),
-      h("div", { class:"bz-cross" }, bank(1),
-        h("div", { class:"bz-river2" }, h("span", { "aria-hidden":"true", html:`<svg class="bz-waves" viewBox="0 0 318 186" preserveAspectRatio="none"><path d="M10 34q12-8 24 0t24 0M200 52q12-8 24 0t24 0M60 96q12-8 24 0t24 0M236 118q12-8 24 0t24 0M24 152q12-8 24 0t24 0M150 160q12-8 24 0t24 0" style="fill:none;stroke:var(--n-wave);stroke-width:2.5;stroke-linecap:round"/></svg>` }), boat),
+      c.mode !== "hands" ? null : h("div", { class:"bz-levels", role:"group", "aria-label":"Choose a crossing" }, CROSSINGS.map((X, i) => {
+        const got = (s.crossStars || {})[X.id] || 0;
+        return btn("", "bz-lvl" + (i === c.level ? " on" : ""), () => startHands("river", { mode:"hands", level:i }),
+          { disabled:i > top, ...(i === c.level ? { "aria-current":"true" } : {}), "data-fk":"lvl" + i,
+            "aria-label":`Crossing ${i + 1}: ${X.name}` + (i > top ? ", locked. Finish the one before it first" : got ? `, best ${got} of 3 stars` : ""),
+            html:`<b>${i + 1}</b><small aria-hidden="true">${i > top ? "locked" : got ? "★".repeat(got) + "☆".repeat(3 - got) : "new"}</small>` }); })),
+      h("div", { class:"bz-hud" }, stat(L.limit ? `${c.used} / ${L.limit}` : String(c.used), L.limit ? "Minutes of battery" : `Trips · par ${L.par}`), starsEl(c.won ? c.stars : riverStars(c, L), c.won),
+        stat(L.name, c.mode === "hands" ? `Crossing ${c.level + 1} of ${CROSSINGS.length}` : "Crossing", { class:"bz-stat bz-lname" })),
+      h("div", { class:"bz-cross" + (L.bridge ? " bridge" : "") }, bank(1),
+        h("div", { class:"bz-river2" }, h("span", { "aria-hidden":"true", html: L.bridge
+          ? `<svg class="bz-waves" viewBox="0 0 318 186" preserveAspectRatio="none"><path d="M96 0v186M222 0v186" style="stroke:var(--n-roof-edge);stroke-width:4"/><path d="M96 14h126M96 40h126M96 66h126M96 92h126M96 118h126M96 144h126M96 170h126" style="stroke:var(--n-roof);stroke-width:12"/></svg>`
+          : `<svg class="bz-waves" viewBox="0 0 318 186" preserveAspectRatio="none"><path d="M10 34q12-8 24 0t24 0M200 52q12-8 24 0t24 0M60 96q12-8 24 0t24 0M236 118q12-8 24 0t24 0M24 152q12-8 24 0t24 0M150 160q12-8 24 0t24 0" style="fill:none;stroke:var(--n-wave);stroke-width:2.5;stroke-linecap:round"/></svg>` }), boat),
         bank(0)),
       c.won ? null : c.fail ? h("div", { class:"bz-ctl two" }, sbtn("Undo that trip", "go", undo, { "data-fk":"undo" }))
         : h("div", { class:"bz-ctl" },
           sbtn("Undo", "", undo, { disabled:!c.past.length, "data-fk":"undo" }),
-          sbtn("Hint", "hintb", () => { const next = riverNext(c.pos, c.boat); if (!next) return; c.hinted = true; c.hint = next;
-            c.say = (next === "empty" ? "Hint: row back with an empty boat." : `Hint: take the ${next} across.`) + " A hint caps this one at 2 stars."; if (c.load && c.load !== next) c.load = null; renderHands(); }, { "data-fk":"hint" }),
+          sbtn("Hint", "hintb", hint, { "data-fk":"hint" }),
           sbtn("Cross", "go", cross, { "data-fk":"cross" })),
     ];
   }
@@ -535,6 +684,7 @@
     const done = (i) => (s.rooms[i] || 0) >= 3, all = E.rooms.every((_, i) => done(i));
     paint(topBar(E.title, { fn: () => hub() }),
       bubble(all ? (s.escaped ? "We did it once. Fancy doing it again?" : "That's every digit! Get to the keypad!") : E.intro, "modern"),
+      garageScene(E, s, done, all),
       h("div", { class:"bz-rooms" }, E.rooms.map((r, i) => {
         const open = i === 0 || done(i - 1), st = s.rooms[i] || 0;
         const b = btn("", "bz-room" + (done(i) ? " done" : "") + (open && !done(i) ? " bz-focus" : ""), () => roomView(i), { disabled:!open });
@@ -545,6 +695,41 @@
           b.append(h("span", { class:"bz-ic", "aria-hidden":"true" }, "⌨️"), h("b", {}, "Garage door keypad"), h("small", {}, all ? "Enter the code!" : `${E.rooms.filter((_, i) => done(i)).length} of ${n} digits`)); return b; })()),
       s.escaped ? h("div", { class:"bz-row" }, btn("Reset the rooms and play again", "ghost", () => { s.rooms = {}; save(); escapeMenu(); })) : null);
     focusFirst();
+  }
+  // The garage, drawn: each corner is tappable, locked corners are dim, solved ones show their digit,
+  // the next one glows, and the keypad by the door fills in as you go. The buttons below stay for keyboards and screen readers.
+  function garageScene(E, s, done, all){
+    const open = (i) => i === 0 || done(i - 1), now = E.rooms.findIndex((_, i) => open(i) && !done(i));
+    const digits = E.rooms.map((r, i) => done(i) ? r.digit : "_").join(" ");
+    const spot = (i, x, y, w, hh, art) => {
+      const st = done(i) ? "done" : open(i) ? (i === now ? "now" : "open") : "locked";
+      const badge = st === "done" ? `<g class="gz-badge"><circle cx="${x + w - 6}" cy="${y + 6}" r="11" fill="#FFD866" stroke="#1E1E24" stroke-width="2"/><text x="${x + w - 6}" y="${y + 10.5}" text-anchor="middle" font-size="13" font-weight="900" fill="#1E1E24">${E.rooms[i].digit}</text></g>`
+        : st === "locked" ? `<text x="${x + w / 2}" y="${y + hh / 2 + 6}" text-anchor="middle" font-size="18">🔒</text>` : "";
+      const ring = st === "now" ? `<rect class="gz-ring" x="${x - 4}" y="${y - 4}" width="${w + 8}" height="${hh + 8}" rx="10" fill="none" stroke="#FFD866" stroke-width="2.5" stroke-dasharray="6 4"/>` : "";
+      return `<g class="gz-spot gz-${st}" data-room="${i}">${ring}<g class="gz-art">${art}</g>${badge}<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="transparent"/></g>`;
+    };
+    const svg = `<svg viewBox="0 0 320 200" role="img" aria-label="Dad's garage. Code so far: ${digits.replace(/_/g, "blank")}">
+      <rect width="320" height="200" fill="#3B4150"/><path d="M0 150 L320 150 L320 200 L0 200Z" fill="#2A2D36"/>
+      <path d="M0 150 L320 150" stroke="#1E1E24" stroke-width="2"/>
+      <g><rect x="112" y="40" width="96" height="110" fill="#8C97A3" stroke="#1E1E24" stroke-width="2"/>
+        ${[0,1,2,3,4,5,6].map(k => `<path d="M112 ${54 + k * 14} H208" stroke="#6B7580" stroke-width="2"/>`).join("")}
+        <rect x="150" y="128" width="20" height="5" rx="2" fill="#5A6470"/></g>
+      <g class="gz-keypad${all ? " gz-ready" : ""}" data-keypad="1"><rect x="214" y="78" width="24" height="34" rx="3" fill="#1E1E24" stroke="${all ? "#FFD866" : "#5A6470"}" stroke-width="2"/>
+        <rect x="217" y="81" width="18" height="7" rx="1" fill="${all ? "#9BE08A" : "#3D5A3A"}"/>
+        ${[0,1,2].map(r => [0,1,2].map(c => `<rect x="${218 + c * 6}" y="${92 + r * 6}" width="4" height="4" fill="#C9D1D9"/>`).join("")).join("")}<rect x="210" y="74" width="32" height="42" fill="transparent"/></g>
+      <rect x="112" y="16" width="96" height="18" rx="4" fill="#1E1E24"/><text x="160" y="29.5" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" font-weight="800" fill="#9BE08A" letter-spacing="2">CODE ${digits}</text>
+      ${spot(0, 10, 112, 92, 38, `<rect x="12" y="122" width="88" height="8" fill="#A0703A" stroke="#1E1E24" stroke-width="2"/><path d="M18 130 v20 M94 130 v20" stroke="#1E1E24" stroke-width="3"/><rect x="24" y="112" width="26" height="6" rx="2" fill="#C9D1D9" stroke="#1E1E24" stroke-width="1.5"/><path d="M62 120 l16 -10 l4 4 l-16 10z" fill="#D7263D" stroke="#1E1E24" stroke-width="1.5"/>`)}
+      ${spot(1, 14, 34, 80, 40, `<path d="M8 74 H96" stroke="#7A5530" stroke-width="5"/><rect x="26" y="50" width="48" height="24" rx="3" fill="#D7263D" stroke="#1E1E24" stroke-width="2"/><path d="M40 50 v-6 h20 v6" fill="none" stroke="#1E1E24" stroke-width="2.5"/><path d="M26 60 H74" stroke="#1E1E24" stroke-width="1.5"/>`)}
+      ${spot(2, 222, 128, 92, 54, `<path d="M226 168 Q228 150 248 148 L262 136 Q270 132 286 132 L296 134 Q306 140 308 154 Q312 158 310 168Z" fill="#3D7CB8" stroke="#1E1E24" stroke-width="2"/><path d="M266 138 L292 138 L300 150 L258 150Z" fill="#BFE8DC" stroke="#1E1E24" stroke-width="1.5"/><circle cx="246" cy="170" r="9" fill="#1E1E24"/><circle cx="246" cy="170" r="3.5" fill="#8C97A3"/><circle cx="294" cy="170" r="9" fill="#1E1E24"/><circle cx="294" cy="170" r="3.5" fill="#8C97A3"/>`)}
+      ${spot(3, 236, 18, 78, 52, `<path d="M234 70 H316" stroke="#7A5530" stroke-width="5"/><rect x="242" y="44" width="28" height="26" fill="#C8A26B" stroke="#1E1E24" stroke-width="2"/><rect x="274" y="34" width="32" height="36" fill="#B5894F" stroke="#1E1E24" stroke-width="2"/><text x="256" y="62" text-anchor="middle" font-size="14" font-weight="900" fill="#1E1E24">?</text><text x="290" y="58" text-anchor="middle" font-size="16" font-weight="900" fill="#1E1E24">?</text>`)}
+    </svg>`;
+    const wrap = h("div", { class:"bz-garage", html: svg });
+    wrap.addEventListener("click", (e) => {
+      if (e.target.closest("[data-keypad]")) { if (all) keypad(); return; }
+      const g = e.target.closest("[data-room]"); if (!g) return;
+      const i = +g.dataset.room; if (open(i)) roomView(i);
+    });
+    return wrap;
   }
   function roomView(i, say){
     view = "room"; ctx = null;
@@ -602,7 +787,7 @@
   #brainBody{position:relative}
   .bz-top{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; margin-bottom:10px}
   .bz-back{padding:6px 12px}
-  .bz-label{font-weight:900; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bz-label{font-weight:900; text-align:center; line-height:1.15; min-width:0; overflow-wrap:anywhere}
   .bz-stats{display:flex; gap:10px; font-weight:900; white-space:nowrap}
   .bz-level{grid-column:1 / -1; display:flex; align-items:center; gap:8px; font-weight:800; font-size:.85rem}
   .bz-level small{color:var(--muted); white-space:nowrap}
@@ -618,6 +803,13 @@
   .bz-ic{font-size:1.6rem; line-height:1}
   .bz-room:disabled{opacity:.55; cursor:not-allowed}
   .bz-room.done{border-color:var(--denim)}
+  .bz-garage{border-radius:16px; overflow:hidden; border:1px solid var(--line); box-shadow:0 6px 18px rgba(0,0,0,.18)} .bz-garage svg{display:block; width:100%; height:auto}
+  .gz-spot{cursor:pointer} .gz-locked{cursor:not-allowed} .gz-locked .gz-art{opacity:.35; filter:grayscale(1)}
+  .gz-spot:not(.gz-locked):hover .gz-art{filter:brightness(1.15)}
+  .gz-ring{animation:gzring 1.6s linear infinite} @keyframes gzring{to{stroke-dashoffset:-20}}
+  .gz-badge{animation:gzpop .5s cubic-bezier(.34,1.56,.64,1)} @keyframes gzpop{from{transform:scale(0); transform-box:fill-box; transform-origin:center}}
+  .gz-keypad{cursor:pointer} .gz-ready rect:first-child{animation:gzglow 1.2s ease-in-out infinite} @keyframes gzglow{50%{filter:drop-shadow(0 0 6px #FFD866)}}
+  @media (prefers-reduced-motion:reduce){.gz-ring,.gz-badge,.gz-ready rect:first-child{animation:none}}
   .bz-rooms{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px}
   .bz-foot,.bz-meta{color:var(--muted); font-size:.85rem; text-align:center}
   .bz-q{font-weight:800; font-size:1.08rem}
@@ -625,6 +817,7 @@
   .bz-msg{font-weight:700}
   .bz-msg.ok{background:color-mix(in srgb, var(--denim) 14%, transparent); padding:10px 12px; border-radius:12px}
   .bz-opts{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin:10px 0}
+  .bz-thumb{display:block; width:100%; max-width:132px; margin-bottom:6px} .bz-thumb svg{display:block; width:100%; height:auto; border-radius:10px}
   .bz-opt{padding:12px; border-radius:14px; border:2px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; font-weight:800; cursor:pointer}
   .bz-opt:hover:not(:disabled){border-color:var(--denim)}
   .bz-opt.no{opacity:.45; text-decoration:line-through; animation:bzshake .3s}
@@ -765,6 +958,19 @@
   .bz-slot.empty{border:2px dashed var(--n-dim); border-radius:50%}
   .bz-tok{width:60px; height:60px; padding:0; box-sizing:border-box; border:3px solid var(--n-frame); border-radius:50%; background:var(--n-off); cursor:pointer; display:grid; place-items:center}
   .bz-tok svg{width:38px; height:38px; display:block}
+  .bz-tok{position:relative} .bz-tok.sm,.bz-slot.sm{width:48px; height:48px} .bz-tok.sm svg{width:30px; height:30px}
+  .bz-slots.many{max-width:none; flex-wrap:wrap; gap:8px 4px}
+  .bz-slots.six{display:grid; grid-template-columns:repeat(3, 48px); gap:8px 22px; justify-content:center; max-width:none}
+  .bz-scene .bz-river2{height:150px} .bz-scene .bz-boat2.near{transform:translateY(54px)}
+  .bz-wt{position:absolute; left:50%; bottom:-8px; transform:translateX(-50%); padding:0 5px; border:1px solid var(--n-line); border-radius:999px; background:var(--n-sky); color:var(--n-ink); font-style:normal; font-size:.58rem; font-weight:800; line-height:13px}
+  .bz-mins{display:flex; flex-direction:column; align-items:center; line-height:1; color:var(--n-lit)} .bz-mins b{font-size:1.15rem; font-weight:900} .bz-mins small{font-size:.58rem; font-weight:800}
+  .bz-cross.bridge .bz-river2{background:var(--n-off)}
+  .bz-torch svg{display:block; width:30px; height:30px}
+  .bz-levels{display:grid; grid-template-columns:repeat(4, 1fr); gap:6px}
+  .bz-lvl{min-height:44px; padding:3px; border:1px solid var(--n-line); border-radius:12px; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; cursor:pointer}
+  .bz-lvl b{font-size:.95rem; font-weight:900; line-height:1} .bz-lvl small{font-size:.62rem; line-height:1; color:var(--n-muted); letter-spacing:.04em}
+  .bz-lvl.on{border-color:var(--n-accent); box-shadow:inset 0 0 0 1px var(--n-accent)} .bz-lvl:disabled{opacity:.45; cursor:default}
+  .bz-scene .bz-lname b{font-size:.78rem; line-height:1.15}
   .bz-tok.flag{outline:3px dashed var(--n-ink); outline-offset:4px}
   .bz-tok.hint{outline:3px solid var(--n-hint); outline-offset:4px}
   .bz-tok.gone svg{opacity:.3}

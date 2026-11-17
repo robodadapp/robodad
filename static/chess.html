@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0B0B14">
 <meta name="robots" content="noindex">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/avatar-moves.css">
 <style>
 :root{--bg:#0B0B14; --panel:#16142A; --ink:#FFF6D6; --muted:#9A93B8; --gold:#F5C518; --edge:#2A2650;
   --sq-light:#E9DCC0; --sq-dark:#8C6B4A; --sel:#F5C518; --last:rgba(245,197,24,.45); --check:#FF4D6D;
@@ -26,6 +27,7 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 .opp .name{font-weight:900; font-size:1.05rem}
 .opp .tier{color:var(--muted); font-size:.9rem}
 .bubble{margin-left:auto; max-width:46%; background:var(--ink); color:#1B1530; border-radius:12px; padding:8px 10px; font-size:.95rem; min-height:2.4em}
+.bubble:empty{visibility:hidden}
 .board{position:relative; width:min(92vw, 480px); aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr); border:4px solid var(--frame); border-radius:8px; overflow:hidden; box-shadow:var(--frame-glow)}
 /* Board skin variables. Each dad's skin below only changes these, so selection,
    check and legal-move highlights keep working the same on every board. */
@@ -186,6 +188,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 .tier[aria-checked="true"]{border-color:var(--gold)}
 .tier small{display:block; color:var(--muted); font-size:12px; font-weight:700}
 .tier[disabled]{opacity:.5; cursor:default}
+.tier{position:relative}
+.tier .sw{margin-left:auto; flex:none; width:24px; height:24px; border-radius:5px; border:2px solid; box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.tier[disabled] .sw{opacity:1; filter:none}
 .moves{width:100%; max-width:640px; color:var(--muted); font-size:.9rem; min-height:1.6em; word-spacing:4px}
 .foot{color:var(--muted); font-size:13px; text-align:center; max-width:640px}
 .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
@@ -216,6 +221,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 @keyframes resShrug{0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}}
 @media (prefers-reduced-motion: reduce){.res-card,.res-card svg{animation:none}}
 </style>
+<script src="/static/game-look.js?v=1"></script>
 </head>
 <body>
 <div class="top">
@@ -225,7 +231,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 </div>
 
 <section class="opp" aria-label="Your opponent">
-  <div id="oppArt"></div>
+  <div id="oppArt" class="bot"></div>
   <div>
     <div class="name" id="oppName">Modern Dad</div>
     <div class="tier" id="oppTier">Tier 1</div>
@@ -278,6 +284,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
 <script src="/static/avatars.js?v=42"></script>
 <script src="/static/radio.js?v=45"></script>
+<script src="/static/arcade.js?v=5"></script>
 <script src="/static/chess-engine.js"></script>
 <script src="/static/chess-puzzles.js"></script>
 <script>
@@ -835,6 +842,17 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   }
   function history() { return states.map((s) => C.toFEN(s)); }
 
+  // Dad reacts on the board: one of his own moves when he captures, gives check, or the game ends.
+  function dadMove(kind) {
+    const el = $("oppArt"), a = AV && AV.AVATARS[tierKey];
+    if (!el || !a || !a.moves?.length || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const m = kind === "win" ? (a.moves.find((x) => ["victory", "oneup", "gg", "dad", "smug"].includes(x)) || a.moves[0])
+      : kind === "lose" ? (a.moves.find((x) => ["tipcap", "hattip", "nod", "wink"].includes(x)) || a.moves[a.moves.length - 1])
+      : a.moves[Math.floor(Math.random() * a.moves.length)];
+    [...el.classList].filter((c) => c.startsWith("do-")).forEach((c) => el.classList.remove(c));
+    void el.getBoundingClientRect(); el.classList.add("do-" + m);
+    clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("do-" + m), 3300);
+  }
   function avatarSVG(key, size) {
     const a = AV && AV.AVATARS[key];
     if (!a) return "";
@@ -848,8 +866,20 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       const locked = t.secret && store.get(UNLOCK_KEY) !== "1";
       const label = locked ? "Locked. Find him in the Secret Vault." : (t.server ? `Tier ${t.tier} · online` : `Tier ${t.tier}`) + timeText(k, true);
       return `<button class="tier" type="button" role="radio" data-k="${k}" aria-checked="${k === tierKey}" ${locked ? "disabled" : ""}>
-        ${locked ? "" : avatarSVG(k, 36)}<span>${t.name}<small>${label}</small></span></button>`;
+        ${locked ? "" : avatarSVG(k, 36)}<span>${t.name}<small>${label}</small></span><i class="sw" aria-hidden="true" title="${t.name}'s board" style="${swatch(k)}"></i></button>`;
     }).join("");
+  }
+  // A tiny preview of each dad's board, read from the same skin colours the real board uses, so you can see what you're playing for.
+  const swCache = {};
+  function swatch(k) {
+    if (!(k in swCache)) {
+      const d = document.createElement("div"); d.className = "board"; d.dataset.skin = k;
+      d.style.cssText = "position:absolute; visibility:hidden; width:1px; pointer-events:none"; document.body.append(d);
+      const cs = getComputedStyle(d), v = (n) => cs.getPropertyValue(n).trim();
+      const L = v("--sq-light"), D = v("--sq-dark"), F = v("--frame") || D; d.remove();
+      swCache[k] = L && D ? `background:conic-gradient(${L} 25%, ${D} 0 50%, ${L} 0 75%, ${D} 0) 0 0/12px 12px; border-color:${F}` : "display:none";
+    }
+    return swCache[k];
   }
 
   function setOpponent() {
@@ -987,6 +1017,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       headline = `Draw (${st.reason}).`;
       line = "draw";
     }
+    if (window.RoboArcade && !daily && st.reason !== "resign") RoboArcade.award("chess", { result: humanWon ? "win" : st.draw || st.result === "1/2-1/2" ? "draw" : "lose", tier: (C.TIERS[tierKey] || {}).tier || 0, bonus: tierKey === "professor" || tierKey === "grandpa" ? 10 : 0 });
     if (humanWon && tierKey === "eighties" && !daily) store.set("robodad.otto.goal.chess", "1");   // a play goal for the READY door (Otto mode)
     if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
     setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
@@ -995,6 +1026,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (window.RoboRadio) RoboRadio.stop();           // let the jingle be heard; the loop comes back with the next game
     setTimeout(() => sfx(end), 650);
     talk(line);
+    dadMove(humanWon ? "lose" : end === "lose" ? "win" : "draw");
     syncControls();
     $("shareBtn").hidden = !(humanWon && !daily);
     showResultCard(end, headline, st);
@@ -1285,6 +1317,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     busy = false;
     const waiting = $("say").textContent;
     if (hangsPiece(next, human)) talk("botBlunder");
+    if (kind === "check" || kind === "capture") setTimeout(() => { if (gid === gameId) dadMove(kind); }, land + 120);
     if ($("say").textContent === waiting && (LINES.thinking[tierKey] || []).includes(waiting)) $("say").textContent = "";
     renderBoard();
     if (afterPosition()) return;
