@@ -108,7 +108,7 @@
 @keyframes spin{to{transform:rotate(-360deg)}}
 @keyframes hop{50%{transform:translateY(-4px); opacity:.5}}
 .bot .hd{transform-origin:32px 46px}
-.bot .mv,.bot .eye,.bot .cap,.bot .pager,.bot .mouth,.bot .tips,.bot .ph-bot,.bot .glint,.bot .led{transform-box:fill-box; transform-origin:center}
+.bot .brow,.bot .mv,.bot .eye,.bot .cap,.bot .pager,.bot .mouth,.bot .tips,.bot .ph-bot,.bot .glint,.bot .led{transform-box:fill-box; transform-origin:center}
 .bot .mv-hand,.bot .mv-collar{transform-origin:50% 100%}
 .bot .ph-bot{transform-origin:50% 0}
 @keyframes av-pop{0%{opacity:0} 12%,85%{opacity:1} 100%{opacity:0}}
