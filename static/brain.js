@@ -33,6 +33,96 @@
   // anonymous counters (a fixed list of names, checked by the server); does nothing without the app around it
   const ping = (name) => { try { bridge?.ping?.(name); } catch {} };
   const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const shuffleR = (a, rand) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  // ---------- sound: little synth blips made on the spot, no files. The switch lives on every Hands-on screen. ----------
+  let ac = null;
+  const sfxOn = () => !S().sfxOff;
+  function audio(){
+    if (!sfxOn()) return null;
+    try { ac ||= new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac; } catch { return null; }
+  }
+  function tone(f, dur, type = "square", vol = 0.05, slide = 0, delay = 0){
+    const a = audio(); if (!a) return;
+    try {
+      const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, f + slide), t + dur);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.03);
+    } catch {}
+  }
+  function noise(dur, vol = 0.05, delay = 0, freq = 1000){
+    const a = audio(); if (!a) return;
+    try {
+      const len = Math.max(1, Math.floor(a.sampleRate * dur)), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime + delay;
+      src.buffer = buf; f.type = "bandpass"; f.frequency.value = freq; g.gain.value = vol;
+      src.connect(f).connect(g).connect(a.destination); src.start(t);
+    } catch {}
+  }
+  const SFX = {
+    flip: () => tone(700, 0.05, "square", 0.035),
+    dim: () => tone(470, 0.06, "square", 0.03),
+    click: () => tone(1500, 0.022, "square", 0.028),
+    tap: () => tone(540, 0.05, "triangle", 0.06),
+    slide: () => noise(0.06, 0.06, 0, 1600),
+    row: () => { noise(0.3, 0.05, 0, 520); tone(190, 0.22, "sine", 0.035, -70); },
+    clunk: () => { tone(95, 0.2, "square", 0.07, -45); noise(0.14, 0.07, 0.03, 340); tone(1250, 0.06, "triangle", 0.04, 0, 0.22); },
+    nope: () => tone(170, 0.2, "sawtooth", 0.045, -60),
+    coin: () => { tone(988, 0.07, "square", 0.045); tone(1319, 0.16, "square", 0.045, 0, 0.07); },
+    win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.15, "square", 0.045, 0, i * 0.09)),
+    lose: () => [392, 330, 262].forEach((f, i) => tone(f, 0.2, "triangle", 0.05, 0, i * 0.14)),
+    tick: () => tone(1900, 0.02, "square", 0.022),
+  };
+  const sfx = (k) => { try { SFX[k]?.(); } catch {} };
+
+  // ---------- Beat Dad: every Hands-on game has a dad to beat, climbing the same ladder as chess ----------
+  // Beat the dad you're on and the next one steps up. Robo-Grandpa is last; beat him and you've finished that ladder.
+  const DADS = [
+    { id:"modern", name:"Modern Dad",
+      start:["I did this one in {n}. On my phone. While answering emails.", "{n}. That's my number. It's a very reasonable number."],
+      beat:["Okay, okay. You beat my {n}. I'm muting the family group chat.", "That was better than my {n}. I'm going to need a coffee."],
+      lose:["My {n} stands. Phone's on 4%, still winning.", "Close. But {n} is {n}. I'll screenshot this."] },
+    { id:"eighties", name:"Arcade Dad",
+      start:["{n}. I put my initials next to it in 1986.", "Beat {n} and you get the top spot on my high-score table."],
+      beat:["NEW HIGH SCORE. My initials just got bumped. Brutal.", "You beat {n}. Insert another coin? For me, not you."],
+      lose:["{n} still holds. Game over, man. Insert coin.", "Player two loses. {n} stays at the top of the table."] },
+    { id:"skater", name:"Skater Dad",
+      start:["{n}. First try. Didn't even stretch.", "My line was {n}. Clean, no bails."],
+      beat:["Sick. You beat my {n}. That's going in the video part.", "Okay, that line was cleaner than my {n}. Respect."],
+      lose:["Bail! {n} is still the line to beat.", "Not bad, but {n} is {n}. Shake it off, drop back in."] },
+    { id:"gamer", name:"Gamer Dad",
+      start:["{n}. Speedrun category: any percent, dad edition.", "My PB is {n}. Don't make me grind it down."],
+      beat:["GG. You beat my {n}. Reporting myself for skill issue.", "That beats {n}. I'm uninstalling. Kidding. Rematch."],
+      lose:["{n} holds. Skill check failed. Respawn and try again.", "Nope, {n} is still the run to beat. GG though."] },
+    { id:"coach", name:"Coach Dad",
+      start:["{n}. That's the time to beat. Hustle.", "Team record is {n}. Let's see some effort."],
+      beat:["THAT'S what I'm talking about! You beat {n}. Water break!", "New team record. {n} is history. Take a lap. A victory lap."],
+      lose:["{n} still stands. Good hustle. Run it back.", "Not today. {n} is the record. Again, from the top."] },
+    { id:"bookworm", name:"Bookworm Dad",
+      start:["{n}. I did it between chapters.", "My bookmark says {n}. A modest number, quietly earned."],
+      beat:["Remarkable. You surpassed {n}. I shall note it in the margins.", "Well read. Well played. {n} has been bested."],
+      lose:["{n} endures, like a good classic. Try another chapter.", "Alas, {n} remains unbeaten. The plot thickens."] },
+    { id:"labdad", name:"Lab Dad",
+      start:["Hypothesis: you can't beat {n}. Let's run the experiment.", "My measured result: {n}. Repeatable, peer-reviewed by me."],
+      beat:["Fascinating. You beat {n}. Hypothesis rejected. Science wins.", "Data says you beat {n}. I'm recalibrating everything."],
+      lose:["Result: {n} still holds. The experiment continues.", "Not significant. {n} remains the control. Try again."] },
+    { id:"professor", name:"Professor Dad",
+      start:["{n}. I proved it on the chalkboard. Twice.", "The answer is {n}. Show your work and beat it."],
+      beat:["Q.E.D. You beat {n}. I'm adding you to the syllabus.", "Excellent. Better than {n}. Full marks, gold star."],
+      lose:["{n} stands. Partial credit. Revise and resubmit.", "Close, but {n} is still the answer to beat. See me after class."] },
+    { id:"grandpa", name:"Robo-Grandpa",
+      start:["{n}. In my day we did this uphill, both ways, with a rotary phone.", "Grandpa's number is {n}. Been holding it since before your dad had a moustache."],
+      beat:["Well, I'll be. You beat {n}. I'm telling everyone at the bingo hall.", "Back in my day nobody beat {n}. Today's a new day, apparently."],
+      lose:["{n} still stands, sonny. Grandpa's still got it.", "Ha! {n}. Pull up a chair and try again. I'll put the kettle on."] },
+  ];
+  const LOWER = ["lights", "river", "lock", "tiles"];   // lower beats Dad; in Blitz, higher does
+  const rivalIdx = (k) => { const s = S(); return Math.min(DADS.length - 1, (s.rivals || {})[k] || 0); };
+  const talkOn = () => !S().talkOff;
+  const dadLine = (d, kind, n) => talkOn() ? pick(d[kind]).replaceAll("{n}", n)
+    : ({ start:`${d.name}'s score: ${n}. Beat it.`, beat:`You beat ${d.name}'s ${n}.`, lose:`${d.name}'s ${n} still stands.` })[kind];
 
   // ---------- tiny DOM helper ----------
   function h(tag, attrs, ...kids){
@@ -130,7 +220,7 @@
               : d && d.tries.length ? `${d.tries.length} of 6 tries used. Pick up where you left off.` : "Today's safe. Same code for everyone, six tries.",
             () => startHands("lock", { mode:"daily" })); })(),
         mk(dailyDone ? "✅" : "📅", "Today's puzzle", dailyDone ? "Done! A new one tomorrow." : "Double points, once a day.", () => dailyDone ? hub("You already cracked today's puzzle. Come back tomorrow for a new one!") : startPuzzle(dailyPuzzle(), { mode:"daily" })),
-        mk("🧩", "Hands-on", "Blackout, Crack Dad's Safe, Crossings and Scramble.", handsMenu),
+        mk("🧩", "Hands-on", `Four games, a dad to beat in each. Today's four: ${dailiesDone()} of 4 done.`, handsMenu),
         notebookOpen() ? mk("📓", "Dev's Notebook", `${NB.filter(p => s.done.includes(p.id)).length} of ${NB.length} puzzles solved.`, notebookMenu) : null,
         mk("🚪", E.title, s.escaped ? "Escaped! Play it again any time." : `${roomsDone} of ${E.rooms.length} rooms cracked.`, escapeMenu)),
       h("p", { class:"bz-foot" }, `Solved ${P.filter(p => s.done.includes(p.id)).length} of ${P.length} puzzles · Best streak ${s.best}`));
@@ -325,61 +415,168 @@
     river:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#8ED081"/><path d="M0 24 Q24 18 48 24 T96 24 V44 Q72 50 48 44 T0 44Z" fill="#3E8ED0"/><path d="M10 34 q6 -3 12 0 M58 30 q6 -3 12 0" stroke="#BFE3FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M34 32 h26 l-4 7 h-18z" fill="#8A5A2B" stroke="#3B2512" stroke-width="1.5"/><circle cx="44" cy="27" r="4" fill="#F2C29B"/><circle cx="54" cy="29" r="3" fill="#F2F2F2"/></svg>`,
     tiles:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#2E2A4F"/><g font-family="system-ui,sans-serif" font-weight="900" font-size="12" text-anchor="middle"><rect x="26" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="18" fill="#2E2A4F">1</text><rect x="41" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="18" fill="#2E2A4F">2</text><rect x="56" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="18" fill="#2E2A4F">3</text><rect x="26" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="33" fill="#2E2A4F">4</text><rect x="41" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="33" fill="#2E2A4F">5</text><rect x="26" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="48" fill="#2E2A4F">7</text><rect x="56" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="48" fill="#2E2A4F">6</text><rect x="41" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="48" fill="#2E2A4F">8</text></g></svg>`,
   };
+  const DAILY_NAME = { lock:"Dad's Safe", lights:"Blackout", river:"Night Bridge", tiles:"Scramble" };
+  const DAILY_ICON = { lock:"🔐", lights:"💡", river:"🔦", tiles:"🧩" };
+  // today's result for one of the four dailies (the safe keeps its own record), or null
+  function dailyDone(k){
+    const s = S(), no = safeNo();
+    if (k === "lock") { const d = s.safeDay && s.safeDay.no === no ? s.safeDay : null; return d && (d.won || d.lost) ? { stars:d.won ? d.stars || 0 : 0, lost:!!d.lost } : null; }
+    return s.dHands && s.dHands.no === no ? s.dHands[k] || null : null;
+  }
+  const dailiesDone = () => HKINDS.filter(dailyDone).length;
+  function dailyChips(){
+    const n = dailiesDone(), no = safeNo();
+    return h("div", { class:"bz-dailies" },
+      h("p", { class:"bz-dhead" }, h("b", {}, "Today's four"), h("small", {}, n === 4 ? "All four done. New ones at midnight." : `${n} of 4 done · the same boards for everyone`)),
+      h("div", { class:"bz-dchips" }, HKINDS.map(k => { const d = dailyDone(k);
+        const sub = !d ? `#${no}` : d.lost ? "shut" : "★".repeat(d.stars) + "☆".repeat(3 - d.stars);
+        return btn("", "bz-dchip" + (d ? " done" : ""), () => startHands(k, { mode:"daily", from:"menu" }),
+          { "aria-label":`${DAILY_NAME[k]} number ${no}` + (!d ? ", not played yet" : d.lost ? ", the safe stayed shut" : `, done with ${d.stars} of 3 stars`),
+            html:`<span class="bz-dic" aria-hidden="true">${d ? "✅" : DAILY_ICON[k]}</span><b>${DAILY_NAME[k]}</b><small aria-hidden="true">${sub}</small>` }); })));
+  }
+  const toggles = (redraw) => h("div", { class:"bz-row bz-toggles" },
+    btn(sfxOn() ? "🔊 Sound on" : "🔇 Sound off", "ghost", () => { const s = S(); s.sfxOff = !s.sfxOff; save(); if (!s.sfxOff) sfx("tap"); redraw(); }, { "aria-pressed":String(sfxOn()), "data-fk":"snd" }),
+    btn(talkOn() ? "💬 Trash talk on" : "💬 Trash talk off", "ghost", () => { const s = S(); s.talkOff = !s.talkOff; save(); redraw(); }, { "aria-pressed":String(talkOn()), "data-fk":"talk" }));
   function handsMenu(){
     view = "handsMenu"; ctx = null;
     const s = S();
     paint(topBar("Hands-on", { fn: () => hub() }),
-      bubble("No multiple choice here. Stars for doing it in few moves, and a hint if you get stuck."),
-      h("div", { class:"bz-tiles" }, HKINDS.map((k, i) => { const H = D.hands[k];
+      bubble("Four games, a dad to beat in each one, and four dailies that reset at midnight."),
+      dailyChips(),
+      h("div", { class:"bz-tiles" }, HKINDS.map((k, i) => { const H = D.hands[k], r = DADS[rivalIdx(k)];
         const b = btn("", "bz-tile" + (i ? "" : " bz-focus"), () => startHands(k, { mode:"hands" }));
         b.append(...[h("span", { class:"bz-thumb", "aria-hidden":"true", html: THUMBS[k] }), h("b", {}, H.name + (s.handsDone.includes(k) ? " ✓" : "")), h("small", {}, H.blurb),
+          h("small", { class:"bz-vs" }, (s.rivalsDone || {})[k] ? "Every dad beaten. Robo-Grandpa wants a rematch." : `Next to beat: ${r.name}`),
           (s.handsStars || {})[k] ? h("small", { class:"bz-best", "aria-label":`Best: ${s.handsStars[k]} of 3 stars` }, "★".repeat(s.handsStars[k]) + "☆".repeat(3 - s.handsStars[k])) : null].filter(Boolean));
-        return b; })));
+        return b; })),
+      toggles(handsMenu));
     focusFirst();
   }
   function startHands(kind, c){
     view = "hands";
     ctx = { ...c, kind, won:false, say: D.hands[kind].blurb, moves:0 };
     ({ lights:initLights, lock:initLock, river:initRiver, tiles:initTiles })[kind]();
+    if (!ctx.won) ctx.rival = rivalFor(ctx);
     renderHands(); focusFirst(".bz-win, .bz-tum button, .bz-tok, .bz-pt");
+  }
+
+  // the score each dad sets, by rung of the ladder (0 = Modern Dad … 8 = Robo-Grandpa)
+  const SLACK = { lights:[6, 5, 4, 3, 3, 2, 1, 1, 0], river:[4, 3, 3, 2, 2, 1, 1, 0, 0] };
+  const SPM = [2600, 2300, 2000, 1800, 1600, 1400, 1250, 1100, 950];   // Scramble: dad's milliseconds per move
+  const BLITZ = [3, 4, 5, 6, 7, 8, 9, 10, 12];
+  const LOCKRIVAL = { deduce3:[5, 5, 4, 4, 4, 3, 3, 3, 2], deduce4:[6, 6, 5, 5, 5, 4, 4, 4, 3], crack3:[8, 7, 7, 6, 6, 6, 5, 5, 5], crack4:[10, 9, 9, 8, 8, 7, 7, 7, 6] };
+  function rivalFor(c){
+    if (c.mode !== "hands" && c.mode !== "blitz") return null;
+    const key = c.mode === "blitz" ? "blitz" : c.kind, t = rivalIdx(key), d = c.kind === "lock" ? c.owner : DADS[t];
+    let target, fmt;
+    if (key === "blitz") { target = BLITZ[t]; fmt = (v) => `${v} board${v === 1 ? "" : "s"}`; }
+    else if (key === "lights") { target = c.par + SLACK.lights[t]; fmt = (v) => `${v} taps`; }
+    else if (key === "river") { target = c.L.limit || c.L.par + SLACK.river[t]; fmt = (v) => c.L.limit ? `${v} minutes` : `${v} trips`; }
+    else if (key === "lock") { target = Math.min(c.max, LOCKRIVAL[c.lockMode + c.len][t]); fmt = (v) => `${v} ${v === 1 ? "try" : "tries"}`; }
+    else { target = Math.round((4000 + c.par * SPM[t]) / 100) * 100; fmt = fmtTime; }
+    const txt = fmt(target);
+    return { key, t, d, target, fmt, txt, say:dadLine(d, "start", txt) };
+  }
+  // after a finish: did you beat the dad? Beating him brings on the next one.
+  function settleRival(c){
+    const r = c.rival; if (!r) return false;
+    const v = r.key === "lights" ? c.moves : r.key === "river" ? c.used : r.key === "lock" ? c.tries.length + 1 : r.key === "tiles" ? c.ms : c.blitz.boards;
+    const beat = r.key === "blitz" ? v >= r.target : v <= r.target;
+    const s = S(); s.rivals ||= {}; s.rivalsDone ||= {};
+    r.done = true; r.beat = beat; r.say = dadLine(r.d, beat ? "beat" : "lose", r.txt);
+    if (beat) { if (r.t >= DADS.length - 1) s.rivalsDone[r.key] = true; else { s.rivals[r.key] = r.t + 1; r.next = DADS[r.t + 1]; } ping("rival_beat"); }
+    else ping("rival_lose");
+    save(); return beat;
+  }
+  function rivalBar(c){
+    const r = c.rival; if (!r) return null;
+    const head = r.done ? (r.beat ? `You beat ${r.d.name}!` : `${r.d.name} wins this one`) : `vs ${r.d.name}`;
+    const sub = r.done ? (r.beat ? (r.next ? `Next up: ${r.next.name}` : "That was the top of the ladder.") : `Score to beat: ${r.txt}`) : `Score to beat: ${r.txt} · dad ${r.t + 1} of ${DADS.length}`;
+    return h("div", { class:"bz-rival" + (r.done ? (r.beat ? " beat" : " lost") : "") },
+      dadSVG(r.d.id),
+      h("span", {}, h("b", {}, head), h("small", {}, sub), h("i", {}, "“" + r.say + "”")));
   }
   function handsWon(stars, line){
     const c = ctx, s = S(); c.won = true; c.stars = stars;
     s.handsStars ||= {}; s.handsStars[c.kind] = Math.max(s.handsStars[c.kind] || 0, stars);
-    if (c.mode === "daily") finishSafe(c, true); else if (c.mode === "hands") ping("hands_win"); else if (c.mode === "run" && run) run.solved++;
-    const extra = award([30, 30, 40, 50][stars], { hands:c.kind, keepStreak:true });
-    c.say = [line || pick(SAY.hands), extra].filter(Boolean).join(" "); buzz([30, 40, 30]);
+    if (c.kind === "lock") s.safesCracked = (s.safesCracked || 0) + 1;
+    if (c.mode === "daily") { if (c.kind === "lock") finishSafe(c, true); else finishDaily(c); }
+    else if (c.mode === "hands") ping("hands_win"); else if (c.mode === "run" && run) run.solved++;
+    const beat = settleRival(c);
+    const extra = award([30, 30, 40, 50][stars] + (beat ? 15 : 0), { hands:c.kind, keepStreak:true });
+    c.say = [line || pick(SAY.hands), beat ? "+15 for beating Dad." : "", extra].filter(Boolean).join(" "); buzz([30, 40, 30]);
+    if (c.kind === "lock") { sfx("clunk"); setTimeout(() => sfx("win"), 380); } else sfx("win");
     renderHands(); focusFirst(".bz-focus");
   }
   function renderHands(){
     const c = ctx, H = D.hands[c.kind];
     // redrawing replaces every button, so remember which one had the keyboard focus and give it back
     const fk = root.contains(document.activeElement) ? document.activeElement.getAttribute("data-fk") : null;
-    const label = c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "daily" ? `Dad's Safe #${c.no}` : H.name;
-    const back = c.mode === "hands" ? { label:"Hands-on", fn: handsMenu } : c.mode === "daily" ? { fn: () => hub() } : backFor();
+    const label = c.mode === "escape" ? D.escape.rooms[c.room].name : c.mode === "daily" ? `${DAILY_NAME[c.kind]} #${c.no}` : c.mode === "blitz" ? "Blackout Blitz" : H.name;
+    const home = c.from === "menu" ? handsMenu : () => hub();
+    const back = c.mode === "hands" || c.mode === "blitz" ? { label:"Hands-on", fn: handsMenu } : c.mode === "daily" ? { label: c.from === "menu" ? "Hands-on" : "Menu", fn: home } : backFor();
     const nodes = [topBar(label, back), c.mode === "run" ? runBar() : null, bubble(c.say, "gamer")];
-    nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind }, ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
+    nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind }, rivalBar(c), ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
     const row = h("div", { class:"bz-row" }), over = c.won || c.lost;
     if (c.mode === "daily") {
-      // one safe a day: no "new puzzle" here, just share it or go back
-      if (over) row.append(btn("Share result", "primary bz-focus", () => shareSafe(c)), btn("Menu", "ghost", () => hub()));
-      else row.append(btn("Ask Dad", "ghost", () => bridge?.coach("hands-lock")));
+      // one board a day: no "new puzzle" here, just share it or go back
+      if (over) row.append(btn("Share result", "primary bz-focus", () => c.kind === "lock" ? shareSafe(c) : shareDaily(c)), btn("Menu", "ghost", home));
+      else row.append(btn("Ask Dad", "ghost", () => bridge?.coach("hands-" + c.kind)));
+    } else if (c.mode === "blitz") {
+      if (c.won) row.append(btn("Go again", "primary bz-focus", () => startHands("lights", { mode:"blitz" })), btn("Share", "ghost", () => shareBlitz(c)), btn("Menu", "ghost", handsMenu));
+      else row.append(btn("Ask Dad", "ghost", () => bridge?.coach("hands-lights")));
     } else if (c.won) {
       row.append(c.mode === "escape" ? btn("Back to the room →", "primary bz-focus", () => escapeStepDone())
         : c.mode === "run" ? btn(runNextLabel(), "primary bz-focus", runAdvance)
         : c.kind === "river" ? (c.level + 1 < CROSSINGS.length
             ? btn("Next crossing →", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level + 1 }))
             : btn("Play again", "primary bz-focus", () => startHands("river", { mode:"hands", level:c.level })))
+        : c.kind === "lights" ? btn(c.level + 1 < RULES.length && c.level + 1 <= lightsOpen(S()) ? "Next wiring →" : "Play another", "primary bz-focus",
+            () => startHands("lights", { mode:"hands", level: c.level + 1 < RULES.length && c.level + 1 <= lightsOpen(S()) ? c.level + 1 : c.level }))
+        : c.kind === "tiles" ? btn("Play another", "primary bz-focus", () => startHands("tiles", { mode:"hands", pic:c.pic }))
         : btn("Play another", "primary bz-focus", () => startHands(c.kind, { mode:"hands" })));
       if (c.mode !== "escape") row.append(btn("Menu", "ghost", () => hub()));
     } else {
-      row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step, level:c.level })),
+      row.append(btn(c.kind === "river" ? "Start over" : "New puzzle", c.lost ? "primary bz-focus" : "ghost", () => startHands(c.kind, { mode:c.mode, room:c.room, step:c.step, level:c.level, pic:c.pic })),
         btn("Ask Dad", "ghost", () => bridge?.coach("hands-" + c.kind)));
     }
     // count what people do after a hands-on win: replay after 3 stars, retry after fewer, or go to the next crossing
     if (c.won && c.mode === "hands") row.firstChild.addEventListener("click", () => ping(c.kind === "river" && c.level + 1 < CROSSINGS.length ? "hands_next" : c.stars < 3 ? "hands_retry" : "hands_again"));
-    nodes.push(row, c.mode === "daily" && over ? safeFoot() : null); paint(...nodes);
+    nodes.push(row, c.mode === "daily" && over ? (c.kind === "lock" ? safeFoot() : dailyFoot()) : null, toggles(renderHands)); paint(...nodes);
     if (fk) { const el = root.querySelector(`[data-fk="${fk}"]`); if (el && !el.disabled) el.focus(); else focusFirst(".bz-sbtn:not(:disabled)"); }
+  }
+
+  // ---------- the other three dailies (the safe has its own, further down) ----------
+  function finishDaily(c){
+    const s = S(), no = c.no;
+    if (!s.dHands || s.dHands.no !== no) s.dHands = { no };
+    if (s.dHands[c.kind]) return;
+    s.dHands[c.kind] = { moves:c.moves, used:c.used, ms:c.ms, stars:c.stars, hinted:!!c.hinted, par:c.par, trips:(c.past || []).length };
+    countAllFour(s); ping("hands_daily"); bridge?.arcade?.(4); save();
+  }
+  // the "all four in one day" counter, checked whenever a daily finishes
+  function countAllFour(s){ const no = safeNo(); if (s.allFourDay !== no && dailiesDone() === 4) { s.allFourDay = no; s.dAllDays = (s.dAllDays || 0) + 1; } }
+  function dailyFoot(){
+    const n = new Date(), mid = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1), mins = Math.max(1, Math.ceil((mid - n) / 60000));
+    return h("p", { class:"bz-foot" }, `${dailiesDone()} of 4 dailies done today · New boards in ${Math.floor(mins / 60)}h ${mins % 60}m`);
+  }
+  function sendShare(text, title){
+    ping("hands_share");
+    if (bridge?.shareText) bridge.shareText(text, title);
+    else navigator.clipboard?.writeText(text).catch(() => {});
+  }
+  // spoiler-free, like the safe: how you did, never how to do it
+  function shareDaily(c){
+    const d = dailyDone(c.kind) || {}, st = d.stars || 0, stars = "★".repeat(st) + "☆".repeat(3 - st) + (d.hinted ? " 💡" : "");
+    let text;
+    if (c.kind === "lights") text = `💡 Blackout #${c.no} · ${RULES[c.level].name}\n${d.moves} taps · par ${d.par} ${stars}\n` + "🌑".repeat(Math.min(d.par, d.moves)) + "💡".repeat(Math.max(0, d.moves - d.par));
+    else if (c.kind === "river") text = `🔦 Night Bridge #${c.no}\n${d.used} of ${c.L.limit} minutes ${stars}\n` + Array.from({ length:d.trips || 0 }, (_, i) => i % 2 ? "⬅️" : "➡️").join("");
+    else text = `🧩 Scramble #${c.no} · ${c.picName}\n⏱ ${fmtTime(d.ms || 0)} · ${d.moves} moves (par ${d.par}) ${stars}`;
+    sendShare(text, DAILY_NAME[c.kind]);
+  }
+  function shareBlitz(c){
+    const b = c.blitz.boards;
+    sendShare(`⚡ Blackout Blitz\n${b} board${b === 1 ? "" : "s"} in 60 seconds` + (c.rival ? ` · ${c.rival.beat ? "beat" : "lost to"} ${c.rival.d.name}` : "") + "\n" + "🏠".repeat(Math.min(b, 15)), "Blackout Blitz");
   }
 
   // ---------- hands-on scenes: shared bits ----------
@@ -392,66 +589,159 @@
   const capStars = (c, n) => c.hinted ? Math.min(n, 2) : n;   // using a hint caps the level at 2 stars
   const buzz = (ms) => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch {} };
 
-  // ---------- Blackout (Lights Out): built by pressing random lights from all-off, so it can always be solved ----------
-  function initLights(){
-    const s = S(), n = ctx.mode === "escape" || !s.handsDone.includes("lights") ? 3 : 4;
+  // ---------- Blackout (Lights Out): built by pressing random windows from all-off, so it can always be solved ----------
+  // Four wirings. Each one changes what a tap does; the house and the goal stay the same.
+  const PLUS = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
+  const RULES = [
+    { id:"plus", name:"Plus wiring", short:"Plus", m:2, off:PLUS,
+      intro:"It's 11 pm and this house is visible from space. Tap a window to flip it and the ones above, below and beside it. Get them all off." },
+    { id:"cross", name:"Cross wiring", short:"Cross", m:2, off:[[0, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]],
+      intro:"Lab Dad rewired this house. A tap flips the window and its four diagonal neighbours. Not the ones beside it. Diagonals." },
+    { id:"wrap", name:"Wraparound", short:"Wrap", m:2, wrap:true, off:PLUS,
+      intro:"Wraparound wiring. A neighbour past the edge comes back on the far side, like walking off an old arcade screen." },
+    { id:"dim", name:"Dimmers", short:"Dimmer", m:3, off:PLUS,
+      intro:"Dimmer switches. Each tap steps a light from bright to dim to off, then back to bright. Its neighbours step too." },
+  ];
+  // the highest wiring you may play: each one opens when you finish the one before it
+  const lightsOpen = (s) => Math.min(RULES.length - 1, RULES.filter(R => (s.lightRules || {})[R.id]).length);
+  function lightsBoard(R, n, k, rand){
     const press = (g, i) => { const r = Math.floor(i / n), q = i % n;
-      [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dr, dq]) => { const rr = r + dr, qq = q + dq; if (rr >= 0 && rr < n && qq >= 0 && qq < n) g[rr * n + qq] = !g[rr * n + qq]; }); };
-    let g, picks; const k = n === 3 ? 4 : 6;
-    do { g = Array(n * n).fill(false); picks = shuffle([...Array(n * n).keys()]).slice(0, k); picks.forEach(i => press(g, i)); } while (!g.some(Boolean));
-    // todo = the windows that still need one tap each; it doubles as the hint list
-    Object.assign(ctx, { n, grid:g, par:k, press, todo:new Set(picks), past:[], first:{ grid:g.slice(), todo:picks.slice() }, hint:-1,
-      say:"It's 11 pm and this house is visible from space. Tap a window to flip it and its neighbours. Get them all off." });
+      R.off.forEach(([dr, dq]) => { let rr = r + dr, qq = q + dq;
+        if (R.wrap) { rr = (rr + n) % n; qq = (qq + n) % n; }
+        if (rr >= 0 && rr < n && qq >= 0 && qq < n) { const j = rr * n + qq; g[j] = (g[j] + R.m - 1) % R.m; } }); };
+    let g, picks;
+    do { g = Array(n * n).fill(0); picks = shuffleR([...Array(n * n).keys()], rand).slice(0, k); picks.forEach(i => press(g, i)); } while (!g.some(Boolean));
+    // need[i] = taps window i still needs; it doubles as the hint list (pressing any window m times changes nothing)
+    const need = Array(n * n).fill(0); picks.forEach(i => { need[i] = R.m - 1; });
+    return { grid:g, need, par:picks.length * (R.m - 1), press, first:{ grid:g.slice(), need:need.slice() } };
+  }
+  function initLights(){
+    const s = S(), mode = ctx.mode;
+    let rand = Math.random, level = 0;
+    if (mode === "hands") level = Math.min(ctx.level ?? lightsOpen(s), lightsOpen(s));
+    if (mode === "daily") { ctx.no = safeNo(); rand = seeded(ctx.no * 4241 + 7); level = ctx.no % RULES.length; }
+    const R = RULES[level];
+    const n = mode === "blitz" || mode === "escape" || (mode !== "daily" && !s.handsDone.includes("lights")) ? 3 : 4;
+    const k = mode === "blitz" ? 3 : R.m === 3 ? (n === 3 ? 3 : 4) : n === 3 ? 4 : 6;
+    Object.assign(ctx, { level, R, n, k, rand, past:[], hint:-1, say:R.intro }, lightsBoard(R, n, k, rand));
+    if (mode === "blitz") { ctx.blitz = { boards:0, end:0 }; ctx.say = "Blitz. Sixty seconds, as many houses as you can black out. The clock starts on your first tap."; }
+    if (mode === "daily") {
+      const d = dailyDone("lights");
+      ctx.say = `Tonight's house: ${R.name.toLowerCase()}. Same house for everyone. ` + R.intro;
+      if (d) Object.assign(ctx, { won:true, stars:d.stars, moves:d.moves, hinted:d.hinted, grid:ctx.grid.map(() => 0), say:`Tonight's house is dark. ${d.moves} taps, par ${d.par}. A new one at midnight.` });
+    }
   }
   const lightStars = (c) => capStars(c, c.moves <= c.par ? 3 : c.moves <= c.par + 2 ? 2 : 1);
+  function blitzEnd(c){
+    if (c.won) return;
+    clearInterval(c.iv); c.won = true;
+    const s = S(), b = c.blitz.boards, pb = b > (s.blitzBest || 0);
+    if (pb) s.blitzBest = b;
+    c.stars = b >= 10 ? 3 : b >= 6 ? 2 : b >= 1 ? 1 : 0;
+    const beat = settleRival(c);
+    ping("blitz_done");
+    const extra = b ? award(Math.min(150, b * 10) + (beat ? 15 : 0), { hands:"lights", keepStreak:true }) : "";
+    c.say = [b ? `Time! ${b} house${b === 1 ? "" : "s"} blacked out.` : "Time! Not one house dark. The hydro company sends its thanks.", pb && b ? "New best." : `Your best is ${s.blitzBest || 0}.`, beat ? "+15 for beating Dad." : "", extra].filter(Boolean).join(" ");
+    sfx(b ? "win" : "lose"); buzz([40, 40, 40]); save();
+    renderHands(); focusFirst(".bz-focus");
+  }
   function drawLights(){
-    const c = ctx, n = c.n, lit = c.grid.filter(Boolean).length, total = n * n;
-    const flip = (i) => { c.press(c.grid, i); if (c.todo.has(i)) c.todo.delete(i); else c.todo.add(i); c.hint = -1; };
-    const tap = (i) => { if (c.won) return; flip(i); c.past.push(i); c.moves = c.past.length;
-      if (!c.grid.some(Boolean)) { const st = lightStars(c);
+    const c = ctx, n = c.n, R = c.R, s = S(), total = n * n, blitz = c.mode === "blitz";
+    const lit = c.grid.reduce((a, v) => a + (v ? v / (R.m - 1) : 0), 0);
+    const flip = (i) => { c.press(c.grid, i); c.need[i] = (c.need[i] + R.m - 1) % R.m; c.hint = -1; };
+    const unflip = (i) => { for (let k = 1; k < R.m; k++) c.press(c.grid, i); c.need[i] = (c.need[i] + 1) % R.m; c.hint = -1; };
+    const tap = (i) => {
+      if (c.won) return;
+      if (blitz && !c.blitz.end) startBlitzClock(c);
+      flip(i); c.past.push(i); c.moves = c.past.length; sfx(R.m === 3 && c.grid[i] === 1 ? "dim" : "flip");
+      if (!c.grid.some(Boolean)) {
+        if (blitz) { c.blitz.boards++; sfx("coin"); buzz(25);
+          Object.assign(c, lightsBoard(R, n, c.k, c.rand), { past:[], moves:0, hint:-1 });
+          c.say = pick(["Dark! Next house.", "Another one bites the dust. Next.", "Lights out. Keep going.", "Boom. Next house, go go go."]); return renderHands(); }
+        const st = lightStars(c);
+        if (c.mode === "hands") { s.lightRules ||= {}; s.lightRules[R.id] = Math.max(s.lightRules[R.id] || 0, st); }
         return handsWon(st, c.moves <= c.par ? `Blackout in ${c.moves} taps. The meter and I both thank you.` : `Dark at last. ${c.moves} taps, but who's counting. Me. I am.`); }
-      c.say = c.moves > c.par ? `Par was ${c.par}. I'm not mad, I'm just counting.` : "I've seen the hydro bill. Keep going.";
+      if (!blitz) c.say = c.moves > c.par ? `Par was ${c.par}. I'm not mad, I'm just counting.` : "I've seen the hydro bill. Keep going.";
       renderHands(); };
     const cat = n + (n - 2), gamer = total - n - 1;
-    const win = (on, i) => btn("", "bz-win" + (on ? " on" : "") + (c.hint === i ? " hint" : ""), () => tap(i),
-      { "aria-label":`Window ${Math.floor(i / n) + 1}-${i % n + 1}, light ${on ? "on" : "off"}`, "aria-pressed":String(on), disabled:c.won, "data-fk":"w" + i,
+    const win = (v, i) => { const on = v > 0, dim = R.m === 3 && v === 1;
+      return btn("", "bz-win" + (on ? " on" : "") + (dim ? " dim" : "") + (c.hint === i ? " hint" : ""), () => tap(i),
+      { "aria-label":`Window ${Math.floor(i / n) + 1}-${i % n + 1}, light ${dim ? "dim" : on ? "on" : "off"}`, "aria-pressed":String(on), disabled:c.won, "data-fk":"w" + i,
         html: on && i === cat ? `<svg viewBox="0 0 57 57" aria-hidden="true"><path d="M15 57V42q0-9 7-12l-2-11 8 6h4l8-6-2 11q7 3 7 12v15z"/></svg>`
-          : on && i === gamer ? `<svg viewBox="0 0 57 57" aria-hidden="true"><circle cx="28" cy="30" r="9"/><path d="M17 31a11 11 0 0122 0" style="fill:none;stroke:var(--n-sil);stroke-width:3"/><path d="M8 57q0-14 20-14t20 14z"/></svg>` : "" });
+          : on && i === gamer ? `<svg viewBox="0 0 57 57" aria-hidden="true"><circle cx="28" cy="30" r="9"/><path d="M17 31a11 11 0 0122 0" style="fill:none;stroke:var(--n-sil);stroke-width:3"/><path d="M8 57q0-14 20-14t20 14z"/></svg>` : "" }); };
     const deg = Math.round(-60 + (lit / total) * 120);
+    const left = blitz ? (c.won ? 0 : c.blitz.end ? Math.max(0, c.blitz.end - Date.now()) : 60000) : 0;
+    const clock = h("b", { class:"bz-clock" }, (left / 1000).toFixed(1));
+    if (blitz) c.clockEl = clock;
+    // the wiring picker, plus the Blitz door, in the normal game only
+    const top = lightsOpen(s);
+    const levels = c.mode !== "hands" && !blitz ? null : h("div", { class:"bz-levels five", role:"group", "aria-label":"Choose a wiring" },
+      RULES.map((X, i) => { const got = (s.lightRules || {})[X.id] || 0, on = !blitz && i === c.level;
+        return btn("", "bz-lvl" + (on ? " on" : ""), () => startHands("lights", { mode:"hands", level:i }),
+          { disabled:i > top, ...(on ? { "aria-current":"true" } : {}), "data-fk":"lvl" + i,
+            "aria-label":`${X.name}` + (i > top ? ", locked. Finish the one before it first" : got ? `, best ${got} of 3 stars` : ""),
+            html:`<b>${X.short}</b><small aria-hidden="true">${i > top ? "locked" : got ? "★".repeat(got) + "☆".repeat(3 - got) : "new"}</small>` }); }),
+      btn("", "bz-lvl blitz" + (blitz ? " on" : ""), () => startHands("lights", { mode:"blitz" }),
+        { ...(blitz ? { "aria-current":"true" } : {}), "data-fk":"lvlb", "aria-label":`Blitz: 60 seconds, as many houses as you can. Best ${s.blitzBest || 0}`,
+          html:`<b>Blitz</b><small aria-hidden="true">best ${s.blitzBest || 0}</small>` }));
     return [
-      h("div", { class:"bz-hud" },
-        h("div", { class:"bz-stat bz-meter" },
-          h("span", { html:`<svg viewBox="0 0 44 44" role="img" aria-label="Hydro meter"><circle cx="22" cy="24" r="17" style="fill:var(--n-sky);stroke:var(--n-dim);stroke-width:2"/><path d="M9 24a13 13 0 0126 0" style="fill:none;stroke:var(--n-accent);stroke-width:3;stroke-linecap:round"/><path d="M22 24V12" style="stroke:var(--n-ink);stroke-width:2.4;stroke-linecap:round;transform-origin:22px 24px;transform:rotate(${deg}deg)"/><circle cx="22" cy="24" r="2.6" style="fill:var(--n-ink)"/></svg>` }),
-          h("span", {}, h("b", {}, (lit * 0.3).toFixed(1) + " kW"), h("small", {}, "Hydro"))),
-        stat(String(c.moves), `Taps · par ${c.par}`), starsEl(c.won ? c.stars : lightStars(c), c.won)),
+      levels,
+      blitz ? h("div", { class:"bz-hud" }, h("div", { class:"bz-stat" + (left && left < 10000 ? " hot" : "") }, clock, h("small", {}, "Seconds left")),
+          stat(String(c.blitz.boards), "Houses dark"), stat(String(Math.max(s.blitzBest || 0, c.won ? c.blitz.boards : 0)), "Your best"))
+        : h("div", { class:"bz-hud" },
+          h("div", { class:"bz-stat bz-meter" },
+            h("span", { html:`<svg viewBox="0 0 44 44" role="img" aria-label="Hydro meter"><circle cx="22" cy="24" r="17" style="fill:var(--n-sky);stroke:var(--n-dim);stroke-width:2"/><path d="M9 24a13 13 0 0126 0" style="fill:none;stroke:var(--n-accent);stroke-width:3;stroke-linecap:round"/><path d="M22 24V12" style="stroke:var(--n-ink);stroke-width:2.4;stroke-linecap:round;transform-origin:22px 24px;transform:rotate(${deg}deg)"/><circle cx="22" cy="24" r="2.6" style="fill:var(--n-ink)"/></svg>` }),
+            h("span", {}, h("b", {}, (lit * 0.3).toFixed(1) + " kW"), h("small", {}, "Hydro"))),
+          stat(String(c.moves), `Taps · par ${c.par}`), starsEl(c.won ? c.stars : lightStars(c), c.won)),
       h("div", { class:"bz-house" },
         h("div", { class:"bz-sky", "aria-hidden":"true" }, h("i", { class:"bz-twinkle", style:`opacity:${(0.12 + 0.88 * ((total - lit) / total)).toFixed(2)}` }), h("i", { class:"bz-moon" })),
         h("div", { class:"bz-roof", "aria-hidden":"true", html:`<svg viewBox="0 0 350 84"><rect x="250" y="14" width="30" height="50" style="fill:var(--n-chimney)"/><rect x="245" y="8" width="40" height="10" style="fill:var(--n-roof)"/><path d="M175 4L346 84H4z" style="fill:var(--n-roof);stroke:var(--n-roof-edge);stroke-width:3;stroke-linejoin:round"/></svg>` }),
         h("div", { class:"bz-wall", style:`grid-template-columns:repeat(${n}, 1fr)` }, c.grid.map(win)),
         h("div", { class:"bz-ground", "aria-hidden":"true" })),
+      R.id !== "plus" && !c.won ? h("p", { class:"bz-rule" }, R.id === "cross" ? "Cross wiring: a tap flips the window and its 4 diagonal neighbours." : R.id === "wrap" ? "Wraparound: neighbours past an edge wrap to the far side." : "Dimmers: bright → dim → off → bright. Neighbours step too.") : null,
       c.won ? null : h("div", { class:"bz-ctl" },
-        sbtn("Undo", "", () => { if (!c.past.length) return; flip(c.past.pop()); c.moves = c.past.length; c.say = "Undone. I saw nothing."; renderHands(); }, { disabled:!c.past.length, "data-fk":"undo" }),
-        sbtn("Hint", "hintb", () => { const next = [...c.todo][0]; if (next == null) return; c.hinted = true; c.hint = next; c.say = "Hint: tap the glowing window. A hint caps this one at 2 stars."; renderHands(); }, { "data-fk":"hint" }),
-        sbtn("Restart", "", () => { c.grid = c.first.grid.slice(); c.todo = new Set(c.first.todo); c.past = []; c.moves = 0; c.hint = -1; c.say = "Back to how you found it. Every light on, as usual."; renderHands(); }, { disabled:!c.past.length, "data-fk":"restart" })),
+        sbtn("Undo", "", () => { if (!c.past.length) return; unflip(c.past.pop()); c.moves = c.past.length; c.say = "Undone. I saw nothing."; sfx("tap"); renderHands(); }, { disabled:!c.past.length, "data-fk":"undo" }),
+        sbtn("Hint", "hintb", () => { const next = c.need.findIndex(x => x > 0); if (next < 0) return; if (!blitz) c.hinted = true; c.hint = next;
+          c.say = blitz ? "Tap the glowing window." : "Hint: tap the glowing window. A hint caps this one at 2 stars."; renderHands(); }, { "data-fk":"hint" }),
+        blitz ? sbtn("Skip house", "", () => { Object.assign(c, lightsBoard(R, n, c.k, c.rand), { past:[], moves:0, hint:-1 }); c.say = "New house. That one didn't count."; renderHands(); }, { "data-fk":"skip" })
+          : sbtn("Restart", "", () => { c.grid = c.first.grid.slice(); c.need = c.first.need.slice(); c.past = []; c.moves = 0; c.hint = -1; c.say = "Back to how you found it. Every light on, as usual."; renderHands(); }, { disabled:!c.past.length, "data-fk":"restart" })),
     ];
+  }
+  function startBlitzClock(c){
+    c.blitz.end = Date.now() + 60000; let lastSec = 60;
+    clearInterval(c.iv);
+    c.iv = setInterval(() => {
+      if (ctx !== c || c.won) return clearInterval(c.iv);
+      const left = c.blitz.end - Date.now();
+      if (left <= 0) return blitzEnd(c);
+      const sec = Math.ceil(left / 1000);
+      if (sec !== lastSec) { lastSec = sec; if (sec <= 5) sfx("tick"); }
+      if (c.clockEl && c.clockEl.isConnected) { c.clockEl.textContent = (left / 1000).toFixed(1); c.clockEl.parentElement.classList.toggle("hot", left < 10000); }
+    }, 100);
   }
 
   // ---------- Crack Dad's Safe (Code Lock): a fresh code and clue set every time, checked so only one code fits ----------
-  const ALL_CODES = (() => { const a = []; for (let x = 0; x < 10; x++) for (let y = 0; y < 10; y++) for (let z = 0; z < 10; z++) if (x !== y && y !== z && x !== z) a.push(`${x}${y}${z}`); return a; })();
-  const clueText = (A, B) => A + B === 0 ? "Nothing is right" :
-    [A ? `${A === 1 ? "One digit is" : A === 2 ? "Two digits are" : "All three are"} right and in the right place` : "",
-     B ? `${B === 1 ? "one digit is" : B === 2 ? "two digits are" : "all three are"} right but in the wrong place` : ""].filter(Boolean).join(", and ").replace(/^./, m => m.toUpperCase());
+  // Two ways to play: Deduce (notes on the door, then guesses) and Safecracker (no notes, just the safe's feedback).
+  // 3 digits to start; 4 digits once you've cracked three safes. Every dad's safe holds his own piece of loot.
+  const CODES = {};
+  const codesOf = (len) => CODES[len] ||= (function grow(pre){ if (pre.length === len) return [pre];
+    const out = []; for (let d = 0; d < 10; d++) if (!pre.includes(String(d))) out.push(...grow(pre + d)); return out; })("");
+  const ALL_CODES = codesOf(3);
+  const NUM = ["", "One digit is", "Two digits are", "Three digits are", "All four are"];
+  const clueText = (A, B, len = 3) => A + B === 0 ? "Nothing is right" :
+    [A ? `${A === len ? (len === 3 ? "All three are" : "All four are") : NUM[A]} right and in the right place` : "",
+     B ? `${(B === len ? (len === 3 ? "All three are" : "All four are") : NUM[B]).toLowerCase()} right but in the wrong place` : ""].filter(Boolean).join(", and ").replace(/^./, m => m.toUpperCase());
   function score(code, guess){ let A = 0, B = 0; [...guess].forEach((d, i) => { if (code[i] === d) A++; else if (code.includes(d)) B++; }); return [A, B]; }
   const fitsClue = (s, [g, A, B]) => { const [x, y] = score(s, g); return x === A && y === B; };
-  function makeLock(rand = Math.random){
-    const any = (a) => a[Math.floor(rand() * a.length)];
+  function makeLock(rand = Math.random, len = 3){
+    const any = (a) => a[Math.floor(rand() * a.length)], ALL = codesOf(len), most = len === 3 ? 5 : 7;
     for (let attempt = 0; attempt < 200; attempt++) {
-      const code = any(ALL_CODES), clues = []; let fits = ALL_CODES;
-      while (fits.length > 1 && clues.length < 5) {
+      const code = any(ALL), clues = []; let fits = ALL;
+      while (fits.length > 1 && clues.length < most) {
         let best = null;
         for (let k = 0; k < 10; k++) {
-          const g = any(ALL_CODES), [A, B] = score(code, g);
-          if (g === code || A + B === 3 || clues.some(x => x[0] === g)) continue;   // never hand over all three digits
+          const g = any(ALL), [A, B] = score(code, g);
+          if (g === code || A + B === len || clues.some(x => x[0] === g)) continue;   // never hand over all the digits
           const left = fits.filter(s => fitsClue(s, [g, A, B])).length;
           if (left < fits.length && (!best || left < best.left)) best = { clue:[g, A, B], left };
         }
@@ -460,16 +750,40 @@
       }
       if (fits.length === 1 && clues.length >= 3) return { code, clues };
     }
-    return { code:"316", clues:[["210", 1, 0], ["902", 0, 0], ["362", 1, 1], ["493", 0, 1]] };   // hand-checked fallback
+    return len === 3 ? { code:"316", clues:[["210", 1, 0], ["902", 0, 0], ["362", 1, 1], ["493", 0, 1]] }   // hand-checked fallbacks
+      : { code:"3175", clues:[["3029", 1, 0], ["4610", 0, 1], ["5813", 0, 2], ["7135", 2, 2], ["2468", 0, 0]] };
   }
+
+  // the loot in each dad's safe
+  const LOOT = {
+    modern:{ name:"Dad's first flip phone", svg:`<rect x="32" y="6" width="56" height="56" rx="10" style="fill:var(--n-accent)"/><rect x="40" y="14" width="40" height="34" rx="4" style="fill:var(--n-accent-ink)"/><path d="M46 26h18M46 34h26" style="stroke:var(--n-accent);stroke-width:3;stroke-linecap:round"/><rect x="28" y="60" width="64" height="9" rx="4" style="fill:var(--n-dim)"/><rect x="32" y="67" width="56" height="58" rx="10" style="fill:var(--n-accent)"/>${[0, 1, 2, 3].map(r => [0, 1, 2].map(q => `<rect x="${42 + q * 13}" y="${76 + r * 11}" width="10" height="7" rx="2" style="fill:var(--n-accent-ink)"/>`).join("")).join("")}` },
+    eighties:{ name:"Golden cartridge", svg:`<path d="M14 6h92a8 8 0 018 8v88h-14v24H20v-24H6V14a8 8 0 018-8z" style="fill:var(--n-accent)"/><rect x="24" y="20" width="72" height="50" rx="5" style="fill:var(--n-accent-ink)"/><path d="M36 36h48M36 46h32M36 56h40" style="stroke:var(--n-accent);stroke-width:4;stroke-linecap:round"/><path d="M34 84h52M34 94h52" style="stroke:var(--n-accent-ink);stroke-width:4;stroke-linecap:round;opacity:.55"/><path d="M30 112v10M42 112v10M54 112v10M66 112v10M78 112v10M90 112v10" style="stroke:var(--n-accent-ink);stroke-width:4;stroke-linecap:round"/>` },
+    skater:{ name:"Signed skate deck", svg:`<rect x="42" y="4" width="36" height="124" rx="18" style="fill:var(--n-accent)"/><rect x="48" y="12" width="24" height="108" rx="12" style="fill:none;stroke:var(--n-accent-ink);stroke-width:2;opacity:.45"/><circle cx="36" cy="28" r="7" style="fill:var(--n-lit)"/><circle cx="84" cy="28" r="7" style="fill:var(--n-lit)"/><circle cx="36" cy="104" r="7" style="fill:var(--n-lit)"/><circle cx="84" cy="104" r="7" style="fill:var(--n-lit)"/><path d="M50 78q6-14 10-2t8-6 4 8" style="fill:none;stroke:var(--n-accent-ink);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round"/>` },
+    gamer:{ name:"Platinum headset", svg:`<path d="M20 74V58a40 40 0 0180 0v16" style="fill:none;stroke:var(--n-accent);stroke-width:10;stroke-linecap:round"/><rect x="10" y="64" width="30" height="46" rx="12" style="fill:var(--n-accent)"/><rect x="80" y="64" width="30" height="46" rx="12" style="fill:var(--n-accent)"/><rect x="16" y="72" width="18" height="30" rx="8" style="fill:var(--n-accent-ink)"/><rect x="86" y="72" width="18" height="30" rx="8" style="fill:var(--n-accent-ink)"/><path d="M25 108q6 18 30 18" style="fill:none;stroke:var(--n-accent);stroke-width:5;stroke-linecap:round"/><circle cx="58" cy="126" r="5" style="fill:var(--n-lit)"/>` },
+    coach:{ name:"Championship whistle", svg:`<path d="M60 8q36 0 36 30" style="fill:none;stroke:var(--n-lit);stroke-width:5;stroke-linecap:round"/><path d="M60 8q-30 0-30 40" style="fill:none;stroke:var(--n-lit);stroke-width:5;stroke-linecap:round"/><circle cx="54" cy="86" r="34" style="fill:var(--n-accent)"/><rect x="62" y="52" width="50" height="24" rx="6" style="fill:var(--n-accent)"/><rect x="100" y="56" width="12" height="16" rx="3" style="fill:var(--n-accent-ink)"/><circle cx="54" cy="86" r="14" style="fill:var(--n-accent-ink)"/><circle cx="54" cy="86" r="6" style="fill:var(--n-accent)"/>` },
+    bookworm:{ name:"First-edition book", svg:`<rect x="18" y="10" width="84" height="112" rx="6" style="fill:var(--n-accent)"/><rect x="18" y="10" width="16" height="112" rx="4" style="fill:var(--n-accent-ink);opacity:.35"/><rect x="44" y="30" width="48" height="30" rx="3" style="fill:none;stroke:var(--n-accent-ink);stroke-width:3"/><path d="M52 42h32M56 50h24" style="stroke:var(--n-accent-ink);stroke-width:3;stroke-linecap:round"/><path d="M50 84h36M50 94h28" style="stroke:var(--n-accent-ink);stroke-width:3;stroke-linecap:round;opacity:.5"/><path d="M84 10v36l8-7 8 7V10" style="fill:var(--n-lit)"/>` },
+    labdad:{ name:"Glowing flask", svg:`<path d="M48 8h24M52 8v38L18 112a8 8 0 007 12h70a8 8 0 007-12L68 46V8" style="fill:var(--n-card);stroke:var(--n-accent);stroke-width:5;stroke-linejoin:round"/><path d="M33 86h54l15 26a8 8 0 01-7 12H25a8 8 0 01-7-12z" style="fill:var(--n-lit)"/><circle cx="50" cy="100" r="5" style="fill:var(--n-off);opacity:.35"/><circle cx="68" cy="108" r="3.5" style="fill:var(--n-off);opacity:.35"/><circle cx="60" cy="68" r="4" style="fill:var(--n-lit)"/><circle cx="66" cy="54" r="2.5" style="fill:var(--n-lit)"/>` },
+    professor:{ name:"Golden calculator", svg:`<rect x="20" y="6" width="80" height="120" rx="10" style="fill:var(--n-accent)"/><rect x="30" y="16" width="60" height="26" rx="4" style="fill:var(--n-accent-ink)"/><text x="84" y="35" text-anchor="end" font-family="ui-monospace,monospace" font-weight="900" font-size="16" style="fill:var(--n-lit)">3.14</text>${[0, 1, 2, 3].map(r => [0, 1, 2].map(q => `<rect x="${30 + q * 22}" y="${52 + r * 18}" width="16" height="12" rx="3" style="fill:var(--n-accent-ink)"/>`).join("")).join("")}` },
+    grandpa:{ name:"Grandpa's pocket watch", svg:`<path d="M60 22q-46-6-50 30" style="fill:none;stroke:var(--n-lit);stroke-width:4;stroke-dasharray:6 4;stroke-linecap:round"/><rect x="53" y="10" width="14" height="14" rx="3" style="fill:var(--n-accent)"/><circle cx="60" cy="74" r="48" style="fill:var(--n-accent)"/><circle cx="60" cy="74" r="38" style="fill:var(--n-off)"/>${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => `<circle cx="${(60 + 31 * Math.sin(i * Math.PI / 6)).toFixed(1)}" cy="${(74 - 31 * Math.cos(i * Math.PI / 6)).toFixed(1)}" r="${i % 3 ? 2 : 3.5}" style="fill:var(--n-accent)"/>`).join("")}<path d="M60 74V50M60 74l16 10" style="stroke:var(--n-ink);stroke-width:4;stroke-linecap:round"/><circle cx="60" cy="74" r="4" style="fill:var(--n-accent)"/>` },
+  };
+  const lootSVG = (id, label) => `<svg viewBox="0 0 120 132" ${label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'}>${LOOT[id].svg}</svg>`;
+  // what you're playing: kept between visits; 4 digits open after three cracked safes
+  const lockPref = (s) => { const p = s.safePref || {}; const four = (s.safesCracked || 0) >= 3; return { mode:p.mode === "crack" ? "crack" : "deduce", len:four && p.len === 4 ? 4 : 3, four }; };
+  const LOCK_MAX = { deduce3:6, deduce4:7, crack3:8, crack4:10 };
   function initLock(){
-    Object.assign(ctx, { dial:[0, 0, 0], tries:[], crossed:new Set(), max:6, lost:false,
-      say:"Three digits, all different. The notes on the door are all you get." });
-    if (ctx.mode !== "daily") { ctx.lock = makeLock(); return; }
+    const s = S(), pref = ctx.mode === "hands" ? lockPref(s) : { mode:"deduce", len:3 };
+    const lockMode = pref.mode, len = pref.len, max = LOCK_MAX[lockMode + len];
+    const owner = ctx.mode === "hands" ? DADS[rivalIdx("lock")] : ctx.mode === "daily" ? DADS[safeNo() % DADS.length] : DADS[1];
+    const words = len === 3 ? "Three" : "Four";
+    Object.assign(ctx, { lockMode, len, max, owner, dial:Array(len).fill(0), tries:[], crossed:new Set(), lost:false,
+      say: lockMode === "crack"
+        ? `${owner.name}'s safe. No notes this time: try a code and the safe tells you how close you got. ${words} digits, all different, ${max} tries.`
+        : `${owner.name}'s safe. ${words} digits, all different. The notes on the door are all you get.` });
+    if (ctx.mode !== "daily") { ctx.lock = lockMode === "crack" ? { code:pick(codesOf(len)), clues:[] } : makeLock(Math.random, len); return; }
     // Dad's Safe: the same code and clues for everyone today. Progress is kept, so closing it can't reroll the safe.
-    const s = S(), no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null;
+    const no = safeNo(), d = s.safeDay && s.safeDay.no === no ? s.safeDay : null;
     Object.assign(ctx, { no, lock:makeLock(seeded(no * 7919 + 13)) });
-    if (!d) { ctx.say = "Today's safe. Everyone gets the same code, and you get six tries. " + ctx.say; saveSafe(ctx); ping("safe_open"); return; }
+    if (!d) { ctx.say = `Today's safe belongs to ${owner.name}. Everyone gets the same code, and you get six tries. Three digits, all different.`; saveSafe(ctx); ping("safe_open"); return; }
     Object.assign(ctx, { tries:d.tries.map(t => t.slice()), crossed:new Set(d.crossed || []), hinted:!!d.hinted, lost:!!d.lost, won:!!d.won, stars:d.stars || 0 });
     ctx.say = d.won ? `You cracked today's safe in ${d.tries.length + 1}. A new one opens at midnight.`
       : d.lost ? `Today's safe beat you. The code was ${ctx.lock.code}. A new one opens at midnight.`
@@ -486,18 +800,19 @@
     st.played++; if (won) st.won++;
     st.run = st.last === c.no - 1 ? st.run + 1 : 1; st.last = c.no; st.bestRun = Math.max(st.bestRun, st.run);
     saveSafe(c); ping(won ? "safe_win" : "safe_fail");
+    countAllFour(s); save();
     if (won) bridge?.arcade?.(6);
   }
   function safeFoot(){
     const st = S().safeStats || {}, n = new Date(), mid = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
     const mins = Math.max(1, Math.ceil((mid - n) / 60000));
     return h("p", { class:"bz-foot" }, `Safes cracked: ${st.won || 0} of ${st.played || 0}` + (st.run > 1 ? ` · ${st.run} days in a row` : "")
-      + ` · Next safe in ${Math.floor(mins / 60)}h ${mins % 60}m`);
+      + ` · ${dailiesDone()} of 4 dailies done · Next safe in ${Math.floor(mins / 60)}h ${mins % 60}m`);
   }
   // a spoiler-free result for the group chat: one row per try, never the digits
   function shareSafe(c){
-    const rows = c.tries.map(([, A, B]) => "🟢".repeat(A) + "🟡".repeat(B) + "⚫".repeat(3 - A - B));
-    if (c.won) rows.push("🟢🟢🟢");
+    const rows = c.tries.map(([, A, B]) => "🟢".repeat(A) + "🟡".repeat(B) + "⚫".repeat(c.len - A - B));
+    if (c.won) rows.push("🟢".repeat(c.len));
     const head = `🔐 Dad's Safe #${c.no} · ${c.won ? c.tries.length + 1 : "X"}/${c.max}`
       + (c.won ? " " + "★".repeat(c.stars) + "☆".repeat(3 - c.stars) : "") + (c.hinted ? " 💡" : "");
     ping("safe_share");
@@ -505,51 +820,72 @@
     if (bridge?.shareText) bridge.shareText(text, "Dad's Safe");
     else navigator.clipboard?.writeText(text).catch(() => {});
   }
-  const lockStars = (c, used) => capStars(c, used <= 2 ? 3 : used <= 4 ? 2 : 1);
-  const pegs = (A, B) => h("span", { class:"bz-pegs", "aria-hidden":"true" }, [0, 1, 2].map(i => h("i", { class:"bz-peg" + (i < A ? "" : i < A + B ? " ring" : " dash") })));
+  const LOCK_STARS = { deduce3:[2, 4], deduce4:[3, 5], crack3:[5, 6], crack4:[6, 8] };
+  const lockStars = (c, used) => { const [a, b] = LOCK_STARS[c.lockMode + c.len]; return capStars(c, used <= a ? 3 : used <= b ? 2 : 1); };
+  const pegs = (A, B, len = 3) => h("span", { class:"bz-pegs", "aria-hidden":"true" }, Array.from({ length:len }, (_, i) => h("i", { class:"bz-peg" + (i < A ? "" : i < A + B ? " ring" : " dash") })));
   const shortClue = (A, B) => A + B === 0 ? "Nothing is right" : [A ? `${A} in place` : "", B ? `${B} misplaced` : ""].filter(Boolean).join(", ");
+  function lockPicker(c){
+    if (c.mode !== "hands") return null;
+    const s = S(), p = lockPref(s);
+    const set = (k, v) => { s.safePref = { ...(s.safePref || {}), [k]:v }; save(); startHands("lock", { mode:"hands" }); };
+    const seg = (label, on, fn, attrs) => btn("", "bz-lvl" + (on ? " on" : ""), fn, { ...(on ? { "aria-pressed":"true" } : { "aria-pressed":"false" }), ...attrs, html:label });
+    const got = new Set(s.loot || []);
+    return [h("div", { class:"bz-levels", role:"group", "aria-label":"How to play the safe" },
+        seg(`<b>Deduce</b><small aria-hidden="true">notes</small>`, p.mode === "deduce", () => set("mode", "deduce"), { "data-fk":"m-d", "aria-label":"Deduce: notes on the door, then guesses" }),
+        seg(`<b>Crack</b><small aria-hidden="true">no notes</small>`, p.mode === "crack", () => set("mode", "crack"), { "data-fk":"m-c", "aria-label":"Safecracker: no notes, just the safe's feedback" }),
+        seg(`<b>3</b><small aria-hidden="true">digits</small>`, p.len === 3, () => set("len", 3), { "data-fk":"l-3", "aria-label":"Three digits" }),
+        seg(`<b>4</b><small aria-hidden="true">${p.four ? "digits" : "locked"}</small>`, p.len === 4, () => set("len", 4),
+          { "data-fk":"l-4", disabled:!p.four, "aria-label": p.four ? "Four digits" : `Four digits, locked. Crack ${3 - (s.safesCracked || 0)} more safe${3 - (s.safesCracked || 0) === 1 ? "" : "s"} first` })),
+      h("div", { class:"bz-shelf", role:"img", "aria-label":`Loot shelf: ${got.size} of ${DADS.length} collected` },
+        DADS.map(d => h("span", { class:"bz-shelfi" + (got.has(d.id) ? " got" : "") + (d === c.owner ? " now" : ""), title: got.has(d.id) ? LOOT[d.id].name : "Not cracked yet", html: lootSVG(d.id) })))];
+  }
   function drawLock(){
-    const c = ctx, used = c.tries.length + (c.won ? 1 : 0), over = c.won || c.lost;
+    const c = ctx, len = c.len, used = c.tries.length + (c.won ? 1 : 0), over = c.won || c.lost, words = len === 3 ? "three" : "four";
     const hudRow = h("div", { class:"bz-hud" }, stat(`${used} / ${c.max}`, "Tries used"), starsEl(c.won ? c.stars : lockStars(c, used + 1), c.won), stat(c.won ? "Yours" : "Locked", "Loot"));
-    if (c.won) return [hudRow,
+    const L = LOOT[c.owner.id];
+    if (c.won) return [lockPicker(c), hudRow,
       h("div", { class:"bz-vault" },
-        h("div", { class:"bz-loot", html:`<svg viewBox="0 0 120 132" role="img" aria-label="Golden game cartridge"><path d="M14 6h92a8 8 0 018 8v88h-14v24H20v-24H6V14a8 8 0 018-8z" style="fill:var(--n-accent)"/><rect x="24" y="20" width="72" height="50" rx="5" style="fill:var(--n-accent-ink)"/><path d="M36 36h48M36 46h32M36 56h40" style="stroke:var(--n-accent);stroke-width:4;stroke-linecap:round"/><path d="M34 84h52M34 94h52" style="stroke:var(--n-accent-ink);stroke-width:4;stroke-linecap:round;opacity:.55"/><path d="M30 112v10M42 112v10M54 112v10M66 112v10M78 112v10M90 112v10" style="stroke:var(--n-accent-ink);stroke-width:4;stroke-linecap:round"/></svg>` }),
-        h("b", {}, "Golden cartridge"), h("p", {}, `The safe swings open. The code was ${c.lock.code}.`))];
-    const turn = (i, by) => () => { c.dial[i] = (c.dial[i] + by + 10) % 10; renderHands(); };
+        h("div", { class:"bz-loot", html:lootSVG(c.owner.id, L.name) }),
+        h("b", {}, L.name), h("p", {}, `${c.owner.name}'s safe swings open. The code was ${c.lock.code}.` + (c.newLoot ? " New on your loot shelf!" : ""))), ].flat();
+    const turn = (i, by) => () => { c.dial[i] = (c.dial[i] + by + 10) % 10; sfx("click"); renderHands(); };
     const dial = (i) => h("div", { class:"bz-tum" },
       btn("▲", "", turn(i, 1), { "aria-label":`Dial ${i + 1} up`, disabled:over, "data-fk":"u" + i }),
       h("span", { class:"bz-digit2", "aria-live":"polite", "aria-label":`Dial ${i + 1}: ${c.dial[i]}` }, String(c.dial[i])),
       btn("▼", "", turn(i, -1), { "aria-label":`Dial ${i + 1} down`, disabled:over, "data-fk":"d" + i }));
     const tryIt = () => {
       const g = c.dial.join("");
-      if (new Set(g).size < 3) { c.say = "All three digits are different. Change one and try again."; return renderHands(); }
-      if (c.tries.some(t => t[0] === g)) { c.say = `You already tried ${g}. The safe hasn't changed its mind.`; return renderHands(); }
-      if (g === c.lock.code) { const n = c.tries.length + 1;
-        return handsWon(lockStars(c, n), n <= 2 ? `Cracked in ${n}. Should I be worried about my wallet?` : `Open in ${n} tries. The golden cartridge is yours. Don't sell it.`); }
-      const [A, B] = score(c.lock.code, g); c.tries.push([g, A, B]);
-      if (c.tries.length >= c.max) { c.lost = true; buzz(120); c.say = `Six tries and it's still shut. The code was ${c.lock.code}. The safe and I are both disappointed.`;
+      if (new Set(g).size < len) { c.say = `All ${words} digits are different. Change one and try again.`; sfx("nope"); return renderHands(); }
+      if (c.tries.some(t => t[0] === g)) { c.say = `You already tried ${g}. The safe hasn't changed its mind.`; sfx("nope"); return renderHands(); }
+      if (g === c.lock.code) { const n = c.tries.length + 1, s = S();
+        s.loot ||= []; c.newLoot = !s.loot.includes(c.owner.id); if (c.newLoot) s.loot.push(c.owner.id);
+        return handsWon(lockStars(c, n), n <= 2 ? `Cracked in ${n}. Should I be worried about my wallet?` : `Open in ${n} tries. ${L.name} is now yours. Don't sell it.`); }
+      const [A, B] = score(c.lock.code, g); c.tries.push([g, A, B]); sfx("nope");
+      if (c.tries.length >= c.max) { c.lost = true; buzz(120); sfx("lose"); c.say = `${c.max} tries and it's still shut. The code was ${c.lock.code}. The safe and I are both disappointed.`;
+        if (c.rival) { c.rival.done = true; c.rival.beat = false; c.rival.say = dadLine(c.rival.d, "lose", c.rival.txt); ping("rival_lose"); }
         if (c.mode === "daily") { c.say += " Same time tomorrow?"; finishSafe(c, false); } }
       else { c.say = c.tries.length === c.max - 1 ? "One try left. No pressure. Some pressure." : "Not it. But the safe just told you something. Read the row."; saveSafe(c); }
       renderHands();
     };
-    return [hudRow,
-      h("div", { class:"bz-safe" },
-        h("ul", { class:"bz-notes", "aria-label":"Clues" }, c.lock.clues.map(([g, A, B]) =>
-          h("li", { class:"bz-note", "aria-label":`${g.split("").join(" ")}: ${clueText(A, B)}` }, h("b", { "aria-hidden":"true" }, g), h("span", { "aria-hidden":"true" }, pegs(A, B), h("small", {}, shortClue(A, B)))))),
-        h("div", { class:"bz-dials" }, h("div", { class:"bz-tumblers" }, dial(0), dial(1), dial(2)),
+    const cols = c.max > 7 ? Math.ceil(c.max / 2) : c.max;
+    return [lockPicker(c), hudRow,
+      h("div", { class:"bz-safe" + (len === 4 ? " four" : "") },
+        c.lock.clues.length ? h("ul", { class:"bz-notes", "aria-label":"Clues" }, c.lock.clues.map(([g, A, B]) =>
+          h("li", { class:"bz-note", "aria-label":`${g.split("").join(" ")}: ${clueText(A, B, len)}` }, h("b", { "aria-hidden":"true" }, g), h("span", { "aria-hidden":"true" }, pegs(A, B, len), h("small", {}, shortClue(A, B)))))) 
+          : h("p", { class:"bz-nonotes" }, "No notes on this door. Every try below is a clue: ● right digit, right place · ○ right digit, wrong place."),
+        h("div", { class:"bz-dials" }, h("div", { class:"bz-tumblers" }, Array.from({ length:len }, (_, i) => dial(i))),
           h("span", { class:"bz-handle", "aria-hidden":"true", html:`<svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" style="fill:none;stroke:var(--n-dim);stroke-width:6"/><path d="M42 8v68M8 42h68M18 18l48 48M66 18L18 66" style="stroke:var(--n-dim);stroke-width:5;stroke-linecap:round"/><circle cx="42" cy="42" r="12" style="fill:var(--n-accent)"/><circle cx="42" cy="42" r="4" style="fill:var(--n-accent-ink)"/></svg>` })),
         h("div", { class:"bz-pad", role:"group", "aria-label":"Scratchpad: cross out digits you have ruled out" }, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(d =>
-          btn(String(d), c.crossed.has(d) ? "x" : "", () => { if (c.crossed.has(d)) c.crossed.delete(d); else c.crossed.add(d); saveSafe(c); renderHands(); },
+          btn(String(d), c.crossed.has(d) ? "x" : "", () => { if (c.crossed.has(d)) c.crossed.delete(d); else c.crossed.add(d); sfx("click"); saveSafe(c); renderHands(); },
             { "aria-pressed":String(c.crossed.has(d)), "aria-label":`${d}${c.crossed.has(d) ? ", crossed out" : ""}`, "data-fk":"p" + d }))),
-        h("ol", { class:"bz-tries", "aria-label":"Your tries" }, Array.from({ length:c.max }, (_, i) => { const t = c.tries[i];
-          return h("li", { class:"bz-try" + (t ? " used" : ""), "aria-label": t ? `Try ${i + 1}: ${t[0]}, ${clueText(t[1], t[2])}` : `Try ${i + 1}: not used` }, t ? [h("span", { "aria-hidden":"true" }, t[0]), pegs(t[1], t[2])] : null); }))),
+        h("ol", { class:"bz-tries", style:`grid-template-columns:repeat(${cols}, 1fr)`, "aria-label":"Your tries" }, Array.from({ length:c.max }, (_, i) => { const t = c.tries[i];
+          return h("li", { class:"bz-try" + (t ? " used" : ""), "aria-label": t ? `Try ${i + 1}: ${t[0]}, ${clueText(t[1], t[2], len)}` : `Try ${i + 1}: not used` }, t ? [h("span", { "aria-hidden":"true" }, t[0]), pegs(t[1], t[2], len)] : null); }))),
       c.lost ? null : h("div", { class:"bz-ctl" },
         sbtn("Hint", "hintb", () => { const free = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(d => !c.lock.code.includes(String(d)) && !c.crossed.has(d));
           if (!free.length) { c.say = "Every wrong digit is crossed out. The rest is on you."; return renderHands(); }
           c.hinted = true; c.crossed.add(free[0]); c.say = `Fine. ${free[0]} isn't in the code, so I crossed it out. A hint caps this one at 2 stars.`; saveSafe(c); renderHands(); }, { "data-fk":"hint" }),
         sbtn("Clear", "", () => { c.crossed.clear(); saveSafe(c); renderHands(); }, { disabled:!c.crossed.size, "data-fk":"clear" }),
         sbtn("Try code", "go", tryIt, { "data-fk":"try" })),
-    ];
+    ].flat();
   }
 
   // ---------- Crossings (River Run): a pack of four crossing puzzles that share one engine ----------
@@ -625,22 +961,39 @@
     return null;
   }
   const crossOpen = (s) => Math.min(CROSSINGS.length - 1, CROSSINGS.filter(L => (s.crossStars || {})[L.id]).length);   // highest level you may play
+  // Night Bridge: the daily crossing. Four walkers with new times every day; the battery lasts exactly as long as the fastest way over.
+  function dailyBridge(no){
+    const r = seeded(no * 3571 + 11), pool = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15];
+    const mins = shuffleR(pool, r).slice(0, 4).sort((a, b) => a - b), who = ["The sprinter", "Dad", "Uncle", "Grandpa"];
+    const L = { ...CROSSINGS[1], id:"night", name:"Night Bridge", limit:99,
+      tokens:mins.map((m, i) => ({ id:"m" + i, type:"mins", mins:m, label:`${who[i]}, ${m} minute${m === 1 ? "" : "s"}` })) };
+    const best = crossNext(L, Object.fromEntries(L.tokens.map(t => [t.id, 0])), 0).total;
+    return Object.assign(L, { par:best, limit:best,
+      intro:`Tonight's bridge. Four of us take ${mins.join(", ")} minutes. Two at most cross together, at the slower one's pace, and the flashlight has to come back each time. The battery lasts ${best} minutes, exactly enough if you find the fastest way.`,
+      late:(n, done) => done ? `Everyone's across, but that took ${n} minutes and the flashlight died at ${best}. There is a faster way. Undo and find it.`
+        : `That's ${n} minutes gone. The flashlight died at ${best} and someone is standing in the dark. Undo that.`,
+      win:() => `${best} minutes on the dot. Nobody left in the dark. Same bridge for everyone tonight, so go brag.` });
+  }
   function initRiver(){
     const s = S(), top = crossOpen(s);
-    const level = ctx.mode !== "hands" ? 0 : Math.min(ctx.level ?? top, top), L = CROSSINGS[level];
-    Object.assign(ctx, { level, pos:Object.fromEntries(L.tokens.map(t => [t.id, 0])), boat:0, load:[], used:0, fail:null, past:[], hint:null, slide:null, say:L.intro });
+    const level = ctx.mode !== "hands" ? 0 : Math.min(ctx.level ?? top, top);
+    let L = CROSSINGS[level];
+    if (ctx.mode === "daily") { ctx.no = safeNo(); L = dailyBridge(ctx.no); }
+    Object.assign(ctx, { level, L, par:L.par, pos:Object.fromEntries(L.tokens.map(t => [t.id, 0])), boat:0, load:[], used:0, fail:null, past:[], hint:null, slide:null, say:L.intro });
+    const d = ctx.mode === "daily" ? dailyDone("river") : null;
+    if (d) Object.assign(ctx, { won:true, stars:d.stars, used:d.used, hinted:d.hinted, pos:Object.fromEntries(L.tokens.map(t => [t.id, 1])), boat:1, say:`Everyone made it over tonight in ${d.used} minutes. A new bridge at midnight.` });
   }
   const riverStars = (c, L) => capStars(c, c.used <= L.par ? 3 : c.used <= L.par + 2 ? 2 : 1);
   function drawRiver(){
-    const c = ctx, s = S(), L = CROSSINGS[c.level], live = !c.won && !c.fail, small = L.tokens.length > 3, sz = small ? " sm" : "";
+    const c = ctx, s = S(), L = c.L, live = !c.won && !c.fail, small = L.tokens.length > 3, sz = small ? " sm" : "";
     const loaded = (t) => c.load.includes(t.id);
     const face = (t) => t.type === "mins" ? `<span class="bz-mins" aria-hidden="true"><b>${t.mins}</b><small>min</small></span>` : CICON[t.type] + (t.wt ? `<i class="bz-wt" aria-hidden="true">${t.wt === 2 ? "heavy" : "light"}</i>` : "");
     const token = (t, onBoat) => btn("", "bz-tok" + sz + (c.fail && c.fail.bad.includes(t.id) ? " flag" : "") + (live && c.hint && c.hint.includes(t.id) && !onBoat ? " hint" : "") + (c.fail && c.fail.gone === t.id ? " gone" : ""), () => {
       if (!live) return; c.hint = null;
       if (onBoat) c.load = c.load.filter(id => id !== t.id);
       else if (c.pos[t.id] !== c.boat) c.say = L.bridge ? "The flashlight is on the other side. Nobody walks that bridge in the dark." : "The boat is on the other bank. Nobody's swimming.";
-      else { const why = L.fits(L.tokens.filter(x => loaded(x) || x === t)); if (why) c.say = why; else c.load.push(t.id); }
-      renderHands();
+      else { const why = L.fits(L.tokens.filter(x => loaded(x) || x === t)); if (why) { c.say = why; sfx("nope"); } else c.load.push(t.id); }
+      sfx("tap"); renderHands();
     }, { html:face(t), "data-fk":"t-" + t.id, "aria-label": onBoat ? `${t.label}, ${L.bridge ? "about to cross" : "in the boat"}. Tap to take back` : `${t.label}, on the ${c.pos[t.id] ? "far" : "near"} side` + (c.pos[t.id] === c.boat ? `. Tap to ${L.bridge ? "send across" : "load into the boat"}` : "") });
     const slotCls = "bz-slot" + sz;
     const bank = (side) => h("div", { class:"bz-bank2" }, h("small", {}, side ? L.far : L.near),
@@ -654,7 +1007,8 @@
       c.boat = 1 - from; c.used += load.length ? L.cost(load) : 1; c.load = []; c.hint = null; c.slide = from;
       const done = L.tokens.every(t => c.pos[t.id] === 1);
       const bad = L.trouble(c.pos, c.boat) || (L.limit && c.used > L.limit ? { bad:[], say:L.late(c.used, done) } : null);
-      if (bad) { c.fail = bad; c.say = bad.say; buzz(120); return renderHands(); }
+      if (bad) { c.fail = bad; c.say = bad.say; buzz(120); sfx("nope"); return renderHands(); }
+      sfx("row");
       if (done) { const st = riverStars(c, L);
         if (c.mode === "hands") { s.crossStars ||= {}; s.crossStars[L.id] = Math.max(s.crossStars[L.id] || 0, st); }
         return handsWon(st, L.win(c.used)); }
@@ -662,7 +1016,7 @@
         : pick(["Made it across. Think about who gets left behind.", "Rowing, rowing. Robot arms, but still.", "Across. Who's next?"]);
       renderHands();
     };
-    const undo = () => { const p = c.past.pop(); if (!p) return; Object.assign(c, { pos:p.pos, boat:p.boat, used:p.used, load:[], fail:null, hint:null, slide:null }); c.say = "Trip undone. We never speak of it."; renderHands(); };
+    const undo = () => { const p = c.past.pop(); if (!p) return; Object.assign(c, { pos:p.pos, boat:p.boat, used:p.used, load:[], fail:null, hint:null, slide:null }); c.say = "Trip undone. We never speak of it."; sfx("tap"); renderHands(); };
     const hint = () => {
       const next = crossNext(L, c.pos, c.boat);
       if (!next || (L.limit && c.used + next.total > L.limit)) { c.say = L.limit ? "From here the battery can't last. Undo a trip or two, then ask me again." : "No way home from here. Undo a trip, then ask me again."; return renderHands(); }
@@ -705,6 +1059,15 @@
 
   // ---------- Scramble (Slide Tiles): a picture cut into 8 tiles, shuffled with legal moves so it can always be solved ----------
   const PIC = `<rect x="0" y="0" width="300" height="300" style="fill:var(--n-off)"/><rect x="0" y="274" width="300" height="26" style="fill:var(--n-line)"/><rect x="46" y="10" width="208" height="278" rx="12" stroke-width="4" style="fill:var(--n-card);stroke:var(--n-frame)"/><rect x="60" y="22" width="180" height="50" rx="8" style="fill:var(--n-accent)"/><path d="M82 34l3.8 7.8 8.6 1.2-6.2 6 1.5 8.500L82 53.400l-7.7 4.1 1.5-8.5-6.2-6 8.6-1.200z" style="fill:var(--n-accent-ink)"/><path d="M112 34v26h8a13 13 0 000-26zM146 60l9-26h4l9 26M150 52h14M184 34v26h8a13 13 0 000-26z" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--n-accent-ink)"/><circle cx="226" cy="47" r="7" style="fill:var(--n-accent-ink)"/><rect x="66" y="86" width="168" height="100" rx="8" stroke-width="4" style="fill:var(--n-off);stroke:var(--n-frame)"/><rect x="80" y="104" width="7" height="34" rx="3" style="fill:var(--n-lit)"/><rect x="213" y="134" width="7" height="34" rx="3" style="fill:var(--n-lit)"/><path d="M150 96v80" stroke-width="3" stroke-dasharray="6 8" style="stroke:var(--n-dim)"/><circle cx="128" cy="150" r="7" style="fill:var(--n-lit)"/><path d="M168 104h10v10h-10v10h10" fill="none" stroke-width="3" style="stroke:var(--n-lit)"/><rect x="46" y="198" width="208" height="40" style="fill:var(--n-line)"/><path d="M86 222v-18" stroke-width="5" stroke-linecap="round" style="stroke:var(--n-ink)"/><circle cx="86" cy="204" r="9" style="fill:var(--n-accent)"/><ellipse cx="86" cy="226" rx="14" ry="5" style="fill:var(--n-off)"/><circle cx="136" cy="220" r="9" style="fill:var(--n-lit)"/><circle cx="164" cy="212" r="9" style="fill:var(--n-hint)"/><rect x="212" y="206" width="24" height="26" rx="4" stroke-width="3" style="fill:var(--n-off);stroke:var(--n-accent)"/><path d="M224 212v14" stroke-width="3" stroke-linecap="round" style="stroke:var(--n-accent)"/><path d="M62 250h26M62 258h26M62 266h26" stroke-width="3" stroke-linecap="round" style="stroke:var(--n-frame)"/><rect x="112" y="248" width="76" height="28" rx="5" stroke-width="3" style="fill:var(--n-off);stroke:var(--n-frame)"/><circle cx="150" cy="262" r="4" style="fill:var(--n-dim)"/><path d="M212 250l26 16M212 258l26 16M212 266l14 8" stroke-width="3" stroke-linecap="round" style="stroke:var(--n-frame)"/>`;
+  // more pictures, unlocked by solving Scrambles (at = wins needed). All drawn with the look's own colours.
+  const PICS = [
+    { id:"arcade", name:"Dad's arcade", short:"Arcade", at:0, svg:PIC },
+    { id:"tape", name:"Dad's mixtape", short:"Mixtape", at:2, svg:`<rect width="300" height="300" style="fill:var(--n-off)"/><text x="150" y="38" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="900" font-size="20" letter-spacing="3" style="fill:var(--n-hint)">MIXTAPE '89</text><path d="M18 18l10 10M28 18l-10 10M272 264l10 10M282 264l-10 10" stroke-width="3" stroke-linecap="round" style="stroke:var(--n-lit)"/><rect x="22" y="56" width="256" height="190" rx="16" stroke-width="4" style="fill:var(--n-card);stroke:var(--n-frame)"/><g style="fill:var(--n-frame)"><circle cx="40" cy="74" r="5"/><circle cx="260" cy="74" r="5"/><circle cx="40" cy="228" r="5"/><circle cx="260" cy="228" r="5"/></g><rect x="50" y="72" width="200" height="74" rx="8" style="fill:var(--n-accent)"/><text x="64" y="104" font-family="system-ui,sans-serif" font-weight="900" font-size="24" style="fill:var(--n-accent-ink)">A</text><path d="M94 94h138M94 110h104M94 126h124" stroke-width="5" stroke-linecap="round" style="stroke:var(--n-accent-ink)"/><rect x="78" y="156" width="144" height="52" rx="26" stroke-width="4" style="fill:var(--n-off);stroke:var(--n-frame)"/><circle cx="108" cy="182" r="18" style="fill:var(--n-lit)"/><circle cx="192" cy="182" r="18" style="fill:var(--n-lit)"/><path d="M98 172l20 20M118 172l-20 20M182 172l20 20M202 172l-20 20" stroke-width="3" style="stroke:var(--n-sil)"/><circle cx="108" cy="182" r="6" style="fill:var(--n-off)"/><circle cx="192" cy="182" r="6" style="fill:var(--n-off)"/><path d="M126 196h48" stroke-width="4" style="stroke:var(--n-sil)"/><path d="M70 246l16-26h128l16 26z" style="fill:var(--n-line)"/><circle cx="112" cy="234" r="5" style="fill:var(--n-off)"/><circle cx="188" cy="234" r="5" style="fill:var(--n-off)"/><path d="M60 278h180" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round" style="stroke:var(--n-dim)"/>` },
+    { id:"boombox", name:"Dad's boombox", short:"Boombox", at:4, svg:`<rect width="300" height="300" style="fill:var(--n-off)"/><text x="18" y="48" font-family="system-ui,sans-serif" font-size="34" style="fill:var(--n-lit)">♪</text><path d="M72 66V44a14 14 0 0114-14h128a14 14 0 0114 14v22" fill="none" stroke-width="10" stroke-linecap="round" style="stroke:var(--n-frame)"/><path d="M246 64L284 12" stroke-width="5" stroke-linecap="round" style="stroke:var(--n-dim)"/><circle cx="284" cy="12" r="6" style="fill:var(--n-dim)"/><rect x="12" y="64" width="276" height="180" rx="18" stroke-width="4" style="fill:var(--n-card);stroke:var(--n-frame)"/><rect x="26" y="76" width="248" height="22" rx="6" style="fill:var(--n-line)"/><rect x="114" y="80" width="14" height="14" rx="3" style="fill:var(--n-accent)"/><rect x="134" y="80" width="14" height="14" rx="3" style="fill:var(--n-lit)"/><rect x="154" y="80" width="14" height="14" rx="3" style="fill:var(--n-hint)"/><rect x="174" y="80" width="14" height="14" rx="3" style="fill:var(--n-dim)"/>${[78, 222].map(x => `<circle cx="${x}" cy="172" r="56" stroke-width="5" style="fill:var(--n-off);stroke:var(--n-frame)"/><circle cx="${x}" cy="172" r="40" fill="none" stroke-width="3" stroke-dasharray="4 6" style="stroke:var(--n-dim)"/><circle cx="${x}" cy="172" r="22" style="fill:var(--n-dim)"/><circle cx="${x}" cy="172" r="8" style="fill:var(--n-accent)"/>`).join("")}<rect x="122" y="118" width="56" height="40" rx="5" stroke-width="3" style="fill:var(--n-off);stroke:var(--n-frame)"/><circle cx="138" cy="138" r="7" style="fill:var(--n-lit)"/><circle cx="162" cy="138" r="7" style="fill:var(--n-lit)"/><rect x="122" y="172" width="56" height="10" rx="3" style="fill:var(--n-hint)"/><rect x="122" y="190" width="56" height="10" rx="3" style="fill:var(--n-accent)"/><path d="M128 220h44" stroke-dasharray="6 7" stroke-width="7" style="stroke:var(--n-lit)"/><rect x="0" y="256" width="300" height="44" style="fill:var(--n-line)"/><rect x="40" y="244" width="44" height="14" rx="4" style="fill:var(--n-frame)"/><rect x="216" y="244" width="44" height="14" rx="4" style="fill:var(--n-frame)"/><text x="248" y="294" font-family="system-ui,sans-serif" font-size="30" style="fill:var(--n-lit)">♫</text>` },
+    { id:"car", name:"Dad's first car", short:"Car", at:7, svg:`<rect width="300" height="300" style="fill:var(--n-off)"/><g style="fill:var(--n-ink)"><circle cx="30" cy="30" r="2"/><circle cx="90" cy="18" r="1.6"/><circle cx="150" cy="44" r="2"/><circle cx="196" cy="22" r="1.6"/><circle cx="60" cy="80" r="1.6"/></g><circle cx="246" cy="56" r="28" style="fill:var(--n-lit)"/><circle cx="260" cy="46" r="24" style="fill:var(--n-off)"/><path d="M0 200q60-44 120-12t110-22 70 12V240H0z" style="fill:var(--n-line)"/><rect x="0" y="236" width="300" height="64" style="fill:var(--n-card)"/><path d="M12 276h40M92 276h40M172 276h40M252 276h40" stroke-width="6" stroke-linecap="round" style="stroke:var(--n-dim)"/><path d="M24 226v-36q0-10 10-12l40-8 34-40q8-10 22-10h70q14 0 22 12l26 38 26 6q12 3 12 16v34z" style="fill:var(--n-accent)"/><path d="M112 166l26-30h34v30z" style="fill:var(--n-sky)"/><path d="M184 136h22q8 0 12 6l18 24h-52z" style="fill:var(--n-sky)"/><path d="M34 204h244" stroke-width="6" style="stroke:var(--n-accent-ink)"/><path d="M178 172v48" stroke-width="3" style="stroke:var(--n-accent-ink);opacity:.5"/><rect x="266" y="184" width="14" height="10" rx="3" style="fill:var(--n-lit)"/><path d="M286 184l14-8v26z" style="fill:var(--n-lit);opacity:.4"/><rect x="24" y="186" width="10" height="12" rx="2" style="fill:var(--n-hint)"/>${[84, 222].map(x => `<circle cx="${x}" cy="228" r="28" style="fill:var(--n-off)"/><circle cx="${x}" cy="228" r="24" fill="none" stroke-width="8" style="stroke:var(--n-frame)"/><circle cx="${x}" cy="228" r="9" style="fill:var(--n-dim)"/>`).join("")}` },
+    { id:"pad", name:"Dad's game pad", short:"Game pad", at:10, svg:`<rect width="300" height="300" style="fill:var(--n-off)"/><g style="fill:var(--n-line)"><rect x="18" y="18" width="18" height="18"/><rect x="40" y="40" width="18" height="18"/><rect x="18" y="62" width="18" height="18"/><rect x="246" y="262" width="18" height="18"/><rect x="266" y="240" width="18" height="18"/></g><path d="M150 96q0-30 30-40t24-44" fill="none" stroke-width="6" stroke-linecap="round" style="stroke:var(--n-frame)"/><path d="M70 96h160q50 0 56 60l6 62q4 40-30 40-20 0-38-36l-10-20H86l-10 20q-18 36-38 36-34 0-30-40l6-62q6-60 56-60z" stroke-width="4" style="fill:var(--n-card);stroke:var(--n-frame)"/><path d="M66 150h20v-20h20v20h20v20h-20v20h-20v-20h-20z" style="fill:var(--n-lit)"/><circle cx="228" cy="136" r="13" style="fill:var(--n-accent)"/><circle cx="252" cy="160" r="13" style="fill:var(--n-hint)"/><circle cx="204" cy="160" r="13" style="fill:var(--n-lit)"/><circle cx="228" cy="184" r="13" style="fill:var(--n-dim)"/><rect x="126" y="152" width="20" height="9" rx="4.5" style="fill:var(--n-dim)"/><rect x="154" y="152" width="20" height="9" rx="4.5" style="fill:var(--n-dim)"/><circle cx="150" cy="124" r="7" style="fill:var(--n-accent)"/>` },
+  ];
+  const picsOpen = (s) => PICS.reduce((top, P, i) => (s.tileWins || 0) >= P.at ? i : top, 0);
   const nbT = (i) => [i - 3, i + 3, i % 3 ? i - 1 : -1, i % 3 < 2 ? i + 1 : -1].filter(j => j >= 0 && j < 9);
   const HOME = "1,2,3,4,5,6,7,8,0";
   // shortest solution (IDA* with the taxicab distance): a list of board positions to tap, in order
@@ -722,45 +1085,78 @@
   }
   const fmtTime = (ms) => { const t = Math.floor(ms / 100), m = Math.floor(t / 600), s = Math.floor((t % 600) / 10); return `${m}:${s < 10 ? "0" : ""}${s}.${t % 10}`; };
   function initTiles(){
+    const s = S();
+    let rand = Math.random, pic = 0;
+    if (ctx.mode === "daily") { ctx.no = safeNo(); rand = seeded(ctx.no * 6007 + 3); pic = ctx.no % PICS.length; }
+    else if (ctx.mode === "hands") pic = Math.min(ctx.pic ?? s.tilePic ?? 0, picsOpen(s));
+    const P = PICS[pic];
     let t, last = -1;
-    do { t = [1, 2, 3, 4, 5, 6, 7, 8, 0]; for (let k = 0; k < 60; k++) { const z = t.indexOf(0), opts = nbT(z).filter(j => j !== last); const j = pick(opts); [t[z], t[j]] = [t[j], t[z]]; last = z; } }
+    do { t = [1, 2, 3, 4, 5, 6, 7, 8, 0]; for (let k = 0; k < 60; k++) { const z = t.indexOf(0), opts = nbT(z).filter(j => j !== last); const j = opts[Math.floor(rand() * opts.length)]; [t[z], t[j]] = [t[j], t[z]]; last = z; } }
     while (t.join() === HOME);
-    Object.assign(ctx, { tiles:t, first:t.slice(), par:solveTiles(t).length, past:[], t0:0, ms:0, hint:-1, pb:false, nums:!!S().tileNums,
-      say:"Rebuild my arcade cabinet. The clock starts on your first move." });
+    Object.assign(ctx, { pic, picName:P.name, tiles:t, first:t.slice(), par:solveTiles(t).length, past:[], t0:0, ms:0, hint:-1, pb:false, nums:!!s.tileNums,
+      say: ctx.mode === "daily" ? `Tonight's Scramble: ${P.name}. Same shuffle for everyone. The clock starts on your first move.` : `Rebuild ${P.name}. Tap or swipe a tile into the gap. The clock starts on your first move.` });
+    const d = ctx.mode === "daily" ? dailyDone("tiles") : null;
+    if (d) Object.assign(ctx, { won:true, stars:d.stars, moves:d.moves, ms:d.ms, hinted:d.hinted, tiles:HOME.split(",").map(Number), say:`Tonight's Scramble is solved: ${fmtTime(d.ms)} in ${d.moves} moves. A new one at midnight.` });
   }
   const tileStars = (c) => capStars(c, c.moves <= c.par + 2 ? 3 : c.moves <= c.par + 10 ? 2 : 1);
   function drawTiles(){
-    const c = ctx, z = c.tiles.indexOf(0), s = S();
-    const pic = (v) => `<svg viewBox="0 0 300 300" aria-hidden="true" style="left:${-((v - 1) % 3) * 100}%;top:${-Math.floor((v - 1) / 3) * 100}%">${PIC}</svg>`;
-    const tap = (i) => {
+    const c = ctx, z = c.tiles.indexOf(0), s = S(), P = PICS[c.pic];
+    const pic = (v) => `<svg viewBox="0 0 300 300" aria-hidden="true" style="left:${-((v - 1) % 3) * 100}%;top:${-Math.floor((v - 1) / 3) * 100}%">${P.svg}</svg>`;
+    const tap = (i, swiped) => {
       if (c.won || i === z) return;
+      if (!swiped && Date.now() - (c.swipeAt || 0) < 400) return;   // the click that follows a swipe
       const zr = Math.floor(z / 3), zc = z % 3, r = Math.floor(i / 3), q = i % 3;
-      if (r !== zr && q !== zc) return;
+      if (r !== zr && q !== zc) { sfx("nope"); return; }
       const step = r === zr ? (q < zc ? -1 : 1) : (r < zr ? -3 : 3);
       c.past.push({ tiles:c.tiles.slice(), moves:c.moves });
       for (let g = z; g !== i; g += step) { c.tiles[g] = c.tiles[g + step]; c.tiles[g + step] = 0; c.moves++; }   // tapping further along slides the whole row
-      c.hint = -1; if (!c.t0) c.t0 = Date.now();
-      if (c.tiles.join() === HOME) { c.ms = Date.now() - c.t0; c.pb = !s.tileBest || c.ms < s.tileBest; if (c.pb) { s.tileBest = c.ms; save(); }
-        return handsWon(tileStars(c), `Solved in ${fmtTime(c.ms)} and ${c.moves} moves.` + (c.pb ? " New personal best. Frame it." : c.moves > c.par + 10 ? " That was the scenic route, but it counts." : " Not bad at all.")); }
+      c.hint = -1; if (!c.t0) c.t0 = Date.now(); sfx("slide");
+      if (c.tiles.join() === HOME) { c.ms = Date.now() - c.t0; c.pb = !s.tileBest || c.ms < s.tileBest; if (c.pb) s.tileBest = c.ms;
+        const before = picsOpen(s); s.tileWins = (s.tileWins || 0) + 1; const opened = picsOpen(s) > before ? PICS[picsOpen(s)] : null; save();
+        return handsWon(tileStars(c), `Solved in ${fmtTime(c.ms)} and ${c.moves} moves.` + (c.pb ? " New personal best. Frame it." : c.moves > c.par + 10 ? " That was the scenic route, but it counts." : " Not bad at all.")
+          + (opened ? ` New picture unlocked: ${opened.name}.` : "")); }
       c.say = "Clock is running. So is my patience. Mostly."; renderHands();
     };
     const timeEl = h("b", { class:"bz-clock" }, fmtTime(c.won ? c.ms : c.t0 ? Date.now() - c.t0 : 0));
     if (c.t0 && !c.won) { clearInterval(c.iv); c.iv = setInterval(() => { if (ctx !== c || c.won || !timeEl.isConnected) return clearInterval(c.iv); timeEl.textContent = fmtTime(Date.now() - c.t0); }, 100); }
+    const puz = h("div", { class:"bz-puz" }, c.tiles.map((v, i) => { const show = v || (c.won ? 9 : 0);
+      return !show ? h("span", { class:"bz-gap2", "aria-hidden":"true" })
+        : h("button", { type:"button", class:"bz-pt" + (c.hint === i ? " hint" : ""), on:{ click:() => tap(i) }, disabled:c.won, "data-fk":"pt" + v, "data-i":String(i),
+            "aria-label":`Tile ${show}, row ${Math.floor(i / 3) + 1}, column ${i % 3 + 1}` + (nbT(z).includes(i) ? ", next to the gap" : ""),
+            html:pic(show) + (c.nums ? `<i class="n" aria-hidden="true">${show}</i>` : "") }); }));
+    // swipe: start on a tile and flick it toward the gap, or flick anywhere and the tile beside the gap moves that way
+    let sx = 0, sy = 0, si = -1, down = false;
+    puz.addEventListener("pointerdown", (e) => { if (c.won) return; down = true; sx = e.clientX; sy = e.clientY; const b = e.target.closest(".bz-pt"); si = b ? +b.dataset.i : -1; });
+    puz.addEventListener("pointercancel", () => { down = false; });
+    puz.addEventListener("pointerup", (e) => {
+      if (!down) return; down = false;
+      const dx = e.clientX - sx, dy = e.clientY - sy, horiz = Math.abs(dx) > Math.abs(dy);
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+      c.swipeAt = Date.now();
+      const zr = Math.floor(z / 3), zc = z % 3; let i = -1;
+      if (si >= 0) { const r = Math.floor(si / 3), q = si % 3;
+        if (horiz && r === zr && Math.sign(zc - q) === Math.sign(dx)) i = si;
+        else if (!horiz && q === zc && Math.sign(zr - r) === Math.sign(dy)) i = si; }
+      if (i < 0) i = horiz ? (dx < 0 ? (zc < 2 ? z + 1 : -1) : (zc > 0 ? z - 1 : -1)) : (dy < 0 ? (zr < 2 ? z + 3 : -1) : (zr > 0 ? z - 3 : -1));
+      if (i >= 0) tap(i, true); else sfx("nope");
+    });
+    const top = picsOpen(s);
     return [
+      c.mode !== "hands" ? null : h("div", { class:"bz-levels five", role:"group", "aria-label":"Choose a picture" }, PICS.map((X, i) =>
+        btn("", "bz-lvl bz-plvl" + (i === c.pic ? " on" : ""), () => { s.tilePic = i; save(); startHands("tiles", { mode:"hands", pic:i }); },
+          { disabled:i > top, ...(i === c.pic ? { "aria-current":"true" } : {}), "data-fk":"pic" + i,
+            "aria-label":X.name + (i > top ? `, locked. Solve ${X.at - (s.tileWins || 0)} more Scramble${X.at - (s.tileWins || 0) === 1 ? "" : "s"} to unlock it` : ""),
+            html:`<span class="bz-lthumb${i > top ? " locked" : ""}" aria-hidden="true"><svg viewBox="0 0 300 300">${X.svg}</svg></span><small aria-hidden="true">${i > top ? `${X.at} wins` : X.short}</small>` }))),
       h("div", { class:"bz-hud" },
         h("div", { class:"bz-stat" }, timeEl, h("small", {}, c.won && c.pb ? "Time · PB!" : s.tileBest ? `Best ${fmtTime(s.tileBest)}` : "Time")),
         stat(String(c.moves), `Moves · par ${c.par}`), starsEl(c.won ? c.stars : tileStars(c), c.won)),
-      h("div", { class:"bz-puz" }, c.tiles.map((v, i) => { const show = v || (c.won ? 9 : 0);
-        return !show ? h("span", { class:"bz-gap2", "aria-hidden":"true" })
-          : h("button", { type:"button", class:"bz-pt" + (c.hint === i ? " hint" : ""), on:{ click:() => tap(i) }, disabled:c.won, "data-fk":"pt" + v,
-              "aria-label":`Tile ${show}, row ${Math.floor(i / 3) + 1}, column ${i % 3 + 1}` + (nbT(z).includes(i) ? ", next to the gap" : ""),
-              html:pic(show) + (c.nums ? `<i class="n" aria-hidden="true">${show}</i>` : "") }); })),
+      puz,
       h("div", { class:"bz-goal" },
-        h("span", { class:"bz-goalpic", html:`<svg viewBox="0 0 300 300" role="img" aria-label="The finished picture: Dad's arcade cabinet">${PIC}</svg>` }),
-        h("span", {}, h("small", {}, "Goal"), h("b", {}, "Dad's arcade")),
+        h("span", { class:"bz-goalpic", html:`<svg viewBox="0 0 300 300" role="img" aria-label="The finished picture: ${P.name}">${P.svg}</svg>` }),
+        h("span", {}, h("small", {}, "Goal"), h("b", {}, P.name)),
         sbtn(c.nums ? "Hide numbers" : "Show numbers", "", () => { c.nums = !c.nums; s.tileNums = c.nums; save(); renderHands(); }, { "aria-pressed":String(c.nums), "data-fk":"nums" })),
       c.won ? null : h("div", { class:"bz-ctl" },
-        sbtn("Undo", "", () => { const p = c.past.pop(); if (!p) return; c.tiles = p.tiles; c.moves = p.moves; c.hint = -1; renderHands(); }, { disabled:!c.past.length, "data-fk":"undo" }),
+        sbtn("Undo", "", () => { const p = c.past.pop(); if (!p) return; c.tiles = p.tiles; c.moves = p.moves; c.hint = -1; sfx("slide"); renderHands(); }, { disabled:!c.past.length, "data-fk":"undo" }),
         sbtn("Hint", "hintb", () => { const path = solveTiles(c.tiles); if (!path.length) return; c.hinted = true; c.hint = path[0]; c.say = "Hint: slide the glowing tile. A hint caps this one at 2 stars."; renderHands(); }, { "data-fk":"hint" }),
         sbtn("Restart", "", () => { c.tiles = c.first.slice(); c.moves = 0; c.past = []; c.t0 = 0; c.hint = -1; clearInterval(c.iv); c.say = "Scrambled again, exactly as before. The clock is back to zero."; renderHands(); }, { disabled:!c.past.length, "data-fk":"restart" })),
     ];
@@ -1163,12 +1559,47 @@
   .bz-goalpic svg{display:block; width:58px; height:58px; border-radius:10px; border:2px solid var(--n-line)}
   .bz-goal .bz-sbtn{min-height:44px; padding:0 14px; font-size:.85rem}
   @media (max-width:380px){.bz-notes{grid-template-columns:1fr} .bz-scene{padding:10px 8px} .bz-safe{padding:10px 8px 10px 14px} .bz-handle{display:none} .bz-goal > span:nth-child(2){display:none} .bz-goal{justify-content:space-between} .bz-stat b{font-size:1.05rem} .bz-sbtn{font-size:.85rem}}
-  @media (prefers-reduced-motion:reduce){.bz-boat2,.bz-twinkle,.bz-win{transition:none} .bz-vault,.bz-stars.pop .bz-star.on{animation:none}}`;
+  @media (prefers-reduced-motion:reduce){.bz-boat2,.bz-twinkle,.bz-win{transition:none} .bz-vault,.bz-stars.pop .bz-star.on{animation:none}}
+  .bz-levels.five{grid-template-columns:repeat(5, 1fr)}
+  .bz-lvl.blitz b{color:var(--n-accent)}
+  .bz-plvl{gap:3px; padding:4px 2px}
+  .bz-lthumb svg{display:block; width:30px; height:30px; border-radius:6px; border:1px solid var(--n-line)} .bz-lthumb.locked svg{filter:grayscale(1) brightness(.5)}
+  .bz-win.dim{background:color-mix(in srgb, var(--n-lit) 42%, var(--n-off))}
+  .bz-win.dim svg{opacity:.55}
+  .bz-rule{margin:0; font-size:.78rem; font-weight:700; color:var(--n-muted); text-align:center}
+  .bz-stat.hot b{color:var(--n-lit); animation:bzpulse .5s infinite alternate}
+  @keyframes bzpulse{from{transform:scale(1)} to{transform:scale(1.12)}}
+  .bz-rival{display:flex; align-items:center; gap:10px; padding:6px 10px 6px 6px; background:var(--n-card); border:1px solid var(--n-line); border-radius:16px}
+  .bz-rival .bz-av svg{width:44px; height:44px; display:block}
+  .bz-rival > span{display:flex; flex-direction:column; gap:1px; min-width:0}
+  .bz-rival b{font-size:.9rem; font-weight:900} .bz-rival small{font-size:.72rem; color:var(--n-muted); font-weight:700}
+  .bz-rival i{font-size:.75rem; line-height:1.25; color:var(--n-ink); opacity:.85}
+  .bz-rival.beat{border-color:var(--n-accent); box-shadow:inset 0 0 0 1px var(--n-accent)} .bz-rival.beat b{color:var(--n-accent)}
+  .bz-rival.lost .bz-av{animation:bzshake .35s 2}
+  .bz-shelf{display:grid; grid-template-columns:repeat(9, 1fr); gap:4px}
+  .bz-shelfi{display:block; padding:3px; border-radius:8px; border:1px solid var(--n-line); background:var(--n-off)}
+  .bz-shelfi svg{display:block; width:100%; height:auto; filter:grayscale(1) brightness(.45)}
+  .bz-shelfi.got svg{filter:none} .bz-shelfi.now{border-color:var(--n-accent)}
+  .bz-nonotes{margin:0; padding:8px 10px; border-radius:10px; background:var(--n-off); font-size:.8rem; font-weight:700; line-height:1.35}
+  .bz-safe.four .bz-tumblers{grid-template-columns:repeat(4, minmax(40px, 52px)); gap:6px} .bz-safe.four .bz-digit2{font-size:1.6rem} .bz-safe.four .bz-handle svg{width:52px; height:52px}
+  @media (max-width:400px){.bz-safe.four .bz-handle{display:none}}
+  .bz-puz{touch-action:none}
+  .bz-dailies{margin:0 0 12px; padding:10px 12px; border:1px solid var(--line); border-radius:16px; background:var(--surface)}
+  .bz-dhead{margin:0 0 8px; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px} .bz-dhead small{color:var(--muted); font-weight:700}
+  .bz-dchips{display:grid; grid-template-columns:repeat(4, 1fr); gap:6px}
+  .bz-dchip{display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 2px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--ink); font:inherit; cursor:pointer; min-width:0}
+  .bz-dchip:hover{border-color:var(--denim)} .bz-dchip.done{border-color:var(--denim); background:color-mix(in srgb, var(--denim) 10%, var(--surface))}
+  .bz-dchip b{font-size:.74rem; font-weight:900; text-align:center; line-height:1.1} .bz-dchip small{font-size:.7rem; color:var(--muted); font-weight:700}
+  .bz-dic{font-size:1.3rem; line-height:1}
+  .bz-vs{font-weight:800}
+  .bz-toggles{justify-content:center} .bz-toggles .ghost{font-size:.85rem; padding:6px 12px}
+  @media (max-width:380px){.bz-dchip b{font-size:.66rem} .bz-rival i{display:none}}
+  @media (prefers-reduced-motion:reduce){.bz-stat.hot b,.bz-rival.lost .bz-av{animation:none}}`;
   function addCSS(){ if (document.getElementById("bz-css")) return; const st = document.createElement("style"); st.id = "bz-css"; st.textContent = css; document.head.append(st); }
 
   window.BrainGame = {
     open(el, br){ bridge = br || null; root = el; addCSS(); hub(); },
     // exposed for the checker script
-    _score: score, _clueText: clueText,
+    _score: score, _clueText: clueText, _makeLock: makeLock, _codesOf: codesOf, _ctx: () => ctx, _pics: PICS, _loot: LOOT,
   };
 })();

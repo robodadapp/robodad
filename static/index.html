@@ -2499,8 +2499,8 @@ textarea::placeholder{color:var(--muted)}
 
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
-<script src="/static/brainteasers.js?v=6"></script>
-<script src="/static/brain.js?v=13"></script>
+<script src="/static/brainteasers.js?v=7"></script>
+<script src="/static/brain.js?v=14"></script>
 <script src="/static/arcade.js?v=6"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
@@ -3840,6 +3840,14 @@ const PLAYERS = {
     ["br1", "Lightbulb Moment", "brain", "Solve your first brain teaser", "Solved a first brain teaser. Ding!", "common", "?!", (p) => p.done.length >= 1],
     ["br5", "On a Roll", "brain", "Get a streak of 5 puzzles in a row", "Five puzzles in a row without a slip.", "rare", "?!", (p) => (p.best || 0) >= 5],
     ["brhands", "Hands-On Hero", "brain", "Solve all four hands-on puzzles", "Blackout, Crack Dad's Safe, Crossings and Scramble, all done.", "rare", "?!", (p) => (p.handsDone || []).length >= 4],
+    ["brlight", "Three-Star Electrician", "brain", "Get 3 stars on all four Blackout wirings", "Plus, Cross, Wraparound and Dimmers, all three-starred. The hydro company is worried.", "epic", "?!", (p) => ["plus", "cross", "wrap", "dim"].every(k => ((p.lightRules || {})[k] || 0) >= 3)],
+    ["brblitz", "Blitz Master", "brain", "Black out 10 houses in one Blackout Blitz", "Ten houses dark in sixty seconds. Somewhere a meter reader is crying.", "epic", "?!", (p) => (p.blitzBest || 0) >= 10],
+    ["brsafe", "Safecracker", "brain", "Crack 10 of Dad's safes", "Ten safes cracked. Every dad has moved his valuables.", "rare", "?!", (p) => (p.safesCracked || 0) >= 10],
+    ["brloot", "Loot Collector", "brain", "Collect the loot from every dad's safe", "Nine safes, nine prizes, one very full shelf.", "epic", "?!", (p) => (p.loot || []).length >= 9],
+    ["brferry", "Ferry Captain", "brain", "Get 3 stars on all four crossings", "Dog, bridge, zombies, band. Nobody eaten, nobody in the dark, three stars each.", "rare", "?!", (p) => ["classic", "bridge", "zombies", "gig"].every(k => ((p.crossStars || {})[k] || 0) >= 3)],
+    ["brspeed", "Speed Scrambler", "brain", "Solve a Scramble in under 30 seconds", "Under thirty seconds. The tiles didn't see it coming.", "rare", "?!", (p) => (p.tileBest || 0) > 0 && p.tileBest < 30000],
+    ["brday", "Daily Grinder", "brain", "Finish all four Hands-on dailies in one day", "Safe, house, bridge and Scramble, all in one day.", "rare", "?!", (p) => (p.dAllDays || 0) >= 1],
+    ["brgramps", "Grandpa Got Schooled", "brain", "Beat every dad, up to Robo-Grandpa, in one Hands-on game", "Nine dads, one ladder, and Robo-Grandpa at the top of it. Beaten.", "legendary", "?!", (p) => Object.keys(p.rivalsDone || {}).length >= 1],
     ["bresc", "Garage Escape Artist", "brain", "Escape Dad's Garage", "Cracked all four rooms and got Dad out of the garage.", "epic", "?!", (p) => !!p.escaped],
     ["br30", "Big Brain Energy", "brain", "Solve 30 different brain teasers", "Thirty different brain teasers solved. Big brain energy.", "epic", "?!", (p) => p.done.length >= 30],
     ["vglow", "Glow Getter", "vocab", "Glow up your first sentence with Dad", "Glowed up a first sentence. Somewhere, an English teacher smiled and didn't know why.", "common", "Aa", (p) => (p.glow || 0) >= 1],
