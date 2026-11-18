@@ -227,20 +227,20 @@
 
   // Hands-on puzzle types (the game builds a fresh one each time)
   const HANDS = {
-    lights: { name:"Blackout", blurb:"Every light in the house is on. Tap a window to flip it and its neighbours. Get them all off.",
-      coach:"Hands-on puzzle: Blackout, a Lights Out game drawn as a house at night. It's a grid of windows. Tapping a window flips its light and the lights directly above, below, left and right of it. The goal is to turn every light off in as few taps as possible. There are undo and hint buttons, and stars for finishing at or near par." },
-    lock: { name:"Crack Dad's Safe", blurb:"Crack the 3-digit code. Every digit is different. Read the notes on the door, set the dials, try your guess. Six tries.",
-      coach:"Hands-on puzzle: Crack Dad's Safe, a 3-digit code lock with Mastermind-style clues (how many digits are right and in the right place, and how many are right but in the wrong place). All three digits are different. The player gets six tries, a scratchpad to cross out digits, and each wrong try gives a new clue." },
+    lights: { name:"Blackout", blurb:"Every light in the house is on. Four wirings to master, plus a 60-second Blitz.",
+      coach:"Hands-on puzzle: Blackout, a Lights Out game drawn as a house at night. It's a grid of windows. Tapping a window flips its light and the lights directly above, below, left and right of it. The goal is to turn every light off in as few taps as possible. There are undo and hint buttons, and stars for finishing at or near par. There are four wirings: Plus (the usual), Cross (a tap flips the window and its four diagonal neighbours instead), Wraparound (neighbours past an edge wrap to the far side) and Dimmers (each light steps bright, dim, off, then bright again). Blitz mode is 60 seconds to black out as many small houses as possible. Ask the player which wiring they are on." },
+    lock: { name:"Crack Dad's Safe", blurb:"Crack each dad's safe and take his loot. Read the notes, or go Safecracker with none. 3 or 4 digits.",
+      coach:"Hands-on puzzle: Crack Dad's Safe, a 3-digit code lock with Mastermind-style clues (how many digits are right and in the right place, and how many are right but in the wrong place). All three digits are different. The player gets six tries, a scratchpad to cross out digits, and each wrong try gives a new clue. It can also be played with 4 digits (7 tries), and in Safecracker mode, where there are no notes on the door at all and the player works only from the feedback on their own guesses (8 tries for 3 digits, 10 for 4). Ask the player which way they are playing." },
     river: { name:"Crossings", blurb:"Four crossing puzzles: a dog, a cat and a pizza; a bridge at night; dads and zombies; and a band with a small boat.",
-      coach:"Hands-on puzzle: Crossings, a pack of four crossing puzzles. Ask the player which one they are on. 1) Dog, cat, pizza: Dad ferries them over a river, the boat holds Dad plus one, and the dog can't be left alone with the cat or with the pizza; 7 trips. 2) The bridge at night: four people who take 1, 2, 5 and 10 minutes must cross a bridge, at most two at a time at the slower one's pace, and the single flashlight must be walked back each time; the battery lasts 17 minutes, and the trick is to send the two slowest together. 3) Dads and zombies: three dads and three zombies cross in a boat for two, anyone can row, and zombies must never outnumber dads on either bank; 11 trips. 4) Load-in at the gig: two grown-ups and two kids, the boat holds one grown-up or two kids, everyone can row; 9 trips, with the kids doing the ferrying." },
-    tiles: { name:"Scramble", blurb:"Slide the picture tiles until Dad's arcade cabinet is back in one piece. The clock starts on your first move.",
-      coach:"Hands-on puzzle: Scramble, an 8-tile sliding picture puzzle on a 3 by 3 grid. Slide tiles into the gap until the picture is whole, with the gap in the bottom-right corner. Tiles can show numbers 1 to 8 as a guide. It is timed, and there are stars for solving it in few moves." },
+      coach:"Hands-on puzzle: Crossings, a pack of four crossing puzzles. Ask the player which one they are on. 1) Dog, cat, pizza: Dad ferries them over a river, the boat holds Dad plus one, and the dog can't be left alone with the cat or with the pizza; 7 trips. 2) The bridge at night: four people who take 1, 2, 5 and 10 minutes must cross a bridge, at most two at a time at the slower one's pace, and the single flashlight must be walked back each time; the battery lasts 17 minutes, and the trick is to send the two slowest together. 3) Dads and zombies: three dads and three zombies cross in a boat for two, anyone can row, and zombies must never outnumber dads on either bank; 11 trips. 4) Load-in at the gig: two grown-ups and two kids, the boat holds one grown-up or two kids, everyone can row; 9 trips, with the kids doing the ferrying. There is also a daily Night Bridge: a bridge-at-night puzzle with four new walking times each day, where the battery lasts exactly as long as the fastest way over." },
+    tiles: { name:"Scramble", blurb:"Tap or swipe the tiles until the picture is whole. Solve them to unlock more pictures.",
+      coach:"Hands-on puzzle: Scramble, an 8-tile sliding picture puzzle on a 3 by 3 grid. Slide tiles into the gap until the picture is whole, with the gap in the bottom-right corner. Tiles can show numbers 1 to 8 as a guide. It is timed, and there are stars for solving it in few moves. Tiles can be tapped or swiped, and tapping a tile further along a row or column slides the whole line. There are five pictures to unlock: an arcade cabinet, a mixtape, a boombox, a car and a game pad." },
   };
 
   // Escape Dad's Garage: four rooms, three puzzles each, one code digit per room.
   const ESCAPE = {
     title: "Escape Dad's Garage",
-    intro: "Kiddo? Bad news. I'm stuck in the garage. The door's jammed and the keypad wants a 4-digit code. Good news: I hid one digit in each corner of the garage, behind a puzzle. Bad news again: I don't remember the puzzles. Get me out before dinner?",
+    intro: "Hey. Bad news. I'm stuck in the garage. The door's jammed and the keypad wants a 4-digit code. Good news: I hid one digit in each corner of the garage, behind a puzzle. Bad news again: I don't remember the puzzles. Get me out before dinner?",
     code: "1985",
     rooms: [
       { name:"The Workbench", icon:"🔧", digit:"1",
@@ -260,7 +260,7 @@
         steps:[{ p:"bt04" }, { p:"bt11" }, { hands:"tiles" }],
         done:"The DO NOT OPEN box had a single foam number in it: 5. Anticlimactic, but useful." },
     ],
-    win: "1985! The year my first car rolled off the line. The door's rolling up… I'm free! Thanks, kiddo. Dinner's on me. Well, dinner's on Mum. But I'll set the table.",
+    win: "1985! The year my first car rolled off the line. The door's rolling up… I'm free! I owe you one. Dinner's on me. Well, dinner's on Mum. But I'll set the table.",
     after: "Something fell off the top shelf as the door opened: a sticky note that says \"The cartridge is still lost.\" Hmm. Keep your eyes open.",
   };
 
