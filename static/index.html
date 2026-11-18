@@ -4914,6 +4914,19 @@ const PLAYERS = {
     looks: () => openMenu(false), badges: () => openBelt(),
     tour: () => startTour(), feedback: () => openFeedback(),
   };
+  // Deep links from the public pages (robodad.online, robodad.ca): ?go=vocab|grammar|mind|brain opens that game,
+  // ?tab=play|learn|chill opens that tab. Waits for the age check and anything else on screen, like ?learn= does.
+  { const q = new URLSearchParams(location.search), go = q.get("go"), tab = q.get("tab");
+    const DEEP_GO = ["vocab", "grammar", "mind", "brain"], DEEP_TAB = ["play", "learn", "chill"];
+    if ((go && DEEP_GO.includes(go)) || (tab && DEEP_TAB.includes(tab))) {
+      window.history.replaceState?.(null, "", location.pathname);
+      let tries = 0;
+      const open = () => {
+        if (document.querySelector(".overlay:not([hidden])") || document.querySelector(".side.open")) { if (++tries < 300) setTimeout(open, 400); return; }
+        if (go && DEEP_GO.includes(go)) GO[go](); else goTab(tab);
+      };
+      setTimeout(open, 300);
+    } }
   Object.values(SHEETS).forEach((dlg) => {
     dlg.addEventListener("click", (e) => {
       if (e.target === dlg || e.target.closest("[data-sheet-close]")) { dlg.hidden = true; return; }

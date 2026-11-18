@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>RoboDad for Parents</title>
-<meta name="description" content="What RoboDad is, how it keeps teens safe, and what happens to their information, in two minutes.">
+<title>RoboDad for Parents: a safe, free AI dad for teens 13+</title>
+<meta name="description" content="RoboDad is a free AI dad for teens 13+ that answers everyday questions and nudges them back to you. How it works, how it keeps teens safe, and what happens to their data.">
 <meta name="theme-color" content="#2E5C8A">
 <link rel="canonical" href="https://robodad.ca/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RoboDad">
 <meta property="og:url" content="https://robodad.ca/">
 <meta property="og:title" content="RoboDad for Parents">
-<meta property="og:description" content="What RoboDad is, how it keeps teens safe, and what happens to their information, in two minutes.">
+<meta property="og:description" content="A free AI dad for teens 13+ that answers the everyday questions, then nudges them to ask you too. No account, no ads, chats stay on their device.">
 <meta property="og:image" content="https://robodad.app/static/share-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,110 +20,317 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@robodadapp">
 <meta name="twitter:title" content="RoboDad for Parents">
-<meta name="twitter:description" content="What RoboDad is, how it keeps teens safe, and what happens to their information, in two minutes.">
+<meta name="twitter:description" content="A free AI dad for teens 13+ that answers the everyday questions, then nudges them to ask you too.">
 <meta name="twitter:image" content="https://robodad.app/static/share-card.png">
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem("robodad.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t;}catch(e){}</script>
+<link rel="stylesheet" href="/static/site/site.css?v=1">
 <style>
-:root{--sky:#E8EFF5; --surface:#FFFFFF; --ink:#1B2A3A; --muted:#5A6B7E; --line:#D3DEE8; --denim:#2E5C8A; --mustard:#F2B533; --ok:#2F7D5B; --alert:#B3412E; color-scheme:light}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){--sky:#101821; --surface:#1A2632; --ink:#E5EDF5; --muted:#9AAABB; --line:#2B3A49; --denim:#7FA9D6; --ok:#5FBF93; --alert:#E07A66; color-scheme:dark}
+/* hero */
+.hero{padding:clamp(36px, 7vw, 88px) 0 clamp(40px, 6vw, 72px)}
+.hero .wrap{display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(28px, 5vw, 72px); align-items:center}
+@media (max-width:900px){ .hero .wrap{grid-template-columns:1fr} .demo{margin-top:40px} }
+.hero h1{font-size:clamp(2.5rem, 6.4vw, 4.6rem); line-height:.98; letter-spacing:-.035em; max-width:13ch}
+.hero .lede{margin-top:20px}
+.hero .cta{display:flex; flex-wrap:wrap; gap:12px; margin-top:28px}
+.hero .note{margin-top:14px; font-size:.92rem; color:var(--muted); font-weight:700}
+
+/* the chat demo: the one moment that moves */
+.demo{position:relative; background:var(--paper); border:1px solid var(--line); border-radius:var(--r-lg); padding:84px 22px 22px; box-shadow:0 30px 60px -36px rgba(20,44,72,.45)}
+.demo .dad{position:absolute; top:-46px; left:22px; width:118px; height:118px; overflow:visible}
+.demo .who{position:absolute; top:22px; left:150px; right:22px; font-weight:900; line-height:1.2}
+.demo .who small{display:block; color:var(--ok); font-weight:800; font-size:.85rem}
+.msgs{display:flex; flex-direction:column; gap:10px; min-height:330px}
+.msg{max-width:86%; padding:11px 15px; border-radius:20px; font-size:.98rem; line-height:1.45}
+.msg.teen{align-self:flex-end; background:var(--denim); color:#fff; border-bottom-right-radius:6px}
+:root[data-theme="dark"] .msg.teen{color:#0E1822}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .msg.teen{color:#0E1822} }
+.msg.bot{align-self:flex-start; background:var(--chip); border-bottom-left-radius:6px}
+.real{align-self:stretch; display:grid; grid-template-columns:auto 1fr; gap:4px 12px; padding:14px 16px; border-radius:16px; background:color-mix(in srgb, var(--mustard) 22%, var(--paper)); border:2px solid var(--mustard)}
+.real svg{grid-row:span 2; width:28px; height:28px; color:var(--mustard-ink)}
+:root[data-theme="dark"] .real svg{color:var(--mustard)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .real svg{color:var(--mustard)} }
+.real b{font-size:.98rem}
+.real p{font-size:.95rem}
+.real .mini{grid-column:2; justify-self:start; margin-top:6px; font:inherit; font-size:.85rem; font-weight:900; border-radius:999px; padding:6px 12px; border:2px solid var(--ink); background:transparent; color:var(--ink)}
+.demo .step{opacity:0; transform:translateY(6px); transition:opacity .45s ease, transform .45s ease}
+.demo .step.on{opacity:1; transform:none}
+.typing{display:inline-flex; gap:4px; padding:14px 16px}
+.typing i{width:7px; height:7px; border-radius:50%; background:var(--muted); animation:dot 1s infinite ease-in-out}
+.typing i:nth-child(2){animation-delay:.15s} .typing i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,80%,100%{opacity:.25; transform:translateY(0)} 40%{opacity:1; transform:translateY(-3px)}}
+.replay{position:absolute; right:16px; top:20px; font:inherit; font-size:.85rem; font-weight:800; background:none; border:0; color:var(--denim); cursor:pointer; padding:6px}
+
+/* quick facts: a ruled strip, not more cards */
+.facts{border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+.facts .wrap{display:grid; grid-template-columns:repeat(4, 1fr)}
+.facts .wrap > div{padding:24px 20px 24px 0}
+.facts .wrap > div + div{padding-left:20px; border-left:1px solid var(--line)}
+.facts b{display:block; font-size:1.15rem; font-weight:900}
+.facts span{color:var(--muted); font-size:.95rem}
+@media (max-width:820px){ .facts .wrap{grid-template-columns:1fr 1fr} .facts .wrap > div:nth-child(3){padding-left:0; border-left:0} .facts .wrap > div:nth-child(n+3){border-top:1px solid var(--line)} }
+
+/* what's inside */
+.inside{display:grid; grid-template-columns:repeat(4, 1fr); gap:clamp(16px, 2.4vw, 28px)}
+.inside figure{margin:0; display:grid; gap:16px; align-content:start}
+.inside figcaption h3{margin-bottom:6px}
+.inside figcaption p{color:var(--muted); font-size:.97rem}
+@media (max-width:900px){
+  .inside{grid-auto-flow:column; grid-template-columns:none; grid-auto-columns:min(72vw, 280px); overflow-x:auto; scroll-snap-type:x mandatory; scroll-padding-inline:20px; padding:4px 20px 18px; margin:0 -20px}
+  .inside figure{scroll-snap-align:start}
 }
-:root[data-theme="dark"]{--sky:#101821; --surface:#1A2632; --ink:#E5EDF5; --muted:#9AAABB; --line:#2B3A49; --denim:#7FA9D6; --ok:#5FBF93; --alert:#E07A66; color-scheme:dark}
-*{box-sizing:border-box}
-body{margin:0; background:var(--sky); color:var(--ink); font:17px/1.6 "Nunito", ui-rounded, system-ui, sans-serif}
-main{max-width:720px; margin:0 auto; padding:28px 16px 64px; display:flex; flex-direction:column; gap:16px}
-.back{color:var(--denim); font-weight:800}
-h1{margin:0; font-size:clamp(1.9rem, 6vw, 2.5rem); line-height:1.08; font-weight:900; letter-spacing:-.02em}
-.lede{margin:0; color:var(--muted); max-width:60ch}
-.card{background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px 20px}
-.card h2{margin:0 0 8px; font-size:1.15rem; font-weight:900}
-.card p{margin:0 0 8px; max-width:64ch} .card p:last-child{margin-bottom:0}
-ul{margin:0; padding-left:1.2em} li{margin-bottom:6px; max-width:64ch}
-.grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px}
-.fact{background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:14px 16px}
-.fact b{display:block; font-size:1.05rem; font-weight:900; margin-bottom:2px}
-.fact span{color:var(--muted); font-size:.95rem}
-.yes{color:var(--ok); font-weight:900} .no{color:var(--alert); font-weight:900}
-a{color:var(--denim); font-weight:800}
-.fine{font-size:.85rem; color:var(--muted)}
-.cta{display:flex; flex-wrap:wrap; gap:10px}
-.btn{display:inline-flex; align-items:center; min-height:46px; padding:0 20px; border-radius:999px; background:var(--denim); color:#fff; text-decoration:none; font-weight:900}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .btn{color:#101821} }
-:root[data-theme="dark"] .btn{color:#101821}
-.btn.ghost{background:transparent; color:var(--denim); border:2px solid var(--denim)}
-.socials{display:flex; flex-wrap:wrap; gap:6px 16px}
+
+/* safety */
+.safety{background:var(--paper); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+.safe-grid{display:grid; grid-template-columns:1fr 1fr; gap:clamp(28px, 5vw, 64px); align-items:start}
+@media (max-width:900px){ .safe-grid{grid-template-columns:1fr} }
+.crisis{border-radius:var(--r-md); border:2px solid var(--alert); padding:20px 22px; background:color-mix(in srgb, var(--alert) 6%, var(--paper))}
+.crisis .k{font-weight:900; color:var(--alert); font-size:.95rem; margin-bottom:8px}
+.crisis p{font-size:.98rem; margin-bottom:10px}
+.crisis ul{margin:0 0 10px; padding-left:1.2em; font-size:.98rem}
+.crisis-why{margin-top:16px; color:var(--muted); font-size:.95rem; max-width:60ch}
+.rules{list-style:none; margin:0; padding:0; display:grid; gap:0}
+.rules li{display:grid; grid-template-columns:28px 1fr; gap:12px; padding:16px 0; border-bottom:1px solid var(--line)}
+.rules li:first-child{padding-top:0}
+.rules svg{width:24px; height:24px; color:var(--ok); margin-top:3px}
+.rules b{display:block}
+.rules span{color:var(--muted); font-size:.96rem}
+
+/* data table */
+.data{width:100%; border-collapse:collapse; background:var(--paper); border-radius:var(--r-md); overflow:hidden; box-shadow:0 0 0 1px var(--line)}
+.data th, .data td{text-align:left; padding:16px 20px; vertical-align:top; border-bottom:1px solid var(--line)}
+.data tr:last-child td{border-bottom:0}
+.data thead th{background:var(--chip); font-size:.92rem}
+.data td:first-child{font-weight:800; width:34%}
+.pill{display:inline-block; font-size:.85rem; font-weight:900; border-radius:999px; padding:2px 10px; white-space:nowrap}
+.pill.no{background:color-mix(in srgb, var(--ok) 16%, transparent); color:var(--ok)}
+.pill.anon{background:color-mix(in srgb, var(--denim) 14%, transparent); color:var(--denim)}
+.pill.dev{background:color-mix(in srgb, var(--mustard) 26%, transparent); color:var(--ink)}
+@media (max-width:640px){ .data thead{display:none} .data tr{display:grid; padding:14px 16px; border-bottom:1px solid var(--line)} .data td{padding:2px 0; border:0; width:auto!important} }
+.after-table{margin-top:16px; color:var(--muted); font-size:.95rem}
+
+/* why it exists */
+.story{background:var(--denim); color:#fff}
+:root[data-theme="dark"] .story{background:#16324F}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .story{background:#16324F} }
+.story .wrap{display:grid; grid-template-columns:auto 1fr; gap:clamp(24px, 5vw, 64px); align-items:center}
+.story svg.dad{width:clamp(120px, 18vw, 200px); height:auto; overflow:visible}
+.story blockquote{margin:0; font-size:clamp(1.35rem, 2.8vw, 2rem); font-weight:800; line-height:1.3; letter-spacing:-.015em; max-width:34ch}
+.story p{margin-top:18px; color:#D6E3F0; max-width:60ch}
+@media (max-width:700px){ .story .wrap{grid-template-columns:1fr} }
+
+/* faq */
+.faq{display:grid; gap:0; max-width:820px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer; list-style:none; padding:20px 40px 20px 0; font-weight:900; font-size:1.1rem; position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:""; position:absolute; right:6px; top:50%; width:12px; height:12px; border-right:3px solid var(--denim); border-bottom:3px solid var(--denim); transform:translateY(-70%) rotate(45deg); transition:transform .2s}
+.faq details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.faq details p{padding:0 0 20px; color:var(--muted); max-width:66ch}
+
+/* talk band */
+.talk{background:var(--mustard); color:var(--mustard-ink)}
+.talk .wrap{display:grid; grid-template-columns:1.2fr 1fr; gap:32px; align-items:end}
+.talk h2{color:var(--mustard-ink)}
+.talk p{font-size:1.1rem; max-width:52ch}
+.talk .cta{display:flex; flex-wrap:wrap; gap:12px; justify-content:flex-end}
+.talk .btn{background:var(--mustard-ink); color:#fff}
+.talk .btn.line{background:transparent; color:var(--mustard-ink); box-shadow:inset 0 0 0 2px var(--mustard-ink)}
+@media (max-width:800px){ .talk .wrap{grid-template-columns:1fr} .talk .cta{justify-content:flex-start} }
 </style>
 </head>
 <body>
-<main>
-  <a class="back" href="/">← Back to RoboDad</a>
-  <h1>RoboDad for parents</h1>
-  <p class="lede">A free AI "dad" for teens 13+, built by a Toronto dad. Here's a two-minute read on what it is, how it keeps teens safe, and what happens to their information.</p>
-  <div class="cta"><a class="btn" href="/">Try RoboDad free</a><a class="btn ghost" href="/learn">Learn with Dad</a></div>
-
-  <div class="grid" aria-label="Quick facts">
-    <div class="fact"><b>Ages 13+</b><span>A birth-year check on first visit. Under-13s are turned away.</span></div>
-    <div class="fact"><b>No account</b><span>No name, email or phone number needed.</span></div>
-    <div class="fact"><b>Chats aren't saved</b><span>Conversations stay on the teen's own device.</span></div>
-    <div class="fact"><b>Free, no ads</b><span>Nothing to buy, nothing sold, no tracking cookies.</span></div>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head" id="head">
+  <div class="wrap">
+    <a class="brand" href="/parents"><img src="/static/favicon.svg" alt="">RoboDad <small>for parents</small></a>
+    <nav class="site-nav" aria-label="On this page">
+      <a href="#inside">What's inside</a><a href="#safety">Safety</a><a href="#data">Privacy</a><a href="#faq">Questions</a>
+    </nav>
+    <a class="btn small" href="/">Try RoboDad</a>
   </div>
+</header>
 
-  <section class="card">
-    <h2>What RoboDad is</h2>
-    <p>RoboDad is an AI chatbot with the personality of a friendly, slightly corny dad. Teens ask it about everyday life: cooking, laundry, money, school stress, first jobs, friendships and getting around. It answers in a few practical sentences and tells terrible dad jokes.</p>
-    <p>It's a passion project by Saikat Sunil Ganguly, a dad in Toronto, and it's built to <strong>send teens back to the real adults in their lives</strong>, not replace them. "Ask your real one" cards suggest questions to ask a parent, and the only Legendary life-skill badge is earned by having a real talk with a parent or trusted adult.</p>
+<main id="main">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>The AI dad that keeps sending your teen back to you.</h1>
+        <p class="lede">RoboDad answers the everyday questions teens don't always ask out loud, like laundry, money, exam stress and first jobs. Then it nudges them to go ask you too.</p>
+        <div class="cta">
+          <a class="btn" href="/">Try it yourself</a>
+          <a class="btn line" href="#safety">How it keeps teens safe</a>
+        </div>
+        <p class="note">Free for teens 13 and up. No account, no ads, works in any browser.</p>
+      </div>
+
+      <div class="demo" aria-label="Example conversation">
+        <svg class="dad" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-modern"/></svg>
+        <p class="who">RoboDad <small>Online</small></p>
+        <button class="replay" type="button" id="replay" hidden>Play again</button>
+        <div class="msgs" id="msgs">
+          <p class="msg teen step">how do i wash my hoodie without it shrinking</p>
+          <p class="msg bot step">Cold water, gentle cycle, inside out. Then hang it up or tumble dry on low. High heat is what shrinks it. And check the tag first: it's basically the instructions.</p>
+          <div class="real step">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+            <b>Ask your real one</b>
+            <p>Try asking a parent: "What's the worst thing you ever shrank in the wash?"</p>
+            <span class="mini" aria-hidden="true">We talked! Unlock Real Talk</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>How it keeps teens safe</h2>
-    <ul>
-      <li><strong>Crisis messages get a fixed help message, not an AI answer.</strong> If a teen mentions self-harm, being threatened with intimate photos, an eating disorder, dating violence, abuse at home or someone touching them in ways that aren't OK, RoboDad shows a fixed, human-written help message with tap-to-call numbers for Kids Help Phone (1-800-668-6868, or text CONNECT to 686868) and 911. Messages that match our English, French, Spanish and Hindi safety checks never reach the AI at all. For anything those checks miss, in any language, the AI is told to flag it instead of answering, and the same help message appears. No safety system is perfect, which is why RoboDad keeps pointing teens to real people.</li>
-      <li><strong>Firm boundaries.</strong> Nothing sexual. No help getting or hiding vapes, alcohol or drugs. No diet plans or weight-loss tips. No weapons, violence or cheating. RoboDad explains why in a sentence and points to something helpful instead of a cold refusal.</li>
-      <li><strong>Privacy reminders.</strong> RoboDad never asks for personal details, and if a teen shares their address, school or passwords, it reminds them to keep those private.</li>
-      <li><strong>Honest about being an AI.</strong> It says plainly that it isn't a real parent, and it can get things wrong.</li>
-      <li><strong>Tested against tricks.</strong> We regularly test it with the kinds of messages teens use to try to break chatbots ("ignore your rules", "it's for a school project").</li>
-      <li><strong>A Report button on every reply.</strong> Reports come to us so we can fix problems.</li>
-    </ul>
+  <section class="facts" aria-label="Quick facts">
+    <div class="wrap">
+      <div><b>Ages 13 and up</b><span>A birth-year check on first visit turns under-13s away.</span></div>
+      <div><b>No account</b><span>No name, email or phone number, ever.</span></div>
+      <div><b>Chats stay on their phone</b><span>We don't keep what your teen types.</span></div>
+      <div><b>Free, with no ads</b><span>Nothing to buy and no data sold.</span></div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>What happens to their information</h2>
-    <ul>
-      <li><span class="no">Not saved:</span> what your teen types. Messages are sent to the AI service (Groq) to write a reply, then they're gone from our side. The chat history stays in their browser, and "New chat" clears it.</li>
-      <li><span class="yes">Saved, anonymously:</span> thumbs up/down and reports, with RoboDad's reply, never your teen's message, and nothing that identifies them. If your teen chooses to send feedback from the Me tab, we save the note they wrote in that box (they're asked not to include anything private).</li>
-      <li><span class="yes">On the device only:</span> nickname, look, settings and earned badges.</li>
-      <li>The full details are in our plain-language <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</li>
-    </ul>
+  <section class="section" id="inside">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>More than a chatbot</h2>
+        <p class="lede">Teens come for an answer and stay for the games and lessons. Every part of it is built around small, real-world wins.</p>
+      </div>
+      <div class="inside">
+        <figure>
+          <div class="phone"><img src="/static/site/app-chat.webp" alt="RoboDad's chat screen with the dad avatar and suggested questions" width="390" height="780" loading="lazy"></div>
+          <figcaption><h3>Ask Dad</h3><p>Practical answers in a few sentences on life skills, school, money and friendships, with a terrible dad joke when it's earned.</p></figcaption>
+        </figure>
+        <figure>
+          <div class="phone"><img src="/static/site/app-learn.webp" alt="The Learn menu: languages, maths, study hall, vocabulary and grammar" width="390" height="780" loading="lazy"></div>
+          <figcaption><h3>Learn</h3><p>French, Spanish, Hindi, Marathi and Bengali, Grades 7 to 10 maths, and grammar and vocabulary games. Dad gives hints, not homework answers.</p></figcaption>
+        </figure>
+        <figure>
+          <div class="phone"><img src="/static/site/app-play.webp" alt="The Play menu: chess, Tile Talk, brain teasers and arcade games" width="390" height="780" loading="lazy"></div>
+          <figcaption><h3>Play</h3><p>Chess against nine dads, a word game, brain teasers and a retro arcade, all without ads or anything to buy.</p></figcaption>
+        </figure>
+        <figure>
+          <div class="phone"><img src="/static/site/app-chill.webp" alt="The Chill menu: RoboDad Radio, sleep sounds and a countdown" width="390" height="780" loading="lazy"></div>
+          <figcaption><h3>Chill</h3><p>A built-in radio and sleep sounds with a timer that fades out on its own. Everything is generated on the device.</p></figcaption>
+        </figure>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Good to know</h2>
-    <ul>
-      <li>RoboDad gives general life advice. It isn't a doctor, lawyer, counsellor or a replacement for you.</li>
-      <li>It can read replies aloud and play relaxing background music made right on the device. Both are off until your teen turns them on.</li>
-      <li><strong>Learn with Dad:</strong> teens can practise beginner French, Spanish and Hindi with short hand-written lessons, quizzes and role-plays (ordering at a café, chatting with an uncle). There's a Study Hall focus timer (study, then a short break) and maths for Grades 7–10 with hand-checked quizzes, and a coach mode where Dad gives hints and checks their working rather than doing the homework. It's for practice and confidence, not a course or a fluency certificate, and the same safety rules apply in every language. Native speakers who spot a mistake: please tell us.</li>
-      <li><strong>Sleep Sounds:</strong> rain, ocean waves, a stream, wind, a fan and brown, pink or white noise, all made on the device. A sleep timer (30 minutes by default) fades them out on its own, and the "lights out" screen is dark with one line from RoboDad: phones down, eyes closed. It's there to help them relax. It isn't a treatment for sleep problems.</li>
-      <li>Badges are on the honour system. The Daily Dad Challenge has an optional streak that forgives a missed day, and when a streak ends nothing is lost or locked: there are no notifications, no penalties and no pressure.</li>
-    </ul>
+  <section class="section safety" id="safety">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Built for teens, with the guardrails on</h2>
+        <p class="lede">RoboDad is honest that it's an AI, not a parent, and it's designed to point teens toward real people when it matters.</p>
+      </div>
+      <div class="safe-grid">
+        <div>
+          <h3 style="margin-bottom:14px">When something serious comes up</h3>
+          <div class="crisis" aria-label="An example of the help message teens see">
+            <p class="k">This is what your teen sees</p>
+            <p>I'm really glad you told me. That took courage. You deserve help from a real person right now.</p>
+            <ul>
+              <li><b>Kids Help Phone:</b> call 1-800-668-6868 or text CONNECT to 686868</li>
+              <li><b>988 Suicide Crisis Helpline:</b> call or text 988</li>
+              <li>In danger right now? Call <b>911</b>.</li>
+            </ul>
+            <p style="margin:0">If you can, tell a trusted adult today.</p>
+          </div>
+          <p class="crisis-why">Mentions of self-harm, abuse at home, an eating disorder, dating violence, or someone threatening to share photos get a fixed message written by a person, with tap-to-call numbers. In English, French, Spanish and Hindi those messages never reach the AI at all, and for anything the checks miss, the AI is told to flag it rather than answer. No safety system is perfect, which is why RoboDad keeps pointing to real people.</p>
+        </div>
+        <ul class="rules">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><div><b>Firm boundaries</b><span>Nothing sexual. No help getting or hiding vapes, alcohol or drugs. No diet plans, weapons or cheating. It explains why in a sentence and offers something useful instead.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><div><b>Privacy reminders</b><span>It never asks for personal details. If a teen shares an address, school or password, it reminds them to keep those private.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><div><b>Honest about being an AI</b><span>It says plainly that it isn't a real parent and can get things wrong. It isn't a doctor, lawyer or counsellor.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><div><b>Tested against tricks</b><span>We regularly test it with the messages teens use to break chatbots, like "ignore your rules" or "it's for a school project".</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><div><b>A Report button on every reply</b><span>Reports come straight to us so we can fix problems.</span></div></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><div><b>No pressure loops</b><span>No notifications. Streaks forgive a missed day, and when one ends nothing is lost or locked.</span></div></li>
+        </ul>
+      </div>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>A conversation starter</h2>
-    <p>Ask your teen what RoboDad told them this week, or which badge they're going for. Then tell them about your first job, your worst laundry disaster or the first thing you saved up for. That's the conversation RoboDad is trying to start.</p>
+  <section class="section" id="data">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>What happens to their information</h2>
+        <p class="lede">The short version: we don't keep what your teen types, and there's no account to tie anything to.</p>
+      </div>
+      <table class="data">
+        <thead><tr><th scope="col">Information</th><th scope="col">What happens to it</th></tr></thead>
+        <tbody>
+          <tr><td>What your teen types</td><td><span class="pill no">Not saved</span> Sent to our AI provider (Groq) to write a reply, then gone from our side. The chat history stays in their browser.</td></tr>
+          <tr><td>Thumbs up or down, and reports</td><td><span class="pill anon">Saved anonymously</span> With RoboDad's reply, never your teen's message, and nothing that identifies them.</td></tr>
+          <tr><td>Feedback from the Me tab</td><td><span class="pill anon">Saved anonymously</span> Only the note they choose to write. They're asked not to include anything private.</td></tr>
+          <tr><td>Nickname, look, settings, badges</td><td><span class="pill dev">On the device only</span> Never sent to us. Clearing the browser removes them.</td></tr>
+        </tbody>
+      </table>
+      <p class="after-table">The details are in our plain-language <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p>
+    </div>
   </section>
 
-  <section class="card">
-    <h2>Follow along</h2>
-    <p>Behind-the-scenes clips and dad jokes, no faces, no ads:</p>
-    <p class="socials"><a href="https://www.instagram.com/robodadapp/" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@robodadapp" rel="noopener">TikTok</a><a href="https://www.youtube.com/@robodadapp" rel="noopener">YouTube</a><a href="https://www.threads.com/@robodadapp" rel="noopener">Threads</a><a href="https://x.com/robodadapp" rel="noopener">X</a></p>
+  <section class="section story" aria-label="Why RoboDad exists">
+    <div class="wrap">
+      <svg class="dad" viewBox="0 0 64 64" aria-hidden="true"><use href="#av-modern"/></svg>
+      <div>
+        <blockquote>"I lost my dad before I became a teenager. I had questions and no one to ask when I needed answers most."</blockquote>
+        <p>RoboDad was built on weekends by a dad in Toronto, so no teen has to feel that way. It's not meant to replace anyone. It's meant to get the conversation started, then hand it over to you.</p>
+      </div>
+    </div>
   </section>
 
-  <p class="fine">Questions or concerns? Email <a href="mailto:dad@robodad.app">dad@robodad.app</a>. If you think a child under 13 has used RoboDad, let us know and we'll help.</p>
-  <p class="fine">RoboDad™ and the RoboDad logo and characters are trademarks of Saikat Sunil Ganguly. © 2026 Saikat Sunil Ganguly. All rights reserved.</p>
+  <section class="section" id="faq">
+    <div class="wrap">
+      <div class="section-head"><h2>Questions parents ask</h2></div>
+      <div class="faq">
+        <details><summary>Is it really free?</summary><p>Yes. There are no ads, no in-app purchases and no premium tier, and we don't sell data. RoboDad is a passion project.</p></details>
+        <details><summary>Can I see what my teen talks about?</summary><p>No, and neither can we. Chats stay on your teen's own device. That's on purpose: teens are more likely to ask the awkward questions somewhere private. The best way in is to ask them what RoboDad told them this week.</p></details>
+        <details><summary>What if it gets something wrong?</summary><p>It can. It's an AI and says so. It gives general life advice, not medical, legal or counselling advice, and every reply has a Report button so we can fix mistakes.</p></details>
+        <details><summary>Does it work in French?</summary><p>Teens can chat in French, Spanish, Hindi and more, and the same safety rules apply in every language. The Learn section has beginner French, Spanish, Hindi, Marathi and Bengali lessons. If you're a native speaker and spot a mistake, please tell us.</p></details>
+        <details><summary>Is there an app to download?</summary><p>RoboDad works in any browser on a phone, tablet or computer, and can be added to the home screen. An Android app is being tested for Google Play.</p></details>
+        <details><summary>Will it keep my teen on their phone?</summary><p>It's designed not to. There are no notifications, the badges are earned by doing real things like cooking a meal or having a real talk with a parent, and the sleep sounds end with "phones down, eyes closed".</p></details>
+        <details><summary>What if a child under 13 used it?</summary><p>Email <a href="mailto:dad@robodad.app">dad@robodad.app</a> and we'll help. RoboDad doesn't store chats or accounts, so there's nothing on our side tied to them.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section talk" aria-label="A conversation starter">
+    <div class="wrap">
+      <div>
+        <h2>Tonight, try this</h2>
+        <p style="margin-top:14px">Ask your teen what RoboDad told them this week, or which badge they're going for. Then tell them about your first job or your worst laundry disaster. That's the conversation RoboDad is trying to start.</p>
+      </div>
+      <div class="cta">
+        <a class="btn" href="/">Try RoboDad yourself</a>
+        <a class="btn line" href="mailto:?subject=RoboDad%2C%20an%20AI%20dad%20for%20teens&amp;body=Thought%20you%27d%20like%20this%3A%20https%3A%2F%2Frobodad.ca">Send to another parent</a>
+      </div>
+    </div>
+  </section>
 </main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-brand"><img src="/static/favicon.svg" alt="">RoboDad</div>
+        <p>A free AI dad for teens 13+. Questions or concerns? Email <a href="mailto:dad@robodad.app">dad@robodad.app</a>.</p>
+      </div>
+      <div><h4>RoboDad</h4><ul><li><a href="/">Open the app</a></li><li><a href="/learn">Learn with Dad</a></li><li><a href="/changelog">What's new</a></li></ul></div>
+      <div><h4>Follow along</h4><ul><li><a href="https://www.instagram.com/robodadapp/" rel="noopener">Instagram</a></li><li><a href="https://www.tiktok.com/@robodadapp" rel="noopener">TikTok</a></li><li><a href="https://www.youtube.com/@robodadapp" rel="noopener">YouTube</a></li><li><a href="https://x.com/robodadapp" rel="noopener">X</a></li></ul></div>
+      <div><h4>The fine print</h4><ul><li><a href="/privacy">Privacy policy</a></li><li><a href="/terms">Terms of use</a></li><li><a href="mailto:dad@robodad.app">Contact</a></li></ul></div>
+    </div>
+    <div class="foot-fine">
+      <p>In an emergency, call 911. Kids Help Phone: 1-800-668-6868, or text CONNECT to 686868.</p>
+      <p>RoboDad™ and the RoboDad logo and characters are trademarks of Saikat Sunil Ganguly. © 2026 Saikat Sunil Ganguly. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"></svg>
+<script src="/static/avatars.js?v=49"></script>
+<script src="/static/site/site.js?v=1"></script>
 </body>
 </html>

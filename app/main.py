@@ -189,9 +189,9 @@ def _parents_page() -> HTMLResponse:
     with open(os.path.join(STATIC_DIR, "parents.html"), encoding="utf-8") as f:
         html = f.read()
     # on robodad.ca the site root is this page, so app links point at robodad.app
-    html = html.replace('href="/"', f'href="{APP_ORIGIN}/"').replace('href="/learn"', f'href="{APP_ORIGIN}/learn"')
-    html = html.replace('href="/privacy"', f'href="{APP_ORIGIN}/privacy"').replace('href="/terms"', f'href="{APP_ORIGIN}/terms"')
-    html = html.replace("← Back to RoboDad", "Open the RoboDad app →")
+    for path in ("/", "/learn", "/privacy", "/terms", "/changelog"):
+        html = html.replace(f'href="{path}"', f'href="{APP_ORIGIN}{path}"')
+    html = html.replace('href="/parents"', 'href="/"')
     return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
 
