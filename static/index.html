@@ -2508,8 +2508,8 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=5"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
-<script src="/static/radio.js?v=46"></script>
-<script src="/static/sfx.js?v=1"></script>
+<script src="/static/radio.js?v=47"></script>
+<script src="/static/sfx.js?v=2"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=49"></script>
 <script src="/static/hunt.js?v=3"></script>
@@ -3179,7 +3179,7 @@ textarea::placeholder{color:var(--muted)}
   }
   function renderVocab(){
     vocabDlg.querySelectorAll("[data-vtab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.vtab === vTab)));
-    if (vTab !== "duel") stopDuelTimer();
+    if (vTab !== "duel") { stopDuelTimer(); duelMusicOff(); }
     if (vTab === "glow") {
       const ex = V.GLOWUPS[vGlowEx % V.GLOWUPS.length];
       vocabBody.innerHTML = `${badgeLine("vocab")}<p>Paste a real sentence: an email to a teacher, an essay line, a message to a coach. Dad polishes it and shows you the one or two changes that made the difference.</p>
@@ -3257,8 +3257,19 @@ textarea::placeholder{color:var(--muted)}
     const f = vocabBody.querySelector(".duel-face"); if (!f) return;
     f.classList.remove("flinch", "taunt"); void f.offsetWidth; f.classList.add(kind);
   }
+  // Vocab Duel music: a quiet loop for the rung you're on. It never cuts in over music you're already playing, and it hands the volume back afterwards.
+  let duelMusic = false;
+  function duelMusicOn(id){
+    const R = window.RoboRadio; if (!R || duelMusic || R.playing || !R.names["duel-" + id]) return;
+    duelMusic = true; R.setVolume(0.2); R.play("duel-" + id);
+  }
+  function duelMusicOff(){
+    if (!duelMusic) return; duelMusic = false;
+    RoboRadio.stop(); RoboRadio.setVolume(radioPrefs.vol / 100);
+  }
   function duelQuestion(){
     const D = vDuel, q = D.qs[D.n], L = V.DUEL[D.i]; D.answered = false; D.t0 = Date.now();
+    if (D.n === 0) duelMusicOn(L.id);
     vocabBody.innerHTML = `<div class="lang-top"><button class="ghost" type="button" data-vact="duel-quit">Quit duel</button></div>
       ${duelArena()}
       <div class="v-stats"><span>Question ${D.n + 1} of ${D.qs.length}</span><span>✅ ${D.score}</span><span>🔥 ${D.streak}</span><span>⭐ +${D.xp}</span></div>
@@ -3295,7 +3306,7 @@ textarea::placeholder{color:var(--muted)}
     d.xp += D.xp + (won ? 25 : 0); d.bestStreak = Math.max(d.bestStreak, D.top);
     d.best[L.id] = Math.max(d.best[L.id] || 0, D.score);
     if (won && !d.beaten.includes(L.id)) d.beaten.push(L.id);
-    saveDuel(d); vDuel = null;
+    saveDuel(d); vDuel = null; duelMusicOff();
     try { window.RoboArcade?.award("duel", { tickets: won ? Math.min(20, 8 + 2 * L.tier) : 2 }); } catch {}
     window.RoboSfx?.play(won ? "roundDone" : "lose");
     vbump(p => { p.beaten = d.beaten.slice(); if (D.score === 8) p.perfect = true; });
@@ -3330,14 +3341,14 @@ textarea::placeholder{color:var(--muted)}
     else if (act === "origin-ask") vocabAskDad(`Tell me more about where the word "${V.ORIGINS[vOrigin].w}" comes from.`);
     else if (act === "origin-share") { const o = V.ORIGINS[vOrigin]; shareLine(`Word story: ${o.w}\n${o.story}`); }
     else if (act === "duel-next") { vDuel.n++; vDuel.over || vDuel.n >= vDuel.qs.length ? duelFinish() : duelQuestion(); }
-    else if (act === "duel-quit") { stopDuelTimer(); vDuel = null; renderDuelLadder(); }
+    else if (act === "duel-quit") { stopDuelTimer(); vDuel = null; duelMusicOff(); renderDuelLadder(); }
   });
   vocabDlg.querySelector(".vocab-tabs").addEventListener("click", (e) => {
     const b = e.target.closest("[data-vtab]"); if (!b) return;
     vTab = b.dataset.vtab; vDuel = null; renderVocab();
   });
   const openVocab = () => { vocabDlg.hidden = false; renderVocab(); setTimeout(() => vocabDlg.querySelector('[aria-selected="true"]')?.focus(), 30); };
-  const closeVocab = () => { stopDuelTimer(); vDuel = null; vocabDlg.hidden = true; $("learnBtn").focus(); };
+  const closeVocab = () => { stopDuelTimer(); vDuel = null; duelMusicOff(); vocabDlg.hidden = true; $("learnBtn").focus(); };
   $("vocabClose").addEventListener("click", closeVocab);
   vocabDlg.addEventListener("click", (e) => { if (e.target === vocabDlg) closeVocab(); });
   vocabDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVocab(); });
@@ -5740,6 +5751,7 @@ const PLAYERS = {
     $("huntHint").hidden = true; $("huntMsg").hidden = true; $("huntInput").value = "";
     $("huntHintBtn").hidden = false; $("huntHintBtn").textContent = "Need a hint?";
     $("huntDlg").hidden = false; $("huntInput").focus({ preventScroll:true });
+    window.RoboSfx?.play("huntOpen");
   }
   $("huntPuzzle").addEventListener("click", (e) => {           // Dad's letter decoder (Chapter 1): tap a number to flip it to its letter
     const b = e.target.closest(".hunt-dec button"); if (!b) return;
@@ -5749,10 +5761,11 @@ const PLAYERS = {
   function huntUnlock(n, solver){
     const prev = huntProgress();
     if (n > prev) setPref(HUNT_KEY, String(n));
-    if (n <= 5) { huntUI(); huntOpen(n, n > 1 ? HUNT.chapters[n - 1].solved : ""); return; }
+    if (n <= 5) { window.RoboSfx?.play("huntSolve", { ch: n - 1 }); huntUI(); huntOpen(n, n > 1 ? HUNT.chapters[n - 1].solved : ""); return; }
     // finale: the cartridge is found
     $("huntDlg").hidden = true;
     const first = !getPref("robodad.hunt.done");
+    window.RoboSfx?.play("huntFinale");
     setPref("robodad.hunt.done", "1"); setPref("robodad.egg.dadquest", "1"); huntUI();
     if (first && !dates.cartridge) { dates.cartridge = today(); saveBelt(); updateBeltMini(); }
     const el = $("reveal"); if (el.hidden) revealReturn = document.activeElement;
@@ -5776,6 +5789,7 @@ const PLAYERS = {
       if (j.kind === "hunt" && j.chapter > huntCh) return huntUnlock(j.chapter, j.solver);
       if (j.kind === "hunt_wait") return msg(huntWaitText(j.opens));
       if (j.kind === "hunt") return msg("That's an earlier piece. You've already got that one!");
+      window.RoboSfx?.play("huntWrong");
       msg(r.status === 429 ? (j.error || "Too many guesses. Take a short break.") : "Not quite. Check your working, or tap Need a hint?");
     } catch { $("huntMsg").textContent = "Couldn't reach RoboDad. Check your connection."; $("huntMsg").hidden = false; }
     finally { $("huntGo").disabled = false; }
@@ -5784,7 +5798,7 @@ const PLAYERS = {
   $("huntHintBtn").addEventListener("click", () => {
     const hints = HUNT.chapters[huntCh]?.hints || []; if (!hints.length) return;
     $("huntHint").textContent = hints[Math.min(huntHintN, hints.length - 1)]; $("huntHint").hidden = false;
-    huntHintN++; $("huntHintBtn").textContent = huntHintN < hints.length ? "Another hint?" : "That's all the hints";
+    window.RoboSfx?.play("hint"); huntHintN++; $("huntHintBtn").textContent = huntHintN < hints.length ? "Another hint?" : "That's all the hints";
     if (huntHintN >= hints.length) $("huntHintBtn").hidden = true;
   });
   $("huntPause").addEventListener("click", () => { setPref("robodad.hunt.paused", getPref("robodad.hunt.paused") ? "" : "1"); huntUI(); });

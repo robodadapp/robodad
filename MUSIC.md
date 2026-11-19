@@ -22,6 +22,10 @@ Everything in `static/radio.js` is synthesised live in the browser with the Web 
 
 `static/sfx.js` (RoboSfx) makes every game sound live with Web Audio: no files, no samples, no licences. 46 sounds (the Hands-on games keep their own set in brain.js, which this switch also mutes), several with 2 to 4 variants and a small random pitch shift so repeats differ. One shared channel with a limiter. Answers and pickups climb a pentatonic scale with the streak. Muted state is saved under `robodad.sfx`; the switch is in Looks and dads.
 
+## DAD QUEST room themes and Vocab Duel loops
+
+`static/quest.js` has eight original 32-step room themes (Home, Kitchen, Living Room, Garage, Backyard, Road Trip, Mall Arcade, Attic), each with its own key, scale and drum feel; the drums drop out for 8 steps every fourth loop. Players can still pick the mixtapes. `static/radio.js` has six hidden Vocab Duel loops, `duel-modern`, `duel-skater`, `duel-gamer`, `duel-bookworm`, `duel-professor` and `duel-grandpa`, played at a low volume under a timer. The Lost Cartridge stingers (`huntOpen`, `huntWrong`, `huntSolve`, `huntFinale`) are in `static/sfx.js`. All original, no samples.
+
 ## Downloaded tracks
 
 None yet. For each one added, record: track title, author, page link, licence (CC0 or public domain preferred), date downloaded, and a saved screenshot of the licence on the track page.

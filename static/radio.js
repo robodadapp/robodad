@@ -1271,6 +1271,86 @@
 
   function targetGain() { return volume * 1.4 * (ducked ? 0.25 : 1); }
 
+  // ---------------------------------------------------------------- Vocab Duel loops
+  // One quiet, steady loop per rung of the Vocab Duel ladder, so reading under a timer never fights the music.
+  // Eight-bar cycles: the last two bars tick faster, like a quiz-show clock. Hidden from the picker, played by key:
+  // RoboRadio.play("duel-modern"). All original, made live from oscillators.
+  const duel = (key, def) => { STATIONS["duel-" + key] = Object.assign({ hidden: true }, def); };
+  const tickUp = (k, t, b, level = 0.02) => { if (k >= 6) for (let s = 0; s < 8; s++) hat(t + s * b / 2, level + (k - 6) * 0.006 + s * 0.001); };
+  duel("modern", {
+    name: "Duel: Lo-fi Study", bpm: 88,
+    ch: [[48, [60, 64, 67, 71]], [45, [57, 60, 64, 67]], [41, [60, 64, 65, 69]], [43, [59, 62, 65, 67]]],
+    play(i, t, b) {
+      const k = i % 8, [r, ns] = this.ch[k % 4];
+      ns.forEach((n, j) => epiano(n, t + j * 0.012, b * 3.8, 0.7));
+      bass(r, t, b * 1.8, { level: 0.1 }); bass(r, t + 2.5 * b, b * 1.2, { level: 0.08 });
+      kick(t, 0.16); kick(t + 2 * b, 0.13); snare(t + b, 0.04); snare(t + 3 * b, 0.045);
+      for (let s = 0; s < 8; s++) hat(t + s * b / 2, s % 2 ? 0.012 : 0.02);
+      if (k >= 4) pluck(ns[3] + 12, t + 1.5 * b, { level: 0.04 });
+      tickUp(k, t, b, 0.012);
+    },
+  });
+  duel("skater", {
+    name: "Duel: Garage Band", bpm: 108,
+    ch: [45, 41, 48, 43], riff: [0, 3, 5, 7, 5, 3, 0, 3],
+    play(i, t, b) {
+      const k = i % 8, r = this.ch[k % 4];
+      for (let s = 0; s < 8; s++) bass(r - 12 + (s % 4 === 3 ? 7 : 0), t + s * b / 2, b * 0.45, { type: "sawtooth", level: 0.08, cutoff: 420 });
+      kick(t, 0.2); kick(t + 1.5 * b, 0.15); kick(t + 2 * b, 0.18); snare(t + b, 0.07); snare(t + 3 * b, 0.075);
+      for (let s = 0; s < 8; s++) hat(t + s * b / 2, 0.02);
+      if (k % 2 === 1) this.riff.forEach((o, s) => pluck(r + 24 + o, t + s * b / 2, { type: "sawtooth", level: 0.03, decay: 0.3, cutoff: 1800 }));
+      tickUp(k, t, b);
+    },
+  });
+  duel("gamer", {
+    name: "Duel: Boss Select", bpm: 112,
+    ch: [[50, [62, 65, 69]], [46, [62, 65, 70]], [53, [60, 65, 69]], [48, [60, 64, 67]]],
+    play(i, t, b) {
+      const k = i % 8, [r, ns] = this.ch[k % 4], s16 = b / 4;
+      for (let s = 0; s < 16; s++) blip(ns[s % 3] + (s % 6 < 3 ? 12 : 24), t + s * s16, { level: 0.02, dur: s16 * 0.8, echo: s % 4 === 0 });
+      for (let s = 0; s < 8; s++) bass(r - 12, t + s * b / 2, b * 0.4, { type: "square", level: 0.045, cutoff: 360 });
+      kick(t, 0.2); kick(t + 2 * b, 0.2); kick(t + 3.5 * b, 0.12); snare(t + b, 0.06); snare(t + 3 * b, 0.065);
+      for (let s = 0; s < 16; s++) hat(t + s * s16, s % 4 === 2 ? 0.026 : 0.012);
+      tickUp(k, t, b);
+    },
+  });
+  duel("bookworm", {
+    name: "Duel: Reading Room", bpm: 92,
+    ch: [[52, [64, 67, 71]], [48, [64, 67, 72]], [43, [62, 67, 71]], [50, [62, 66, 69]]],
+    play(i, t, b) {
+      const k = i % 8, [r, ns] = this.ch[k % 4], s8 = b / 2;
+      for (let s = 0; s < 8; s++) harpsi(ns[[0, 1, 2, 1, 0, 2, 1, 2][s]] + (s > 4 ? 12 : 0), t + s * s8 + (rand() - 0.5) * 0.008, 0.12, 0.6);
+      harpsi(r - 12, t, 0.18, 1.2); harpsi(r - 5, t + 2 * b, 0.12, 1.0);
+      if (k >= 4) hit(t + 3 * b, { type: "bandpass", freq: 1800, q: 2, level: 0.03, decay: 0.05 });
+      if (k % 2 === 0) kick(t, 0.1);
+      tickUp(k, t, b, 0.01);
+    },
+  });
+  duel("professor", {
+    name: "Duel: Final Exam", bpm: 76,
+    ch: [[45, [57, 60, 64, 69]], [41, [57, 60, 65, 69]], [38, [57, 62, 65, 69]], [40, [56, 59, 64, 68]]],
+    play(i, t, b) {
+      const k = i % 8, [r, ns] = this.ch[k % 4];
+      pad(ns, t, b * 4, { type: "triangle", cutoff: 1200, level: 0.04 });
+      for (let s = 0; s < 4; s++) harpsi(ns[s] + 12, t + s * b, 0.04, 1.4);
+      bass(r - 12, t, b * 3.5, { level: 0.1, cutoff: 300 });
+      if (k >= 2) kick(t, 0.08); if (k >= 4) { snare(t + 2 * b, 0.03); hat(t + 3 * b, 0.015); }
+      tickUp(k, t, b, 0.012);
+    },
+  });
+  duel("grandpa", {
+    name: "Duel: Porch Stride", bpm: 100,
+    ch: [[48, [60, 64, 67]], [43, [59, 62, 67]], [43, [59, 62, 65]], [48, [60, 64, 67]]], mel: [76, 74, 72, 74, 76, 76, 76, 0],
+    play(i, t, b) {
+      const k = i % 8, [r, ns] = this.ch[k % 4];
+      [0, 2].forEach((q) => bass(r - 12 + (q ? 7 : 0), t + q * b, b * 0.8, { level: 0.16, cutoff: 600 }));       // oom
+      [1, 3].forEach((q) => ns.forEach((n, j) => pluck(n, t + q * b + j * 0.01, { level: 0.07, decay: 0.35 })));  // pah
+      if (k % 4 < 2) this.mel.forEach((n, s) => { if (n) pluck(n + (k % 4 ? 0 : 0), t + s * b / 2, { type: "triangle", level: 0.08, decay: 0.5 }); });
+      hit(t + 3 * b, { type: "bandpass", freq: 1200, q: 1, level: 0.02, decay: 0.08 });
+      tickUp(k, t, b, 0.012);
+    },
+  });
+
   // ---------------------------------------------------------------- victory jingles
   // A few seconds each, one per dad, all original: played when you beat him. They run on their own
   // bus (straight into the compressor), so they still sound after the background station fades out.
