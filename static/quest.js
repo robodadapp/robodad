@@ -215,25 +215,38 @@
     track:   { name: "80s Tracksuit", how: "Clear every room" },
     socks:   { name: "Socks & Sandals", how: "Finish 3 missions" },
     arcade:  { name: "Arcade Dad",    how: "Finish 7 missions" },
+    // Cross-game rewards: these come from chess, not from anything in DAD QUEST itself.
+    champ:      { name: "Chess Champ",     how: "Beat 3 dads at chess" },
+    grandmaster:{ name: "Grandmaster Dad", how: "Beat Robo-Grandpa at chess" },
   };
+  // Chess keeps its own list of dads you've beaten in the same localStorage, shared across robodad.app.
+  const chessBoardsWon = () => { try { const a = JSON.parse(store.get("robodad.chess.boards") || "[]"); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const CHESS_DADS = [["modern", "Modern Dad"], ["skater", "Skater Dad"], ["eighties", "Arcade Dad"], ["gamer", "Gamer Dad"],
+    ["coach", "Coach Dad"], ["bookworm", "Bookworm Dad"], ["labdad", "Lab Dad"], ["professor", "Professor Dad"], ["grandpa", "Robo-Grandpa"]];
+  function checkChessRewards(){
+    if (chessBoardsWon().length >= 3) unlockSkin("champ");
+    if (chessBoardsWon().includes("grandpa")) unlockSkin("grandmaster");
+  }
   const SKIN_IDS = Object.keys(SKINS);
   const skinOwned = (id) => id === "classic" || store.get("robodad.dadquest.skin." + id) === "1";
   let skin = store.get("robodad.dadquest.skin") || "classic";
   if (!SKINS[skin] || !skinOwned(skin)) skin = "classic";
 
   function dadHead(px, py, sk){
-    const o = "#1B2A3A", hair = sk === "mullet" ? "#6B4423" : o, hl = sk === "mullet" ? "#8A5A30" : "#3B4F66";
+    const o = "#1B2A3A", hair = sk === "mullet" ? "#6B4423" : sk === "grandmaster" ? "#9AA6AE" : o, hl = sk === "mullet" ? "#8A5A30" : sk === "grandmaster" ? "#39FF88" : "#3B4F66";
     if (sk === "mullet") R(px - 1, py + 2, 3, 10, hair);                               // business in front, party in back
     R(px + 2, py, 10, 3, hair); R(px + 1, py + 2, 12, 2, hair);
     R(px + 3, py + 1, 3, 1, hl); R(px + 7, py + 1, 2, 1, hl);
     if (sk === "grill") { R(px + 2, py - 5, 10, 5, "#FFFFFF"); R(px + 1, py - 7, 12, 3, "#FFFFFF"); R(px + 2, py - 1, 10, 1, "#D7D7E0"); }
     if (sk === "socks") { R(px + 1, py - 1, 12, 3, "#E8DFC4"); R(px - 1, py + 2, 16, 1, "#E8DFC4"); }   // bucket hat
+    if (sk === "champ") { R(px + 3, py - 3, 2, 3, "#F5C518"); R(px + 6, py - 4, 2, 4, "#F5C518"); R(px + 9, py - 3, 2, 3, "#F5C518"); R(px + 1, py - 1, 12, 1, "#F5C518"); }   // a little gold king's crown
     R(px, py + 6, 1, 3, o); R(px + 13, py + 6, 1, 3, o);                              // ears
-    R(px + 1, py + 4, 12, 8, "#C9D3DC");                                               // face
+    R(px + 1, py + 4, 12, 8, sk === "grandmaster" ? "#D7E6DF" : "#C9D3DC");            // face
     if (sk === "track") R(px + 1, py + 4, 12, 1, "#FF4D6D");                           // sweatband
-    const lens = sk === "arcade" ? "#FF4D9D" : "#0B0B14";
+    if (sk === "grandmaster") R(px + 1, py + 7, 12, 1, "#39FF88");                      // a thin circuit seam, straight from his chess board
+    const lens = sk === "arcade" ? "#FF4D9D" : sk === "grandmaster" ? "#39FF88" : "#0B0B14";
     R(px + 2, py + 6, 4, 2, lens); R(px + 8, py + 6, 4, 2, lens); R(px + 6, py + 6, 2, 1, "#0B0B14");
-    R(px + 3, py + 6, 1, 1, sk === "arcade" ? "#FFD1E8" : "#7F95AD"); R(px + 9, py + 6, 1, 1, sk === "arcade" ? "#FFD1E8" : "#7F95AD");
+    R(px + 3, py + 6, 1, 1, sk === "arcade" ? "#FFD1E8" : sk === "grandmaster" ? "#D7FFE9" : "#7F95AD"); R(px + 9, py + 6, 1, 1, sk === "arcade" ? "#FFD1E8" : sk === "grandmaster" ? "#D7FFE9" : "#7F95AD");
     if (sk === "mullet") R(px + 4, py + 9, 6, 1, hair);                                // the moustache comes free
     else { R(px + 5, py + 10, 4, 1, o); R(px + 4, py + 9, 1, 1, o); R(px + 9, py + 9, 1, 1, o); }
   }
@@ -241,10 +254,10 @@
   // RoboDad, drawn from rectangles (14 wide; 22 tall standing, 12 tall in a sock-slide)
   function drawDad(px, py, frame, slide, air, sk = skin){
     const o = "#1B2A3A";
-    const shirt = sk === "track" ? "#14B8A6" : sk === "socks" ? "#1FA39A" : sk === "arcade" ? "#6D28D9" : "#3D2F27";
-    const shirtD = sk === "track" ? "#7C3AED" : sk === "socks" ? "#F5C518" : sk === "arcade" ? "#22D3EE" : "#2B211C";
-    const leg = sk === "track" ? "#7C3AED" : sk === "socks" ? "#C9B58A" : o;
-    const shoe = sk === "socks" ? "#8A5A30" : sk === "arcade" ? "#22D3EE" : "#FFFFFF";
+    const shirt = sk === "track" ? "#14B8A6" : sk === "socks" ? "#1FA39A" : sk === "arcade" ? "#6D28D9" : sk === "champ" ? "#1E2A4A" : sk === "grandmaster" ? "#2F4D3E" : "#3D2F27";
+    const shirtD = sk === "track" ? "#7C3AED" : sk === "socks" ? "#F5C518" : sk === "arcade" ? "#22D3EE" : sk === "champ" ? "#F5C518" : sk === "grandmaster" ? "#39FF88" : "#2B211C";
+    const leg = sk === "track" ? "#7C3AED" : sk === "socks" ? "#C9B58A" : sk === "champ" ? "#1E2A4A" : sk === "grandmaster" ? "#0E1712" : o;
+    const shoe = sk === "socks" ? "#8A5A30" : sk === "arcade" ? "#22D3EE" : sk === "champ" ? "#F5C518" : sk === "grandmaster" ? "#39FF88" : "#FFFFFF";
     if (slide) {                                   // leaning back, socks out front
       R(px + 9, py + 6, 8, 6, shirt); R(px + 11, py + 6, 2, 4, "#FFFFFF");
       R(px + 15, py + 9, 6, 3, leg); R(px + 20, py + 8, 3, 4, "#FFFFFF"); R(px + 20, py + 8, 3, 1, "#FF4D6D");
@@ -260,6 +273,8 @@
     if (sk === "track") { R(px + 1, py + 13, 1, 6, "#FFFFFF"); R(px + 12, py + 13, 1, 6, "#FFFFFF"); }
     if (sk === "socks") { R(px + 3, py + 15, 1, 1, "#F5C518"); R(px + 10, py + 17, 1, 1, "#FF4D6D"); R(px + 9, py + 14, 1, 1, "#FFFFFF"); }
     if (sk === "grill") { R(px + 3, py + 13, 8, 6, "#E3342F"); R(px + 5, py + 15, 4, 2, "#FFFFFF"); }
+    if (sk === "champ") R(px + 6, py + 14, 2, 5, "#F5C518");                            // gold tie, straight off a trophy
+    if (sk === "grandmaster") R(px + 6, py + 15, 2, 2, "#39FF88");                      // one glowing circuit node
     if (air) {
       R(px + 11, py + 9, 3, 5, shirtD); R(px + 11, py + 8, 3, 2, "#C9D3DC");            // arm up
       R(px + 2, py + 19, 4, 2, leg); R(px + 8, py + 18, 4, 2, leg); R(px + 2, py + 21, 5, 1, shoe); R(px + 8, py + 20, 5, 1, shoe);
@@ -1149,7 +1164,7 @@
     t++;
     x.save();
     if (shake > 0 && !calm) x.translate(Math.round((Math.random() - 0.5) * shake * 0.4), Math.round((Math.random() - 0.5) * shake * 0.4));
-    const idle = ["title", "locked", "boot", "skins", "bonusPick", "missions", "album", "rooms", "homeEnd"].includes(state);
+    const idle = ["title", "locked", "boot", "skins", "bonusPick", "missions", "album", "rooms", "homeEnd", "chesscorner"].includes(state);
     const inBonus = state === "bonus" || state === "bonusEnd" || (state === "paused" && pausedFrom === "bonus");
     const r = idle ? ROOMS[Math.floor(t / 900) % ROOMS.length] : inBonus ? STUDY_ROOM : room();
     const off = idle ? t * 0.6 : dist;
@@ -1175,7 +1190,7 @@
       R(bl.x, bl.y, bl.w, bl.h, c); R(bl.x, bl.y + bl.h - 2, bl.w, 2, "rgba(0,0,0,.3)"); R(bl.x + 1, bl.y + 1, bl.w - 2, 1, "rgba(255,255,255,.35)");
       text(bl.label, bl.x + bl.w / 2, bl.y + 3, 7, bl.state === 0 ? "#0B0B14" : "#FFF6D6", "center", bl.state === 0);
     }
-    const showDad = !["locked", "title", "skins", "missions", "album", "rooms", "bonusPick"].includes(state);
+    const showDad = !["locked", "title", "skins", "missions", "album", "rooms", "bonusPick", "chesscorner"].includes(state);
     if (showDad) {
       // best-run ghost body removed: it trailed behind Dad and looked like a glitch; the BEST flag still marks it
       R(P.x + 2, GY, 10, 2, "rgba(0,0,0,.28)");
@@ -1283,6 +1298,7 @@
           store.set("robodad.dadquest.rm", roomMusic ? "1" : "0"); store.set("robodad.dadquest.tape", String(tape));
           if (tapesOwned < 2 && !roomMusic) showToast("FIND MIXTAPES IN THE ROOMS TO GET MORE MUSIC", "#FFF6D6"); } },
         { label: bonusOpen ? "BONUS ROOMS" : "BONUS ROOMS 🔒", lock: !bonusOpen, act: () => bonusOpen ? setState("bonusPick") : showToast("BEAT THE ROGUE ROOMBA TO OPEN BONUS ROOMS", "#FFF6D6") },
+        { label: chessBoardsWon().length ? "CHESS CORNER" : "CHESS CORNER 🔒", lock: !chessBoardsWon().length, act: () => chessBoardsWon().length ? setState("chesscorner") : showToast("BEAT A DAD AT CHESS TO OPEN THE CHESS CORNER", "#FFF6D6") },
         { label: hard ? "DAD MODE: HARD" : "DAD MODE: CHILL", act: () => { hard = !hard; store.set("robodad.dadquest.hard", hard ? "1" : "0"); showToast(hard ? "HARD: 3 HEARTS, FASTER, TIGHTER" : "CHILL: 5 HEARTS, MORE ROOM TO BREATHE", "#FFF6D6"); } },
         { label: "CRT SCREEN: " + (crt ? "ON" : "OFF"), act: () => { crt = !crt; store.set("robodad.dadquest.crt", crt ? "1" : "0"); } },
       ], 39, 2, 124, 12, 3);
@@ -1314,6 +1330,23 @@
       const hov = SKIN_IDS[sel] ? SKINS[SKIN_IDS[sel]] : null;
       if (hov) text(skinOwned(SKIN_IDS[sel]) ? hov.name : "TO UNLOCK: " + hov.how, W / 2, 108, 7, "#9A93B8");
       menu([{ label: "BACK", act: () => setState("title") }], 122, 1, 80);
+    } else if (state === "chesscorner") {
+      // The dedicated stage for the chess ↔ DAD QUEST connection: a trophy case, not a level to run, since
+      // chess already has its own board and its own ladder of dads.
+      panel(166);
+      text("THE CHESS CORNER", W / 2, 13, 12, "#F5C518");
+      text("A BOARD WON FROM CHESS, AND THE TROPHIES IT EARNED HERE.", W / 2, 27, 6, "#9A93B8");
+      const won = chessBoardsWon();
+      for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) R(W / 2 - 52 + i * 13, 34 + j * 11, 13, 11, (i + j) % 2 ? "#3E873C" : "#63B25A");
+      text("YOUR WINS", W / 2, 88, 7, "#9A93B8");
+      CHESS_DADS.forEach(([k, name], i) => {
+        const col = i % 3, row = Math.floor(i / 3), x = 46 + col * 92, y = 98 + row * 10, beat = won.includes(k);
+        text((beat ? "♚ " : "· ") + name, x, y, 6, beat ? "#AED581" : "#6E6890", "left");
+      });
+      text(skinOwned("champ") ? "✓ CHESS CHAMP UNLOCKED" : "BEAT 3 DADS AT CHESS → CHESS CHAMP", W / 2, 134, 6, skinOwned("champ") ? "#AED581" : "#9A93B8");
+      text(skinOwned("grandmaster") ? "✓ GRANDMASTER DAD UNLOCKED" : "BEAT ROBO-GRANDPA → GRANDMASTER DAD", W / 2, 142, 6, skinOwned("grandmaster") ? "#AED581" : "#9A93B8");
+      text(store.get("robodad.dadquest.cleared") === "1" ? "YOU ALSO UNLOCKED THE LEGEND BOARD IN CHESS" : "CLEAR DAD QUEST → LEGEND BOARD IN CHESS", W / 2, 150, 6, "#7FD1FF");
+      menu([{ label: "BACK", act: () => setState("title") }], 158, 1, 80);
     } else if (state === "missions") {
       panel(156);
       text("MISSIONS", W / 2, 19, 12, "#F5C518");
@@ -1443,6 +1476,7 @@
     while (acc >= 1000 / 60) { if (!held) { if (freeze > 0) freeze--; else update(); } acc -= 1000 / 60; }
     draw(); requestAnimationFrame(loop);
   }
+  checkChessRewards();   // cross-game: pick up any chess wins since the last visit
   say(unlocked ? "DAD QUEST. Press Space or tap to blow on the cartridge and start." : "DAD QUEST is locked. Find the cartridge in the secret hunt.");
   requestAnimationFrame(loop);
 })();

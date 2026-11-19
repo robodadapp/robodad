@@ -124,6 +124,16 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
   .board[data-skin="gamer"]{animation:none; box-shadow:0 0 12px #39FF8899}
   .board[data-skin="grandpa"] .sq.fresh .p{animation:none}
 }
+/* Legend board: a trophy-case gold board, earned by clearing DAD QUEST rather than beating a dad. */
+.board[data-skin="legend"]{--sq-light:#FFF3C4; --sq-dark:#B8892E; --frame:#F5C518; --frame-glow:0 0 16px #F5C51899;
+  --tex-light:radial-gradient(circle at 70% 30%, rgba(255,246,214,.5) 0 2px, transparent 3px);
+  --tex-dark:var(--tex-light);
+  --pw:#FFFDF0; --pw-edge:#5C3B0A; --pb:#5C3B0A; --pb-edge:#FFF3C4;
+  --sel:#FFFFFF; --last:rgba(245,197,24,.4); --hint:#FFFFFF; --dot:rgba(92,59,10,.4);
+  --coord-light:#5C3B0A; --coord-dark:#5C3B0A; --coord-font:Georgia, "Times New Roman", serif}
+.board[data-skin="legend"] .sq.w-piece{text-shadow:0 0 4px #FFF3C4}
+.board[data-skin="legend"] .sq.b-piece{text-shadow:0 0 3px #F5C518}
+.clocks[data-skin="legend"]{--clk-bg:#5C3B0A; --clk-edge:#F5C518; --clk-accent:#FFFFFF; --clk-muted:#FFF3C4; --clk-digits:#FFFDF0; --clk-font:Georgia,"Times New Roman",serif; --clk-glow:0 0 10px #F5C51888}
 .sq .px{width:72%; height:72%; display:block; shape-rendering:crispEdges}
 .board[data-skin="eighties"] .sq.w-piece .px{filter:drop-shadow(0 0 3px #2DE2E6)}
 .board[data-skin="eighties"] .sq.b-piece .px{filter:drop-shadow(0 0 3px #FF3EA5)}
@@ -645,8 +655,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   // ---- board skins ----
   // Playing a dad shows his board. Beat him and his board is yours to use against anyone.
   const getBoards = () => { try { const a = JSON.parse(store.get(BOARDS_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch { return []; } };
+  // Cross-game reward: clearing DAD QUEST (same localStorage, shared across robodad.app) unlocks a gold Legend board here.
+  const legendOwned = () => store.get("robodad.dadquest.cleared") === "1";
   let skinChoice = store.get(SKIN_KEY) || "auto";
-  if (skinChoice !== "auto" && skinChoice !== "classic" && !getBoards().includes(skinChoice)) skinChoice = "auto";
+  if (skinChoice === "legend" && !legendOwned()) skinChoice = "auto";
+  else if (skinChoice !== "auto" && skinChoice !== "classic" && skinChoice !== "legend" && !getBoards().includes(skinChoice)) skinChoice = "auto";
 
   const activeSkin = () => (skinChoice === "auto" ? tierKey : skinChoice);
 
@@ -812,10 +825,11 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   function renderSkinPicker() {
     const won = getBoards();
     const opts = [["auto", "Match the dad"], ["classic", "Classic"]]
-      .concat(ORDER.filter((k) => won.includes(k)).map((k) => [k, `${C.TIERS[k].name}'s board`]));
+      .concat(ORDER.filter((k) => won.includes(k)).map((k) => [k, `${C.TIERS[k].name}'s board`]))
+      .concat(legendOwned() ? [["legend", "Legend Board (DAD QUEST)"]] : []);
     $("skinSel").innerHTML = opts.map(([v, label]) =>
       `<option value="${v}"${v === skinChoice ? " selected" : ""}>${label}</option>`).join("");
-    $("skinNote").textContent = won.length ? "" : "Beat a dad to win his board.";
+    $("skinNote").textContent = won.length ? "" : (legendOwned() ? "" : "Beat a dad to win his board, or clear DAD QUEST for the Legend board.");
   }
 
   // Returns true the first time this dad's board is won.
@@ -1019,7 +1033,12 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     }
     if (window.RoboArcade && !daily && st.reason !== "resign") RoboArcade.award("chess", { result: humanWon ? "win" : st.draw || st.result === "1/2-1/2" ? "draw" : "lose", tier: (C.TIERS[tierKey] || {}).tier || 0, bonus: tierKey === "professor" || tierKey === "grandpa" ? 10 : 0 });
     if (humanWon && tierKey === "eighties" && !daily) store.set("robodad.otto.goal.chess", "1");   // a play goal for the READY door (Otto mode)
-    if (humanWon && winBoard(tierKey)) headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
+    if (humanWon && winBoard(tierKey)) {
+      headline += ` You won ${C.TIERS[tierKey].name}'s board. Pick it under Board any time.`;
+      // Cross-game reward: chess wins unlock DAD QUEST skins (same localStorage, shared across robodad.app).
+      if (getBoards().length === 3) headline += " That's 3 dads beaten — Chess Champ is waiting for you in DAD QUEST.";
+      if (tierKey === "grandpa") headline += " Beating Robo-Grandpa unlocks Grandmaster Dad in DAD QUEST.";
+    }
     setStatus(`<strong>${headline}</strong> Hit New game for a rematch.`);
     const end = humanWon ? "win" : line === "draw" ? "draw" : "lose";
     disarm();

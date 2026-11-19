@@ -415,6 +415,21 @@
     river:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#8ED081"/><path d="M0 24 Q24 18 48 24 T96 24 V44 Q72 50 48 44 T0 44Z" fill="#3E8ED0"/><path d="M10 34 q6 -3 12 0 M58 30 q6 -3 12 0" stroke="#BFE3FF" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M34 32 h26 l-4 7 h-18z" fill="#8A5A2B" stroke="#3B2512" stroke-width="1.5"/><circle cx="44" cy="27" r="4" fill="#F2C29B"/><circle cx="54" cy="29" r="3" fill="#F2F2F2"/></svg>`,
     tiles:`<svg viewBox="0 0 96 64"><rect width="96" height="64" rx="10" fill="#2E2A4F"/><g font-family="system-ui,sans-serif" font-weight="900" font-size="12" text-anchor="middle"><rect x="26" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="18" fill="#2E2A4F">1</text><rect x="41" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="18" fill="#2E2A4F">2</text><rect x="56" y="7" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="18" fill="#2E2A4F">3</text><rect x="26" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="33" fill="#2E2A4F">4</text><rect x="41" y="22" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="33" fill="#2E2A4F">5</text><rect x="26" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="33" y="48" fill="#2E2A4F">7</text><rect x="56" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="63" y="48" fill="#2E2A4F">6</text><rect x="41" y="37" width="14" height="14" rx="3" fill="#FFD866"/><text x="48" y="48" fill="#2E2A4F">8</text></g></svg>`,
   };
+  // Hands-on looks: new scene colours for Blackout, Dad's Safe, Night Bridge and Scramble, earned by
+  // playing (stars from any of the four add up, for life, separately from each puzzle's own best score).
+  const HANDS_LOOKS = { neon:{ name:"Neon", at:15 }, pixelretro:{ name:"Pixel-Retro", at:30 }, blueprint:{ name:"Blueprint", at:50 } };
+  const handsStarTotal = (s) => s.handsStarTotal || 0;
+  const handsLookOwned = (s, id) => handsStarTotal(s) >= HANDS_LOOKS[id].at;
+  const handsLook = (s) => (s.handsLook && s.handsLook !== "classic" && handsLookOwned(s, s.handsLook)) ? s.handsLook : "classic";
+  function handsLookRow(redraw){
+    const s = S(), cur = handsLook(s), total = handsStarTotal(s);
+    return h("div", { class:"bz-row bz-toggles" },
+      btn((cur === "classic" ? "✓ " : "") + "Classic look", "ghost", () => { s.handsLook = "classic"; save(); redraw(); }, { "aria-pressed":String(cur === "classic") }),
+      ...Object.keys(HANDS_LOOKS).map(id => { const L = HANDS_LOOKS[id], owned = handsLookOwned(s, id);
+        return btn(owned ? (cur === id ? "✓ " : "") + L.name : `🔒 ${L.name} (${total}/${L.at}★)`, "ghost",
+          () => { s.handsLook = id; save(); redraw(); }, { "aria-pressed":String(cur === id), disabled:!owned,
+            "aria-label": owned ? L.name : `${L.name}, locked. Earn ${L.at - total} more star${L.at - total === 1 ? "" : "s"} across the hands-on games` }); }));
+  }
   const DAILY_NAME = { lock:"Dad's Safe", lights:"Blackout", river:"Night Bridge", tiles:"Scramble" };
   const DAILY_ICON = { lock:"🔐", lights:"💡", river:"🔦", tiles:"🧩" };
   // today's result for one of the four dailies (the safe keeps its own record), or null
@@ -449,6 +464,7 @@
           h("small", { class:"bz-vs" }, (s.rivalsDone || {})[k] ? "Every dad beaten. Robo-Grandpa wants a rematch." : `Next to beat: ${r.name}`),
           (s.handsStars || {})[k] ? h("small", { class:"bz-best", "aria-label":`Best: ${s.handsStars[k]} of 3 stars` }, "★".repeat(s.handsStars[k]) + "☆".repeat(3 - s.handsStars[k])) : null].filter(Boolean));
         return b; })),
+      handsLookRow(handsMenu),
       toggles(handsMenu));
     focusFirst();
   }
@@ -500,11 +516,16 @@
     const c = ctx, s = S(); c.won = true; c.stars = stars;
     s.handsStars ||= {}; s.handsStars[c.kind] = Math.max(s.handsStars[c.kind] || 0, stars);
     if (c.kind === "lock") s.safesCracked = (s.safesCracked || 0) + 1;
+    // Hands-on looks: every star from any of the four games adds to a running total that unlocks new looks for good.
+    const starsBefore = handsStarTotal(s);
+    s.handsStarTotal = starsBefore + stars;
+    const newLook = Object.keys(HANDS_LOOKS).find(id => HANDS_LOOKS[id].at > starsBefore && HANDS_LOOKS[id].at <= s.handsStarTotal);
     if (c.mode === "daily") { if (c.kind === "lock") finishSafe(c, true); else finishDaily(c); }
     else if (c.mode === "hands") ping("hands_win"); else if (c.mode === "run" && run) run.solved++;
     const beat = settleRival(c);
     const extra = award([30, 30, 40, 50][stars] + (beat ? 15 : 0), { hands:c.kind, keepStreak:true });
-    c.say = [line || pick(SAY.hands), beat ? "+15 for beating Dad." : "", extra].filter(Boolean).join(" "); buzz([30, 40, 30]);
+    c.say = [line || pick(SAY.hands), beat ? "+15 for beating Dad." : "", extra,
+      newLook ? `New hands-on look unlocked: ${HANDS_LOOKS[newLook].name}. Pick it from the Hands-on menu.` : ""].filter(Boolean).join(" "); buzz([30, 40, 30]);
     if (c.kind === "lock") { sfx("clunk"); setTimeout(() => sfx("win"), 380); } else sfx("win");
     renderHands(); focusFirst(".bz-focus");
   }
@@ -516,7 +537,8 @@
     const home = c.from === "menu" ? handsMenu : () => hub();
     const back = c.mode === "hands" || c.mode === "blitz" ? { label:"Hands-on", fn: handsMenu } : c.mode === "daily" ? { label: c.from === "menu" ? "Hands-on" : "Menu", fn: home } : backFor();
     const nodes = [topBar(label, back), c.mode === "run" ? runBar() : null, bubble(c.say, "gamer")];
-    nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind }, rivalBar(c), ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
+    const curLook = handsLook(S());
+    nodes.push(h("div", { class:"bz-scene bz-s-" + c.kind, ...(curLook !== "classic" ? { "data-handslook":curLook } : {}) }, rivalBar(c), ({ lights:drawLights, lock:drawLock, river:drawRiver, tiles:drawTiles })[c.kind]()));
     const row = h("div", { class:"bz-row" }), over = c.won || c.lost;
     if (c.mode === "daily") {
       // one board a day: no "new puzzle" here, just share it or go back
@@ -1448,6 +1470,12 @@
   :root[data-look="gym"] .bz-scene{--n-sky:#14213D; --n-card:#1D2D50; --n-ink:#F1DDB5; --n-muted:#B9B49F; --n-line:#32456E; --n-dim:#757A87; --n-accent:#D64C62; --n-accent-ink:#000000; --n-frame:#58637C; --n-off:#0C1425; --n-roof:#32456E; --n-roof-edge:#626B80; --n-chimney:#233356; --n-lit:#FFD166; --n-sil:#665429; --n-hint:#D64C62; --n-hint-text:#F1DDB5; --n-paper-ink:#000000; --n-water:#254F7F; --n-wave:#778895}
   :root[data-look="cheat"] .bz-scene{--n-sky:#0B0B0F; --n-card:#17171F; --n-ink:#FFF6D6; --n-muted:#C9B98A; --n-line:#3A3420; --n-dim:#7F7860; --n-accent:#FF4D6D; --n-accent-ink:#000000; --n-frame:#615B44; --n-off:#070709; --n-roof:#3A3420; --n-roof-edge:#6B644E; --n-chimney:#222018; --n-lit:#F5C518; --n-sil:#624F0A; --n-hint:#FF4D6D; --n-hint-text:#FF4D6D; --n-paper-ink:#000000; --n-water:#214363; --n-wave:#7A8B91}
   :root[data-look="eid"] .bz-scene{--n-sky:#0B2A33; --n-card:#11404C; --n-ink:#F4FBF8; --n-muted:#A8CFC6; --n-line:#1E5B68; --n-dim:#69939A; --n-accent:#2EC4B6; --n-accent-ink:#000000; --n-frame:#497B85; --n-off:#07191F; --n-roof:#1E5B68; --n-roof-edge:#54838C; --n-chimney:#14424E; --n-lit:#F2C14E; --n-sil:#614D1F; --n-hint:#2EC4B6; --n-hint-text:#2EC4B6; --n-paper-ink:#000000; --n-water:#1E5A7D; --n-wave:#749AAE}
+  /* Hands-on skins: earned with stars from playing Blackout, Crack Dad's Safe, Crossings and Scramble.
+     These sit on the puzzle itself (data-handslook), separate from the app's own "look", and win over it. */
+  .bz-scene[data-handslook="neon"]{--n-sky:#0A0014; --n-card:#17002B; --n-ink:#F4E9FF; --n-muted:#C79BE8; --n-line:#3A0A5E; --n-dim:#8A5CAE; --n-accent:#FF2DD4; --n-accent-ink:#000000; --n-frame:#6E1EA8; --n-off:#05000B; --n-roof:#3A0A5E; --n-roof-edge:#6E1EA8; --n-chimney:#240640; --n-lit:#2DF1FF; --n-sil:#0C4F54; --n-hint:#2DF1FF; --n-hint-text:#2DF1FF; --n-paper-ink:#000000; --n-water:#1A0B4A; --n-wave:#8A5CAE}
+  .bz-scene[data-handslook="pixelretro"]{--n-sky:#0F380F; --n-card:#1C5A1C; --n-ink:#E0F8CF; --n-muted:#8BAC0F; --n-line:#306230; --n-dim:#4D7A2F; --n-accent:#9BBC0F; --n-accent-ink:#0F380F; --n-frame:#306230; --n-off:#081A08; --n-roof:#306230; --n-roof-edge:#4D7A2F; --n-chimney:#1C3A1C; --n-lit:#E0F8CF; --n-sil:#0F380F; --n-hint:#9BBC0F; --n-hint-text:#9BBC0F; --n-paper-ink:#0F380F; --n-water:#1C5A1C; --n-wave:#4D7A2F}
+  .bz-scene[data-handslook="blueprint"]{--n-sky:#0B2545; --n-card:#123563; --n-ink:#DCEEFF; --n-muted:#9FC4E8; --n-line:#2A6DB5; --n-dim:#5F93C2; --n-accent:#7FD1FF; --n-accent-ink:#06203D; --n-frame:#2A6DB5; --n-off:#071A33; --n-roof:#123563; --n-roof-edge:#2A6DB5; --n-chimney:#0B2545; --n-lit:#FFFFFF; --n-sil:#0B2545; --n-hint:#BFE3FF; --n-hint-text:#BFE3FF; --n-paper-ink:#06203D; --n-water:#123563; --n-wave:#5F93C2}
+  .bz-scene[data-handslook="pixelretro"] *{image-rendering:pixelated}
   .bz-scene{background:var(--n-sky); color:var(--n-ink); border-radius:18px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:10px; color-scheme:dark}
   .bz-scene > *{width:100%; max-width:350px; box-sizing:border-box}
   .bz-scene button{font:inherit; color:inherit}
