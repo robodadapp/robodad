@@ -1979,9 +1979,9 @@ textarea::placeholder{color:var(--muted)}
       <button class="playbtn" id="radioToggle" type="button" aria-label="Play music"><svg aria-hidden="true"><use href="#i-play"/></svg></button>
     </div>
     <div class="row" role="radiogroup" aria-label="Station" id="stations">
-      <button class="chipbtn" type="button" role="radio" data-st="lounge" aria-checked="true">Lobby Lounge</button>
+      <button class="chipbtn" type="button" role="radio" data-st="lounge" aria-checked="false">Lobby Lounge</button>
       <button class="chipbtn" type="button" role="radio" data-st="canon" aria-checked="false">Canon in D</button>
-      <button class="chipbtn" type="button" role="radio" data-st="drive" aria-checked="false">Midnight Drive</button>
+      <button class="chipbtn" type="button" role="radio" data-st="drive" aria-checked="true">Midnight Drive</button>
       <button class="chipbtn" type="button" role="radio" data-st="jukebox" aria-checked="false">Jukebox '55</button>
       <button class="chipbtn" type="button" role="radio" data-st="skate" aria-checked="false">Half-Pipe '99</button>
       <button class="chipbtn" type="button" role="radio" data-st="block" aria-checked="false">Block Party '03</button>
@@ -1995,6 +1995,9 @@ textarea::placeholder{color:var(--muted)}
     </div>
     <label class="sr" for="radioVol">Volume</label>
     <input type="range" id="radioVol" min="0" max="100" value="35">
+    <div class="setting" style="margin-top:6px"><label for="radioSleep" style="font-weight:700">Sleep timer</label>
+      <select id="radioSleep" style="font:inherit; font-weight:700; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:12px; padding:7px 10px">
+        <option value="0">Off</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
     <small>Played live by RoboDad's built-in synth, so nothing is downloaded. Canon in D by Johann Pachelbel (public domain).</small>
   </section>
 
@@ -2508,7 +2511,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=5"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
-<script src="/static/radio.js?v=47"></script>
+<script src="/static/radio.js?v=48"></script>
 <script src="/static/sfx.js?v=2"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=49"></script>
@@ -5220,7 +5223,7 @@ const PLAYERS = {
 
   // RoboDad Radio
   const RADIO_KEY = "robodad.radio";
-  let radioPrefs = { st: "lounge", vol: 35 };
+  let radioPrefs = { st: "drive", vol: 35 };
   try { radioPrefs = { ...radioPrefs, ...JSON.parse(localStorage.getItem(RADIO_KEY) || "{}") }; } catch {}
   if (window.RoboRadio && !RoboRadio.stations[radioPrefs.st]) radioPrefs.st = "lounge";   // e.g. the boss music, which an old shuffle could pick
   const saveRadio = () => setPref(RADIO_KEY, JSON.stringify(radioPrefs));
@@ -5237,8 +5240,10 @@ const PLAYERS = {
     $("musicArt").classList.toggle("on", on); $("radioArt").classList.toggle("on", on);
     $("musicBtn").title = on ? `Pause music (${R.names[R.station]})` : "Play music";
     $("musicLabel").textContent = $("musicBtn").title;
+    { const sl = $("radioSleep"); if (sl && !(R && R.sleepLeft())) sl.value = "0"; }
     quickUI();
   }
+  { const sl = $("radioSleep"); if (sl) sl.addEventListener("change", () => { if (window.RoboRadio) RoboRadio.sleepIn(+sl.value); }); }
   let musicTipShown = false;
   function startMusic(){
     RoboRadio.play(radioPrefs.st);
