@@ -56,11 +56,13 @@
     if (over || btn.classList.contains("seen") || looksLeft <= 0) return;
     looksLeft--;
     btn.classList.add("seen");
+    window.RoboSfx?.play("rummage");
     if (spot.id === hiding.id) {
       btn.classList.add("found"); btn.textContent = "REMOTE!"; btn.setAttribute("aria-label", spot.label + ": the remote");
       const used = LOOKS - looksLeft, p = 6 - used;            // 5 points for a first-look find, down to 2
       points += p; found++;
       say(pick(["Ah, the remote. Exactly where I left it.", "Found it! I knew it was there the whole time.", "There it is. Nobody tell your mother."]) + " +" + p + " for you.");
+      window.RoboSfx?.play("correct", { streak: found });
       lockAll(); endRound(true);
     } else {
       btn.textContent = "Nothing"; btn.setAttribute("aria-label", spot.label + ": nothing here");
@@ -68,6 +70,7 @@
       const band = d < 60 ? "Burning hot." : d < 110 ? "Warm." : d < 170 ? "Cool." : "Ice cold.";
       const trend = lastDist == null ? "" : d < lastDist - 8 ? " Warmer than last time." : d > lastDist + 8 ? " Colder than last time." : " About the same as before.";
       lastDist = d;
+      setTimeout(() => window.RoboSfx?.play(d < 110 ? "warm" : "cold"), 220);
       say(spot.miss + " " + band + trend);
       if (looksLeft <= 0) {
         const r = SPOTS.find((s) => s.id === hiding.id), rb = btns[SPOTS.indexOf(r)];
@@ -84,6 +87,7 @@
   }
   function finish() {
     over = true;
+    window.RoboSfx?.play("roundDone");
     const got = window.RoboArcade ? RoboArcade.award("remote", { points }) : 0;
     const best = Math.max(points, parseInt(store.get("robodad.remote.best") || "0", 10) || 0);
     store.set("robodad.remote.best", String(best));

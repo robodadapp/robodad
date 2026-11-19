@@ -321,8 +321,9 @@ img,svg{-webkit-user-drag:none; user-drag:none}
 <p class="foot"><b>Bonuses:</b> play a Glow-Up word (a classier word for an everyday one) for +10, and the day's Power Word for double points. Cover a ✦ Simile Square, play a verb, or every few turns, and Dad gives you a quick bonus round: a simile, a Tense Twist or a sentence.</p>
 
 <script src="/static/radio.js?v=46"></script>
+<script src="/static/sfx.js?v=1"></script>
 <script src="/static/avatars.js?v=49"></script>
-<script src="/static/arcade.js?v=5"></script>
+<script src="/static/arcade.js?v=6"></script>
 <script src="/static/words.js"></script>
 <script src="/static/glowup.js"></script>
 <script src="/static/tenses.js"></script>
@@ -765,6 +766,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     const tile = { r, c, ch: ch === "?" ? (letter || "") : ch, blank: ch === "?", idx: i };
     pending.push(tile);
     sel = -1;
+    window.RoboSfx?.play("tilePlace");
     addFx(k, "pop", 0, 300);
     if (tile.blank && !letter) { askBlank = tile; showLetterPicker(); }
     renderAll();
@@ -780,16 +782,18 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     if (swapMode) { swapSel.has(i) ? swapSel.delete(i) : swapSel.add(i); renderRack(); renderButtons(); return; }
     if (cursor) { const k = cursor.k, dir = cursor.dir; cursor = nextCursor(k, dir); placeAt(k, i); return; }
     sel = sel === i ? -1 : i;
+    if (sel === i) window.RoboSfx?.play("tilePick");
     renderBoard(); renderRack();
   }
 
-  function recall() { pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear(); yourMoveStatus(); renderAll(); }
+  function recall() { if (pending.length) window.RoboSfx?.play("tileReturn"); pending = []; askBlank = null; sel = -1; cursor = null; hintKeys.clear(); yourMoveStatus(); renderAll(); }
 
   function play() {
     if (!pending.length || askBlank || busy || s.turn !== 0) return;
     const tiles = pending.map(({ r, c, ch, blank }) => ({ r, c, ch, blank }));
     const ev = T.evaluatePlay(s.board, tiles, dict);
     if (!ev.ok) {
+      window.RoboSfx?.play("invalid");
       if (ev.error === "notword") {
         setStatus(`<strong>Not in the dictionary:</strong> ${ev.bad.map(up).join(", ")}. Move your tiles and try again.`);
         talk("notWord");
@@ -799,6 +803,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     pending = []; sel = -1; cursor = null; hintKeys.clear(); confirmPass = false;
     const keep = s.racks[0].length - tiles.length;
     T.applyPlay(s, tiles, ev);
+    if (window.RoboSfx) { RoboSfx.play(ev.fullHouse ? "bingo" : "wordOk", { points: ev.score }); if (!ev.fullHouse && tiles.some((t) => T.PREMIUM[t.r * N + t.c] === "tw" || T.PREMIUM[t.r * N + t.c] === "dw")) setTimeout(() => RoboSfx.play("premium"), 380); }
     tiles.forEach((t, n) => addFx(t.r * N + t.c, "commit", n * 40, 600));
     rackDeal = { from: keep, t0: performance.now() + 150 };
     noteWords(ev);
@@ -986,6 +991,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
   }
   function shuffle() {
     if (!s || busy || s.over || s.turn !== 0 || swapMode) return;
+    window.RoboSfx?.play("rackShuffle");
     rearrange((pos) => { let o = pos; for (let tries = 0; tries < 6 && o.every((v, i) => v === i) && pos.length > 1; tries++) o = shuffled(pos); return o; });
     const b = $("shuffleBtn"); b.classList.remove("spin"); void b.offsetWidth; b.classList.add("spin");
   }
@@ -1039,7 +1045,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
     if (busy || s.turn !== 0) return;
     if (!confirmPass) { confirmPass = true; renderButtons(); setTimeout(() => { confirmPass = false; renderButtons(); }, 3000); return; }
     confirmPass = false; recall(); lastDad = [];
-    T.applyPass(s);
+    T.applyPass(s); window.RoboSfx?.play("pass");
     setStatus("You passed.");
     afterTurn();
   }
@@ -1173,6 +1179,7 @@ img,svg{-webkit-user-drag:none; user-drag:none}
       "Nobody could score for six turns in a row, so the game stopped.";
     const theEnd = T.TIERS[tierKey].boss ? "<strong>THE END.</strong> " : "";
     setStatus(`${theEnd}<strong>${headline}</strong> ${you} to ${dad}. ${how} Tap <strong>New game</strong> for a rematch.`);
+    window.RoboSfx?.play(o.winner === 0 ? "win" : o.winner === 1 ? "lose" : "tie", { stars: 3 });
     if (o.winner === 0) sayDad("lose"); else if (o.winner === 1) sayDad("win"); else talk("draw");
     celebrate(o.winner === 1 ? DAD().move : (tierKey === "grandpa" ? "kids" : null));
     if (window.RoboArcade && !o.resigned) RoboArcade.award("tiles", { result: o.winner === 0 ? "win" : o.winner === 1 ? "lose" : "draw", tier: T.TIERS[tierKey].tier || 0, bonus: T.TIERS[tierKey].boss ? 10 : 0 });

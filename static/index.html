@@ -2124,6 +2124,8 @@ textarea::placeholder{color:var(--muted)}
     </div>
     <div class="row" style="justify-content:flex-start; margin-top:10px"><button class="ghost" id="shuffleMenu" type="button">✨ Shuffle theme</button></div>
     <div>
+      <div class="setting" id="sfxRow"><span>Game sound effects</span>
+        <button class="switch" id="sfxToggle" type="button" aria-pressed="true"><span class="sr">Game sound effects</span></button></div>
       <div class="setting" id="readRow" hidden><span>Read replies aloud</span>
         <button class="switch" id="readAloud" type="button" aria-pressed="false"><span class="sr">Read replies aloud</span></button></div>
       <div class="setting" id="voiceRow" hidden><label for="voiceSel" style="font-weight:700">RoboDad's voice</label>
@@ -2500,13 +2502,14 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=7"></script>
-<script src="/static/brain.js?v=14"></script>
+<script src="/static/brain.js?v=15"></script>
 <script src="/static/arcade.js?v=6"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
 <script src="/static/grammar.js?v=5"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
 <script src="/static/radio.js?v=46"></script>
+<script src="/static/sfx.js?v=1"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=49"></script>
 <script src="/static/hunt.js?v=3"></script>
@@ -2995,6 +2998,7 @@ textarea::placeholder{color:var(--muted)}
   // and have the teacher dad on that sheet react. Grammar and Brain Teasers call it through window.RDWin.
   function answerMoment(scope, ok, statsHtml){
     if (!scope) return;
+    window.RoboSfx?.answer(ok);
     const hit = scope.querySelector(ok ? ".ok, .right" : ".bad, .wrong");
     if (hit) { hit.classList.remove("win-pop", "miss"); void hit.offsetWidth; hit.classList.add(ok ? "win-pop" : "miss"); }
     const row = statsHtml && scope.querySelector(".v-stats");
@@ -3293,6 +3297,7 @@ textarea::placeholder{color:var(--muted)}
     if (won && !d.beaten.includes(L.id)) d.beaten.push(L.id);
     saveDuel(d); vDuel = null;
     try { window.RoboArcade?.award("duel", { tickets: won ? Math.min(20, 8 + 2 * L.tier) : 2 }); } catch {}
+    window.RoboSfx?.play(won ? "roundDone" : "lose");
     vbump(p => { p.beaten = d.beaten.slice(); if (D.score === 8) p.perfect = true; });
     const next = V.DUEL[D.i + 1];
     let msg = `<div class="duel-end"><div class="duel-face ${won ? "flinch" : "taunt"}">${avSvg(L.av)}</div><p class="duel-say"><b>${esc(L.name)}:</b> ${esc(duelLine(L, won ? "win" : "lose"))}</p></div>
@@ -3696,6 +3701,10 @@ const PLAYERS = {
   }
   function closeMenu(){ menuDlg.hidden = true; $("meBtn").focus(); }
   $("menuDone").addEventListener("click", () => { closeMenu(); input.focus(); });
+  { const sw = $("sfxToggle"); if (sw && window.RoboSfx) {
+      const sync = () => sw.setAttribute("aria-pressed", String(!RoboSfx.muted)); sync();
+      sw.addEventListener("click", () => { RoboSfx.muted = !RoboSfx.muted; sync(); RoboSfx.play("toggle", { on: !RoboSfx.muted }); });
+    } else if (sw) $("sfxRow").hidden = true; }
   menuDlg.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
   applyLook(getPref(LOOK_KEY) || "classic");
 
