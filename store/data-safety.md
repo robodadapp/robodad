@@ -1,4 +1,4 @@
-# Play Console: Data safety answers (draft, matches /privacy as of v1.36)
+# Play Console: Data safety answers (draft, matches /privacy as of 19 Nov 2026)
 
 You are the one who attests to these in Play Console, so read each line against the live app before submitting.
 Play's rule of thumb: data that leaves the device is "collected" unless it is processed only in memory and in real time. Data sent to another company is "shared" unless that company acts only as your service provider. When unsure, declare it. An over-declared form is safe. An under-declared one can get the app pulled.
@@ -19,9 +19,10 @@ Play's rule of thumb: data that leaves the device is "collected" unless it is pr
 | Messages > Other in-app messages | Yes | Yes (Groq, AI provider) | App functionality | No (it is the core feature) | Chat text goes through your server to Groq to write a reply. Not stored by RoboDad. Declaring it is the cautious choice; if you argue Groq is purely your service provider, "shared" can be No. |
 | App activity > Other user-generated content | Yes | No | App functionality, analytics | Yes | Thumbs up/down and reports store RoboDad's reply (never what the teen typed in chat) in Supabase. Since v1.36, the optional Send feedback box in the Me tab stores the note the user writes there, with the kind (bug, idea, hard to read, other), android/web and look. Not linked to an ID. |
 | App activity > App interactions | Yes | No | Analytics | No | Anonymous event counts (welcome steps, tour, return visits, tab taps, feedback sent). Fixed event names only, no ID. |
+| (Not a user data type) Read-aloud voice | n/a | n/a | | | When Read aloud is on, RoboDad's own reply text (never what the user typed) is sent to Groq (English voice) and Microsoft Azure Speech (backup English voice, language practice) to make audio. It is not user data, so there is no Play row for it, but both are named as service providers in /privacy. If Play's reviewer asks, that's the answer. |
 | Device or other IDs | No | No | | | No advertising ID, no device ID, no cookie. |
 | Location, contacts, photos, files, health, financial | No | No | | | Not collected. |
-| Audio | No | No | | | Mic use is the device's speech recognition. RoboDad only receives text. Re-check this if the Android WebView sends audio to Google's service; if it does, declare Audio > Voice or sound recordings as collected, not stored, for app functionality, optional. |
+| Audio > Voice or sound recordings | Yes | No | App functionality | Yes (only if they tap the microphone) | The Android app asks for the microphone (RECORD_AUDIO) and uses Android's SpeechRecognizer, which usually sends the audio to Google's speech service to turn it into text. RoboDad never receives or stores the audio, only the text. In Play's form, tick "processed ephemerally" (not stored). Google acts for the device, so "shared" stays No. |
 | Personal info (name, email) | No | No | | | Teens are never asked. The tester sign-up page collects Gmail from adults only, and it is on the website, not in the app. If the app links to it, declare Email address as collected, optional. |
 
 ## Security practices block

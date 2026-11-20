@@ -9,12 +9,17 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.safety import check_crisis, clean_nickname  # noqa: E402
+from app.safety import check_crisis, clean_nickname, needs_check_in  # noqa: E402
 
 MUST_TRIGGER = {
     "self_harm": [
         "i want to hurt myself", "I dont want to live anymore", "thinking about suicide",
         "I feel like everyone is better off without me", "i want to kill myself", "I've been cutting myself",
+        # teen slang and indirect phrasing (the keyword rules are the only net when the AI is down)
+        "i wanna unalive myself", "thinking about unaliving myself", "im gonna unalive",
+        "i just want to end it all", "i want to end my life", "nobody would notice if i was gone",
+        "no one would even care if i was dead", "nobody would miss me", "i wish i was dead",
+        "i wish i was never born", "i dont want to wake up tomorrow", "i wish i could just disappear",
     ],
     "sextortion": [
         "someone is threatening to post my pics unless i pay", "this guy says he will share my nudes",
@@ -30,7 +35,11 @@ MUST_TRIGGER = {
         "my boyfriend hits me", "my gf threatened me", "my partner pushed me",
         "my boyfriend won't let me see my friends", "he forced me to",
     ],
-    "abuse": ["my uncle is hurting me", "I'm not safe at home", "im scared to go home", "i am being abused"],
+    "abuse": [
+        "my uncle is hurting me", "I'm not safe at home", "im scared to go home", "i am being abused",
+        "my stepdad hits me", "my stepdad hits me when hes drunk", "my mom slapped me", "my dad beats me",
+        "my mom's boyfriend hurts me", "my parents hit me", "he choked me", "im scared of my dad",
+    ],
     "touching": [
         "the boy in my class pull my shirt I like it since we play that way but now he does pull my pant how can I tell him to only pull my shirt",
         "he pulls my pants down at recess", "a guy grabbed my butt in the hallway", "she keeps touching my chest",
@@ -87,6 +96,37 @@ MUST_NOT_TRIGGER = [
     "my boyfriend and i had a fight about movies", "I'm not eating breakfast today, no time",
     "how do i take good photos", "my brother keeps taking my charger", "my coach pushes me hard in practice",
     "how to throw a party", "how do i make a budget", "I'm stressed about exams",
+    # near misses for the slang and abuse rules
+    "school is 5 kms away", "we drove 200 kms today", "it's a few kms from my house", "the 10 km run",
+    "i'm going to end things with my girlfriend", "i want to end it with him, how do i break up",
+    "i wanna die laughing at this video", "i wanna die of embarrassment lol", "the end of my life story essay",
+    "nobody would notice if i changed my hair", "my sister hit me with a pillow", "my brother hit me back in fortnite",
+    "my knee hurts me", "he hit me with a snowball", "my mom hurt my feelings", "she hit me up on snap",
+    "my dad hits me with dad jokes", "my coach kicked me off the team", "they hit me with homework",
+    "i want to end things on a good note with my friend",
+]
+
+# Joke-prone slang: with the AI on, the AI judges it (no fixed card for "might kms if one more math test");
+# in fallback mode, with no AI to read the context, it gets the self-harm help card.
+SLANG_FALLBACK_ONLY = [
+    "kms fr", "i want to kms", "honestly might kms lol", "KMS", "i wanna die", "thinking of ending things",
+    "im gonna end it tonight", "i just want to end everything",
+]
+
+# Fallback mode (no AI): a low-sounding message gets a gentle check-in, ordinary ones don't.
+# (message, VADER compound, classifier couldn't place it, expected)
+CHECK_IN = [
+    ("i cant do this anymore", 0.0, False, True),
+    ("im so tired of everything", -0.49, False, True),
+    ("i hate my life", -0.57, False, True),
+    ("i feel so empty and alone", -0.56, True, True),
+    ("nobody cares about me", 0.0, False, True),
+    ("whats the point anymore", 0.0, True, True),
+    ("everything feels awful and dark", -0.7, True, True),       # unplaced and very negative
+    ("i hate broccoli", -0.57, False, False),                    # placed (food), so no check-in
+    ("this homework is killing me", -0.66, False, False),
+    ("whats the capital of france", 0.0, True, False),
+    ("how do i do laundry", 0.0, False, False),
 ]
 
 
@@ -106,6 +146,25 @@ def main() -> int:
         if got:
             failures += 1
             print(f"FALSE ALARM {m!r} -> {got[0]}")
+    for m in SLANG_FALLBACK_ONLY:
+        total += 2
+        got = check_crisis(m, ai_on=False)
+        if not got or got[0] != "self_harm":
+            failures += 1
+            print(f"MISSED (fallback) [self_harm] {m!r} -> {got and got[0]}")
+        if check_crisis(m):
+            failures += 1
+            print(f"FIXED CARD WITH AI ON {m!r} (the AI should judge this one)")
+    for m in MUST_NOT_TRIGGER:                   # near misses stay quiet in fallback mode too
+        total += 1
+        if check_crisis(m, ai_on=False):
+            failures += 1
+            print(f"FALSE ALARM (fallback) {m!r}")
+    for m, compound, unplaced, want in CHECK_IN:
+        total += 1
+        if needs_check_in(m, compound, unplaced) != want:
+            failures += 1
+            print(f"CHECK-IN {m!r} -> {not want}, wanted {want}")
     for raw, want in [("Sam", "Sam"), ("  Mary-Jane ", "Mary-Jane"), ("<b>Al</b>", "bAlb"), ("O'Neil 123", "O'Neil")]:
         total += 1
         if clean_nickname(raw) != want:

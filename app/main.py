@@ -49,15 +49,16 @@ from pydantic import BaseModel, Field  # noqa: E402
 
 from .llm import (  # noqa: E402
     PRACTICE_LANGS,
-    FALLBACK_LINE, REWRITE_NOTE, build_system_prompt, clean_secret, detect_provider, is_bare_refusal,
+    FALLBACK_LINE, build_system_prompt, clean_secret, detect_provider, is_bare_refusal,
     stream_with_failover, strip_stock_opener,
 )
 from . import chess_daily, onthisday  # noqa: E402
 from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noqa: E402
 from .nlp import RoboDadNLP  # noqa: E402
 from .safety import (  # noqa: E402
-    CRISIS_TOKEN, boundary_message, check_boundary, check_crisis, clean_nickname, clean_user_text, crisis_message,
-    reads_like_concealment_advice, reads_like_glamour, touches_risky_topic,
+    CHECK_IN_CATEGORY, CHECK_IN_MESSAGE, CRISIS_TOKEN, boundary_message, check_boundary, check_crisis, clean_nickname,
+    clean_user_text, crisis_message, needs_check_in, reads_like_concealment_advice, reads_like_glamour,
+    touches_risky_topic,
 )
 
 log = logging.getLogger("robodad")
@@ -1248,17 +1249,24 @@ async def chat(req: ChatRequest, request: Request):
         nlp_ms = (time.perf_counter() - t0) * 1000
 
         earlier = [m["content"] for m in history[:-1] if m["role"] == "user"]
-        crisis = check_crisis(user_text) or check_boundary(user_text, earlier)
+        ai_on = bool(provider) and _llm_budget_left()
+        crisis = check_crisis(user_text, ai_on=ai_on) or check_boundary(user_text, earlier)
         if crisis:
             mode = "safety"
-        elif provider and _llm_budget_left():
+        elif ai_on:
             mode = "llm"
         else:
             mode = "classic"
+            # Simple answers can't read distress, so a message that sounds low gets a
+            # gentle check-in instead of "say that a different way".
+            if needs_check_in(user_text, analysis.sentiment.get("compound", 0.0), analysis.is_fallback):
+                crisis, mode = (CHECK_IN_CATEGORY, CHECK_IN_MESSAGE), "safety"
 
         meta = analysis.to_dict() | {"mode": mode, "nlp_ms": round(nlp_ms, 1)}
         if crisis:
             meta["safety"] = crisis[0]
+        if not ai_on:
+            meta["reason"] = SIMPLE_ANSWERS_NOTE
         yield _sse("meta", meta)
 
         if mode == "safety":
@@ -1291,8 +1299,18 @@ async def chat(req: ChatRequest, request: Request):
             except Exception as exc:  # network, quota, bad key …
                 log.warning("LLM failed, falling back to classic: %s", exc)
                 if not sent_any:
-                    yield _sse("mode", {"mode": "classic", "reason": "The AI model didn't respond, so RoboDad answered from his playbook."})
-                    yield _sse("token", nlp.classic_reply(analysis))
+                    # No AI read this message, so the fallback-only slang rules and the check-in apply
+                    late = check_crisis(user_text, ai_on=False)
+                    if not late and needs_check_in(user_text, analysis.sentiment.get("compound", 0.0), analysis.is_fallback):
+                        late = (CHECK_IN_CATEGORY, CHECK_IN_MESSAGE)
+                    mode = "safety" if late else "classic"
+                    if late:
+                        log.info("SAFETY message shown: %s (AI unavailable)", late[0])
+                        yield _sse("mode", {"mode": "safety", "safety": late[0], "reason": SIMPLE_ANSWERS_NOTE})
+                        yield _sse("token", late[1])
+                    else:
+                        yield _sse("mode", {"mode": "classic", "reason": SIMPLE_ANSWERS_NOTE})
+                        yield _sse("token", nlp.classic_reply(analysis))
                 else:
                     yield _sse("token", " …sorry, I lost my train of thought there. Try asking again?")
 
@@ -1310,6 +1328,10 @@ async def chat(req: ChatRequest, request: Request):
 
 HOLD_BACK_CHARS = 150  # long enough to spot a one-line stock refusal before anyone sees it
 
+# Shown under a reply whenever the AI isn't writing it (no key, daily limit used up, or the AI didn't respond).
+SIMPLE_ANSWERS_NOTE = ("Dad's AI brain is resting, so he's on simple answers for now and might miss things. "
+                       "Try again in a bit for the full RoboDad.")
+
 
 class CrisisFlag:
     """Yielded instead of text when the AI replies with the crisis token."""
@@ -1322,8 +1344,8 @@ async def dad_mode_stream(provider, system: str, history: list[dict], guard: str
     """Stream the reply, but never let a bare "Sorry, I can't help with that" through.
 
     The first ~150 characters are held back. If the complete reply turns out to
-    be a stock refusal, RoboDad is asked to rewrite it in Dad Mode; if that
-    fails too, an in-character line is sent instead.
+    be a stock refusal, the fixed in-character FALLBACK_LINE is sent instead.
+    The model is never asked to try again.
 
     With `guard` set (the chat touches vapes, alcohol, drugs or weapons) the whole
     reply is held back. If it reads like a hiding guide, or is a bare refusal, the
@@ -1362,15 +1384,12 @@ async def dad_mode_stream(provider, system: str, history: list[dict], guard: str
         if buf:
             yield strip_stock_opener(buf)
         return
-    log.info("Bare refusal caught; asking for a Dad Mode rewrite")
-    _daily["count"] += 1
-    retry = ""
-    try:
-        async for chunk in stream_with_failover(provider, system + REWRITE_NOTE, history, state["client"]):
-            retry += chunk
-    except Exception as exc:
-        log.warning("Dad Mode rewrite failed: %s", exc)
-    yield strip_stock_opener(retry) if retry.strip() and not is_bare_refusal(retry) else FALLBACK_LINE
+    # The model declined. Its refusal is a safety signal, so it is never asked to try
+    # again (a "don't refuse" nudge can talk a model into answering what it rightly
+    # declined). The fixed in-character line goes out instead, and the log shows
+    # what is being refused so the persona can be tuned.
+    log.info("REFUSAL replaced with the fixed Dad line: %r", buf[:160])
+    yield FALLBACK_LINE
 
 
 @app.post("/api/feedback")

@@ -36,7 +36,7 @@ th{font-weight:800}
   <a class="back" href="/">← Back to RoboDad</a>
   <div class="card">
     <h1>RoboDad Privacy Policy</h1>
-    <p class="muted">Last updated: November 11, 2026 (optional feedback box in the Me tab, anonymous usage counts)</p>
+    <p class="muted">Last updated: November 19, 2026 (how "Read aloud" and the microphone work, and the voice services we use)</p>
 
     <p>RoboDad is an AI chatbot that gives teenagers practical advice about everyday life. It is a passion
     project made by Saikat Sunil Ganguly in Toronto, Canada. This page explains, in plain language, what
@@ -103,19 +103,32 @@ th{font-weight:800}
     </table>
 
     <h2>Voice features</h2>
-    <p>If you tap the microphone, your browser's own speech recognition turns your voice into text. In some
-    browsers, such as Chrome, the audio is processed by the browser maker's speech service. RoboDad only receives
-    the text. "Read aloud" uses your device's built-in voice, so nothing extra is sent anywhere.</p>
+    <p><strong>The microphone.</strong> If you tap the microphone, your phone or browser turns your voice into text
+    with its own speech recognition. In the Android app and in browsers such as Chrome, the audio is usually sent to
+    Google's speech service to do this, under Google's privacy policy. RoboDad never receives or keeps your audio,
+    only the text it turns into, which is then handled like a typed message.</p>
+    <p><strong>Read aloud.</strong> To give Dad the same voice on every phone, the text of <em>RoboDad's reply</em>
+    is sent through our server to a voice service, which turns it into audio and sends it straight back:</p>
+    <ul>
+      <li><strong>Groq</strong> makes Dad's usual English voice.</li>
+      <li><strong>Microsoft Azure Speech</strong> makes the backup English voice, and the voice for French,
+      Spanish, Hindi, Marathi and Bengali practice.</li>
+    </ul>
+    <p>Only RoboDad's own words are sent, never what you typed, and RoboDad doesn't save the text or the audio.
+    If those services aren't available, your device's built-in voice reads instead, and nothing is sent.
+    Nothing is read aloud unless you turn the voice on or tap a speaker button.</p>
 
     <h2>Services RoboDad uses</h2>
     <ul>
       <li><strong>Render</strong> hosts the website (United States). Render uses <strong>Cloudflare</strong> to protect and deliver it.</li>
-      <li><strong>Groq</strong> runs the AI model that writes replies (United States).</li>
+      <li><strong>Groq</strong> runs the AI model that writes replies, and makes Dad's English read-aloud voice (United States).</li>
+      <li><strong>Microsoft Azure Speech</strong> makes the backup read-aloud voice and the language-practice voices (Canada).</li>
+      <li><strong>Google</strong>'s speech service may turn your voice into text when you use the microphone (handled by your phone or browser, not by RoboDad).</li>
       <li><strong>Supabase</strong> stores ratings, reports, tester sign-ups, link counts and votes (United States).</li>
       <li><strong>Porkbun</strong> is where the web addresses are registered, and it forwards robodad.online to robodad.app.</li>
       <li><strong>Google Fonts</strong> provides the typeface, so your browser contacts Google to load it.</li>
     </ul>
-    <p>Because these services are in the United States, information may be processed there.</p>
+    <p>Because most of these services are in the United States, information may be processed there.</p>
 
     <h2>Keeping yourself safe</h2>
     <ul>

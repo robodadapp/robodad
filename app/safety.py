@@ -34,6 +34,18 @@ _CATEGORIES: list[tuple[str, list[str], str]] = [
             r"\bbetter\s+off\s+(dead|without\s+me)\b",
             # hiding self-harm from others
             r"\b(hide|hiding|cover|covering|conceal\w*)\s+(up\s+)?(my\s+|the\s+)?(cuts|cut\s+marks|self[\s-]?harm)",
+            # Teen slang and indirect phrasing. These must be caught here too, because
+            # when the AI is unavailable the keyword rules are the only safety net.
+            r"\bunaliv(e|ing)\s+(my\s*self|myself|me)\b",
+            r"\b(want|wanna|gonna|going|thinking|thought|plan\w*|might|should|could|about)\b[^.!?\n]{0,20}\bunaliv",
+            r"\bend(ing)?\s+it\s+all\b",
+            r"\bend(ing)?\s+my\s+life\b",
+            r"\b(no\s*one|nobody|noone)\s+(would|will|wud|'?d|is\s+gonna|is\s+going\s+to)\s+(even\s+)?(notice|care|know)\b"
+            r"[^.!?\n]{0,20}\b(gone|dead|died|disappear\w*|not\s+here|wasn'?t\s+here|weren'?t\s+here|didn'?t\s+exist)\b",
+            r"\b(no\s*one|nobody|noone)\s+(would|will|wud|'?d)\s+(even\s+)?miss\s+me\b",
+            r"\bwish\s+i\s+(was|were)\s+(dead|never\s+born)\b|\bwish\s+i\s+(wasn'?t|weren'?t)\s+(alive|born)\b",
+            r"\b(don'?t|dont|do\s+not)\s+want\s+to\s+wake\s+up\b",
+            r"\bwish\s+i\s+could\s+(just\s+)?(disappear|vanish|stop\s+existing|not\s+wake\s+up)\b",
         ],
         "I'm really glad you told me. That took courage. What you're going through matters, and you "
         "deserve help from a real person right now. I'm an AI, so I can't be there the way someone "
@@ -96,6 +108,8 @@ _CATEGORIES: list[tuple[str, list[str], str]] = [
     (
         "dating_violence",
         [
+            # (not a parent's partner: "my mom's boyfriend hits me" is abuse at home)
+            r"(?<!mom's\s)(?<!mum's\s)(?<!dad's\s)(?<!moms\s)(?<!mums\s)(?<!dads\s)"
             r"\b(boyfriend|girlfriend|partner|bf|gf|ex)\s+(\w+\s+)?(hits?|hitting|hurts?|hurting|pushe[sd]|pushing|"
             r"slapp?(ed|s|ing)?|choke[sd]?|chokes|threaten(s|ed|ing)?|forced?|forces|forcing)\s+(me|my)\b",
             r"\b(boyfriend|girlfriend|partner|bf|gf)\b.*\b(won'?t\s+let\s+me|controls?\s+(who|what|where|my))",
@@ -115,6 +129,17 @@ _CATEGORIES: list[tuple[str, list[str], str]] = [
             r"\b(being\s+)?abused\b",
             r"\bnot\s+safe\s+at\s+home\b",
             r"\bscared\s+to\s+go\s+home\b",
+            # Present and past tense ("my stepdad hits me", "my mom slapped me"), by people in a teen's life
+            r"\b(my\s+(mom|mum|mother|dad|father|step\s*dad|step\s*mom|step\s*mum|step\s*father|step\s*mother|parents?|"
+            r"brother|sister|uncle|aunt|aunty|auntie|grandpa|grandma|grandfather|grandmother|cousin|guardian|"
+            r"foster\s+\w+|coach|teacher|babysitter|(mom|mum|dad)'?s\s+(boyfriend|girlfriend|partner))|he|she|they|someone|somebody)"
+            r"\s+(always\s+|sometimes\s+|still\s+|keeps\s+)?(hits|hit|beats|beat|slaps|slapped|punches|punched|kicks|kicked|"
+            r"chokes|choked|hurts|hurt|throws\s+things\s+at)\s+me\b"
+            r"(?!\s+(up|off|out|back)\b|\s+with\s+(a\s+|an\s+|the\s+|some\s+|more\s+)?(pillow|snowball|ball|nerf|homework|"
+            r"(dad\s+)?jokes?|puns?|questions?|facts?|truth|news|idea|reality|feedback)|\s+in\s+(a\s+)?(game|fortnite|"
+            r"minecraft|chess|dodgeball))",
+            r"\b(scared|afraid|terrified|frightened)\s+of\s+my\s+(mom|mum|mother|dad|father|step\s*dad|step\s*mom|step\s*mum|"
+            r"step\s*father|step\s*mother|parents?|uncle|guardian|(mom|mum|dad)'?s\s+(boyfriend|girlfriend|partner))\b",
         ],
         "I'm really glad you told me. What's happening is **not your fault**, and you deserve to be safe.\n\n"
         "• If you're in danger right now, call **911**.\n"
@@ -250,6 +275,19 @@ _COMPILED = [(name, re.compile("|".join(pats), re.IGNORECASE), msg) for name, pa
 MAX_MESSAGE_CHARS = 1000
 
 
+# Slang that teens also use as a joke ("might kms if I get one more math test").
+# With the AI running, these are left to the AI, which reads the context and
+# flags a real crisis with CRISIS_TOKEN; a fixed help card for a joke would teach
+# teens to stop talking to RoboDad. When the AI is unavailable, the keyword rules
+# are the only safety net, so these count as a crisis too (erring towards help).
+_SLANG_SELF_HARM = re.compile("|".join([
+    r"(?<!\d)(?<!\d\s)(?<!few\s)(?<!many\s)(?<!couple\s)\bkms\b(?!\s+(away|from|to|per|an?\s+hour|each|long|of|left|out))",
+    r"\bk\s*m\s*s\s+(fr|lol|lmao|rn|tbh|honestly)\b",
+    r"\bwanna\s+die\b(?!\s+(of|from|laughing))",
+    r"\b(thinking\s+(of|about)|want\s+to|wanna|gonna|going\s+to|ready\s+to|might|just\s+want\s+to)\s+end(ing)?\s+"
+    r"(things|everything|it)\b(?!\s+(with|between|off\s+with|on\s+a\s+good\s+note))",
+]), re.IGNORECASE)
+
 _MESSAGES = {name: msg for name, _, msg in _CATEGORIES}
 
 # The AI replies with this token alone when it spots a crisis the keyword
@@ -264,12 +302,18 @@ def _normalise(text: str) -> str:
     return unicodedata.normalize("NFC", t.replace("\u0901", "\u0902"))
 
 
-def check_crisis(text: str) -> tuple[str, str] | None:
-    """Return (category, fixed response) if the message signals danger."""
+def check_crisis(text: str, ai_on: bool = True) -> tuple[str, str] | None:
+    """Return (category, fixed response) if the message signals danger.
+
+    `ai_on=False` means no AI will read the message (fallback mode), so joke-prone
+    slang such as "kms" also counts.
+    """
     t = _normalise(text)
     for name, rx, msg in _COMPILED:
         if rx.search(t):
             return name, msg
+    if not ai_on and _SLANG_SELF_HARM.search(t):
+        return "self_harm", _MESSAGES["self_harm"]
     return None
 
 
@@ -502,6 +546,46 @@ _GLAMOUR_RX = [re.compile(p, re.IGNORECASE) for p in _GLAMOUR]
 def reads_like_glamour(reply: str) -> bool:
     r = reply or ""
     return sum(1 for rx in _GLAMOUR_RX if rx.search(r)) >= 2
+
+
+# ---------------------------------------------------------------------------
+# Fallback-mode check-in. When the AI is unavailable, the classic classifier
+# answers; it can't read distress, and used to reply "say that a different
+# way" to a teen who was struggling. A message that sounds low gets this
+# gentle check-in instead. It is not a crisis card: it doesn't assume the
+# worst, it just keeps the door open and shows where real help is.
+CHECK_IN_CATEGORY = "check_in"
+CHECK_IN_MESSAGE = (
+    "That sounds heavy, and I want to get this right. My AI brain is resting right now, so I'm on "
+    "simple answers and I might miss what you mean.\n\n"
+    "If something hard is going on, please talk to someone who can really be there:\n"
+    "• A parent, teacher, coach or school counsellor\n"
+    f"• {KHP}\n"
+    "• If you're in danger right now, call **911**.\n\n"
+    "I'm still here. Want to tell me a bit more?"
+)
+_LOW = re.compile("|".join([
+    r"\b(can'?t|cant|cannot)\s+(do\s+this|take\s+(it|this)|handle\s+(it|this|anything))\s*(any\s*more)?\b",
+    r"\b(so\s+)?(tired|sick)\s+of\s+(everything|it\s+all|life|being\s+alive|myself)\b",
+    r"\bhate\s+(my\s+life|myself|my\s*self|being\s+me)\b",
+    r"\bfeel(ing)?\s+(so\s+|really\s+|very\s+|completely\s+)?(worthless|hopeless|empty|numb|alone|lonely|useless|invisible|like\s+a\s+burden)\b",
+    r"\b(no\s*one|nobody|noone)\s+(cares|likes\s+me|loves\s+me|understands\s+me|gets\s+me|would\s+care)\b",
+    r"\b(i'?m|im|i\s+am)\s+(a\s+)?(burden|failure|nothing|worthless)\b",
+    r"\bwhat'?s\s+the\s+point\s+(of\s+(anything|living|life|trying)|anymore)\b",
+    r"\beverything\s+is\s+(falling\s+apart|pointless|hopeless)\b",
+    r"\bgive\s+up\s+on\s+(everything|life|myself)\b",
+]), re.IGNORECASE)
+
+
+def needs_check_in(text: str, compound: float, unplaced: bool) -> bool:
+    """For fallback mode only: does this message sound low enough to check in?
+
+    True for clearly low phrasing, or when the classifier couldn't place the
+    message (`unplaced`) and its VADER sentiment is strongly negative.
+    """
+    if _LOW.search(_normalise(text)):
+        return True
+    return unplaced and compound <= -0.4
 
 
 def clean_user_text(text: str) -> str:
