@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.robodad",
+      "sha256_cert_fingerprints": [
+        "C5:02:47:5A:EE:77:96:A2:3A:9D:C6:AF:D3:D1:D2:9B:3B:9E:F8:B9:53:73:DB:A7:FC:B0:B9:ED:0C:2A:2A:23"
+      ]
+    }
+  }
+]
