@@ -16,6 +16,11 @@ on:
   push:
     branches: [main]
     paths: ["android/**", ".github/workflows/android.yml"]
+  # Pull requests that touch the Android app are built and opened on the virtual
+  # phone too, so a broken build shows up before merging. They are never signed
+  # and never saved to the android-build branch.
+  pull_request:
+    paths: ["android/**", ".github/workflows/android.yml"]
   workflow_dispatch:
 
 permissions:
@@ -38,6 +43,7 @@ jobs:
           gradle-version: "8.14.3"
 
       - name: Unpack the upload key (from secrets)
+        if: github.event_name != 'pull_request'
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
         run: |
@@ -105,7 +111,7 @@ jobs:
             adb shell pidof app.robodad > out/still-running.txt || echo "NOT RUNNING" > out/still-running.txt
 
       - name: Save the results to the android-build branch
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         run: |
           mkdir -p out && cd out
           echo "Built from ${GITHUB_SHA} on $(date -u)" > README.txt
