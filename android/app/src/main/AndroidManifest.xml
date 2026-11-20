@@ -48,8 +48,9 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- robodad.app links open in the app -->
-            <intent-filter>
+            <!-- robodad.app links open in the app directly (verified App Link; requires
+                 /.well-known/assetlinks.json on robodad.app matching the Play signing cert) -->
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
