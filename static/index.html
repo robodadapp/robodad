@@ -3040,7 +3040,7 @@ textarea::placeholder{color:var(--muted)}
   }
 
   // ---------- events ----------
-  function autosize(){ input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 160) + "px"; }
+  function autosize(){ input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 160) + "px"; send.disabled = busy || !input.value.trim(); }   // keep Send in step when code fills the box (Ask Dad hand-offs)
   input.addEventListener("input", () => { autosize(); send.disabled = busy || !input.value.trim(); });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(input.value); }
