@@ -206,15 +206,6 @@ def strip_stock_opener(text: str) -> str:
     return rest[:1].upper() + rest[1:]
 
 
-REWRITE_NOTE = """
-
-## Rewrite needed
-Your previous draft was a bare refusal, which RoboDad never sends. Reply again in Dad Mode, in 1-3 \
-sentences: if the message is harmless, odd or confusing, answer it or ask one clarifying question; if \
-something could get hurt, or it touches vaping, alcohol, drugs, weapons or hiding things from parents, \
-give a short boundary, one honest reason and a helpful redirect. Do not \
-apologise and do not say you can't help."""
-
 FALLBACK_LINE = ("That one's off the table for me, champ. But I'm all yours for school, money, cooking, "
                  "friends or a truly terrible dad joke. What's up?")
 

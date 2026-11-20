@@ -2897,6 +2897,16 @@ textarea::placeholder{color:var(--muted)}
     const p = document.createElement("p");
     p.className = "notice"; p.textContent = text; stack.appendChild(p);
   }
+  // When the AI isn't writing the replies (resting, daily limit used up, or it didn't respond), say so once,
+  // under the first such reply, and show it in the status line. A full AI reply resets it.
+  let simpleNoted = false;
+  function simpleAnswers(stack, reason){
+    if (!reason) return;
+    statusEl.classList.add("classic");
+    statusEl.innerHTML = `<span class="dot"></span>Online · simple answers`;
+    if (simpleNoted) return;
+    simpleNoted = true; addNotice(stack, reason);
+  }
 
   // ---------- waking up (free hosting sleeps when idle) ----------
   function setStatus(s){
@@ -2904,7 +2914,7 @@ textarea::placeholder{color:var(--muted)}
     statusEl.classList.toggle("classic", s.mode !== "llm");
     statusEl.innerHTML = `<span class="dot"></span>` + (s.mode === "llm"
       ? `Online`
-      : `Online · classic mode`);
+      : `Online · simple answers`);
   }
   async function connect(){
     const started = Date.now();
@@ -2960,15 +2970,17 @@ textarea::placeholder{color:var(--muted)}
           const ev = /^event: (.+)$/m.exec(raw)?.[1]; const data = /^data: (.*)$/m.exec(raw)?.[1];
           if (!ev || data === undefined) continue;
           const obj = JSON.parse(data);
-          if (ev === "meta") { meta = obj; if (obj.mode === "safety") bubble.classList.add("safety"); }
-          else if (ev === "mode" && obj.mode === "safety") {   // the AI flagged a crisis: the fixed help message follows
+          if (ev === "meta") { meta = obj; if (obj.mode === "safety") bubble.classList.add("safety"); simpleAnswers(stack, obj.reason); }
+          else if (ev === "mode" && obj.mode === "safety") {   // a crisis or check-in: the fixed help message follows
             meta = {...meta, mode:"safety", safety: obj.safety, model:""}; bubble.classList.add("safety");
             text = text.replace(/\[\[\s*CRIS[^\]]*\]?\]?/gi, "").trim(); bubble.innerHTML = md(text);
+            simpleAnswers(stack, obj.reason);
           }
-          else if (ev === "mode") { meta = {...meta, mode: obj.mode, model: ""}; addNotice(stack, obj.reason); }
+          else if (ev === "mode") { meta = {...meta, mode: obj.mode, model: ""}; simpleAnswers(stack, obj.reason); }
           else if (ev === "token") { if (!text) dadTalking(true); text += obj; bubble.innerHTML = md(text); scrollDown(); }
           else if (ev === "done") {
             totalMs = obj.total_ms;
+            if (meta?.mode === "llm" && simpleNoted) { simpleNoted = false; setStatus({ mode:"llm" }); }
             if (obj.model && meta?.mode === "llm" && obj.model !== meta.model) {
               meta.model = obj.model;
               setStatus({ mode:"llm", model: obj.model });
