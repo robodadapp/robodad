@@ -131,7 +131,8 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
   --pw:#FFFDF0; --pw-edge:#5C3B0A; --pb:#5C3B0A; --pb-edge:#FFF3C4;
   --sel:#FFFFFF; --last:rgba(245,197,24,.4); --hint:#FFFFFF; --dot:rgba(92,59,10,.4);
   --coord-light:#5C3B0A; --coord-dark:#5C3B0A; --coord-font:Georgia, "Times New Roman", serif}
-.board[data-skin="legend"] .sq.w-piece{text-shadow:0 0 4px #FFF3C4}
+/* White pieces are ivory on a cream square, so they need a solid dark-gold edge to read. */
+.board[data-skin="legend"] .sq.w-piece{text-shadow:1.5px 0 #5C3B0A,-1.5px 0 #5C3B0A,0 1.5px #5C3B0A,0 -1.5px #5C3B0A,1px 1px #5C3B0A,-1px -1px #5C3B0A,1px -1px #5C3B0A,-1px 1px #5C3B0A,0 2px 5px rgba(92,59,10,.6)}
 .board[data-skin="legend"] .sq.b-piece{text-shadow:0 0 3px #F5C518}
 .clocks[data-skin="legend"]{--clk-bg:#5C3B0A; --clk-edge:#F5C518; --clk-accent:#FFFFFF; --clk-muted:#FFF3C4; --clk-digits:#FFFDF0; --clk-font:Georgia,"Times New Roman",serif; --clk-glow:0 0 10px #F5C51888}
 .sq .px{width:72%; height:72%; display:block; shape-rendering:crispEdges}
