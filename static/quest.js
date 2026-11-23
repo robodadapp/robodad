@@ -880,6 +880,7 @@
     parts = parts.filter(p => p.life > 0);
     if (state === "boot") { if (bootT && ++bootT > 70) setState("title", true); return; }
     if (state === "bonus") return updateBonus();
+    if (state === "celebrate") return updateCelebrate();
     if (state !== "play") return;
     rt = mt - roomStart;
     const r = room(); speed = curSpeed();
@@ -954,7 +955,65 @@
       say("You found everything. You win!"); return;
     }
     if (level + 1 > reached) { reached = level + 1; store.set("robodad.dadquest.reached", String(reached)); }
-    setState("level", true); say(ROOMS[level].name + " cleared. Next room, or try a bonus room.");
+    say(ROOMS[level].name + " cleared. Next room, or try a bonus room.");
+    if (calm) setState("level", true); else startCelebrate();
+  }
+  // ---------- level-clear clip: Dad runs to the middle, celebrates, then walks through the door into the next room ----------
+  const CEL_END = 200, CEL_DOORX = 262;
+  let cel = null;
+  function startCelebrate(){
+    obs = []; items = []; boss = null; strength = 0; power = 0; inv = 0;
+    P.slide = false; P.air = false; P.sx = P.sy = 1; P.vy = 0; P.y = GY - 22; P.x = Math.min(P.x, 60);
+    cel = { f: 0, vy: 0, a: 1, startX: P.x, speed0: speed };
+    sfx.win(); setState("celebrate", true);
+  }
+  function updateCelebrate(){
+    const c = cel; c.f++;
+    const f = c.f, ground = GY - 22;
+    if (f <= 50) {                                    // A: Dad keeps running to the middle of the room while the scrolling slows down
+      dist += c.speed0 * (1 - f / 50); P.x += (118 - c.startX) / 50; P.frame = (f >> 2) % 6; P.y = ground; P.air = false;
+      if (f % 6 === 0) dust(3);
+    } else if (f <= 108) {                            // B: two victory hops, confetti, banner
+      const k = f - 50;
+      if (k === 1) { sparkle(P.x + 7, GY - 30, true); shake = 6; }
+      const hopAt = [4, 32];
+      for (const h of hopAt) if (k === h) { c.vy = -4.6; sfx.power(); sparkle(P.x + 7, GY - 34, false); }
+      if (c.vy !== 0 || P.y < ground) { c.vy += 0.34; P.y += c.vy; if (P.y >= ground) { P.y = ground; c.vy = 0; dust(6); } }
+      P.air = P.y < ground; P.frame = 0;
+      if (f % 3 === 0) parts.push({ x: Math.random() * W, y: -4, vx: (Math.random() - 0.5) * 0.7, vy: 0.7 + Math.random() * 0.9, life: 110, max: 110, g: 0.004, c: pick(["#F5C518", "#FFF6D6", "#FF4D6D", "#7FD1FF", "#AED581"]) });
+    } else if (f <= 168) {                            // C: run to the door, it opens, Dad steps into the light
+      const k = f - 108;
+      P.x += 2.4; P.frame = (f >> 2) % 6; P.y = ground; P.air = false;
+      if (f % 7 === 0 && P.x < CEL_DOORX - 8) dust(2);
+      if (k === 38) { sfx.power(); sparkle(CEL_DOORX + 14, GY - 24, true); }
+      if (P.x > CEL_DOORX - 2) c.a = Math.max(0, c.a - 0.12);
+    } else c.a = 0;
+    if (f >= CEL_END) { cel = null; setState("level", true); }
+  }
+  function celebrateSkip(){ if (cel) { cel = null; parts = []; setState("level", true); } }
+  const celDoorOpen = () => cel && cel.f > 146;
+  function drawCelebrateBack(){
+    if (!cel) return;
+    const f = cel.f, dx = CEL_DOORX, dy = GY - 46, slide = Math.max(0, 1 - clamp((f - 70) / 24, 0, 1));   // the door slides in from the right while Dad celebrates
+    const ox = Math.round(slide * 90);
+    R(dx - 4 + ox, dy - 4, 40, 50, "#5A3A1F"); R(dx - 2 + ox, dy - 2, 36, 48, "#2A1B0E");
+    if (celDoorOpen()) { R(dx + ox, dy, 32, 46, "#FFF6D6"); R(dx + 4 + ox, dy + 4, 24, 42, "#FFFFFF"); R(dx + ox, dy, 7, 46, "#8B5A2B"); }
+    else { R(dx + ox, dy, 32, 46, "#8B5A2B"); R(dx + 3 + ox, dy + 4, 11, 16, "#6F4522"); R(dx + 18 + ox, dy + 4, 11, 16, "#6F4522"); R(dx + 3 + ox, dy + 25, 26, 16, "#6F4522"); R(dx + 25 + ox, dy + 24, 3, 3, "#F5C518"); }
+    if (f > 94) text("NEXT: " + ROOMS[Math.min(level + 1, ROOMS.length - 1)].name.toUpperCase(), dx + 16 + ox, dy - 12, 6, "#F5C518");
+    if (celDoorOpen()) { x.globalAlpha = 0.18 + 0.1 * Math.sin(f / 3); R(dx - 20, dy - 4, 76, 50, "#FFF6D6"); x.globalAlpha = 1; }
+  }
+  function drawCelebrateFront(){
+    if (!cel) return;
+    const f = cel.f;
+    if (f > 44 && f < 118) {
+      const k = f - 44, pop = Math.min(1, k / 10), by = 30 + Math.round(Math.sin(f / 4) * 2);
+      x.globalAlpha = clamp((118 - f) / 10, 0, 1) * pop;
+      panelAt(40, by - 8, W - 80, roomHits === 0 ? 40 : 30);
+      text(ROOMS[level].name.toUpperCase() + " CLEARED!", W / 2, by, 12, "#F5C518");
+      text(roomHits === 0 ? "NOT A SCRATCH! +300" : "SCORE " + Math.floor(score), W / 2, by + 16, 8, roomHits === 0 ? "#AED581" : "#FFF6D6");
+      x.globalAlpha = 1;
+    }
+    if (f > 164) { const w = Math.round(clamp((f - 164) / 30, 0, 1) * W); R(0, 0, w, H, "#0B0B14"); R(w, 0, 2, H, "#F5C518"); }   // curtain wipes across before the results panel
   }
   // The READY door: opens once READY is entered in Otto mode (rung 8) and the other two play goals are done
   const homeGoals = () => [["BEAT ARCADE DAD AT CHESS", store.get("robodad.otto.goal.chess") === "1"], ["SOLVE 10 NOTEBOOK PAGES", store.get("robodad.otto.goal.nb") === "1"], ["PLAY LEVEL 1 TO THE DOOR", true]];
@@ -1190,12 +1249,13 @@
       R(bl.x, bl.y, bl.w, bl.h, c); R(bl.x, bl.y + bl.h - 2, bl.w, 2, "rgba(0,0,0,.3)"); R(bl.x + 1, bl.y + 1, bl.w - 2, 1, "rgba(255,255,255,.35)");
       text(bl.label, bl.x + bl.w / 2, bl.y + 3, 7, bl.state === 0 ? "#0B0B14" : "#FFF6D6", "center", bl.state === 0);
     }
+    if (state === "celebrate") drawCelebrateBack();
     const showDad = !["locked", "title", "skins", "missions", "album", "rooms", "bonusPick", "chesscorner"].includes(state);
     if (showDad) {
       // best-run ghost body removed: it trailed behind Dad and looked like a glitch; the BEST flag still marks it
       R(P.x + 2, GY, 10, 2, "rgba(0,0,0,.28)");
       if (strength > 0 && !calm) for (let i = 1; i <= 3; i++) drawDadAt(P.x - i * 7, P.y, 0.25 - i * 0.06);
-      if (!(inv > 0 && strength <= 0 && Math.floor(inv / 5) % 2 === 0)) drawDadAt(P.x, P.y, 1);
+      if (!(inv > 0 && strength <= 0 && Math.floor(inv / 5) % 2 === 0)) drawDadAt(P.x, P.y, state === "celebrate" && cel ? cel.a : 1);
       if (strength > 0 && (t >> 1) % 2) { R(P.x - 2, P.y - 4, 18, 1, "#F5C518"); R(P.x - 3, P.y + 8, 1, 8, "#FF4D6D"); R(P.x + 16, P.y + 4, 1, 8, "#FF4D6D"); }
       if (power > 0 && (t >> 2) % 2) R(P.x + 1, P.y - 3, 12, 1, "rgba(255,246,214,.6)");
     }
@@ -1214,6 +1274,7 @@
       if (bonus.msg) text(bonus.msg, W / 2, 68, 8, bonus.msg.startsWith("CORRECT") ? "#27AE60" : "#FF8A65");
       else text("JUMP INTO THE RIGHT ANSWER", W / 2, 68, 7, "#9A93B8");
     }
+    if (state === "celebrate") drawCelebrateFront();
     if (flash > 0) R(0, 0, W, H, strength > 0 ? "rgba(245,197,24,.14)" : "rgba(255,77,109,.14)");
     x.restore();
     btns = [];
@@ -1301,13 +1362,15 @@
         { label: chessBoardsWon().length ? "CHESS CORNER" : "CHESS CORNER 🔒", lock: !chessBoardsWon().length, act: () => chessBoardsWon().length ? setState("chesscorner") : showToast("BEAT A DAD AT CHESS TO OPEN THE CHESS CORNER", "#FFF6D6") },
         { label: hard ? "DAD MODE: HARD" : "DAD MODE: CHILL", act: () => { hard = !hard; store.set("robodad.dadquest.hard", hard ? "1" : "0"); showToast(hard ? "HARD: 3 HEARTS, FASTER, TIGHTER" : "CHILL: 5 HEARTS, MORE ROOM TO BREATHE", "#FFF6D6"); } },
         { label: "CRT SCREEN: " + (crt ? "ON" : "OFF"), act: () => { crt = !crt; store.set("robodad.dadquest.crt", crt ? "1" : "0"); } },
-      ], 39, 2, 124, 12, 3);
-      text(`BEST ${best}  ·  TAPES ${tapesOwned}/${TAPES.length}`, W / 2, 118, 7, "#9A93B8");
+      ], 37, 2, 124, 10, 2);
+      // the text under the buttons follows wherever the buttons end, so a longer menu can never sit on top of it
+      const ty = Math.min(btns[btns.length - 1].y + 14, 124);
+      text(`BEST ${best}  ·  TAPES ${tapesOwned}/${TAPES.length}`, W / 2, ty, 7, "#9A93B8");
       const m = activeMissions()[0];
-      text(m ? `NEXT MISSION: ${m.label} (${Math.min(mval(m), m.n)}/${m.n})` : "EVERY MISSION DONE. LEGEND.", W / 2, 129, 7, "#7FD1FF");
-      text(touchSeen ? "TAP RIGHT: JUMP · HOLD LEFT: SLIDE" : "SPACE: JUMP · ↓: SLIDE · P: PAUSE", W / 2, 140, 7, "#9A93B8");
-      text("P.S. DID YOU TEXT YOUR PARENT BACK?", W / 2, 152, 7, "#9A93B8");
-      text("NO ADS · NO PURCHASES · NO STREAKS", W / 2, 163, 6, "#6E6890");
+      text(m ? `NEXT MISSION: ${m.label} (${Math.min(mval(m), m.n)}/${m.n})` : "EVERY MISSION DONE. LEGEND.", W / 2, ty + 10, 7, "#7FD1FF");
+      text(touchSeen ? "TAP RIGHT: JUMP · HOLD LEFT: SLIDE" : "SPACE: JUMP · ↓: SLIDE · P: PAUSE", W / 2, ty + 20, 7, "#9A93B8");
+      text("P.S. DID YOU TEXT YOUR PARENT BACK?", W / 2, ty + 30, 7, "#9A93B8");
+      text("NO ADS · NO PURCHASES · NO STREAKS", W / 2, ty + 40, 6, "#6E6890");
     } else if (state === "rooms") {
       panel(150);
       text("PICK A ROOM", W / 2, 22, 12, "#F5C518");
@@ -1377,6 +1440,9 @@
         { label: "HINDI ROOM", act: () => startBonus("word", "hi", "title") },
         { label: "BACK", act: () => setState("title") },
       ], 66, 1, 120, 12, 3);
+    } else if (state === "celebrate") {
+      btns.push({ x: 0, y: 0, w: W, h: H, act: celebrateSkip });
+      if (cel && cel.f > 20 && cel.f < 110 && (t >> 4) % 2) text(touchSeen ? "TAP TO SKIP" : "SPACE TO SKIP", W - 4, H - 10, 6, "#9A93B8", "right");
     } else if (state === "level") {
       panel(118);
       text(ROOMS[level].name.toUpperCase() + " CLEARED!", W / 2, 38, 12, "#F5C518");
