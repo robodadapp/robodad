@@ -43,7 +43,7 @@ h1{margin:0; font-size:1.6rem; font-weight:900; letter-spacing:-.01em}
 .sq.last{box-shadow:inset 0 0 0 999px var(--last)}
 .sq.sel{box-shadow:inset 0 0 0 4px var(--sel)}
 .sq.check{box-shadow:inset 0 0 0 999px var(--check-fill)}
-.sq.hint{box-shadow:inset 0 0 0 4px var(--hint)}
+.sq.hint{box-shadow:inset 0 0 0 4px #0B57D0, inset 0 0 0 7px #FFFFFF}   /* two tones, so it shows on every board */
 .sq.legal::after{content:""; position:absolute; width:28%; height:28%; border-radius:50%; background:var(--dot)}
 .sq.legal.cap::after{width:88%; height:88%; background:transparent; border:5px solid var(--dot)}
 .co{position:absolute; font:800 clamp(8px,2.2vw,11px)/1 var(--coord-font); color:var(--coord-dark); pointer-events:none; opacity:.9}
@@ -415,7 +415,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (thinkTimer) { clearTimeout(thinkTimer); thinkTimer = null; }
   }
 
-  let states = [], sanLog = [], selected = -1, targets = [], hintSq = null, pendingPromo = null;
+  let states = [], sanLog = [], selected = -1, targets = [], hintSq = null, hintTo = null, pendingPromo = null;
   let tierKey = "modern", busy = false, over = null, undoLeft = 1, hintsLeft = 3;
   let human = "w";
   let daily = null;                       // { index, solved } while the Daily Board is open
@@ -925,8 +925,8 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
         if (i === selected) cls.push("sel");
         if (last.includes(i)) cls.push("last");
         if (i === kingIdx && C.inCheck(s, s.turn)) cls.push("check");
-        if (i === hintSq) cls.push("hint");
-        if (targets.includes(i)) cls.push(s.board[i] || (s.ep === i) ? "legal cap" : "legal");
+        if (i === hintSq || (hintSq !== null && i === hintTo)) cls.push("hint");
+        if (targets.includes(i)) cls.push(s.board[i] || (s.ep === i && s.board[selected]?.toLowerCase() === "p") ? "legal cap" : "legal");
         if (p) cls.push(p === p.toUpperCase() ? "w-piece" : "b-piece");
         if (freshBot && lastPair && i === lastPair.to) cls.push("fresh");
         const files = "abcdefgh";
@@ -937,7 +937,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
         html += `<button class="${cls.join(" ")}" data-i="${i}" aria-label="${name}"><span class="p">${p ? (pixel ? pixelPiece(p.toLowerCase()) : GLYPH[p.toLowerCase()]) : ""}</span>${co}</button>`;
       }
     }
+    const focused = board.contains(document.activeElement) ? document.activeElement.dataset.i : null;
     board.innerHTML = html;
+    if (focused != null) board.querySelector(`.sq[data-i="${focused}"]`)?.focus({ preventScroll: true });
     freshBot = false;                     // the glitch plays once, on the render right after the dad's move
     if (anim) { curAnim = { a: anim, at: nowMs() }; anim = null; playAnim(curAnim.a, 0); }
     else if (curAnim) {                   // redrawn while a piece was still sliding: carry on from where it was
@@ -953,6 +955,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     $("undoBtn").disabled = !!daily || !!busy || undoLeft <= 0 || states.length < 3 || cur().turn !== human || !!over;
     $("hintBtn").textContent = `Hint (${hintsLeft} left)`;
     $("hintBtn").disabled = !!daily || !!busy || !!hinting || hintsLeft <= 0 || cur().turn !== human || !!over;
+    $("clockBtn").disabled = inProgress();       // no pausing your own clock in the middle of a game
     $("resignBtn").hidden = !!daily;
     $("resignBtn").disabled = !!over || !inProgress();
     $("resignBtn").textContent = confirmResign ? "Tap again to resign" : "Resign";
@@ -971,6 +974,16 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     syncControls();
   }
   function disarm() { confirmResign = confirmNew = confirmExit = false; }
+  // Picking a dad or the Daily Board mid-game throws the game away, so those ask for a second tap too.
+  let sure = null, sureTimer = null;
+  function twice(key, message) {
+    clearTimeout(sureTimer);
+    if (!inProgress() || sure === key) { sure = null; return true; }
+    sure = key;
+    setStatus(message);
+    sureTimer = setTimeout(() => { sure = null; refreshStatus(); }, 3500);
+    return false;
+  }
 
   function resign() {
     if (!inProgress()) return;
@@ -1003,7 +1016,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     const st = C.status(s, history().slice(0, -1));
     if (st.over) return;
     setStatus(s.turn === human
-      ? (st.check ? "<strong>Check.</strong> Your move." : "Your move.")
+      ? (st.check ? "<strong>Check!</strong> Move your king, block, or capture the attacker." : "Your move.")
       : `<strong>${C.TIERS[tierKey].name}</strong> to move.`);
   }
 
@@ -1146,6 +1159,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   function startGame() {
     stopThinking();
+    clearTimeout(sureTimer); sure = null;
     gameId++; dropWorker(); curAnim = null; anim = null; hinting = false;     // anything the old game's dad was working on is dropped
     daily = null; human = "w"; $("dailyBox").hidden = true;
     const start = C.fromFEN(C.START);
@@ -1189,7 +1203,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     } else {
       selected = -1; targets = [];
     }
-    hintSq = null;
+    if (selected !== hintSq) hintSq = null;     // keep the hint up while its piece is picked up
     renderBoard();
   }
 
@@ -1201,6 +1215,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     selected = -1; targets = [];
     busy = true; renderBoard();
     setStatus("Checking…");
+    const gid = gameId;
     let result = null;
     try {
       const res = await fetch("/api/chess/daily", { method: "POST", headers: { "Content-Type": "application/json" },
@@ -1209,6 +1224,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
       else if (res.status === 400) { setStatus("That's not today's board. Reload the page for a fresh one."); }
       else if (res.status === 429) { setStatus("Lots of guesses. Take a short break."); }
     } catch { setStatus("Couldn't reach RoboDad. Check your connection."); }
+    if (gid !== gameId) return;          // you moved on while it was checking
     busy = false;
     if (result && result.ok) {
       const letters = getLetters(); letters[daily.index] = result.letter; store.set(LETTER_KEY, JSON.stringify(letters));
@@ -1235,8 +1251,10 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
 
   async function startDaily() {
     stopThinking();
+    const asked = gameId;
     let info;
     try { info = await (await fetch("/api/chess/daily")).json(); } catch { setStatus("Couldn't reach RoboDad. Check your connection."); return; }
+    if (asked !== gameId) return;       // another game was started while the board was loading
     const p = window.DAILY_PUZZLES && window.DAILY_PUZZLES[info.index];
     if (!p) { setStatus("No board today. Check back soon."); return; }
     const st = C.fromFEN(p.fen);
@@ -1359,22 +1377,22 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
     if (busy || hinting || over || hintsLeft <= 0 || cur().turn !== human) return;
     hinting = true; syncControls();
     const gid = gameId, len = states.length, state = cur();
-    let from = -1;
+    let from = -1, to = -1;
     try {
       const uci = await askWorker(C.toFEN(state), tierKey, "hint");    // off the main thread, like the dads
-      if (uci) from = C.sqFromName(uci.slice(0, 2));
+      if (uci) { from = C.sqFromName(uci.slice(0, 2)); to = C.sqFromName(uci.slice(2, 4)); }
     } catch {
       const best = C.rankMoves(state, 3, {})[0];
-      if (best) from = best.move.from;
+      if (best) { from = best.move.from; to = best.move.to; }
     }
     hinting = false;
     if (gid !== gameId || states.length !== len || over || from < 0) { syncControls(); return; }
     hintsLeft--;
-    hintSq = from;
+    hintSq = from; hintTo = to;
     selected = -1; targets = [];
     talk("hint");
     renderBoard();
-    setTimeout(() => { if (hintSq === from && gid === gameId) { hintSq = null; renderBoard(); } }, 6000);
+    setStatus(`<strong>Hint:</strong> move ${C.sqName(from)} to ${C.sqName(to)}.`);
   }
 
   // ---- wiring ----
@@ -1391,6 +1409,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   $("tierGrid").addEventListener("click", (e) => {
     const b = e.target.closest(".tier");
     if (!b || b.disabled) return;
+    if (!twice(b.dataset.k, `This game isn't saved. Tap <strong>${C.TIERS[b.dataset.k].name}</strong> again to start over.`)) return;
     tierKey = b.dataset.k;
     startGame();
   });
@@ -1452,7 +1471,7 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   $("newBtn").addEventListener("click", () => {
     if (inProgress() && !confirmNew) { arm("new"); setStatus("This game isn't saved. Tap <strong>Tap again to start over</strong> to begin a new one."); return; }
     disarm();
-    if (daily) startDaily(); else startGame();
+    startGame();                 // from the Daily Board this goes back to a normal game
   });
   $("resignBtn").addEventListener("click", resign);
   $("exitBtn").addEventListener("click", (e) => {
@@ -1478,7 +1497,9 @@ button.btn.primary{background:var(--gold); color:#1B1530; border-color:var(--gol
   });
   // Chrome ignores history entries a page adds before the first tap, so arm on the first tap or key press
   ["click", "keydown"].forEach((ev) => window.addEventListener(ev, armBackGuard, { capture: true, once: true }));
-  $("dailyBtn").addEventListener("click", startDaily);
+  $("dailyBtn").addEventListener("click", () => {
+    if (twice("daily", "This game isn't saved. Tap <strong>Daily Board</strong> again to leave it.")) startDaily();
+  });
   $("shareBtn").addEventListener("click", shareWin);
   $("undoBtn").addEventListener("click", undo);
   $("hintBtn").addEventListener("click", hint);
