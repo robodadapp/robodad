@@ -288,6 +288,7 @@
       h("p", { class:"bz-foot" }, `Best run: ${s.runBest} of ${RUN_LEN} stops · ${s.runWins || 0} complete`),
       h("div", { class:"bz-row" }, btn("New run", "primary bz-focus", () => startRun(true)), btn("Menu", "ghost", () => hub())));
     focusFirst();
+    if (won) window.RDClips?.play("did");
   }
 
   // ---------- multiple choice and type-in puzzles ----------
@@ -364,7 +365,7 @@
       }
       const left = p.hints.length - c.hints;
       nodes.push(h("div", { class:"bz-row" },
-        left > 0 ? btn(`💡 Hint (${left} left)`, "ghost", () => { c.hints++; c.say = pick(SAY.hint); c.msg = ""; renderPuzzle(); }) : null,
+        left > 0 ? btn(`💡 Hint (${left} left)`, "ghost", () => { c.hints++; c.say = pick(SAY.hint); c.msg = ""; renderPuzzle(); window.RDClips?.play("trick"); }) : null,
         btn("Ask Dad", "ghost", () => bridge?.coach(p.id)),
         challengeBtn(p),
         btn("Show the answer", "ghost", () => {
@@ -1329,6 +1330,7 @@
       h("p", {}, first ? "+200 points for escaping the garage!" : "+50 points. Still got it."),
       h("div", { class:"bz-row" }, btn("Back to the menu", "primary bz-focus", () => hub())));
     focusFirst();
+    window.RDClips?.play("did");
   }
 
   // ---------- styles (kept here so the main page stays lean) ----------

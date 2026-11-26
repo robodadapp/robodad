@@ -2544,7 +2544,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/lessons.js?v=41"></script>
 <script src="/static/maths.js?v=40"></script>
 <script src="/static/brainteasers.js?v=7"></script>
-<script src="/static/brain.js?v=15"></script>
+<script src="/static/brain.js?v=16"></script>
 <script src="/static/arcade.js?v=6"></script>
 <script src="/static/words.js?v=1"></script>
 <script src="/static/vocab.js?v=1"></script>
@@ -2554,6 +2554,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/sfx.js?v=3"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=50"></script>
+<script src="/static/dad-clips.js?v=1"></script>
 <script src="/static/hunt.js?v=3"></script>
 <script>
 (() => {
@@ -3062,6 +3063,7 @@ textarea::placeholder{color:var(--muted)}
   function answerMoment(scope, ok, statsHtml){
     if (!scope) return;
     window.RoboSfx?.answer(ok);
+    window.RDClips?.answer(ok);
     const hit = scope.querySelector(ok ? ".ok, .right" : ".bad, .wrong");
     if (hit) { hit.classList.remove("win-pop", "miss"); void hit.offsetWidth; hit.classList.add(ok ? "win-pop" : "miss"); }
     const row = statsHtml && scope.querySelector(".v-stats");
@@ -3372,6 +3374,7 @@ textarea::placeholder{color:var(--muted)}
     saveDuel(d); vDuel = null; duelMusicOff();
     try { window.RoboArcade?.award("duel", { tickets: won ? Math.min(20, 8 + 2 * L.tier) : 2 }); } catch {}
     window.RoboSfx?.play(won ? "roundDone" : "lose");
+    if (won) window.RDClips?.play("did");
     vbump(p => { p.beaten = d.beaten.slice(); if (D.score === 8) p.perfect = true; });
     const next = V.DUEL[D.i + 1];
     let msg = `<div class="duel-end"><div class="duel-face ${won ? "flinch" : "taunt"}">${avSvg(L.av)}</div><p class="duel-say"><b>${esc(L.name)}:</b> ${esc(duelLine(L, won ? "win" : "lose"))}</p></div>
@@ -3593,6 +3596,7 @@ const PLAYERS = {
   }
   const AV_KEY = "robodad.avatar";
   const AV = window.RoboAvatars;
+  window.RDDadKind = () => avKind;   // the performance clips only match one dad
   let avPref = getPref(AV_KEY) || "auto", avKind = "fifties", avLast = "";
   if (AV) AV.installSymbols(document.querySelector('svg[width="0"]'));
   const avKindFor = (look) => {
@@ -4138,7 +4142,7 @@ const PLAYERS = {
     const el = $("reveal"), id = revealQ.shift();
     if (!id) {
       const wasOpen = !el.hidden; el.hidden = true; el.innerHTML = ""; revealReturn?.focus?.();
-      if (wasOpen) setTimeout(() => { dadProud(); const m = AV?.AVATARS[avKind]?.moves || []; avPlay(m.find(x => ["victory", "oneup", "dad", "gg", "fistbump", "peace", "kids"].includes(x)) || null); }, 250);   // Dad celebrates with you
+      if (wasOpen) setTimeout(() => { dadProud(); window.RDClips?.play("did"); const m = AV?.AVATARS[avKind]?.moves || []; avPlay(m.find(x => ["victory", "oneup", "dad", "gg", "fistbump", "peace", "kids"].includes(x)) || null); }, 250);   // Dad celebrates with you
       return;
     }
     const b = BADGES[id], r = RARITY[b.rar];
@@ -5260,7 +5264,7 @@ const PLAYERS = {
     if (chDone.includes(todayKey())) return;
     const before = isEarned(BADGES.challenge);
     chDone.push(todayKey()); setPref(CH_KEY, JSON.stringify(chDone)); renderChallenge(); updateBeltMini();
-    { const sn = challengeStreak().n; if ([3, 7, 14, 30].includes(sn)) { ping("streak_" + sn); toast(`🔥 ${sn}-day streak. That's real habit-building.`); } }
+    { const sn = challengeStreak().n; if ([3, 7, 14, 30].includes(sn)) { ping("streak_" + sn); toast(`🔥 ${sn}-day streak. That's real habit-building.`); window.RDClips?.play("did"); } }
     nod(); bubbleWord(pick(["Proud of you!", "That's my kid!", "Atta kid!", "Nailed it!"]));
     if (!before && isEarned(BADGES.challenge)) { revealReturn = document.activeElement; revealQ.push("challenge"); if ($("reveal").hidden) showReveal(); }
     else toast(chDone.length === 1 ? "First challenge done. See you tomorrow for the next one." : `Nice work. That's ${chDone.length} challenges done.`);
@@ -5869,7 +5873,7 @@ const PLAYERS = {
   $("huntHintBtn").addEventListener("click", () => {
     const hints = HUNT.chapters[huntCh]?.hints || []; if (!hints.length) return;
     $("huntHint").textContent = hints[Math.min(huntHintN, hints.length - 1)]; $("huntHint").hidden = false;
-    window.RoboSfx?.play("hint"); huntHintN++; $("huntHintBtn").textContent = huntHintN < hints.length ? "Another hint?" : "That's all the hints";
+    window.RoboSfx?.play("hint"); window.RDClips?.play("trick"); huntHintN++; $("huntHintBtn").textContent = huntHintN < hints.length ? "Another hint?" : "That's all the hints";
     if (huntHintN >= hints.length) $("huntHintBtn").hidden = true;
   });
   $("huntPause").addEventListener("click", () => { setPref("robodad.hunt.paused", getPref("robodad.hunt.paused") ? "" : "1"); huntUI(); });
