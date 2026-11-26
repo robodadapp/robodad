@@ -18,6 +18,8 @@ jobs:
         run: pip install pip-audit && pip-audit -r requirements.txt
       - name: Crisis safety rules
         run: pip install -r requirements.txt && python scripts/test_safety.py
+      - name: Reply safeguards (signed replies, moderation swap, help lines)
+        run: python scripts/test_boundaries.py && python scripts/test_reply_safety.py
       - name: Chess rules and server tests
         run: |
           pip install -r requirements.txt

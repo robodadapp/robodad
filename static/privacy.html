@@ -36,7 +36,7 @@ th{font-weight:800}
   <a class="back" href="/">← Back to RoboDad</a>
   <div class="card">
     <h1>RoboDad Privacy Policy</h1>
-    <p class="muted">Last updated: November 19, 2026 (how "Read aloud" and the microphone work, and the voice services we use)</p>
+    <p class="muted">Last updated: November 25, 2026 (the safety check on AI replies, and how your nickname is used)</p>
 
     <p>RoboDad is an AI chatbot that gives teenagers practical advice about everyday life. It is a passion
     project made by Saikat Sunil Ganguly in Toronto, Canada. This page explains, in plain language, what
@@ -68,7 +68,7 @@ th{font-weight:800}
           <td>Sent to our server, which runs the Stockfish chess engine to pick a reply. The other dads play entirely in your browser.</td>
           <td>Not saved and not linked to you. The server keeps no record of the position.</td></tr>
       <tr><td>Your messages and the conversation so far</td>
-          <td>Sent through our server to our AI provider (Groq) to write a reply</td>
+          <td>Sent through our server to our AI provider (Groq) to write a reply. Each reply, with the message it answers, is also checked by a safety model at Groq before it is kept; a reply that fails the check is replaced with a fixed RoboDad message.</td>
           <td>Not saved by RoboDad. Groq handles it under its own privacy policy.</td></tr>
       <tr><td>Messages that suggest you might be in danger</td>
           <td>Answered with a fixed help message. Messages caught by our safety checks are not sent to the AI. Anything the checks miss goes to the AI like a normal message, and the AI is told to flag it so the same help message is shown.</td>
@@ -80,7 +80,7 @@ th{font-weight:800}
           <td>Stored only in your browser on your device</td>
           <td>Until you start a new chat, close the tab (chat) or clear your browser data (nickname and settings)</td></tr>
       <tr><td>Your nickname, if you set one</td>
-          <td>Sent with each message so RoboDad can use it in replies</td>
+          <td>Sent with each message and passed to the AI so RoboDad can use it in replies</td>
           <td>Not saved on our server</td></tr>
       <tr><td>Thumbs up/down and reports</td>
           <td>Our database (Supabase): the rating or report reason, the topic RoboDad detected, the AI model used and RoboDad's reply</td>
@@ -121,7 +121,7 @@ th{font-weight:800}
     <h2>Services RoboDad uses</h2>
     <ul>
       <li><strong>Render</strong> hosts the website (United States). Render uses <strong>Cloudflare</strong> to protect and deliver it.</li>
-      <li><strong>Groq</strong> runs the AI model that writes replies, and makes Dad's English read-aloud voice (United States).</li>
+      <li><strong>Groq</strong> runs the AI model that writes replies and the safety model that checks them, and makes Dad's English read-aloud voice (United States).</li>
       <li><strong>Microsoft Azure Speech</strong> makes the backup read-aloud voice and the language-practice voices (Canada).</li>
       <li><strong>Google</strong>'s speech service may turn your voice into text when you use the microphone (handled by your phone or browser, not by RoboDad).</li>
       <li><strong>Supabase</strong> stores ratings, reports, tester sign-ups, link counts and votes (United States).</li>

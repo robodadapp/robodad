@@ -110,6 +110,28 @@ jobs:
             rm out/logcat-full.txt
             adb shell pidof app.robodad > out/still-running.txt || echo "NOT RUNNING" > out/still-running.txt
 
+      # Android 16 (API 36) changed how Back works for apps that target it: onBackPressed is
+      # no longer called. Open a second page, press Back, and check the app is still open.
+      - name: Back button on an Android 16 virtual phone
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: |
+            adb install -r out/robodad-test.apk
+            adb shell am start -n app.robodad/.MainActivity
+            sleep 40
+            adb shell am start -a android.intent.action.VIEW -d https://robodad.app/privacy app.robodad
+            sleep 15
+            adb shell input keyevent KEYCODE_BACK
+            sleep 5
+            adb exec-out screencap -p > out/screen-api36-after-back.png
+            # the process can outlive a closed screen, so check which activity is in front
+            adb shell dumpsys activity activities | grep -E "topResumedActivity|mResumedActivity" > out/back-api36.txt || true
+            if grep -q "app.robodad/.MainActivity" out/back-api36.txt; then echo "OK: still open after Back" >> out/back-api36.txt; else echo "FAIL: Back closed the app" >> out/back-api36.txt; exit 1; fi
+
       - name: Save the results to the android-build branch
         if: always() && github.event_name != 'pull_request'
         run: |

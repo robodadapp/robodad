@@ -270,6 +270,13 @@ _MULTILINGUAL: dict[str, list[str]] = {
 for _name, _pats, _msg in _CATEGORIES:
     _pats.extend(_MULTILINGUAL.get(_name, []))
 
+# The numbers above are for Canada and the US. Every help message also says where
+# to find a free helpline anywhere else, so a teen in another country is never left
+# with numbers that don't connect.
+INTL_HELP = ("Outside Canada or the US? **findahelpline.com** lists free, confidential "
+             "helplines in your country.")
+_CATEGORIES = [(name, pats, msg + "\n\n" + INTL_HELP) for name, pats, msg in _CATEGORIES]
+
 _COMPILED = [(name, re.compile("|".join(pats), re.IGNORECASE), msg) for name, pats, msg in _CATEGORIES]
 
 MAX_MESSAGE_CHARS = 1000
@@ -416,7 +423,7 @@ _WEAPON_REPLY = (
     "not even for a joke or a story. Someone could get seriously hurt.\n\n"
     "If you feel unsafe, or someone is threatening you, please tell a parent, teacher or school "
     "counsellor today. You can also reach Kids Help Phone: call 1-800-668-6868 or text CONNECT to 686868. "
-    "In an emergency, call **911**."
+    "In an emergency, call **911**.\n\n" + INTL_HELP
 )
 
 
@@ -473,6 +480,29 @@ _ACTING_REPLY = (
     "is worth more than any prop.\n\n"
     "Want me to help with your lines, or run a scene with you where I play the friend who's worried about him?"
 )
+
+
+# Shown in place of an AI reply that the moderation classifier flagged (see app/moderation.py).
+_MODERATED_SEXUAL = (
+    "Let me stop myself there, champ. That's not something your robot dad gets into. What I can do: talk "
+    "about feelings, respect, consent and boundaries, or help you work out who to talk to about it, like a "
+    "parent, older sibling, school counsellor or doctor.\n\n"
+    "If someone is pressuring you or making you uncomfortable, that's not okay and it's not your fault. "
+    f"Tell a trusted adult, or reach {KHP}.\n\n" + INTL_HELP
+)
+_MODERATED_OTHER = (
+    "Hmm, I started down a road there that I shouldn't have, so I've scrapped that answer. Let's try it a "
+    "different way. Tell me a bit more about what you're after, and I'll help with the safe, useful part of it."
+)
+
+
+def moderated_message(category: str) -> tuple[str, str]:
+    """(category shown in the page, fixed reply) for a reply the classifier flagged."""
+    if category == "self_harm":
+        return "self_harm", _MESSAGES["self_harm"]
+    if category == "sexual":
+        return "moderated_sexual", _MODERATED_SEXUAL
+    return "moderated", _MODERATED_OTHER
 
 
 def boundary_message(category: str) -> str:
@@ -561,7 +591,8 @@ CHECK_IN_MESSAGE = (
     "If something hard is going on, please talk to someone who can really be there:\n"
     "• A parent, teacher, coach or school counsellor\n"
     f"• {KHP}\n"
-    "• If you're in danger right now, call **911**.\n\n"
+    "• If you're in danger right now, call **911**.\n"
+    f"• {INTL_HELP}\n\n"
     "I'm still here. Want to tell me a bit more?"
 )
 _LOW = re.compile("|".join([

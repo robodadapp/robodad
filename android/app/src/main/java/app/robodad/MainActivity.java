@@ -84,17 +84,45 @@ public class MainActivity extends Activity {
     private String pendingRecId, pendingRecLang;
     private boolean pendingRecInterim;
 
-    @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
+    private static final String OFFLINE_URL = "file:///android_asset/offline.html";
+
+    private FrameLayout root;
+    private boolean showingOffline = false;
+    private Object backCallback;            // OnBackInvokedCallback on API 33+ (kept as Object so API 24 can load the class)
+    private boolean backCallbackOn = false;
+
     @Override
     protected void onCreate(Bundle saved) {
         super.onCreate(saved);
         bridgeJs = readAsset("bridge.js");
 
-        FrameLayout root = new FrameLayout(this);
-        web = new WebView(this);
-        root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        root = new FrameLayout(this);
         setContentView(root);
         applyInsets(root);
+        createWebView();
+
+        tts = new TextToSpeech(this, status -> {
+            ttsReady = status == TextToSpeech.SUCCESS;
+            if (ttsReady) {
+                tts.setOnUtteranceProgressListener(new TtsListener());
+                ui.post(() -> js("window.__rdVoices && window.__rdVoices()"));
+            }
+        });
+
+        Uri data = getIntent() != null ? getIntent().getData() : null;
+        if (saved != null) web.restoreState(saved);
+        else if (data != null && isOurs(data)) web.loadUrl(data.toString());
+        else {
+            String last = getPreferences(MODE_PRIVATE).getString("lastUrl", null);
+            web.loadUrl(last != null && isOurs(Uri.parse(last)) ? last : START_URL);
+        }
+    }
+
+    // Builds (or rebuilds, after the renderer dies) the WebView and its settings.
+    @SuppressLint({"SetJavaScriptEnabled", "JavascriptInterface"})
+    private void createWebView() {
+        web = new WebView(this);
+        root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -115,22 +143,34 @@ public class MainActivity extends Activity {
         }
         web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new Client());
+    }
 
-        tts = new TextToSpeech(this, status -> {
-            ttsReady = status == TextToSpeech.SUCCESS;
-            if (ttsReady) {
-                tts.setOnUtteranceProgressListener(new TtsListener());
-                ui.post(() -> js("window.__rdVoices && window.__rdVoices()"));
-            }
-        });
+    // ---------- back navigation ----------
+    // Android 16 (targetSdk 36) no longer calls onBackPressed(), so on API 33+ a callback
+    // is registered whenever the WebView has somewhere to go back to, and removed when it
+    // doesn't, which lets the system close the app (with its predictive animation) from the start page.
+    private void syncBack() {
+        if (Build.VERSION.SDK_INT < 33 || web == null) return;
+        boolean want = !showingOffline && web.canGoBack();
+        if (want == backCallbackOn) return;
+        android.window.OnBackInvokedDispatcher d = getOnBackInvokedDispatcher();
+        if (backCallback == null) backCallback = (android.window.OnBackInvokedCallback) this::goBackInWeb;
+        if (want) d.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                (android.window.OnBackInvokedCallback) backCallback);
+        else d.unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback) backCallback);
+        backCallbackOn = want;
+    }
 
-        Uri data = getIntent() != null ? getIntent().getData() : null;
-        if (saved != null) web.restoreState(saved);
-        else if (data != null && isOurs(data)) web.loadUrl(data.toString());
-        else {
-            String last = getPreferences(MODE_PRIVATE).getString("lastUrl", null);
-            web.loadUrl(last != null && isOurs(Uri.parse(last)) ? last : START_URL);
-        }
+    private void goBackInWeb() {
+        if (web != null && !showingOffline && web.canGoBack()) web.goBack();
+        else finish();
+    }
+
+    // The offline page: shown on a network error or a server error, with no history
+    // behind it, so Back closes the app instead of returning to the failed page.
+    private void showOffline(WebView view) {
+        showingOffline = true;
+        view.loadUrl(OFFLINE_URL);
     }
 
     // Keep RoboDad clear of the status bar, navigation bar and keyboard (Android 15 draws edge to edge).
@@ -178,10 +218,11 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
+    // API 24-32 (and API 33-35 when no callback is registered). Android 16 apps never get this call.
     @SuppressWarnings("deprecation")
     @Override
     public void onBackPressed() {
-        if (web.canGoBack()) web.goBack();
+        if (web != null && !showingOffline && web.canGoBack()) web.goBack();
         else super.onBackPressed();
     }
 
@@ -222,11 +263,42 @@ public class MainActivity extends Activity {
         @Override
         public void onPageFinished(WebView view, String url) {
             if (!scriptAtStart && url != null && isOurs(Uri.parse(url))) view.evaluateJavascript(bridgeJs, null);
+            if (OFFLINE_URL.equals(url)) view.clearHistory();        // nothing to go back to from the offline page
+            else if (url != null && isOurs(Uri.parse(url))) showingOffline = false;
+            syncBack();
+        }
+
+        @Override
+        public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+            syncBack();
         }
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest req, WebResourceError err) {
-            if (req.isForMainFrame()) view.loadUrl("file:///android_asset/offline.html");
+            if (req.isForMainFrame()) showOffline(view);
+        }
+
+        // A server error (for example while the server restarts) shows the offline page, not a raw error body.
+        @Override
+        public void onReceivedHttpError(WebView view, WebResourceRequest req, android.webkit.WebResourceResponse res) {
+            if (req.isForMainFrame() && res != null && res.getStatusCode() >= 500) showOffline(view);
+        }
+
+        // If the WebView's renderer dies (low memory, a crash), rebuild it instead of letting Android kill the app.
+        @Override
+        public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+            String url = view.getUrl();
+            root.removeView(view);
+            view.destroy();
+            if (view != web) return true;                            // an older WebView we already replaced
+            backCallbackOn = false;
+            if (Build.VERSION.SDK_INT >= 33 && backCallback != null) {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback) backCallback);
+            }
+            createWebView();
+            showingOffline = false;
+            web.loadUrl(url != null && isOurs(Uri.parse(url)) ? url : START_URL);
+            return true;
         }
     }
 

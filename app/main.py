@@ -52,13 +52,16 @@ from .llm import (  # noqa: E402
     FALLBACK_LINE, build_system_prompt, clean_secret, detect_provider, is_bare_refusal,
     stream_with_failover, strip_stock_opener,
 )
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+
 from . import chess_daily, onthisday  # noqa: E402
 from .chess_engine import EngineUnavailable, best_move as chess_best_move  # noqa: E402
+from .moderation import check_reply, detect_moderator  # noqa: E402
 from .nlp import RoboDadNLP  # noqa: E402
 from .safety import (  # noqa: E402
     CHECK_IN_CATEGORY, CHECK_IN_MESSAGE, CRISIS_TOKEN, boundary_message, check_boundary, check_crisis, clean_nickname,
-    clean_user_text, crisis_message, needs_check_in, reads_like_concealment_advice, reads_like_glamour,
-    touches_risky_topic,
+    clean_user_text, crisis_message, moderated_message, needs_check_in, reads_like_concealment_advice,
+    reads_like_glamour, touches_risky_topic,
 )
 
 log = logging.getLogger("robodad")
@@ -104,12 +107,16 @@ async def lifespan(app: FastAPI):
     state["nlp"] = RoboDadNLP()
     state["provider"] = detect_provider()
     state["client"] = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0))
-    p = state["provider"]
+    state["moderator"] = detect_moderator()
+    p, mod = state["provider"], state["moderator"]
     log.info(
-        "RoboDad ready in %.2fs: %d examples, %d intents, mode=%s",
+        "RoboDad ready in %.2fs: %d examples, %d intents, mode=%s, reply moderation=%s",
         time.perf_counter() - t, len(state["nlp"].rows), len(state["nlp"].intents),
-        p.label if p else "classic (no LLM key set)",
+        p.label if p else "classic (no LLM key set)", mod.model if mod else "OFF",
     )
+    if p and not mod:
+        log.warning("Reply moderation is OFF: AI replies reach teens without a safety classifier. "
+                    "Set GROQ_API_KEY or MODERATION_API_KEY to turn it on.")
     yield
     await state["client"].aclose()
 
@@ -263,6 +270,15 @@ nav a{color:var(--denim); font-weight:800}
 </main></body></html>"""
 
 
+@app.exception_handler(RequestValidationError)
+async def bad_request(request: Request, exc: RequestValidationError):
+    """A friendly message the page can show, without echoing the request back (it holds the whole chat)."""
+    fields = sorted({str(e.get("loc", ["", "?"])[1]) for e in exc.errors() if len(e.get("loc", ())) > 1})
+    log.info("Rejected request to %s (fields: %s)", request.url.path, ", ".join(fields) or "?")
+    return JSONResponse({"error": "That didn't go through. Try a shorter message, or start a new chat."},
+                        status_code=422)
+
+
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
     path = request.url.path
@@ -279,6 +295,12 @@ _hits: dict[str, deque] = defaultdict(deque)
 # the anonymous counters get their own allowance, so playing puzzles never uses up chat messages
 _ev_hits: dict[str, deque] = defaultdict(deque)
 _EV_MAX_HITS = 120
+# Ratings, reports, votes and sign-ups get their own allowances too, so thumbs-upping
+# replies never uses up chat messages.
+_fb_hits: dict[str, deque] = defaultdict(deque)
+_FB_MAX_HITS = 60
+_misc_hits: dict[str, deque] = defaultdict(deque)
+_MISC_MAX_HITS = 30
 _daily = {"day": date.today(), "count": 0}
 
 
@@ -328,6 +350,7 @@ def _llm_budget_left() -> bool:
 class ChatMessage(BaseModel):
     role: str = Field(max_length=16)
     content: str = Field(max_length=4000)
+    sig: str = Field(default="", max_length=64)   # server signature on RoboDad's own replies
 
 
 class FeedbackRequest(BaseModel):
@@ -451,13 +474,48 @@ def _is_family(token: str) -> bool:
     return bool(t and token) and hmac.compare_digest(t, token)
 
 
+# The page says which voice read the last reply aloud. Only these fixed descriptions
+# reach the AI: free text from the page would be a way to slip instructions into the
+# system prompt.
+VOICE_NOTES = {
+    "online": "RoboDad's own male dad voice",
+    "backup": "RoboDad's backup male dad voice",
+    "device": "the phone's own built-in voice (on some phones it sounds female)",
+}
+
+
 def _voice_note(req: "ChatRequest") -> str:
     """Tell the AI which voice actually read its last reply, so it never has to guess."""
-    v = re.sub(r"[^\w\s().:#\-]", "", req.voice or "").strip()[:80]
+    v = VOICE_NOTES.get((req.voice or "").strip().lower())
     if not v:
         return ""
     return ("\n\nThe voice that read your last reply aloud on this device: " + v +
             ". Use this only if they ask about your voice.")
+
+
+# ---------------------------------------------------------------- signed replies
+# The page keeps the conversation and sends it back with each message. RoboDad's own
+# replies carry a signature from this server, and unsigned or altered "RoboDad" turns
+# are dropped, so nobody can put words in his mouth to talk the AI into something.
+# The key is REPLY_SIGNING_KEY, or else derived from the AI key, so it survives restarts.
+def _signing_key() -> bytes:
+    seed = os.getenv("REPLY_SIGNING_KEY") or "".join(
+        clean_secret(os.getenv(k)) for k in ("ANTHROPIC_API_KEY", "GROQ_API_KEY", "OPENAI_API_KEY"))
+    if not seed:
+        seed = os.urandom(32).hex()            # classic mode only: replies are fixed text anyway
+    return hashlib.sha256(b"robodad-reply-v1|" + seed.encode()).digest()
+
+
+_SIGN_KEY = _signing_key()
+PRACTICE_OPENER_MAX = 400   # a role-play's first line comes from lessons.js on the page, unsigned
+
+
+def sign_reply(text: str) -> str:
+    return hmac.new(_SIGN_KEY, text.encode("utf-8"), hashlib.sha256).hexdigest()[:40]
+
+
+def _signed(m: ChatMessage) -> bool:
+    return bool(m.sig) and hmac.compare_digest(m.sig, sign_reply(m.content))
 
 
 def _prompt_extras(req: "ChatRequest") -> str:
@@ -474,12 +532,19 @@ def _prepare_history(msgs: list[ChatMessage], practice: bool = False) -> list[di
 
     In Practice mode RoboDad speaks first (he opens the role-play), so that
     opening line is kept behind a short stand-in user turn.
+
+    RoboDad's turns must carry this server's signature. The one exception is a
+    short role-play opening line at the very start of a practice chat.
     """
-    cleaned = [
-        {"role": m.role, "content": clean_user_text(m.content)}
-        for m in msgs
-        if m.role in ("user", "assistant") and m.content.strip()
-    ][-HISTORY_TURNS:]
+    kept = []
+    for i, m in enumerate(msgs):
+        if m.role not in ("user", "assistant") or not m.content.strip():
+            continue
+        if m.role == "assistant" and not _signed(m):
+            if not (practice and i == 0 and len(m.content) <= PRACTICE_OPENER_MAX):
+                continue
+        kept.append(m)
+    cleaned = [{"role": m.role, "content": clean_user_text(m.content)} for m in kept][-HISTORY_TURNS:]
     if practice and cleaned and cleaned[0]["role"] == "assistant":
         cleaned.insert(0, {"role": "user", "content": "(Start the role-play.)"})
     while cleaned and cleaned[0]["role"] != "user":
@@ -630,7 +695,7 @@ async def tester_count():
 @app.post("/api/testers")
 async def tester_signup(t: TesterSignup, request: Request):
     """Google Play closed-test sign-up. Stores only the email and an optional first name."""
-    if _rate_limited(_client_ip(request)):
+    if _rate_limited(_client_ip(request), _misc_hits, _MISC_MAX_HITS):
         return JSONResponse({"error": "Too many tries. Wait a minute, then try again."}, status_code=429)
     if t.website:  # a bot filled in the hidden field
         return {"ok": True, "count": await _tester_count(), "goal": TESTER_GOAL}
@@ -731,7 +796,7 @@ async def interest(i: Interest, request: Request):
     """'I want this' votes on the learning hub (a subject or a family language). Anonymous."""
     if i.topic not in INTEREST_TOPICS:
         raise HTTPException(400, "Unknown topic.")
-    if _rate_limited(_client_ip(request)):
+    if _rate_limited(_client_ip(request), _misc_hits, _MISC_MAX_HITS):
         return JSONResponse({"error": "Too many tries. Wait a minute."}, status_code=429)
     await _count("interest", i.topic, request)
     return {"ok": True}
@@ -1216,7 +1281,7 @@ async def secret_code(c: CodeRequest, request: Request):
     if chapter:
         opens = _hunt_opens(chapter)
         if not _is_family(c.family) and chapter > HUNT_OPEN_THROUGH and (opens is None or _toronto_today() < opens):
-            when = opens.strftime("%A, %B %-d") if opens else None
+            when = f"{opens:%A, %B} {opens.day}" if opens else None
             return {"kind": "hunt_wait", "opens": when}
         log.info("HUNT: chapter %s opened", chapter)
         out = {"kind": "hunt", "chapter": chapter}
@@ -1269,11 +1334,16 @@ async def chat(req: ChatRequest, request: Request):
             meta["reason"] = SIMPLE_ANSWERS_NOTE
         yield _sse("meta", meta)
 
+        # `final` is the reply exactly as the page should keep it. It goes back in the
+        # "done" event with this server's signature, so later turns can prove RoboDad said it.
+        final = ""
         if mode == "safety":
             log.info("SAFETY message shown: %s", crisis[0])
-            yield _sse("token", crisis[1])
+            final = crisis[1]
+            yield _sse("token", final)
         elif mode == "classic":
-            yield _sse("token", nlp.classic_reply(analysis))
+            final = nlp.classic_reply(analysis)
+            yield _sse("token", final)
         else:
             _daily["count"] += 1
             sent_any = False
@@ -1284,15 +1354,17 @@ async def chat(req: ChatRequest, request: Request):
                 guard = "substance_conceal" if touches_risky_topic(earlier[-3:] + [user_text]) else None
                 async for chunk in dad_mode_stream(provider, system, history, guard):
                     if isinstance(chunk, CrisisFlag):
-                        # The AI spotted a crisis the keyword rules missed (any language)
+                        # The AI spotted a crisis the keyword rules missed (any language).
+                        # Anything it had already streamed is dropped: the help message stands alone.
                         name, msg = crisis_message(chunk.category)
                         log.info("SAFETY message shown (AI flag): %s", name)
                         mode = "safety"
                         yield _sse("mode", {"mode": "safety", "safety": name})
                         yield _sse("token", ("\n\n" if sent_any else "") + msg)
-                        sent_any = True
+                        final, sent_any = msg, True
                         break
                     sent_any = True
+                    final += chunk
                     yield _sse("token", chunk)
                 if not sent_any:
                     raise RuntimeError("model returned an empty reply")
@@ -1306,15 +1378,30 @@ async def chat(req: ChatRequest, request: Request):
                     mode = "safety" if late else "classic"
                     if late:
                         log.info("SAFETY message shown: %s (AI unavailable)", late[0])
+                        final = late[1]
                         yield _sse("mode", {"mode": "safety", "safety": late[0], "reason": SIMPLE_ANSWERS_NOTE})
-                        yield _sse("token", late[1])
+                        yield _sse("token", final)
                     else:
+                        final = nlp.classic_reply(analysis)
                         yield _sse("mode", {"mode": "classic", "reason": SIMPLE_ANSWERS_NOTE})
-                        yield _sse("token", nlp.classic_reply(analysis))
+                        yield _sse("token", final)
                 else:
-                    yield _sse("token", " …sorry, I lost my train of thought there. Try asking again?")
+                    tail = " …sorry, I lost my train of thought there. Try asking again?"
+                    final += tail
+                    yield _sse("token", tail)
 
-        done = {"total_ms": round((time.perf_counter() - t0) * 1000, 1)}
+            # Safety classifier on the finished AI reply. A flagged reply is replaced on the
+            # page before it is saved, rated or read aloud, and never goes back to the AI.
+            moderator = state.get("moderator")
+            if mode == "llm" and moderator and final.strip():
+                flagged = await check_reply(moderator, state["client"], user_text, final)
+                if flagged:
+                    name, final = moderated_message(flagged)
+                    mode = "safety"
+                    log.warning("MODERATION replaced a reply (%s)", flagged)
+                    yield _sse("replace", {"mode": "safety", "safety": name, "text": final})
+
+        done = {"total_ms": round((time.perf_counter() - t0) * 1000, 1), "text": final, "sig": sign_reply(final)}
         if mode == "llm":
             log.info("REPLY model=%s", provider.label)  # kept in server logs only, never sent to the page
         yield _sse("done", done)
@@ -1407,13 +1494,14 @@ async def feedback(fb: FeedbackRequest, request: Request):
         fb.mode, fb.confidence, fb.reply = "app", 0.0, fb.reply.strip()[:600]
     if fb.rating == 0:
         raise HTTPException(400, "Rating must be 1 or -1.")
-    if _rate_limited(_client_ip(request)):
+    if _rate_limited(_client_ip(request), _fb_hits, _FB_MAX_HITS):
         return JSONResponse({"error": "Too many ratings. Wait a minute, then try again."}, status_code=429)
 
     p = state.get("provider")
     fb.model = p.label if (p and fb.mode == "llm") else ""
     if fb.kind == "app":
-        log.warning("APP FEEDBACK (%s, %s): %r", fb.reason, fb.intent, fb.reply)  # recorded server-side; the page never sees it
+        # The note itself goes only to the database (see /privacy); the log just says one arrived.
+        log.warning("APP FEEDBACK (%s, %s): %d characters", fb.reason, fb.intent, len(fb.reply))
     row = fb.model_dump()
     log.info("FEEDBACK %s%s intent=%s mode=%s model=%s reply=%r",
              "REPORT " if fb.kind == "report" else "", "up" if fb.rating > 0 else "down",

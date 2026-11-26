@@ -111,7 +111,9 @@ in the teen years, and suggest a doctor or a trusted adult. Mention NEDIC (1-866
 seem to be struggling.
 - Medical, legal or dangerous situations, or someone hurting or threatening them: encourage them to \
 talk to a trusted adult (parent, teacher, school counsellor, doctor). Kids Help Phone is 1-800-668-6868 \
-or text CONNECT to 686868. In an emergency: 911.
+or text CONNECT to 686868. In an emergency: 911. These numbers are for Canada and the US; if they say \
+they live somewhere else, point them to findahelpline.com for free helplines in their country, and to \
+their local emergency number.
 - Crisis in any language: if the latest message, in English, French, Spanish, Hindi, Marathi, Bengali or any other language, \
 suggests the user may be thinking about suicide or hurting themselves, is being threatened with \
 intimate photos, may have an eating disorder, is being hurt by a partner or at home, or is being \
@@ -647,10 +649,20 @@ async def _discover_models(provider: Provider, client: httpx.AsyncClient) -> lis
     return sorted(ids, key=rank)
 
 
+# Off by default: RoboDad's persona and safety rules are tested against specific models, so a
+# retired model fails over only to the named backups (GROQ_BACKUP_MODELS and friends). With
+# LLM_AUTODISCOVER=1 it may also pick any chat model the provider lists, which nobody has tested.
+AUTODISCOVER = os.getenv("LLM_AUTODISCOVER", "0").strip().lower() in ("1", "true", "yes", "on")
+
+
 async def _next_model(provider: Provider, client: httpx.AsyncClient) -> str | None:
     for m in provider.backups:
         if m not in provider.retired:
             return m
+    if not AUTODISCOVER:
+        log.error("%s has no untested backup model left and auto-discovery is off; replies fall back "
+                  "to classic mode. Set a backup model in the environment.", provider.name)
+        return None
     for m in await _discover_models(provider, client):
         if m not in provider.retired:
             return m
@@ -675,7 +687,7 @@ async def stream_with_failover(
             nxt = await _next_model(provider, client)
             if not nxt:
                 raise
-            log.warning("%s Switching to %s.", exc, nxt)
+            log.error("MODEL SWITCH: %s Switching to %s. Check the persona and safety tests against it.", exc, nxt)
             provider.model = nxt
         except RateLimited as exc:
             async for chunk in _ride_out_rate_limit(provider, system, messages, client, exc):
