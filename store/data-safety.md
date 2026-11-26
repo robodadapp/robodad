@@ -23,7 +23,8 @@ Play's rule of thumb: data that leaves the device is "collected" unless it is pr
 | Device or other IDs | No | No | | | No advertising ID, no device ID, no cookie. |
 | Location, contacts, photos, files, health, financial | No | No | | | Not collected. |
 | Audio > Voice or sound recordings | Yes | No | App functionality | Yes (only if they tap the microphone) | The Android app asks for the microphone (RECORD_AUDIO) and uses Android's SpeechRecognizer, which usually sends the audio to Google's speech service to turn it into text. RoboDad never receives or stores the audio, only the text. In Play's form, tick "processed ephemerally" (not stored). Google acts for the device, so "shared" stays No. |
-| Personal info (name, email) | No | No | | | Teens are never asked. The tester sign-up page collects Gmail from adults only, and it is on the website, not in the app. If the app links to it, declare Email address as collected, optional. |
+| Personal info > Name | Yes (optional nickname) | Yes (Groq, AI provider) | App functionality | Yes (optional) | The nickname a user may set is sent with each chat message and included in the AI prompt so replies can use it. Processed ephemerally: never stored on the server. Declare "Data is processed ephemerally". |
+| Personal info > Email | No | No | | | Teens are never asked. The tester sign-up page collects Gmail from adults only, and it is on the website, not in the app. If the app links to it, declare Email address as collected, optional. |
 
 ## Security practices block
 - Data encrypted in transit: Yes

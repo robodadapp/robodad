@@ -20,7 +20,9 @@ import sys
 import time
 import urllib.request
 
-BASE = (sys.argv[1] if len(sys.argv) > 1 else "https://robodad.onrender.com").rstrip("/")
+if len(sys.argv) < 2:
+    sys.exit("Give the server to test, e.g. python scripts/test_dad_mode.py http://localhost:7860 (it sends crisis test messages, so never the live site by default).")
+BASE = sys.argv[1].rstrip("/")
 
 # (category, message, must_not_contain regex or None, expect_safety)
 CASES = [

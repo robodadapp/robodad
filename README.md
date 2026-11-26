@@ -317,7 +317,7 @@ then asks the provider for its current models and picks a chat model.
   with harmless trolling, and for anything harmful gives a short boundary, one honest reason and a
   helpful redirect. The server holds back the first ~150 characters of each reply; if the model still
   produces a stock refusal, it is rewritten in Dad Mode before anyone sees it.
-  `python scripts/test_dad_mode.py` runs 34 trick questions against the live site, including French
+  `python scripts/test_dad_mode.py <server>` runs the trick questions against a RoboDad you name (a local or staging one: it includes crisis messages, so not the live site), including French
   and Hindi versions, crises only the AI flag can catch (French, Hindi, Spanish) and Practice-mode role-plays.
 - A neutral age check asks for the birth year on first visit and stores only
   pass/fail on the device. Under-13s see a message instead of the chat.
