@@ -1,0 +1,2 @@
+    topResumedActivity=ActivityRecord{30862071 u0 app.robodad/.MainActivity t7}
+OK: still open after Back
