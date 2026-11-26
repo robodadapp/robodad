@@ -2551,7 +2551,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/grammar.js?v=5"></script>
 <script src="/static/tiles-badges.js?v=3"></script>
 <script src="/static/radio.js?v=48"></script>
-<script src="/static/sfx.js?v=2"></script>
+<script src="/static/sfx.js?v=3"></script>
 <script src="/static/sleep.js?v=1"></script>
 <script src="/static/avatars.js?v=50"></script>
 <script src="/static/hunt.js?v=3"></script>
@@ -3613,12 +3613,14 @@ const PLAYERS = {
   // Personality in timing: quick, loose dads move faster; the professor, the bookworm and Grandpa take their time.
   const DAD_TEMPO = { skater:1.3, gamer:1.25, eighties:1.2, nineties:1.15, coach:1.15, chef:1.05, dojo:1.15, bucket:1.05, filmi:1.05, modern:1, fifties:.95, labdad:.95,
     dracula:.9, festive:1, xmas:1.1, lucky:1, eiddad:.95, bookworm:.8, professor:.8, grandpa:.68 };
-  function avPlay(move){
+  const MOVE_SFX = { flip:"chefFlip", taste:"chefTaste", kiss:"chefKiss" };
+  function avPlay(move, aloud){   // aloud: the player asked for this one, so it may make a sound
     if (!AV) return;
     const moves = AV.AVATARS[avKind].moves;
     if (move && !moves.includes(move)) move = null;   // a move this dad doesn't have: pick one of his own
     if (!move) { const pool = moves.filter(m => m !== avLast); move = pool[Math.floor(Math.random() * pool.length)]; }
     avLast = move; bubbleSay(move);
+    if (aloud && MOVE_SFX[move]) window.RoboSfx?.play(MOVE_SFX[move], { theme: "default" });
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;   // still says his line, just doesn't move
     ["avHead", "avHero"].forEach(id => {
       const el = $(id); if (!el) return;
@@ -3639,7 +3641,7 @@ const PLAYERS = {
   function tapAvatar(){
     setPref("robodad.poked", "1");
     const now = Date.now(); taps = taps.filter(t => now - t < 3000); taps.push(now);
-    if (taps.length >= 5 && AV?.AVATARS.grandpa && !getPref("robodad.grandpa")) { taps = []; unlockGrandpa(); } else avPlay();
+    if (taps.length >= 5 && AV?.AVATARS.grandpa && !getPref("robodad.grandpa")) { taps = []; unlockGrandpa(); } else avPlay(null, true);
   }
   function unlockGrandpa(){
     if (!AV?.AVATARS.grandpa || getPref("robodad.grandpa")) return;
@@ -3684,7 +3686,7 @@ const PLAYERS = {
     $("avPick").addEventListener("click", (e) => {
       const b = e.target.closest(".avb"); if (!b) return;
       avPref = b.dataset.av; setPref(AV_KEY, avPref);
-      mountAvatar(document.documentElement.dataset.look || "classic"); setTimeout(() => avPlay(), 250);
+      mountAvatar(document.documentElement.dataset.look || "classic"); setTimeout(() => avPlay(null, true), 250);
     });
     $("avatar").addEventListener("click", tapAvatar);
     $("avHero")?.addEventListener("click", tapAvatar);

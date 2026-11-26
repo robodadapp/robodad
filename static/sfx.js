@@ -173,6 +173,32 @@
     rummage: { n: 3, jit: 0.08, fn: (k, t, o) => { for (let i = 0; i < 3; i++) k.noise(t + i * 0.07 + Math.random() * 0.03, 0.08, { freq: [900, 1100, 750][o.v] + i * 150, q: 0.9, vol: 0.09 }); } },
     warm:    { n: 1, jit: 0, fn: (k, t) => { k.tone(mtof(79), t, 0.08, { type: "triangle", vol: 0.09, keep: true }); k.tone(mtof(84), t + 0.09, 0.14, { type: "triangle", vol: 0.1, keep: true }); } },
     cold:    { n: 1, jit: 0, fn: (k, t) => { k.tone(mtof(72), t, 0.1, { type: "triangle", vol: 0.09, keep: true, lp: 1200 }); k.tone(mtof(67), t + 0.1, 0.18, { type: "triangle", vol: 0.08, keep: true, lp: 1000 }); } },
+    // ---- Chef Dad's moves: times are seconds into the animation (the CSS keyframes at his tempo, 1.05)
+    chefFlip:  { n: 1, jit: 0, gap: 1500, fn: (k, t) => {
+      const sizzle = (from, len) => {                                         // overlapping hiss, with fat spitting on top
+        for (let d = 0; d < len; d += 0.16) k.noise(t + from + d, 0.34, { type: "highpass", freq: 4200, q: 0.6, vol: 0.075, att: 0.07 });
+        for (let i = 0; i < len * 26; i++) k.noise(t + from + Math.random() * len, 0.012, { freq: 2500 + Math.random() * 4500, q: 5, vol: 0.05 + Math.random() * 0.09 });
+      };
+      sizzle(0, 0.45);
+      k.noise(t + 0.53, 0.45, { freq: 350, to: 2600, q: 1.6, vol: 0.13, att: 0.18 });                  // up
+      k.tone(330, t + 0.55, 0.5, { type: "sine", vol: 0.07, to: 880, att: 0.05, keep: true });
+      k.noise(t + 1.35, 0.45, { freq: 2200, to: 450, q: 1.6, vol: 0.09, att: 0.25 });                  // down
+      k.tone(190, t + 1.87, 0.14, { type: "sine", vol: 0.24, to: 80, keep: true });                    // plop in the pan
+      k.noise(t + 1.87, 0.07, { type: "lowpass", freq: 1400, q: 0.7, vol: 0.2 });
+      sizzle(1.9, 0.75);
+    } },
+    chefTaste: { n: 1, jit: 0, gap: 1500, fn: (k, t) => {
+      k.noise(t + 0.9, 0.34, { freq: 900, to: 3400, q: 5, vol: 0.2, att: 0.2 });                       // slurp
+      k.noise(t + 1.2, 0.05, { freq: 2600, q: 3, vol: 0.12 });
+      k.tone(165, t + 1.42, 0.38, { type: "triangle", vol: 0.14, to: 220, att: 0.06, lp: 800, vib: 5, keep: true });   // "hmm?"
+      for (let i = 0; i < 6; i++) k.noise(t + 2.0 + i * 0.085, 0.04, { type: "highpass", freq: 6500, q: 0.8, vol: i % 2 ? 0.07 : 0.12 });   // salt
+    } },
+    chefKiss:  { n: 1, jit: 0, gap: 1500, fn: (k, t) => {
+      k.noise(t + 0.2, 0.13, { freq: 900, to: 2800, q: 6, vol: 0.14, att: 0.09 });                     // "mm-"
+      k.noise(t + 0.34, 0.035, { freq: 2200, q: 2, vol: 0.28 });                                       // "-wah"
+      k.tone(520, t + 0.345, 0.12, { type: "sine", vol: 0.12, to: 240, keep: true });
+      [91, 96, 100].forEach((m, i) => k.bell(mtof(m), t + 0.48 + i * 0.11, 0.06, 0.8));                // sparkle
+    } },
   };
 
   const lastPlay = {}, lastVariant = {};
