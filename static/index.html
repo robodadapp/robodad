@@ -369,6 +369,23 @@ button,textarea{font:inherit;color:inherit}
 .do-dhishoom .mv-punch{animation:av-punch 2s ease-out}
 @keyframes av-punch{0%{opacity:0; transform:translateX(-10px)} 20%{opacity:1; transform:translateX(-8px)} 32%{transform:translateX(4px) scale(1.15)} 70%{opacity:1; transform:translateX(3px)} 100%{opacity:0; transform:translateX(-6px)}}
 .do-dhishoom .mv-boom{animation:av-1up 2s ease-out .3s}
+.do-hoho .mv-hoho{animation:av-pop 2.4s steps(6)}
+.do-hoho .hd{animation:av-mashhead 2.4s ease-in-out}
+.do-jingle .santa{transform-box:fill-box; transform-origin:30% 100%; animation:av-jingle 2.4s ease-in-out}
+.do-jingle .mv-bells{animation:av-tpop 2.4s ease-in-out}
+@keyframes av-jingle{0%,100%{transform:none} 15%{transform:rotate(-9deg)} 30%{transform:rotate(8deg)} 45%{transform:rotate(-6deg)} 60%{transform:rotate(5deg)} 75%{transform:rotate(-2deg)}}
+.do-gift .mv-gift{animation:av-rise 2.8s ease-in-out}
+.do-flip .mv-pan{animation:av-rise 2.8s ease-in-out}
+.do-flip .cake{animation:av-cake 2.8s ease-in-out; transform-box:fill-box; transform-origin:center}
+@keyframes av-cake{0%,20%{transform:none} 45%{transform:translateY(-30px) rotate(180deg)} 70%,100%{transform:translateY(0) rotate(360deg)}}
+.do-taste .mv-spoon{animation:av-rise 2.8s ease-in-out}
+.do-taste .hd{animation:av-drink 2.8s ease-in-out}
+.do-kiss .mv-kiss{animation:av-tpop 2.4s ease-in-out}
+.do-kiss .hd{animation:av-coolnod 2.4s ease-in-out}
+.do-kiai .mv-punch{animation:av-punch 2s ease-out}
+.do-kiai .mv-boom{animation:av-1up 2s ease-out .3s}
+.do-kiai .hd{animation:av-hop 2s ease-out}
+.do-bow .hd{animation:av-bow 2.8s ease-in-out}
 /* ---------- Diwali Lights (seasonal) ---------- */
 :root[data-look="diwali"] body{background:radial-gradient(ellipse at 50% -10%, #3A1F6A 0, transparent 60%), radial-gradient(circle, rgba(255,201,60,.08) 1px, transparent 1.5px) 0 0 / 22px 22px, #120B2E fixed}
 :root[data-look="diwali"] .top{background:rgba(18,11,46,.92); border-bottom:1px solid #3A2A6A; position:relative; z-index:6}
@@ -624,7 +641,7 @@ body.thinking .bot:not(.talking) .eye{transform:translate(1px, -1px)}
 @keyframes rig-nineties{0%,100%{transform:rotate(2.2deg)} 50%{transform:rotate(3.2deg)}}
 #avHead .rig-nineties .idle-hd,#avHero .rig-nineties .idle-hd{animation:hd-nineties 8s ease-in-out infinite}
 @keyframes hd-nineties{0%,100%{transform:rotate(-1deg)} 50%{transform:rotate(-2.5deg)}}
-#avHead .rig-y2k .idle-hd,#avHero .rig-y2k .idle-hd{animation:hd-y2k 5s ease-in-out infinite}
+#avHead .rig-chef .idle-hd,#avHero .rig-chef .idle-hd{animation:hd-y2k 5s ease-in-out infinite}
 @keyframes hd-y2k{0%,100%{transform:rotate(3deg)} 50%{transform:rotate(1.4deg)}}
 #avHead .rig-skater,#avHero .rig-skater{animation:rig-skater 5s ease-in-out infinite}
 @keyframes rig-skater{0%,100%{transform:rotate(-1.3deg)} 50%{transform:rotate(1.3deg)}}
@@ -642,7 +659,7 @@ body.thinking .bot:not(.talking) .eye{transform:translate(1px, -1px)}
 @keyframes rig-festive{0%,100%{transform:rotate(-1.4deg)} 50%{transform:rotate(1.4deg)}}
 #avHead .rig-festive .idle-hd,#avHero .rig-festive .idle-hd{animation:hd-festive 4s ease-in-out infinite}
 @keyframes hd-festive{0%,100%{transform:rotate(1.6deg)} 50%{transform:rotate(-1.6deg)}}
-#avHead .rig-cozy,#avHero .rig-cozy{animation:rig-cozy 7s linear infinite}
+#avHead .rig-xmas,#avHero .rig-xmas{animation:rig-cozy 7s linear infinite}
 @keyframes rig-cozy{0%,80%,92%,100%{transform:none} 82%,86%,90%{transform:translateX(-.4px)} 84%,88%{transform:translateX(.4px)}}
 #avHead .rig-lucky .idle-hd,#avHero .rig-lucky .idle-hd{animation:hd-lucky 5s ease-in-out infinite}
 @keyframes hd-lucky{0%,50%,100%{transform:none} 25%{transform:translateY(-.5px) rotate(2deg)} 75%{transform:translateY(-.5px) rotate(-2deg)}}
@@ -1731,6 +1748,18 @@ textarea::placeholder{color:var(--muted)}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important; scroll-behavior:auto!important}
 }
+
+/* Performance layer: extra life on top of every move. Low specificity on eyes and hats, so a move's own animation wins. */
+@media (prefers-reduced-motion: no-preference){
+  .bot[class*="do-"] .rig,#avHead[class*="do-"] .rig,#avHero[class*="do-"] .rig{transform-box:view-box; transform-origin:32px 64px; animation:av-perf 1.5s cubic-bezier(.34,1.4,.5,1)}
+  :where(.bot[class*="do-"]) .eye{animation:av-glance 1.6s ease-in-out}
+  :where(.bot[class*="do-"]) :is(.chat,.beanie,.bucket,.cap,.ccap,.toque,.hair-f,.santa){transform-box:fill-box; transform-origin:50% 100%; animation:av-lag 1.8s ease-out .12s}
+  .bot.proud .rig,#avHead.proud .rig,#avHero.proud .rig{transform-box:view-box; transform-origin:32px 64px; animation:av-win 1.1s cubic-bezier(.3,1.3,.5,1) 2}
+}
+@keyframes av-perf{0%{transform:none} 12%{transform:scale(1.06,.91)} 30%{transform:translateY(-2.6px) scale(.95,1.07)} 48%{transform:translateY(0) scale(1.045,.955)} 64%{transform:translateY(-.8px) scale(.985,1.015)} 80%,100%{transform:none}}
+@keyframes av-glance{0%,100%{transform:none} 8%{transform:translate(1.3px,-.4px) scale(1.08)} 26%{transform:translate(1.3px,-.4px)} 40%{transform:translate(-1px,0)} 58%{transform:none}}
+@keyframes av-lag{0%,100%{transform:none} 15%{transform:translateY(.8px) rotate(-2deg)} 36%{transform:translateY(-3px) rotate(5deg)} 55%{transform:translateY(.7px) rotate(-3deg)} 74%{transform:translateY(-.5px) rotate(1.2deg)}}
+@keyframes av-win{0%,100%{transform:none} 15%{transform:scale(1.08,.88)} 42%{transform:translateY(-6px) scale(.94,1.08) rotate(-4deg)} 68%{transform:translateY(0) scale(1.06,.93) rotate(3deg)} 84%{transform:translateY(-1px)}}
 </style>
 </head>
 <body>
@@ -2065,7 +2094,7 @@ textarea::placeholder{color:var(--muted)}
         <strong>VHS Sunset</strong><small>Rewind to 1987</small>
       </button>
       <button class="look" type="button" role="radio" data-look="y2k" aria-checked="false">
-        <span class="pv y2k"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-y2k"/></svg></span>
+        <span class="pv y2k"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-bucket"/></svg></span>
         <strong>Y2K Gloss</strong><small>Glossy bubbles, circa 2004</small>
       </button>
       <button class="look" type="button" role="radio" data-look="diner" aria-checked="false">
@@ -2093,7 +2122,7 @@ textarea::placeholder{color:var(--muted)}
         <strong>Diwali Lights<span class="seasonal-tag">Diwali</span></strong><small>Lights, rangoli and diyas</small>
       </button>
       <button class="look" type="button" role="radio" data-look="winter" data-season="winter" aria-checked="false" hidden>
-        <span class="pv winter"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-cozy"/></svg></span>
+        <span class="pv winter"><svg aria-hidden="true" viewBox="0 0 64 64"><use href="#av-xmas"/></svg></span>
         <strong>Winter Holidays<span class="seasonal-tag">Holidays</span></strong><small>Snow, toques and cocoa</small>
       </button>
       <button class="look" type="button" role="radio" data-look="lunar" data-season="lunar" aria-checked="false" hidden>
@@ -2524,7 +2553,7 @@ textarea::placeholder{color:var(--muted)}
 <script src="/static/radio.js?v=48"></script>
 <script src="/static/sfx.js?v=2"></script>
 <script src="/static/sleep.js?v=1"></script>
-<script src="/static/avatars.js?v=49"></script>
+<script src="/static/avatars.js?v=50"></script>
 <script src="/static/hunt.js?v=3"></script>
 <script>
 (() => {
@@ -3544,7 +3573,7 @@ const PLAYERS = {
   const SEASONS = {
     halloween: { ranges:[["10-15", "11-02"]], hello:"🎃 Happy Halloween! I dressed up. Change the look any time in the Me tab" },
     diwali: { ranges:[["2026-11-05", "2026-11-12"]], hello:"🪔 Happy Diwali! I lit the diyas. Change the look any time in the Me tab" },        // Diwali: Nov 8, 2026
-    winter: { ranges:[["12-15", "01-02"]], hello:"❄️ Happy holidays! I bundled up. Change the look any time in the Me tab" },
+    winter: { ranges:[["12-01", "01-02"]], hello:"🎅 Happy holidays! Santa suit on. Change the look any time in the Me tab" },
     lunar: { ranges:[["2027-02-02", "2027-02-14"]], hello:"🏮 Happy Lunar New Year! Change the look any time in the Me tab" },                    // Lunar New Year: Feb 6, 2027
     eid: { ranges:[["2027-03-07", "2027-03-13"], ["2027-05-14", "2027-05-19"]], hello:"🌙 Eid Mubarak! Change the look any time in the Me tab" },  // Eid al-Fitr ~Mar 9 and Eid al-Adha ~May 16, 2027
   };
@@ -3567,6 +3596,8 @@ const PLAYERS = {
   let avPref = getPref(AV_KEY) || "auto", avKind = "fifties", avLast = "";
   if (AV) AV.installSymbols(document.querySelector('svg[width="0"]'));
   const avKindFor = (look) => {
+    if (avPref === "cozy") { avPref = "auto"; setPref(AV_KEY, avPref); }   // Cozy Dad retired
+    if (avPref === "y2k") { avPref = "bucket"; setPref(AV_KEY, avPref); }
     const a = avPref !== "auto" && AV?.AVATARS[avPref];
     if (a && !(a.season && !seasonActive(a.season))) return avPref;   // seasonal avatars go home after the holiday
     return AV?.LOOK_AVATAR[look] || "fifties";
@@ -3580,8 +3611,8 @@ const PLAYERS = {
     $("avPick") && $("avPick").querySelectorAll(".avb").forEach(b => b.setAttribute("aria-checked", String(b.dataset.av === avPref)));
   }
   // Personality in timing: quick, loose dads move faster; the professor, the bookworm and Grandpa take their time.
-  const DAD_TEMPO = { skater:1.3, gamer:1.25, eighties:1.2, nineties:1.15, y2k:1.15, coach:1.15, bucket:1.05, filmi:1.05, modern:1, fifties:.95, labdad:.95,
-    dracula:.9, festive:1, cozy:.9, lucky:1, eiddad:.95, bookworm:.8, professor:.8, grandpa:.68 };
+  const DAD_TEMPO = { skater:1.3, gamer:1.25, eighties:1.2, nineties:1.15, coach:1.15, chef:1.05, dojo:1.15, bucket:1.05, filmi:1.05, modern:1, fifties:.95, labdad:.95,
+    dracula:.9, festive:1, xmas:1.1, lucky:1, eiddad:.95, bookworm:.8, professor:.8, grandpa:.68 };
   function avPlay(move){
     if (!AV) return;
     const moves = AV.AVATARS[avKind].moves;
@@ -5139,7 +5170,7 @@ const PLAYERS = {
     hattip:"Yo!", collar:"Cool.", comb:"Lookin' good", ollie:"Rad!", pager:"Beep!", capflip:"Ta-da!", sip:"Ahh.", mash:"Go go!", nod:"Sup?", shades:"Deal with it.", glasses:"Hmm?", nap:"Zzz…", kids:"Kids these days!", bleh:"Bleh!", cape:"Good evening.", bat:"Eek!",
     windflip:"Wind on!", shimmy:"Let's dance!", dhishoom:"Dhishoom!", diya:"Let there be light.", sparkler:"Phataka!", namaste:"Happy Diwali!",
     cocoa:"Ahh, cocoa.", snowball:"Snowball!", pompom:"Brr!", lantern:"Happy New Year!", envelope:"Lucky money!", firecracker:"Pop pop!",
-    greet:"Eid Mubarak!", fanous:"Lights on!", sweets:"Sweets for everyone!" };
+    hoho:"Ho ho ho!", jingle:"Jingle jingle!", gift:"For you!", flip:"Order up!", taste:"Needs salt.", kiss:"Chef's kiss!", kiai:"Kiai!", bow:"Respect.", greet:"Eid Mubarak!", fanous:"Lights on!", sweets:"Sweets for everyone!" };
   let sayTimer = null;
   function bubbleSay(move){
     const word = SAY[move]; if (!word || !$("bubCap").hidden || !$("qVoicePop").hidden) return;
