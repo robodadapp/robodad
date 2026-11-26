@@ -177,25 +177,27 @@
     },
     gamer: {
       name: "Gamer Dad", era: "Mid-2000s", moves: ["gg", "mash", "victory"],
-      svg: `<g class="body"><path d="M10 52 C5 34 12 24 18 24 L46 24 C52 24 59 34 54 52Z" fill="#6B3FE0" stroke="${INK}" stroke-width="2.2" stroke-linejoin="round"/>${torso("#252A3A")}
-  <path d="M22 50 L32 57 L42 50" fill="none" stroke="#6B3FE0" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="20" y="58.5" width="24" height="4" rx="2" fill="#111" /><rect x="21" y="59.5" width="15" height="2" rx="1" fill="#39FF88"/></g>${neck}
+      svg: `<g class="body">${torso("#252A3A")}
+  <path d="M18 52.5 C18 48 23 48 27 48.5 H37 C41 48 46 48 46 52.5 C42 56.5 37 58 32 58 C27 58 22 56.5 18 52.5Z" fill="#363B4F" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M28.8 53 L28.2 57 M35.2 53 L35.8 57" fill="none" stroke="#D93636" stroke-width="1.5" stroke-linecap="round"/>
+  <rect x="20" y="58.5" width="24" height="4" rx="2" fill="#111" /><rect x="21" y="59.5" width="15" height="2" rx="1" fill="#2A52BE"/></g>${neck}
   <g class="hd">${head}
-    <path d="M13 24 C11 13 19 8 27 9 L31 3.5 L34 9 L42 4 L42.5 10.5 C50 11 54 17 51.5 25 L45 19.5 L41 23 L36 18.5 L20 19.5Z" fill="#2B2233" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
-    <path d="M31 3.5 L34 9 L42 4 L40 12 L35 17 L30 12Z" fill="#39FF88"/>
+    <path d="M13 24 Q11 12 22 11 Q30 4 46 8 Q42 10 44 12 Q53 14 51.5 25 L48 19.5 Q39 16 30 19.5 Q23 18 17 20.5Z" fill="#2B2233" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M27 13 Q33 7.5 42 9 Q35 11.5 32.5 16Z" fill="#C9A46A"/>
+    <path d="M13.3 35 Q18 38.5 23 37.4 Q32 35.4 41 37.4 Q46 38.5 50.7 35 A9.7 9.7 0 0 1 41 44.7 H23 A9.7 9.7 0 0 1 13.3 35Z" fill="${FACE}" fill-opacity=".16"/>
     <path d="M8 27 C5 2 59 2 56 27" fill="none" stroke="#15171F" stroke-width="3.6"/>
-    <rect x="1.5" y="21" width="13" height="19" rx="6" fill="#15171F" stroke="#39FF88" stroke-width="1.8"/><rect x="49.5" y="21" width="13" height="19" rx="6" fill="#15171F" stroke="#39FF88" stroke-width="1.8"/>
-    <path d="M56 21 L61 10" stroke="#15171F" stroke-width="2.6" stroke-linecap="round"/><circle cx="61" cy="10" r="2.2" fill="#FF3EA5"/>
-    <path class="cup-led" d="M5 30.5 h6 M53 30.5 h6" stroke="#39FF88" stroke-width="2" stroke-linecap="round"/>
-    ${brows("M18 24.5 L28 25.8","M36.5 22.5 Q41.5 19.5 46 22.8",2.6)}
-    ${eyesOf({r:4.4,hl:1.6})}
-    <path class="mouth" d="M24.5 38.5 Q32 41 40.5 36.5 Q38 45.5 31 44.5 Q26 43.5 24.5 38.5Z" fill="#fff" stroke="${FACE}" stroke-width="1.8" stroke-linejoin="round"/>
-    <g class="mic"><path d="M8 38 C9 47 15 48 20 45" fill="none" stroke="#15171F" stroke-width="2.6" stroke-linecap="round"/><rect x="18.5" y="42.5" width="7" height="5" rx="2.5" fill="#15171F" stroke="#39FF88" stroke-width="1.2"/></g>
+    <rect x="1.5" y="21" width="13" height="19" rx="6" fill="#15171F" stroke="#2A52BE" stroke-width="2"/><rect x="49.5" y="21" width="13" height="19" rx="6" fill="#15171F" stroke="#2A52BE" stroke-width="2"/>
+    <path class="cup-led" d="M5 30.5 h6 M53 30.5 h6" stroke="#2A52BE" stroke-width="2" stroke-linecap="round"/>
+    ${brows("M18.5 24.8 L28 26","M36.5 25 L45.5 22.8",2.6)}
+    <g class="eye eye-l"><path d="M18.8 28.4 L27.4 29.8 Q26.8 33.8 23 33.8 Q19.3 33.5 18.8 28.4Z" fill="${FACE}"/><circle cx="24.6" cy="31.3" r="1" fill="#fff"/></g>
+    <g class="eye eye-r"><path d="M36.6 29.8 L45.2 27.6 Q45.2 33.6 41 33.8 Q37.2 33.6 36.6 29.8Z" fill="${FACE}"/><circle cx="42.8" cy="30.8" r="1" fill="#fff"/></g>
+    <path class="mouth" d="M25.5 38.6 Q32 40.6 39.8 37 Q38 43.8 32 43.8 Q27 43.4 25.5 38.6Z" fill="#fff" stroke="${FACE}" stroke-width="1.8" stroke-linejoin="round"/>
+    <g class="mic"><path d="M8 38 C9 47 15 48 20 45" fill="none" stroke="#15171F" stroke-width="2.6" stroke-linecap="round"/><rect x="18.5" y="42.5" width="7" height="5" rx="2.5" fill="#15171F" stroke="#2A52BE" stroke-width="1.2"/></g>
   </g>
-      <text class="mv mv-gg" opacity="0" x="46" y="13" text-anchor="middle" font-family="Nunito, sans-serif" font-size="10" font-weight="900" fill="#39FF88" stroke="#111" stroke-width="1" paint-order="stroke">GG!</text>
+      <text class="mv mv-gg" opacity="0" x="46" y="13" text-anchor="middle" font-family="Nunito, sans-serif" font-size="10" font-weight="900" fill="#2A52BE" stroke="#fff" stroke-width="1" paint-order="stroke">GG!</text>
       <g class="mv mv-pad" opacity="0"><path d="M18 51 C14 51 11 55 12 59 C13 62.5 17 62.5 19.5 60 L22 57.5 H42 L44.5 60 C47 62.5 51 62.5 52 59 C53 55 50 51 46 51Z" fill="#3A3F4A" stroke="${INK}" stroke-width="1.6"/>
         <path d="M20 54.5 v4 M18 56.5 h4" stroke="#C9D3DC" stroke-width="1.4"/>
-        <circle class="pad-btn" cx="44" cy="55" r="1.3" fill="#39FF88"/><circle class="pad-btn b2" cx="46.6" cy="57.2" r="1.3" fill="#FF5E7E"/><circle cx="41.6" cy="57.2" r="1.3" fill="#38B6FF"/><circle cx="44" cy="59.4" r="1.3" fill="#F2B533"/></g>
+        <circle class="pad-btn" cx="44" cy="55" r="1.3" fill="#2A52BE"/><circle class="pad-btn b2" cx="46.6" cy="57.2" r="1.3" fill="#FF5E7E"/><circle cx="41.6" cy="57.2" r="1.3" fill="#38B6FF"/><circle cx="44" cy="59.4" r="1.3" fill="#F2B533"/></g>
       <g class="mv mv-vic" opacity="0"><rect x="51.5" y="47" width="7" height="19" rx="2" fill="#22262E" stroke="${INK}" stroke-width="1.6"/>
         <rect x="49.5" y="38" width="11" height="10" rx="3.5" fill="${SKIN}" stroke="${INK}" stroke-width="1.8"/>
         <path d="M52.5 38.5 v3.5 M55 38.5 v3.5 M57.5 38.5 v3.5" stroke="${INK}" stroke-width="1.2"/></g>
